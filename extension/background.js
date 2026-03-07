@@ -230,13 +230,31 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== 'linkedinSchedule') return;
 
     chrome.storage.local.get(
-        ['popupState', 'schedule', 'sentProfileUrls'],
+        [
+            'popupState', 'schedule',
+            'sentProfileUrls', 'queryRotationIndex'
+        ],
         (data) => {
             const state = data.popupState;
             const schedule = data.schedule;
             if (!schedule?.enabled || !state) return;
 
-            const query = buildQueryFromTags(state);
+            const savedQueries = (state.savedQueries || '')
+                .split('\n')
+                .map(q => q.trim())
+                .filter(Boolean);
+
+            let query;
+            if (savedQueries.length > 1) {
+                const idx = (data.queryRotationIndex || 0)
+                    % savedQueries.length;
+                query = savedQueries[idx];
+                chrome.storage.local.set({
+                    queryRotationIndex: idx + 1
+                });
+            } else {
+                query = buildQueryFromTags(state);
+            }
             if (!query) return;
 
             const networkTypes = [];

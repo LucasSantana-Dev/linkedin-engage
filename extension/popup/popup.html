@@ -565,7 +565,7 @@
                 <input type="checkbox" id="scheduleCheckbox" />
             </div>
             <div id="scheduleOptions" style="display:none;">
-                <div class="input-group" style="margin-bottom:0;">
+                <div class="input-group" style="margin-bottom:8px;">
                     <label for="scheduleInterval">
                         Run every (hours)
                     </label>
@@ -573,12 +573,21 @@
                         value="24" min="1" max="168"
                         style="width:80px;" />
                 </div>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label for="savedQueries">
+                        Query rotation (one per line)
+                    </label>
+                    <textarea id="savedQueries"
+                        class="note-area" rows="3"
+                        placeholder="recruiter software remote&#10;talent acquisition latam&#10;hiring manager tech"></textarea>
+                </div>
                 <div style="
                     font-size:10px; color:var(--text-muted);
                     margin-top:4px;
                 ">
-                    Uses your current settings. Chrome must
-                    be running.
+                    Rotates through queries on each run.
+                    Leave empty to use current search.
+                    Chrome must be running.
                 </div>
             </div>
         </div>

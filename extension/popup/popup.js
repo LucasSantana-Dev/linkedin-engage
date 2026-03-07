@@ -162,7 +162,9 @@ function saveState() {
         scheduleEnabled: document.getElementById(
             'scheduleCheckbox').checked,
         scheduleInterval: document.getElementById(
-            'scheduleInterval').value
+            'scheduleInterval').value,
+        savedQueries: document.getElementById(
+            'savedQueries').value
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -235,6 +237,10 @@ function loadState() {
         if (popupState.scheduleInterval) {
             document.getElementById('scheduleInterval').value =
                 popupState.scheduleInterval;
+        }
+        if (popupState.savedQueries) {
+            document.getElementById('savedQueries').value =
+                popupState.savedQueries;
         }
         if (popupState.useCustomQuery) {
             useCustomQuery = true;
@@ -337,6 +343,10 @@ document.getElementById('scheduleCheckbox').addEventListener(
         });
         saveState();
     }
+);
+
+document.getElementById('savedQueries').addEventListener(
+    'input', saveState
 );
 
 document.getElementById('scheduleInterval').addEventListener(
