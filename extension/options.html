@@ -148,6 +148,44 @@
             font-weight: 600;
         }
 
+        .chart-bar {
+            flex: 1;
+            min-width: 0;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+            position: relative;
+            cursor: default;
+            transition: opacity 0.15s;
+            opacity: 0.7;
+        }
+
+        .chart-bar:hover { opacity: 1; }
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .chart-bar-count {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text);
+            display: none;
+        }
+
+        .chart-bar:hover .chart-bar-count {
+            display: block;
+        }
+
         .badge-sent {
             background: rgba(5, 118, 66, 0.1);
             color: var(--success);
@@ -209,6 +247,17 @@
             <div class="card-value" id="totalAccepted">0</div>
             <div class="card-sub">connections made</div>
         </div>
+    </div>
+
+    <div class="section">
+        <h2 id="activityTitle">Activity (last 14 days)</h2>
+        <div id="chart" style="
+            display:flex; align-items:flex-end;
+            gap:4px; height:80px; padding:8px 0;
+        "></div>
+        <div id="chartEmpty" class="empty" style="
+            padding:16px; display:none;
+        ">No activity data yet.</div>
     </div>
 
     <div class="section">
