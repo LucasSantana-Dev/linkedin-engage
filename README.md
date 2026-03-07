@@ -12,6 +12,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **"Actively Hiring" filter** — leverages LinkedIn's undocumented `activelyHiring=true` URL parameter
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
 - **Custom query mode** — toggle between tag builder and manual query input
+- **Follow-to-Connect** — handles profiles showing "Follow" instead of "Connect" by opening the "More" menu to find the hidden Connect option
 - **Auto-pagination** — navigates through search result pages automatically
 - **Personalized notes** — extracts first name from invite modal and injects it via `{name}` template variable
 

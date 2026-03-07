@@ -204,6 +204,38 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return null;
     }
 
+    async function tryConnectViaMore(card) {
+        const moreBtn = card.querySelector(
+            'button[aria-label*="more action"],' +
+            'button[aria-label*="More action"],' +
+            'button[aria-label*="mais ações"],' +
+            'button[class*="artdeco-dropdown__trigger"]'
+        );
+        if (!moreBtn) return null;
+
+        moreBtn.click();
+        await delay(600);
+
+        const menuItems = document.querySelectorAll(
+            '[role="menuitem"], ' +
+            '.artdeco-dropdown__content button, ' +
+            '.artdeco-dropdown__content a'
+        );
+        for (const item of menuItems) {
+            const text = (item.innerText || '')
+                .trim().toLowerCase();
+            if (text === 'connect' || text === 'conectar') {
+                return item;
+            }
+        }
+
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Escape', code: 'Escape',
+            keyCode: 27, bubbles: true
+        }));
+        return null;
+    }
+
     async function runAutomation(config) {
         console.log('[LinkedIn Bot] Started', config);
 
@@ -282,6 +314,29 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                 connectButtons.push(parent);
                             }
                         }
+                    }
+                }
+
+                const followCards = document.querySelectorAll(
+                    '.entity-result, ' +
+                    '.reusable-search__result-container, ' +
+                    'li.reusable-search__result-container'
+                );
+                for (const card of followCards) {
+                    const primaryBtn = card.querySelector(
+                        'button'
+                    );
+                    if (!primaryBtn) continue;
+                    const btnText = (primaryBtn.innerText || '')
+                        .trim().toLowerCase();
+                    if (btnText !== 'follow' &&
+                        btnText !== 'seguir') continue;
+
+                    const connectItem =
+                        await tryConnectViaMore(card);
+                    if (connectItem && !seen.has(connectItem)) {
+                        seen.add(connectItem);
+                        connectButtons.push(connectItem);
                     }
                 }
 
