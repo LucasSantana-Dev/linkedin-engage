@@ -3,6 +3,34 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
     const delay = ms => new Promise(r => setTimeout(r, ms));
     let stopRequested = false;
+    const connectionLog = [];
+
+    function extractProfileInfo(btn) {
+        const card = btn.closest(
+            '.entity-result, li, ' +
+            '[data-chameleon-result-urn]'
+        );
+        if (!card) return { name: 'Unknown', headline: '' };
+        const nameEl = card.querySelector(
+            '.entity-result__title-text a span[dir], ' +
+            '.entity-result__title-text a, ' +
+            'span.entity-result__title-text'
+        );
+        const name = nameEl
+            ? nameEl.innerText.trim().split('\n')[0]
+            : 'Unknown';
+        const headlineEl = card.querySelector(
+            '.entity-result__primary-subtitle'
+        );
+        const headline = headlineEl
+            ? headlineEl.innerText.trim() : '';
+        const linkEl = card.querySelector(
+            'a[href*="/in/"]'
+        );
+        const profileUrl = linkEl
+            ? linkEl.href.split('?')[0] : '';
+        return { name, headline, profileUrl };
+    }
 
     window.addEventListener('message', (event) => {
         if (event.source !== window) return;
@@ -507,6 +535,13 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         if (!hasModal) {
                             if (isEmailRequiredModal()) {
                                 totalSkipped++;
+                                connectionLog.push({
+                                    ...extractProfileInfo(
+                                        button),
+                                    status: 'skipped-email',
+                                    time: new Date()
+                                        .toISOString()
+                                });
                                 reportProgress(
                                     totalSent, limit,
                                     currentPage, totalSkipped
@@ -604,6 +639,13 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
                                     consecutiveFails = 0;
                                     totalSent++;
+                                    connectionLog.push({
+                                        ...extractProfileInfo(
+                                            button),
+                                        status: 'sent',
+                                        time: new Date()
+                                            .toISOString()
+                                    });
                                     reportProgress(
                                         totalSent, limit,
                                         currentPage, totalSkipped
@@ -642,6 +684,11 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
                             consecutiveFails = 0;
                             totalSent++;
+                            connectionLog.push({
+                                ...extractProfileInfo(button),
+                                status: 'sent',
+                                time: new Date().toISOString()
+                            });
                             reportProgress(
                                 totalSent, limit,
                                 currentPage, totalSkipped
@@ -705,7 +752,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             return {
                 success: true,
                 message: `Finished! Sent ` +
-                    `${totalSent} connection requests.`
+                    `${totalSent} connection requests.`,
+                log: connectionLog
             };
 
         } catch (error) {

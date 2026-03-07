@@ -404,6 +404,27 @@ document.getElementById('stopBtn').addEventListener('click', () => {
 });
 
 let lastReportedSent = 0;
+let lastConnectionLog = [];
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!lastConnectionLog.length) return;
+    const escape = (s) =>
+        `"${(s || '').replace(/"/g, '""')}"`;
+    const header = 'Name,Headline,Profile URL,Status,Time';
+    const rows = lastConnectionLog.map(r =>
+        [r.name, r.headline, r.profileUrl, r.status, r.time]
+            .map(escape).join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `linkedin-connections-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
 
 chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'progress') {
@@ -433,6 +454,12 @@ chrome.runtime.onMessage.addListener((request) => {
         startBtn.style.display = 'flex';
 
         updateWeeklyDisplay();
+
+        if (response?.log?.length) {
+            lastConnectionLog = response.log;
+            document.getElementById('exportBtn')
+                .style.display = 'block';
+        }
 
         if (response?.success) {
             setStatusMessage(
