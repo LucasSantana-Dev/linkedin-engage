@@ -12,6 +12,10 @@
             --text-main: #191919;
             --text-muted: #666666;
             --border: #e0e0e0;
+            --card-bg: #fafafa;
+            --input-bg: #fafafa;
+            --status-bg: #f8f9fa;
+            --preview-bg: #f4f6f8;
             --radius-sm: 6px;
             --radius-md: 8px;
             --radius-lg: 12px;
@@ -19,6 +23,52 @@
             --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
             --success: #057642;
             --warning: #b24020;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #70b5f9;
+                --primary-hover: #9cccfc;
+                --primary-light: rgba(112, 181, 249, 0.12);
+                --bg-color: #1b1f23;
+                --text-main: #e1e4e8;
+                --text-muted: #8b949e;
+                --border: #30363d;
+                --card-bg: #21262d;
+                --input-bg: #161b22;
+                --status-bg: #161b22;
+                --preview-bg: #161b22;
+                --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+                --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+                --success: #3fb950;
+                --warning: #d29922;
+            }
+
+            .header {
+                background: linear-gradient(
+                    135deg, #1a4a7a 0%, #0d3b66 100%
+                );
+            }
+
+            .tag { background: var(--card-bg); }
+            .tag.active { background: var(--primary); color: #1b1f23; }
+
+            #startBtn { background-color: #1a6fb5; }
+            #startBtn:hover { background-color: #2080cc; }
+            #startBtn:disabled { background-color: #30363d; }
+
+            .template-card {
+                border-color: var(--border);
+                background: var(--card-bg);
+            }
+            .template-card.active,
+            .template-card:hover {
+                border-color: var(--primary);
+                background: var(--primary-light);
+            }
+
+            .badge-sent { background: rgba(63,185,80,0.15); }
+            .badge-skipped { background: rgba(210,153,34,0.15); }
         }
 
         * { box-sizing: border-box; }
@@ -94,7 +144,7 @@
             padding: 4px 9px;
             border-radius: 20px;
             border: 1.5px solid var(--border);
-            background: white;
+            background: var(--bg-color);
             font-size: 11px;
             font-weight: 500;
             cursor: pointer;
@@ -117,7 +167,7 @@
         .query-preview {
             margin-top: 8px;
             padding: 7px 10px;
-            background: #f4f6f8;
+            background: var(--preview-bg);
             border-radius: var(--radius-sm);
             font-size: 10px;
             font-family: "SF Mono", "Fira Code", monospace;
@@ -134,7 +184,7 @@
             padding: 8px 10px;
             border-radius: var(--radius-md);
             border: 1px solid var(--border);
-            background-color: #fafafa;
+            background-color: var(--input-bg);
             color: var(--text-main);
             font-size: 12px;
             font-family: "SF Mono", "Fira Code", monospace;
@@ -147,7 +197,7 @@
         .custom-query-input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
-            background: white;
+            background: var(--bg-color);
         }
 
         .row {
@@ -176,7 +226,7 @@
             padding: 8px 10px;
             border-radius: var(--radius-md);
             border: 1px solid var(--border);
-            background-color: #fafafa;
+            background-color: var(--input-bg);
             color: var(--text-main);
             font-size: 12px;
             outline: none;
@@ -196,7 +246,7 @@
         select:focus, input[type="number"]:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
-            background-color: white;
+            background-color: var(--bg-color);
         }
 
         .checkbox-group {
@@ -357,7 +407,7 @@
             font-size: 11px;
             padding: 8px 12px;
             border-radius: var(--radius-md);
-            background: #f8f9fa;
+            background: var(--status-bg);
             border: 1px solid var(--border);
             border-left: 4px solid var(--primary);
             display: none;
@@ -401,7 +451,7 @@
             gap: 8px;
             padding: 6px 8px;
             border-radius: var(--radius-sm);
-            background: #f8f9fa;
+            background: var(--status-bg);
             border: 1px solid var(--border);
         }
 
