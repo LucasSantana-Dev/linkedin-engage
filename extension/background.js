@@ -96,6 +96,116 @@ chrome.runtime.onMessage.addListener(
             });
         }
 
+        if (request.action === 'checkAccepted') {
+            chrome.tabs.create(
+                {
+                    url: 'https://www.linkedin.com/' +
+                        'mynetwork/invite-connect/' +
+                        'connections/',
+                    active: false
+                },
+                (tab) => {
+                    chrome.tabs.onUpdated.addListener(
+                        function listener(tabId, info) {
+                            if (tabId !== tab.id ||
+                                info.status !== 'complete') {
+                                return;
+                            }
+                            chrome.tabs.onUpdated
+                                .removeListener(listener);
+
+                            setTimeout(() => {
+                                chrome.scripting
+                                    .executeScript({
+                                        target: {
+                                            tabId: tab.id
+                                        },
+                                        func: () => {
+                                            const links =
+                                                document
+                                                    .querySelectorAll(
+                                                        'a[href*="/in/"]'
+                                                    );
+                                            const urls = [];
+                                            for (const l
+                                                of links) {
+                                                const url =
+                                                    l.href
+                                                        .split(
+                                                            '?'
+                                                        )[0];
+                                                if (!urls
+                                                    .includes(
+                                                        url
+                                                    )) {
+                                                    urls.push(
+                                                        url
+                                                    );
+                                                }
+                                            }
+                                            return urls;
+                                        }
+                                    })
+                                    .then((results) => {
+                                        const connUrls =
+                                            results?.[0]
+                                                ?.result || [];
+                                        chrome.tabs.remove(
+                                            tab.id
+                                        );
+                                        chrome.storage.local
+                                            .get(
+                                                'sentProfileUrls',
+                                                (data) => {
+                                                    const sent =
+                                                        new Set(
+                                                            data
+                                                                .sentProfileUrls ||
+                                                                []
+                                                        );
+                                                    const accepted =
+                                                        connUrls
+                                                            .filter(
+                                                                (u) =>
+                                                                    sent
+                                                                        .has(
+                                                                            u
+                                                                        )
+                                                            );
+                                                    if (accepted
+                                                        .length) {
+                                                        chrome
+                                                            .storage
+                                                            .local
+                                                            .set({
+                                                                acceptedUrls:
+                                                                    accepted
+                                                            });
+                                                    }
+                                                    sendResponse({
+                                                        accepted
+                                                    });
+                                                }
+                                            );
+                                    })
+                                    .catch(() => {
+                                        chrome.tabs.remove(
+                                            tab.id
+                                        );
+                                        sendResponse({
+                                            error:
+                                                'Failed to ' +
+                                                'check connections'
+                                        });
+                                    });
+                            }, 3000);
+                        }
+                    );
+                }
+            );
+            return true;
+        }
+
         if (request.action === 'setSchedule') {
             chrome.alarms.clear('linkedinSchedule');
             if (request.enabled && request.intervalHours > 0) {

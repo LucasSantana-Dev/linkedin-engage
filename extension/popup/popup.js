@@ -552,5 +552,33 @@ chrome.runtime.onMessage.addListener((request) => {
     }
 });
 
+document.getElementById('checkAcceptedBtn').addEventListener(
+    'click', () => {
+        const btn = document.getElementById('checkAcceptedBtn');
+        btn.disabled = true;
+        btn.textContent = 'Checking...';
+        chrome.runtime.sendMessage(
+            { action: 'checkAccepted' },
+            (response) => {
+                btn.disabled = false;
+                btn.textContent = 'Check Accepted Connections';
+                if (response?.accepted?.length) {
+                    setStatusMessage(
+                        `Found ${response.accepted.length}` +
+                        ' accepted connections!',
+                        'success'
+                    );
+                } else {
+                    setStatusMessage(
+                        response?.error ||
+                        'No new accepted connections found.',
+                        'info'
+                    );
+                }
+            }
+        );
+    }
+);
+
 loadState();
 updateWeeklyDisplay();
