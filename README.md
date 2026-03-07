@@ -8,11 +8,13 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Tag-based search builder** — compose LinkedIn search queries by selecting Role, Industry, Market Focus, and Level tags
 - **6 note templates** — Senior, Mid-Level, Junior, Tech Lead, General Networking, and Custom
 - **300-char validation** — enforces LinkedIn's invitation note character limit
+- **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
+- **Follow-to-Connect** — handles profiles showing "Follow" instead of "Connect" by opening the "More" menu to find the hidden Connect option
+- **Email modal detection** — auto-skips profiles that require email verification (3rd+ degree with no mutuals)
 - **LATAM recruiter targeting** — Market Focus tags (LATAM, Brazil, Nearshore, Remote) + configurable recruiter region selector
 - **"Actively Hiring" filter** — leverages LinkedIn's undocumented `activelyHiring=true` URL parameter
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
 - **Custom query mode** — toggle between tag builder and manual query input
-- **Follow-to-Connect** — handles profiles showing "Follow" instead of "Connect" by opening the "More" menu to find the hidden Connect option
 - **Auto-pagination** — navigates through search result pages automatically
 - **Personalized notes** — extracts first name from invite modal and injects it via `{name}` template variable
 
@@ -21,17 +23,86 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Express API** — trigger automation via HTTP POST (`/api/linkedin/connect`)
 - **n8n compatible** — includes workflow JSON for scheduled automation via n8n
 
+## Installation
+
+### Chrome Extension (from source)
+
+<details>
+<summary><strong>Step-by-step with screenshots</strong></summary>
+
+#### 1. Download the extension
+
+**Option A — Clone the repo:**
+```bash
+git clone https://github.com/LucasSantana-Dev/linkedin-auto-connect.git
+```
+
+**Option B — Download a release:**
+Go to [Releases](https://github.com/LucasSantana-Dev/linkedin-auto-connect/releases), download the `.zip` file, and extract it.
+
+#### 2. Open Chrome Extensions page
+
+Navigate to `chrome://extensions/` in your Chrome browser.
+
+#### 3. Enable Developer Mode
+
+Toggle **Developer mode** in the top-right corner of the extensions page.
+
+#### 4. Load the extension
+
+Click **Load unpacked** and select the `extension/` folder (not the repo root).
+
+> If you downloaded a release zip, select the extracted folder directly.
+
+#### 5. Pin the extension
+
+Click the puzzle icon in Chrome's toolbar and pin **LinkedIn Auto-Connect** for easy access.
+
+#### 6. Configure and launch
+
+1. Click the extension icon
+2. Select your search tags (Role, Industry, Market Focus, Level)
+3. Choose a note template or write a custom message
+4. Set your connection limit and recruiter region
+5. Click **Launch Automation**
+
+The extension opens a LinkedIn search tab and begins sending connection requests automatically.
+
+</details>
+
+### Standalone Connector (Playwright)
+
+```bash
+git clone https://github.com/LucasSantana-Dev/linkedin-auto-connect.git
+cd linkedin-auto-connect
+npm install
+node linkedin-connector.js
+```
+
+In another terminal:
+```bash
+curl -X POST http://localhost:3000/api/linkedin/connect
+```
+
+> First run opens a browser window for manual LinkedIn login. The session is saved in `linkedin_session/` for subsequent runs.
+
+### n8n Integration
+
+Import `n8n-linkedin-workflow.json` into your n8n instance to schedule automated runs via webhook triggers.
+
 ## Architecture
 
 ```
 extension/
-  content.js    ← MAIN world automation (searches across iframes)
-  bridge.js     ← ISOLATED world messaging bridge (chrome.runtime ↔ postMessage)
-  background.js ← Service worker (tab creation, script injection)
-  popup/        ← Settings UI (search builder, templates, filters)
-  manifest.json ← MV3 manifest
-linkedin-connector.js ← Standalone Playwright version
-n8n-linkedin-workflow.json ← n8n workflow for scheduled runs
+  content.js    <- MAIN world automation (cross-iframe DOM queries)
+  bridge.js     <- ISOLATED world messaging bridge (chrome.runtime <-> postMessage)
+  background.js <- Service worker (tab creation, dual-world script injection)
+  popup/        <- Settings UI (search builder, templates, filters)
+  manifest.json <- Chrome MV3 manifest
+linkedin-connector.js      <- Standalone Playwright version
+n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
+.github/workflows/
+  release.yml   <- Auto-creates GitHub release + zip on version tags
 ```
 
 ### Key Technical Decisions
@@ -44,40 +115,9 @@ n8n-linkedin-workflow.json ← n8n workflow for scheduled runs
 
 **React textarea bypass** — LinkedIn uses React's synthetic event system. Setting textarea values requires the native property descriptor setter (`HTMLTextAreaElement.prototype.value.set`) followed by dispatching `input` and `change` events.
 
-## Installation
+**Network-first prioritization** — Profiles are sorted before processing: mutual connections first, then by connection degree (2nd > 3rd+). Email-required modals (3rd+ with no mutuals) are auto-dismissed.
 
-### Chrome Extension
-
-1. Clone this repository
-2. Open `chrome://extensions/` in Chrome
-3. Enable "Developer mode" (top right toggle)
-4. Click "Load unpacked" and select the `extension/` folder
-5. The LinkedIn Auto-Connect icon appears in your toolbar
-
-### Standalone Connector
-
-```bash
-npm install
-node linkedin-connector.js
-# In another terminal:
-curl -X POST http://localhost:3000/api/linkedin/connect
-```
-
-> First run opens a browser window for manual LinkedIn login. The session is saved in `linkedin_session/` for subsequent runs.
-
-## Usage
-
-### Extension
-
-1. Click the extension icon on any page
-2. Select search tags or write a custom query
-3. Choose a note template and customize if needed
-4. Set connection limit and recruiter region
-5. Click **Launch Automation**
-
-The extension opens a new tab with the LinkedIn search results and begins sending connection requests.
-
-### Search Tips
+## Search Tips
 
 - LinkedIn basic search supports **one OR group max** — keep queries flat
 - Use the tag builder for most cases; switch to manual for advanced queries
@@ -94,6 +134,17 @@ The extension opens a new tab with the LinkedIn search results and begins sendin
 | Send Note | On | Include personalized message |
 | Template | Senior Engineer | Pre-written note template |
 
+## Releasing
+
+Push a version tag to trigger the release workflow:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+This creates a GitHub Release with auto-generated release notes and a downloadable `extension.zip`.
+
 ## Disclaimer
 
 This tool is for personal networking purposes. Use responsibly and in accordance with LinkedIn's Terms of Service. Excessive automation may result in account restrictions. Recommended limits:
@@ -104,4 +155,4 @@ This tool is for personal networking purposes. Use responsibly and in accordance
 
 ## License
 
-MIT
+[MIT](LICENSE)
