@@ -11,6 +11,28 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         }
     });
 
+    function detectChallenge() {
+        const url = window.location.href.toLowerCase();
+        if (url.includes('/checkpoint/') ||
+            url.includes('/authwall') ||
+            url.includes('/challenge/')) {
+            return true;
+        }
+        const captcha = document.querySelector(
+            '[class*="captcha"], ' +
+            'iframe[src*="captcha"], ' +
+            'iframe[src*="challenge"], ' +
+            '#captcha-internal'
+        );
+        if (captcha) return true;
+        const text = (document.body?.innerText || '')
+            .substring(0, 2000).toLowerCase();
+        return text.includes('security verification') ||
+            text.includes('verificação de segurança') ||
+            text.includes("let's do a quick") ||
+            text.includes('unusual activity');
+    }
+
     function reportProgress(sent, limit, page, skipped) {
         window.postMessage({
             type: 'LINKEDIN_BOT_PROGRESS',
@@ -297,8 +319,22 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         try {
             while (totalSent < limit) {
                 if (stopRequested) {
-                    console.log('[LinkedIn Bot] Stopped.');
                     break;
+                }
+                if (detectChallenge()) {
+                    window.postMessage({
+                        type: 'LINKEDIN_BOT_DONE',
+                        result: {
+                            success: false,
+                            error: 'CAPTCHA or security ' +
+                                'challenge detected. ' +
+                                `Sent ${totalSent} before stop.`
+                        }
+                    }, '*');
+                    return {
+                        success: false,
+                        error: 'CAPTCHA detected'
+                    };
                 }
                 await delay(3000);
 
@@ -643,6 +679,21 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     await delay(1000);
                     nextBtn.click();
                     await delay(8000);
+                    if (detectChallenge()) {
+                        window.postMessage({
+                            type: 'LINKEDIN_BOT_DONE',
+                            result: {
+                                success: false,
+                                error: 'CAPTCHA detected ' +
+                                    'after page navigation. ' +
+                                    `Sent ${totalSent}.`
+                            }
+                        }, '*');
+                        return {
+                            success: false,
+                            error: 'CAPTCHA detected'
+                        };
+                    }
                 } else {
                     break;
                 }
