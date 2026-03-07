@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Auto-Connector",
+  "version": "1.0",
+  "description": "Automate sending LinkedIn connection requests to targeted profiles with personalized notes.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "LinkedIn Auto-Connector",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

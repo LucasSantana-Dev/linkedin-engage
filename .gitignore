@@ -1,0 +1,7 @@
+node_modules/
+linkedin_session/
+user_data/
+cached-selectors.json
+.env
+*.log
+.DS_Store
