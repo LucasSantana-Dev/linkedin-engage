@@ -1,5 +1,15 @@
 let activeTabId = null;
 
+function notifyError(msg) {
+    activeTabId = null;
+    chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'LinkedIn Auto-Connect',
+        message: msg
+    });
+}
+
 function launchAutomation(config) {
     const geoUrn = config.geoUrn
         || '%5B%22103644278%22%2C%22101121807%22' +
@@ -24,40 +34,103 @@ function launchAutomation(config) {
     chrome.tabs.create(
         { url: searchUrl, active: true },
         (tab) => {
+            if (chrome.runtime.lastError || !tab) {
+                notifyError(
+                    'Failed to open LinkedIn tab: ' +
+                    (chrome.runtime.lastError?.message
+                        || 'unknown error')
+                );
+                return;
+            }
             activeTabId = tab.id;
-            chrome.tabs.onUpdated.addListener(
-                function listener(tabId, info) {
-                    if (tabId !== tab.id ||
-                        info.status !== 'complete') {
+
+            const timeout = setTimeout(() => {
+                chrome.tabs.onUpdated
+                    .removeListener(listener);
+                notifyError(
+                    'Tab took too long to load. ' +
+                    'Check your connection.'
+                );
+            }, 60000);
+
+            function listener(tabId, info) {
+                if (tabId !== tab.id ||
+                    info.status !== 'complete') {
+                    return;
+                }
+                clearTimeout(timeout);
+                chrome.tabs.onUpdated
+                    .removeListener(listener);
+
+                chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ['bridge.js'],
+                    world: 'ISOLATED'
+                }, () => {
+                    if (chrome.runtime.lastError) {
+                        notifyError(
+                            'Script injection failed: ' +
+                            chrome.runtime.lastError.message
+                        );
                         return;
                     }
-                    chrome.tabs.onUpdated
-                        .removeListener(listener);
-
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
-                        files: ['bridge.js'],
-                        world: 'ISOLATED'
+                        files: ['content.js'],
+                        world: 'MAIN'
                     }, () => {
-                        chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            files: ['content.js'],
-                            world: 'MAIN'
-                        }, () => {
-                            chrome.tabs.sendMessage(
-                                tab.id,
-                                {
-                                    action: 'runAutomation',
-                                    limit: config.limit,
-                                    sendNote: config.sendNote,
-                                    noteTemplate:
-                                        config.noteTemplate,
-                                    sentUrls:
-                                        config.sentUrls || []
-                                }
+                        if (chrome.runtime.lastError) {
+                            notifyError(
+                                'Script injection failed: ' +
+                                chrome.runtime.lastError
+                                    .message
                             );
-                        });
+                            return;
+                        }
+                        chrome.tabs.sendMessage(
+                            tab.id,
+                            {
+                                action: 'runAutomation',
+                                limit: config.limit,
+                                sendNote: config.sendNote,
+                                noteTemplate:
+                                    config.noteTemplate,
+                                sentUrls:
+                                    config.sentUrls || []
+                            },
+                            () => {
+                                if (chrome.runtime
+                                    .lastError) {
+                                    notifyError(
+                                        'Failed to start' +
+                                        ' automation: ' +
+                                        chrome.runtime
+                                            .lastError
+                                            .message
+                                    );
+                                }
+                            }
+                        );
                     });
+                });
+            }
+
+            chrome.tabs.onUpdated.addListener(listener);
+
+            chrome.tabs.onRemoved.addListener(
+                function onClose(closedId) {
+                    if (closedId !== tab.id) return;
+                    chrome.tabs.onRemoved
+                        .removeListener(onClose);
+                    clearTimeout(timeout);
+                    chrome.tabs.onUpdated
+                        .removeListener(listener);
+                    if (activeTabId === tab.id) {
+                        notifyError(
+                            'LinkedIn tab was closed ' +
+                            'before automation started.'
+                        );
+                    }
                 }
             );
         }
@@ -76,7 +149,12 @@ chrome.runtime.onMessage.addListener(
             if (activeTabId) {
                 chrome.tabs.sendMessage(
                     activeTabId,
-                    { action: 'stop' }
+                    { action: 'stop' },
+                    () => {
+                        if (chrome.runtime.lastError) {
+                            activeTabId = null;
+                        }
+                    }
                 );
             }
             sendResponse({ status: 'stopping' });
