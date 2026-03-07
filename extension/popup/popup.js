@@ -516,6 +516,19 @@ chrome.runtime.onMessage.addListener((request) => {
             document.getElementById('exportBtn')
                 .style.display = 'block';
 
+            chrome.storage.local.get(
+                'connectionHistory', (hData) => {
+                    const existing =
+                        hData.connectionHistory || [];
+                    const merged =
+                        [...existing, ...response.log];
+                    const trimmed = merged.slice(-500);
+                    chrome.storage.local.set({
+                        connectionHistory: trimmed
+                    });
+                }
+            );
+
             const newUrls = response.log
                 .filter(r => r.status === 'sent' && r.profileUrl)
                 .map(r => r.profileUrl);

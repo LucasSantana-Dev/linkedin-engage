@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LinkedIn Auto-Connect — Dashboard</title>
+    <style>
+        :root {
+            --primary: #0a66c2;
+            --primary-light: rgba(10, 102, 194, 0.08);
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #191919;
+            --muted: #666666;
+            --border: #e0e0e0;
+            --success: #057642;
+            --warning: #b24020;
+            --error: #d32f2f;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; }
+
+        body {
+            font-family: -apple-system, system-ui,
+                BlinkMacSystemFont, "Segoe UI", Roboto,
+                "Helvetica Neue", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 svg { color: var(--primary); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .card-sub {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px 10px;
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        td a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        td a:hover { text-decoration: underline; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-sent {
+            background: rgba(5, 118, 66, 0.1);
+            color: var(--success);
+        }
+
+        .badge-skipped {
+            background: rgba(178, 64, 32, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-accepted {
+            background: rgba(10, 102, 194, 0.1);
+            color: var(--primary);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        #scheduleStatus {
+            font-size: 13px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="28"
+            height="28" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0
+                0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1
+                6-6z"></path>
+            <rect x="2" y="9" width="4" height="12"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+        </svg>
+        Auto-Connect Dashboard
+    </h1>
+
+    <div class="grid">
+        <div class="card">
+            <div class="card-label">This Week</div>
+            <div class="card-value" id="weekSent">0</div>
+            <div class="card-sub">
+                of <span id="weekLimit">150</span> invites
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-label">Total Sent</div>
+            <div class="card-value" id="totalSent">0</div>
+            <div class="card-sub">all time</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Accepted</div>
+            <div class="card-value" id="totalAccepted">0</div>
+            <div class="card-sub">connections made</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Schedule</h2>
+        <p id="scheduleStatus">Loading...</p>
+    </div>
+
+    <div class="section">
+        <h2>Recent Connection Log</h2>
+        <table id="logTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Headline</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+        </table>
+        <div id="emptyMsg" class="empty">
+            No connection history yet. Run the automation
+            to start tracking.
+        </div>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+</html>
