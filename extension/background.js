@@ -361,7 +361,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 sendNote: state.sendNote !== false,
                 noteTemplate: state.activeTemplate === 'custom'
                     ? state.customNote
-                    : getTemplate(state.activeTemplate),
+                    : getTemplate(
+                        state.activeTemplate,
+                        state.lang || 'en'
+                    ),
                 geoUrn,
                 activelyHiring: state.activelyHiring || false,
                 networkFilter,
@@ -391,8 +394,8 @@ function buildQueryFromTags(state) {
     return parts.join(' ');
 }
 
-function getTemplate(key) {
-    const templates = {
+function getTemplate(key, lang) {
+    const en = {
         senior: "Hi {name}, I'm a senior software engineer " +
             "with experience in scalable full-stack systems " +
             "and cloud infrastructure. Always looking to " +
@@ -417,5 +420,30 @@ function getTemplate(key) {
             "I'm always looking to expand my professional " +
             "network. Looking forward to staying in touch!"
     };
+    const pt = {
+        senior: "Olá {name}, sou engenheiro de software " +
+            "sênior com experiência em sistemas " +
+            "full-stack escaláveis e infraestrutura " +
+            "cloud. Sempre bom conectar com " +
+            "profissionais da área. Vamos manter contato!",
+        mid: "Olá {name}, sou engenheiro de software com " +
+            "alguns anos de experiência em aplicações " +
+            "web e APIs. Estou sempre aberto a novas " +
+            "oportunidades. Vamos conectar!",
+        junior: "Olá {name}, sou desenvolvedor no início " +
+            "de carreira, com muita vontade de crescer " +
+            "e aprender com profissionais experientes. " +
+            "Adoraria conectar e manter contato!",
+        lead: "Olá {name}, sou tech lead com experiência " +
+            "em estratégia técnica e mentoria de times. " +
+            "Gosto de conectar com pessoas que fazem a " +
+            "diferença no mercado de tecnologia. " +
+            "Vamos conectar!",
+        networking: "Olá {name}, vi seu perfil e achei que " +
+            "seria ótimo conectar. Estou sempre buscando " +
+            "expandir minha rede profissional. " +
+            "Vamos manter contato!"
+    };
+    const templates = lang === 'pt' ? pt : en;
     return templates[key] || templates.networking;
 }

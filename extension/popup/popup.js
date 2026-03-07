@@ -1,4 +1,4 @@
-const TEMPLATES = {
+const TEMPLATES_EN = {
     senior: `Hi {name}, I'm a senior software engineer with experience in scalable full-stack systems and cloud infrastructure. Always looking to connect with great people in the industry. Let's stay in touch!`,
     mid: `Hi {name}, I'm a software engineer with a few years of experience building web applications and APIs. I'm always open to learning about new opportunities. Would love to connect!`,
     junior: `Hi {name}, I'm a software developer early in my career, eager to grow and learn from experienced professionals. I'd love to connect and stay in touch!`,
@@ -6,6 +6,18 @@ const TEMPLATES = {
     networking: `Hi {name}, I came across your profile and thought it'd be great to connect. I'm always looking to expand my professional network. Looking forward to staying in touch!`,
     custom: ''
 };
+
+const TEMPLATES_PT = {
+    senior: `Olá {name}, sou engenheiro de software sênior com experiência em sistemas full-stack escaláveis e infraestrutura cloud. Sempre bom conectar com profissionais da área. Vamos manter contato!`,
+    mid: `Olá {name}, sou engenheiro de software com alguns anos de experiência em aplicações web e APIs. Estou sempre aberto a novas oportunidades. Vamos conectar!`,
+    junior: `Olá {name}, sou desenvolvedor no início de carreira, com muita vontade de crescer e aprender com profissionais experientes. Adoraria conectar e manter contato!`,
+    lead: `Olá {name}, sou tech lead com experiência em estratégia técnica e mentoria de times. Gosto de conectar com pessoas que fazem a diferença no mercado de tecnologia. Vamos conectar!`,
+    networking: `Olá {name}, vi seu perfil e achei que seria ótimo conectar. Estou sempre buscando expandir minha rede profissional. Vamos manter contato!`,
+    custom: ''
+};
+
+const TEMPLATES = navigator.language?.startsWith('pt')
+    ? { ...TEMPLATES_PT } : { ...TEMPLATES_EN };
 
 const I18N = {
     en: {
@@ -66,7 +78,15 @@ const I18N = {
         savedQueriesPlaceholder:
             'recruiter software remote\n' +
             'talent acquisition latam\n' +
-            'hiring manager tech'
+            'hiring manager tech',
+        tplNames: {
+            senior: 'Senior Engineer',
+            mid: 'Mid-Level Engineer',
+            junior: 'Junior / Associate',
+            lead: 'Tech Lead / Staff',
+            networking: 'General Networking',
+            custom: 'Custom'
+        }
     },
     pt: {
         headerTitle: 'Auto-Conectar',
@@ -126,7 +146,15 @@ const I18N = {
         savedQueriesPlaceholder:
             'recrutador software remoto\n' +
             'talent acquisition latam\n' +
-            'hiring manager tech'
+            'hiring manager tech',
+        tplNames: {
+            senior: 'Engenheiro Sênior',
+            mid: 'Engenheiro Pleno',
+            junior: 'Júnior / Associado',
+            lead: 'Tech Lead / Staff',
+            networking: 'Networking Geral',
+            custom: 'Personalizado'
+        }
     }
 };
 
@@ -291,7 +319,8 @@ function saveState() {
         scheduleInterval: document.getElementById(
             'scheduleInterval').value,
         savedQueries: document.getElementById(
-            'savedQueries').value
+            'savedQueries').value,
+        lang: userLang
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -884,6 +913,21 @@ function applyI18n() {
 
     $('checkAcceptedBtn').textContent = t.checkAccepted;
     $('exportBtn').textContent = t.exportCsv;
+
+    document.querySelectorAll('.template-card').forEach(card => {
+        const key = card.dataset.template;
+        const nameEl = card.querySelector('.template-name');
+        const previewEl = card.querySelector(
+            '.template-preview'
+        );
+        if (nameEl && t.tplNames[key]) {
+            nameEl.textContent = t.tplNames[key];
+        }
+        if (previewEl && TEMPLATES[key]) {
+            previewEl.textContent =
+                TEMPLATES[key].substring(0, 80) + '...';
+        }
+    });
 }
 
 loadState();
