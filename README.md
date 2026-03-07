@@ -23,6 +23,9 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Acceptance tracker** — check which sent invitations were accepted (cross-references connections page)
 - **Dashboard page** — stats overview with weekly/total/accepted counts and connection history log
 - **Multi-query rotation** — scheduled runs cycle through multiple saved queries automatically
+- **Recent profiles** — last 5 connection profiles shown inline in popup with avatar, name, headline, and status badge
+- **i18n (EN/PT-BR)** — auto-detects browser language, translates all UI labels and messages
+- **Error resilience** — tab load timeout, script injection error handling, tab close detection with notifications
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
 - **Custom query mode** — toggle between tag builder and manual query input
 - **Auto-pagination** — navigates through search result pages automatically

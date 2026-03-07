@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-03-07
+
+### Added
+- Error resilience: lastError checks, 60s tab load timeout, tab close detection, notification on all error paths
+- Recent profiles card UI in popup showing last 5 connections with avatar initials, linked name, headline, and status badge
+- i18n support (EN/PT-BR) — auto-detects browser language, translates all popup and dashboard UI text
+
 ## [1.3.0] - 2026-03-07
 
 ### Added
