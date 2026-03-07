@@ -13,6 +13,11 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Email modal detection** — auto-skips profiles that require email verification (3rd+ degree with no mutuals)
 - **LATAM recruiter targeting** — Market Focus tags (LATAM, Brazil, Nearshore, Remote) + configurable recruiter region selector
 - **"Actively Hiring" filter** — leverages LinkedIn's undocumented `activelyHiring=true` URL parameter
+- **Weekly limit guard** — tracks invites per week (150 max), blocks/adjusts when approaching limit
+- **CAPTCHA detection** — auto-stops on security challenges (checkpoint, captcha, verification pages)
+- **Connection log export** — download CSV of sent/skipped profiles with timestamps
+- **Scheduled runs** — recurring automation via Chrome Alarms API (configurable interval)
+- **429 rate limit backoff** — detects failed sends, pauses 30-60s after 3 consecutive failures
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
 - **Custom query mode** — toggle between tag builder and manual query input
 - **Auto-pagination** — navigates through search result pages automatically
@@ -134,6 +139,8 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Actively Hiring | Off | Only show profiles with hiring badge |
 | Send Note | On | Include personalized message |
 | Template | Senior Engineer | Pre-written note template |
+| Weekly Limit | 150 | Max invites per week (auto-enforced) |
+| Schedule | Off | Recurring runs every N hours (Chrome must be open) |
 
 ## Releasing
 

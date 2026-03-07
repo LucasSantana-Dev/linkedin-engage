@@ -158,7 +158,11 @@ function saveState() {
         )?.dataset.template || 'senior',
         customNote: TEMPLATES.custom,
         customQuery: document.getElementById('customQueryInput').value,
-        useCustomQuery
+        useCustomQuery,
+        scheduleEnabled: document.getElementById(
+            'scheduleCheckbox').checked,
+        scheduleInterval: document.getElementById(
+            'scheduleInterval').value
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -221,6 +225,16 @@ function loadState() {
         if (popupState.customQuery) {
             document.getElementById('customQueryInput').value =
                 popupState.customQuery;
+        }
+        if (popupState.scheduleEnabled) {
+            document.getElementById('scheduleCheckbox').checked =
+                true;
+            document.getElementById('scheduleOptions')
+                .style.display = 'block';
+        }
+        if (popupState.scheduleInterval) {
+            document.getElementById('scheduleInterval').value =
+                popupState.scheduleInterval;
         }
         if (popupState.useCustomQuery) {
             useCustomQuery = true;
@@ -308,6 +322,40 @@ document.getElementById('degree2nd').addEventListener('change', saveState);
 document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
+
+document.getElementById('scheduleCheckbox').addEventListener(
+    'change', (e) => {
+        const opts = document.getElementById('scheduleOptions');
+        opts.style.display = e.target.checked ? 'block' : 'none';
+        const hours = parseInt(
+            document.getElementById('scheduleInterval').value
+        ) || 24;
+        chrome.runtime.sendMessage({
+            action: 'setSchedule',
+            enabled: e.target.checked,
+            intervalHours: hours
+        });
+        saveState();
+    }
+);
+
+document.getElementById('scheduleInterval').addEventListener(
+    'change', () => {
+        const enabled = document.getElementById(
+            'scheduleCheckbox'
+        ).checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById('scheduleInterval').value
+        ) || 24;
+        chrome.runtime.sendMessage({
+            action: 'setSchedule',
+            enabled: true,
+            intervalHours: hours
+        });
+        saveState();
+    }
+);
 
 document.getElementById('startBtn').addEventListener('click', async () => {
     const query = buildQuery();
