@@ -8,7 +8,50 @@ const TEMPLATES = {
 };
 
 const MAX_CHARS = 300;
+const WEEKLY_LIMIT = 150;
 let useCustomQuery = false;
+
+function getWeekKey() {
+    const now = new Date();
+    const jan1 = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(
+        ((now - jan1) / 86400000 + jan1.getDay() + 1) / 7
+    );
+    return `week_${now.getFullYear()}_${week}`;
+}
+
+function getWeeklyCount() {
+    return new Promise(resolve => {
+        const key = getWeekKey();
+        chrome.storage.local.get(key, (data) => {
+            resolve(data[key] || 0);
+        });
+    });
+}
+
+function addToWeeklyCount(count) {
+    const key = getWeekKey();
+    chrome.storage.local.get(key, (data) => {
+        const current = data[key] || 0;
+        chrome.storage.local.set({ [key]: current + count });
+    });
+}
+
+function updateWeeklyDisplay() {
+    getWeeklyCount().then(count => {
+        document.getElementById('weeklyCount').textContent = count;
+        document.getElementById('weeklyLimit').textContent =
+            WEEKLY_LIMIT;
+        const el = document.getElementById('weeklyCounter');
+        if (count >= WEEKLY_LIMIT) {
+            el.style.color = '#d32f2f';
+        } else if (count >= WEEKLY_LIMIT - 30) {
+            el.style.color = 'var(--warning)';
+        } else {
+            el.style.color = 'var(--text-muted)';
+        }
+    });
+}
 
 function getSelectedTags(group) {
     const tags = document.querySelectorAll(
@@ -266,7 +309,7 @@ document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
 
-document.getElementById('startBtn').addEventListener('click', () => {
+document.getElementById('startBtn').addEventListener('click', async () => {
     const query = buildQuery();
     if (!query) {
         setStatusMessage(
@@ -290,6 +333,26 @@ document.getElementById('startBtn').addEventListener('click', () => {
     const limit = parseInt(
         document.getElementById('limitInput').value
     ) || 50;
+
+    const weeklyCount = await getWeeklyCount();
+    if (weeklyCount >= WEEKLY_LIMIT) {
+        setStatusMessage(
+            `Weekly limit reached (${weeklyCount}/${WEEKLY_LIMIT}). ` +
+            'Wait until next week to avoid account restrictions.',
+            'error'
+        );
+        return;
+    }
+    if (weeklyCount + limit > WEEKLY_LIMIT) {
+        const remaining = WEEKLY_LIMIT - weeklyCount;
+        setStatusMessage(
+            `Only ${remaining} invites left this week ` +
+            `(${weeklyCount}/${WEEKLY_LIMIT}). ` +
+            `Limit auto-adjusted to ${remaining}.`,
+            'warning'
+        );
+        document.getElementById('limitInput').value = remaining;
+    }
     const geoUrn = getSelectedRegionGeoUrn();
     const activelyHiring =
         document.getElementById('activelyHiringCheckbox').checked;
@@ -305,6 +368,7 @@ document.getElementById('startBtn').addEventListener('click', () => {
         ? encodeURIComponent(`[${networkTypes.join(',')}]`)
         : '';
 
+    lastReportedSent = 0;
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     startBtn.style.display = 'none';
@@ -339,8 +403,16 @@ document.getElementById('stopBtn').addEventListener('click', () => {
     setStatusMessage('Stopping automation...', 'warning');
 });
 
+let lastReportedSent = 0;
+
 chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'progress') {
+        const newSent = request.sent - lastReportedSent;
+        if (newSent > 0) {
+            addToWeeklyCount(newSent);
+            lastReportedSent = request.sent;
+            updateWeeklyDisplay();
+        }
         document.getElementById('progressText').textContent =
             `Sent ${request.sent} / ${request.limit}`;
         const meta = [`Page ${request.page}`];
@@ -352,12 +424,15 @@ chrome.runtime.onMessage.addListener((request) => {
     }
 
     if (request.action === 'done') {
+        lastReportedSent = 0;
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const response = request.result;
 
         stopBtn.style.display = 'none';
         startBtn.style.display = 'flex';
+
+        updateWeeklyDisplay();
 
         if (response?.success) {
             setStatusMessage(
@@ -377,3 +452,4 @@ chrome.runtime.onMessage.addListener((request) => {
 });
 
 loadState();
+updateWeeklyDisplay();
