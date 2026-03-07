@@ -535,6 +535,8 @@ chrome.runtime.onMessage.addListener((request) => {
                     const trimmed = merged.slice(-500);
                     chrome.storage.local.set({
                         connectionHistory: trimmed
+                    }, () => {
+                        renderRecentProfiles(trimmed);
                     });
                 }
             );
@@ -603,5 +605,76 @@ document.getElementById('checkAcceptedBtn').addEventListener(
     }
 );
 
+function renderRecentProfiles(entries) {
+    const container = document.getElementById('recentProfiles');
+    const list = document.getElementById('recentList');
+    if (!entries || !entries.length) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'block';
+    list.textContent = '';
+    const recent = entries.slice(-5).reverse();
+    for (const r of recent) {
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'profile-avatar';
+        const initials = (r.name || '?')
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(w => w[0]?.toUpperCase() || '')
+            .join('');
+        avatar.textContent = initials || '?';
+
+        const info = document.createElement('div');
+        info.className = 'profile-info';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'profile-name';
+        if (r.profileUrl) {
+            const link = document.createElement('a');
+            link.href = r.profileUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = r.name || 'Unknown';
+            nameEl.appendChild(link);
+        } else {
+            nameEl.textContent = r.name || 'Unknown';
+        }
+
+        const headlineEl = document.createElement('div');
+        headlineEl.className = 'profile-headline';
+        headlineEl.textContent = r.headline || '';
+
+        info.appendChild(nameEl);
+        if (r.headline) info.appendChild(headlineEl);
+
+        const badge = document.createElement('span');
+        badge.className = 'profile-badge ';
+        if (r.status === 'sent') {
+            badge.className += 'sent';
+            badge.textContent = 'Sent';
+        } else {
+            badge.className += 'skipped';
+            badge.textContent =
+                (r.status || '').replace('skipped-', '');
+        }
+
+        card.appendChild(avatar);
+        card.appendChild(info);
+        card.appendChild(badge);
+        list.appendChild(card);
+    }
+}
+
+function loadRecentProfiles() {
+    chrome.storage.local.get('connectionHistory', (data) => {
+        renderRecentProfiles(data.connectionHistory);
+    });
+}
+
 loadState();
 updateWeeklyDisplay();
+loadRecentProfiles();
