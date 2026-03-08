@@ -2,6 +2,8 @@ let activeTabId = null;
 
 importScripts('lib/rate-limiter.js');
 importScripts('lib/nurture.js');
+importScripts('lib/analytics.js');
+importScripts('lib/smart-schedule.js');
 
 async function checkRateLimit(mode) {
     return new Promise(resolve => {
@@ -606,6 +608,32 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
+        if (request.action === 'getScheduleInsight') {
+            chrome.storage.local.get(
+                ['analyticsLog', 'sentProfileUrls',
+                    'acceptedUrls'],
+                (data) => {
+                    const log = data.analyticsLog || [];
+                    const stats = typeof computeStats ===
+                        'function'
+                        ? computeStats(log) : null;
+                    const acceptance =
+                        typeof computeAcceptanceByHour ===
+                            'function'
+                            ? computeAcceptanceByHour(
+                                log,
+                                data.acceptedUrls || []
+                            ) : null;
+                    const rec =
+                        computeScheduleRecommendation(
+                            stats, acceptance
+                        );
+                    sendResponse(rec);
+                }
+            );
+            return true;
+        }
+
         if (request.action === 'setSchedule') {
             chrome.alarms.clear('linkedinSchedule');
             if (request.enabled && request.intervalHours > 0) {
@@ -617,7 +645,8 @@ chrome.runtime.onMessage.addListener(
             chrome.storage.local.set({
                 schedule: {
                     enabled: request.enabled,
-                    intervalHours: request.intervalHours
+                    intervalHours: request.intervalHours,
+                    smartMode: request.smartMode || false
                 }
             });
             sendResponse({ status: 'scheduled' });
@@ -913,12 +942,31 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     chrome.storage.local.get(
         [
             'popupState', 'schedule',
-            'sentProfileUrls', 'queryRotationIndex'
+            'sentProfileUrls', 'queryRotationIndex',
+            'analyticsLog', 'acceptedUrls'
         ],
         (data) => {
             const state = data.popupState;
             const schedule = data.schedule;
             if (!schedule?.enabled || !state) return;
+
+            if (schedule.smartMode) {
+                const log = data.analyticsLog || [];
+                const stats =
+                    typeof computeStats === 'function'
+                        ? computeStats(log) : null;
+                const acceptance =
+                    typeof computeAcceptanceByHour ===
+                        'function'
+                        ? computeAcceptanceByHour(
+                            log,
+                            data.acceptedUrls || []
+                        ) : null;
+                const rec = shouldRunNow(
+                    stats, acceptance
+                );
+                if (!rec.recommended) return;
+            }
 
             const savedQueries = (state.savedQueries || '')
                 .split('\n')
