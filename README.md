@@ -21,6 +21,8 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Company follow mode** — search and auto-follow companies (big tech, startups, etc.) with optional target company filter
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching
 - **Comment templates** — `{topic}` auto-detected from post content (AI, leadership, hiring, etc.) and `{excerpt}` for quoting; skip keywords to avoid sponsored content
+- **PT-BR comments** — auto-detects Portuguese posts and generates conversational PT-BR comments with language-appropriate openers/follow-ups
+- **Duplicate post guard** — persists engaged post URNs across sessions to avoid re-engaging the same posts
 - **429 rate limit backoff** — detects failed sends, exponential backoff (30s, 60s, 120s... up to 5min) after 3 consecutive failures
 - **Invite verification** — 4-layer defense against false positives: button state filtering, InMails modal handling, DOM pending state polling, and network API interception (catches LinkedIn's `FUSE_LIMIT_EXCEEDED` 429 responses)
 - **Quota detection** — stops immediately and notifies when LinkedIn's weekly invitation limit is exhausted
@@ -120,8 +122,9 @@ extension/
   bridge.js         <- ISOLATED world messaging bridge (chrome.runtime <-> postMessage)
   background.js     <- Service worker (tab management, alarms, notifications)
   lib/
-    invite-utils.js <- Shared invite/connect utility functions
-    feed-utils.js   <- Shared feed engagement utility functions
+    invite-utils.js  <- Shared invite/connect utility functions
+    feed-utils.js    <- Shared feed engagement utility functions
+    company-utils.js <- Shared company follow utility functions
   popup/            <- Settings UI (search builder, templates, filters, schedule)
   options.html      <- Dashboard page (stats, connection history)
   options.js        <- Dashboard logic

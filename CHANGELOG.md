@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1] - 2026-03-07
+
+### Added
+- **PT-BR comment templates**: Language-aware comment generation — detects Portuguese posts and uses conversational PT-BR templates automatically
+- `detectLanguage()` function with 50+ Portuguese marker words (3+ threshold)
+- `CATEGORY_TEMPLATES_PT` with templates for all 8 categories, plus PT-BR openers/follow-ups
+- **Duplicate post guard**: Engaged post URNs persisted via `chrome.storage.local` across sessions (keeps last 2000)
+- Bridge.js `SAVE_ENGAGED`/`LOAD_ENGAGED` message handlers for feed engagement persistence
+- **Dashboard: company follow + feed engagement stats**: Companies Followed and Feed Engaged cards
+- History persistence for company follow and feed engagement modes (`companyFollowHistory`, `feedEngageHistory`)
+- Log table merges all three modes sorted by time with color-coded badges
+- Activity chart counts company follows and feed engagements alongside connection sends
+- CSV export includes all modes
+- **company-utils.js**: Extracted testable functions (`extractCompanyInfo`, `matchesTargetCompanies`, `isFollowingText`, `isNextPageButton`)
+- 32 new tests: 22 company-utils + 10 feed-utils PT-BR (152 total across 3 suites)
+
+### Fixed
+- Feed engagement `findPosts()` returning 0 posts due to LinkedIn DOM changes — added broader selectors and button-detection fallback
+- Updated `getPostText`, `getPostAuthor`, `getPostUrn`, `reactToPost` selectors for current LinkedIn DOM
+
 ## [1.8.0] - 2026-03-07
 
 ### Added
