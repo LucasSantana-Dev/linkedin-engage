@@ -1,6 +1,6 @@
-# LinkedIn Auto-Connect
+# LinkedIn Engage
 
-A Chrome Extension and standalone Playwright connector for automating LinkedIn connection requests with personalized notes.
+A Chrome Extension and standalone Playwright connector for automating LinkedIn networking — connections, company follows, and feed engagement.
 
 ## Features
 
@@ -58,11 +58,11 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 
 **Option A — Clone the repo:**
 ```bash
-git clone https://github.com/LucasSantana-Dev/linkedin-auto-connect.git
+git clone https://github.com/LucasSantana-Dev/linkedin-engage.git
 ```
 
 **Option B — Download a release:**
-Go to [Releases](https://github.com/LucasSantana-Dev/linkedin-auto-connect/releases), download the `.zip` file, and extract it.
+Go to [Releases](https://github.com/LucasSantana-Dev/linkedin-engage/releases), download the `.zip` file, and extract it.
 
 #### 2. Open Chrome Extensions page
 
@@ -80,7 +80,7 @@ Click **Load unpacked** and select the `extension/` folder (not the repo root).
 
 #### 5. Pin the extension
 
-Click the puzzle icon in Chrome's toolbar and pin **LinkedIn Auto-Connect** for easy access.
+Click the puzzle icon in Chrome's toolbar and pin **LinkedIn Engage** for easy access.
 
 #### 6. Configure and launch
 
@@ -97,8 +97,8 @@ The extension opens a LinkedIn search tab and begins sending connection requests
 ### Standalone Connector (Playwright)
 
 ```bash
-git clone https://github.com/LucasSantana-Dev/linkedin-auto-connect.git
-cd linkedin-auto-connect
+git clone https://github.com/LucasSantana-Dev/linkedin-engage.git
+cd linkedin-engage
 npm install
 node linkedin-connector.js
 ```

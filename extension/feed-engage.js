@@ -158,16 +158,30 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     function getPostText(postEl) {
         const parts = [];
 
-        const bodySel =
-            '.feed-shared-text, ' +
-            '.feed-shared-inline-show-more-text, ' +
-            '.feed-shared-update-v2__description, ' +
-            '.update-components-text, ' +
-            '[data-test-id="main-feed-activity-content"], ' +
-            'span.break-words';
-        const bodyEl = postEl.querySelector(bodySel);
-        if (bodyEl) {
-            parts.push(bodyEl.innerText.trim());
+        const bodySelectors = [
+            '.feed-shared-text',
+            '.feed-shared-inline-show-more-text',
+            '.feed-shared-update-v2__description',
+            '.update-components-text',
+            '[data-test-id="main-feed-activity-content"]',
+            'span.break-words',
+            '.feed-shared-text-view span[dir="ltr"]',
+            'div.feed-shared-update-v2__commentary ' +
+                'span[dir="ltr"]',
+            '[class*="update-components-text"] ' +
+                'span[dir="ltr"]'
+        ];
+        for (const sel of bodySelectors) {
+            const el = postEl.querySelector(sel);
+            if (el) {
+                const t = (el.innerText ||
+                    el.textContent || '').trim();
+                if (t && t.length > 10 &&
+                    !parts.includes(t)) {
+                    parts.push(t);
+                    break;
+                }
+            }
         }
 
         const titleSel =
@@ -182,7 +196,8 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                 'span[dir="ltr"]';
         const titleEls = postEl.querySelectorAll(titleSel);
         for (const el of titleEls) {
-            const t = (el.innerText || '').trim();
+            const t = (el.innerText ||
+                el.textContent || '').trim();
             if (t && !parts.includes(t)) parts.push(t);
         }
 
@@ -193,10 +208,21 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         );
         let longest = '';
         for (const s of spans) {
-            const t = s.innerText.trim();
+            const t = (s.innerText ||
+                s.textContent || '').trim();
             if (t.length > longest.length) longest = t;
         }
-        return longest;
+        if (longest) return longest;
+
+        const allText = (postEl.innerText || '').trim();
+        if (allText.length > 50) {
+            const lines = allText.split('\n')
+                .filter(l => l.trim().length > 15);
+            if (lines.length > 0) {
+                return lines.slice(0, 3).join(' ');
+            }
+        }
+        return allText.substring(0, 500);
     }
 
     function getPostAuthor(postEl) {
@@ -223,57 +249,191 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     }
 
     async function reactToPost(postEl, reactionType) {
-        const likeBtn = postEl.querySelector(
-            'button[aria-label*="Like"], ' +
-            'button[aria-label*="Gostei"], ' +
-            'button[aria-label*="React"], ' +
-            'button[aria-label*="Reagir"], ' +
-            'button.react-button, ' +
-            'button.reactions-react-button, ' +
-            'button.social-actions-button'
-        );
+        const likeBtns = postEl.querySelectorAll('button');
+        let likeBtn = null;
+        for (const btn of likeBtns) {
+            const label = (
+                btn.getAttribute('aria-label') || ''
+            ).toLowerCase();
+            const text = (
+                btn.innerText || btn.textContent || ''
+            ).trim().toLowerCase();
+            if (label.includes('like') ||
+                label.includes('gostei') ||
+                label.includes('react') ||
+                label.includes('reagir') ||
+                text === 'like' || text === 'gostei') {
+                likeBtn = btn;
+                break;
+            }
+        }
+        if (!likeBtn) {
+            likeBtn = postEl.querySelector(
+                'button.react-button, ' +
+                'button.reactions-react-button, ' +
+                'button.social-actions-button'
+            );
+        }
         if (!likeBtn) return false;
 
+        const alreadyLiked =
+            likeBtn.getAttribute('aria-pressed') === 'true';
+        if (alreadyLiked) return false;
+
         if (reactionType === 'LIKE') {
-            const alreadyLiked =
-                likeBtn.getAttribute('aria-pressed') ===
-                'true';
-            if (alreadyLiked) return false;
             likeBtn.click();
             await delay(500);
             return true;
         }
 
-        likeBtn.dispatchEvent(new MouseEvent(
-            'mouseenter', { bubbles: true }
-        ));
-        await delay(800);
+        async function tryOpenReactionPopup() {
+            const rect = likeBtn.getBoundingClientRect();
+            const cx = rect.x + rect.width / 2;
+            const cy = rect.y + rect.height / 2;
 
-        const popup = document.querySelector(
-            '.reactions-menu, ' +
-            '[class*="reactions-menu"], ' +
-            '.react-button__popup'
-        );
+            likeBtn.dispatchEvent(new PointerEvent(
+                'pointerdown', {
+                    bubbles: true, cancelable: true,
+                    clientX: cx, clientY: cy,
+                    button: 0, pointerId: 1
+                }
+            ));
+            for (const evt of [
+                'mousedown', 'pointerenter',
+                'mouseenter', 'mouseover'
+            ]) {
+                likeBtn.dispatchEvent(new MouseEvent(
+                    evt, {
+                        bubbles: true, cancelable: true,
+                        clientX: cx, clientY: cy
+                    }
+                ));
+            }
+
+            await delay(2000);
+
+            likeBtn.dispatchEvent(new PointerEvent(
+                'pointerup', {
+                    bubbles: true, cancelable: true,
+                    clientX: cx, clientY: cy,
+                    button: 0, pointerId: 1
+                }
+            ));
+            likeBtn.dispatchEvent(new MouseEvent(
+                'mouseup', {
+                    bubbles: true, cancelable: true,
+                    clientX: cx, clientY: cy
+                }
+            ));
+
+            await delay(500);
+
+            const popupSels = [
+                '.reactions-menu',
+                '[class*="reactions-menu"]',
+                '.react-button__popup',
+                '[class*="react-button"] [role="toolbar"]',
+                '[class*="react-button"] [role="listbox"]',
+                'div[class*="reaction"][class*="bar"]',
+                '.artdeco-hoverable-content--visible',
+                '[class*="reactions-bar"]',
+                '[data-test-id*="reaction"]'
+            ];
+            for (const sel of popupSels) {
+                const el = document.querySelector(sel);
+                if (el) return el;
+            }
+
+            const above = document.elementsFromPoint(
+                cx, rect.y - 40
+            );
+            for (const el of above) {
+                if (el.querySelector &&
+                    el !== likeBtn &&
+                    el !== document.body &&
+                    el !== document.documentElement) {
+                    const items = el.querySelectorAll(
+                        'button, [role="menuitem"], ' +
+                        '[role="option"], img'
+                    );
+                    if (items.length >= 2) return el;
+                }
+            }
+            return null;
+        }
+
+        let popup = await tryOpenReactionPopup();
+
+        if (!popup) {
+            for (const evt of [
+                'mouseleave', 'pointerleave'
+            ]) {
+                likeBtn.dispatchEvent(new MouseEvent(
+                    evt, { bubbles: true }
+                ));
+            }
+            await delay(500);
+            popup = await tryOpenReactionPopup();
+        }
 
         if (popup) {
             const btns = popup.querySelectorAll(
-                'button, [role="menuitem"]'
+                'button, [role="menuitem"], ' +
+                '[role="option"], img[alt], ' +
+                '[data-reaction-type]'
             );
+            const enLabel = REACTION_MAP[reactionType];
+            const ptLabel = REACTION_MAP_PT[reactionType];
             for (const btn of btns) {
                 const label = (
                     btn.getAttribute('aria-label') ||
+                    btn.getAttribute('alt') ||
+                    btn.getAttribute(
+                        'data-reaction-type') ||
                     btn.innerText || ''
                 ).trim();
-                if (label.includes(
-                    REACTION_MAP[reactionType]) ||
-                    label.includes(
-                        REACTION_MAP_PT[reactionType]
-                    )) {
+                if (label.includes(enLabel) ||
+                    label.includes(ptLabel) ||
+                    label.toUpperCase() ===
+                        reactionType) {
                     btn.click();
                     await delay(500);
+                    console.log(
+                        '[LinkedIn Bot] Reacted: ' +
+                        enLabel
+                    );
                     return true;
                 }
             }
+            console.log(
+                '[LinkedIn Bot] Popup open but no match' +
+                ' for ' + enLabel + '. Found: ' +
+                [...btns].map(b =>
+                    b.getAttribute('aria-label') ||
+                    b.getAttribute('alt') ||
+                    b.innerText || '?'
+                ).join(', ')
+            );
+
+            for (const btn of btns) {
+                if (btn.getAttribute('aria-label') ||
+                    btn.getAttribute('alt')) {
+                    btn.click();
+                    await delay(500);
+                    console.log(
+                        '[LinkedIn Bot] Used first ' +
+                        'available reaction: ' +
+                        (btn.getAttribute('aria-label') ||
+                        btn.getAttribute('alt'))
+                    );
+                    return true;
+                }
+            }
+        } else {
+            console.log(
+                '[LinkedIn Bot] No reaction popup after' +
+                ' 2 attempts, falling back to Like'
+            );
         }
 
         likeBtn.click();
@@ -290,19 +450,55 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         sel.removeAllRanges();
         sel.addRange(range);
 
-        if (document.execCommand('insertText', false, text)) {
-            return;
+        const inserted = document.execCommand(
+            'insertText', false, text
+        );
+
+        if (!inserted || (editor.innerText || '')
+            .trim() !== text.trim()) {
+            editor.innerText = text;
         }
 
-        editor.innerText = text;
-        editor.dispatchEvent(new InputEvent('input', {
-            bubbles: true,
-            inputType: 'insertText',
-            data: text
-        }));
-        editor.dispatchEvent(
-            new Event('change', { bubbles: true })
-        );
+        for (const evtType of ['input', 'change']) {
+            editor.dispatchEvent(new InputEvent(evtType, {
+                bubbles: true,
+                inputType: 'insertText',
+                data: text
+            }));
+        }
+        for (const evtType of ['keydown', 'keypress',
+            'keyup']) {
+            editor.dispatchEvent(new KeyboardEvent(
+                evtType, {
+                    bubbles: true, key: ' ',
+                    keyCode: 32, which: 32
+                }
+            ));
+        }
+    }
+
+    function findCommentSection(postEl) {
+        let container = postEl;
+        for (let i = 0; i < 5; i++) {
+            if (!container) break;
+            const section = container.querySelector(
+                '.comments-comment-box, ' +
+                '.comments-comment-texteditor, ' +
+                'form[class*="comment"], ' +
+                'div[class*="comments-comment-box"]'
+            );
+            if (section) return section;
+            const editor = container.querySelector(
+                'div[role="textbox"]' +
+                '[contenteditable="true"]'
+            );
+            if (editor) return editor.closest(
+                'form, [class*="comment-box"], ' +
+                '[class*="comments"]'
+            ) || editor.parentElement;
+            container = container.parentElement;
+        }
+        return null;
     }
 
     async function commentOnPost(postEl, commentText) {
@@ -330,52 +526,81 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             return false;
         }
 
+        commentBtn.scrollIntoView({
+            behavior: 'smooth', block: 'center'
+        });
+        await delay(300);
         commentBtn.click();
 
         let editor = null;
-        for (let i = 0; i < 10; i++) {
+        let searchScope = postEl;
+        for (let i = 0; i < 12; i++) {
             await delay(500);
+
+            const commentSection =
+                findCommentSection(postEl);
+            if (commentSection) {
+                editor = commentSection.querySelector(
+                    'div[role="textbox"]' +
+                    '[contenteditable="true"]'
+                );
+                if (editor) {
+                    searchScope = commentSection;
+                    break;
+                }
+            }
+
             editor = postEl.querySelector(
                 'div[role="textbox"]' +
                 '[contenteditable="true"]'
             );
-            if (!editor) {
-                editor = document.querySelector(
+            if (editor) break;
+
+            let parent = postEl.parentElement;
+            for (let d = 0; d < 3 && !editor; d++) {
+                if (!parent) break;
+                editor = parent.querySelector(
                     'div[role="textbox"]' +
                     '[contenteditable="true"]'
                 );
-            }
-            if (!editor) {
-                editor = postEl.querySelector(
-                    '.ql-editor' +
-                    '[contenteditable="true"], ' +
-                    '[contenteditable="true"]' +
-                    '[data-placeholder]'
-                );
+                if (editor) {
+                    searchScope = parent;
+                    break;
+                }
+                parent = parent.parentElement;
             }
             if (editor) break;
+
+            if (i === 5) {
+                commentBtn.click();
+                await delay(300);
+            }
         }
         if (!editor) {
             console.log(
-                '[LinkedIn Bot] No comment editor found'
+                '[LinkedIn Bot] No comment editor found ' +
+                'for post by ' + getPostAuthor(postEl)
             );
             return false;
         }
 
         console.log(
-            '[LinkedIn Bot] Found editor, typing: ' +
+            '[LinkedIn Bot] Found editor for post by ' +
+            getPostAuthor(postEl) + ', typing: ' +
             commentText.substring(0, 50)
         );
         setEditorText(editor, commentText);
 
         let submitBtn = null;
-        for (let attempt = 0; attempt < 6; attempt++) {
+        for (let attempt = 0; attempt < 8; attempt++) {
             await delay(800);
 
-            const scopes = [postEl, document];
+            const scopes = [searchScope, postEl];
             for (const scope of scopes) {
                 if (submitBtn) break;
-                const btns = scope.querySelectorAll('button');
+                const btns = scope.querySelectorAll(
+                    'button'
+                );
                 for (const btn of btns) {
                     if (btn.disabled) continue;
                     const cls = btn.className || '';
@@ -384,46 +609,37 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     const text = (btn.innerText ||
                         btn.textContent || '').trim();
 
-                    if (cls.includes('submit-button--cr') ||
+                    const isSubmit =
+                        cls.includes('submit-button') ||
                         cls.includes('comments-comment-box' +
                             '__submit-button') ||
                         (cls.includes('comment') &&
                             (cls.includes('submit') ||
                             btn.type === 'submit')) ||
                         label.includes('Post comment') ||
-                        label.includes('Publicar comentário') ||
-                        label.includes('Post') ||
-                        label.includes('Publicar') ||
-                        label.includes('Submit') ||
-                        label.includes('Enviar') ||
-                        (text === 'Post' &&
-                            cls.includes('comment')) ||
-                        (text === 'Publicar' &&
-                            cls.includes('comment')) ||
-                        (text === 'Post' &&
-                            cls.includes('artdeco')) ||
-                        (text === 'Publicar' &&
-                            cls.includes('artdeco'))) {
-                        submitBtn = btn;
-                        break;
-                    }
-                }
-            }
-
-            if (!submitBtn) {
-                const fallbackSel =
-                    'button.comments-comment-box' +
-                    '__submit-button--cr, ' +
-                    'button.comments-comment-box' +
-                    '__submit-button, ' +
-                    'button[type="submit"]' +
-                    '.artdeco-button--primary, ' +
-                    'form.comments-comment-box ' +
-                    'button.artdeco-button--primary';
-                const fallback =
-                    document.querySelectorAll(fallbackSel);
-                for (const btn of fallback) {
-                    if (!btn.disabled) {
+                        label.includes(
+                            'Publicar comentário') ||
+                        label.includes(
+                            'Submit comment') ||
+                        label === 'Post' ||
+                        label === 'Publicar' ||
+                        label === 'Submit' ||
+                        label === 'Enviar' ||
+                        label === 'Comment' ||
+                        label === 'Comentar';
+                    const isSubmitText =
+                        (text === 'Post' || text === 'Publicar' ||
+                        text === 'Comment' || text === 'Comentar' ||
+                        text === 'Submit' || text === 'Enviar') &&
+                        (cls.includes('comment') ||
+                        cls.includes('artdeco') ||
+                        cls.includes('submit') ||
+                        btn.closest(
+                            '[class*="comment-box"],' +
+                            '[class*="comments-comment"],' +
+                            'form[class*="comment"]'
+                        ));
+                    if (isSubmit || isSubmitText) {
                         submitBtn = btn;
                         break;
                     }
@@ -432,12 +648,25 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
             if (submitBtn) break;
 
-            if (attempt < 5) {
+            if (attempt < 7) {
+                editor.focus();
                 editor.dispatchEvent(new InputEvent(
                     'input', {
                         bubbles: true,
                         inputType: 'insertText',
                         data: commentText
+                    }
+                ));
+                editor.dispatchEvent(new KeyboardEvent(
+                    'keydown', {
+                        bubbles: true, key: 'a',
+                        keyCode: 65
+                    }
+                ));
+                editor.dispatchEvent(new KeyboardEvent(
+                    'keyup', {
+                        bubbles: true, key: 'a',
+                        keyCode: 65
                     }
                 ));
             }
@@ -446,15 +675,29 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         if (submitBtn) {
             console.log(
                 '[LinkedIn Bot] Clicking submit: ' +
-                (submitBtn.innerText || '').trim()
+                (submitBtn.className || '').substring(0, 50)
             );
             submitBtn.click();
             await delay(2000);
+
+            const editorText = (
+                editor.innerText ||
+                editor.textContent || ''
+            ).trim();
+            if (editorText.length > 0 &&
+                editorText !== commentText) {
+                console.log(
+                    '[LinkedIn Bot] Comment may not have ' +
+                    'submitted (editor still has text)'
+                );
+            }
             return true;
         }
+
         console.log(
             '[LinkedIn Bot] No submit button found ' +
-            'after 6 attempts'
+            'after 8 attempts. Editor scope: ' +
+            (searchScope.className || '').substring(0, 60)
         );
         return false;
     }
@@ -505,15 +748,38 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             config?.skipKeywords || [];
         const reactionKeywords = config?.reactionKeywords || {
             celebrate: ['congrat', 'parabén', 'promoted',
-                'new role', 'achievement', 'milestone'],
+                'new role', 'achievement', 'milestone',
+                'launched', 'shipped', 'certified',
+                'graduated', 'accepted', 'first day',
+                'new chapter', 'conquista', 'orgulho',
+                'lancei', 'formei'],
             support: ['struggle', 'difficult', 'layoff',
-                'mental health', 'challenge', 'tough'],
+                'mental health', 'challenge', 'tough',
+                'burnout', 'let go', 'laid off',
+                'lost my job', 'open to work',
+                'looking for', 'job search',
+                'desligado', 'demitido', 'busca'],
             insightful: ['research', 'data', 'study',
-                'insight', 'analysis', 'trend', 'report'],
+                'insight', 'analysis', 'trend', 'report',
+                'pattern', 'architecture', 'design',
+                'algorithm', 'framework', 'approach',
+                'technical', 'engineering', 'system',
+                'lesson', 'learned', 'tip:', 'dica',
+                'strategy', 'best practice', 'solid',
+                'clean code', 'refactor', 'performance',
+                'scale', 'microservice', 'api',
+                'deploy', 'ci/cd', 'testing',
+                'padrão', 'arquitetura', 'solução'],
             funny: ['joke', 'humor', 'meme', 'funny',
-                'lol', 'haha'],
+                'lol', 'haha', 'kkkk', 'rsrs', '😂',
+                '🤣', 'junior dev', 'senior dev',
+                'it works on my machine', 'friday deploy',
+                'merge conflict', 'stackoverflow'],
             love: ['passion', 'love', 'inspire',
-                'grateful', 'thankful', 'amazing']
+                'grateful', 'thankful', 'amazing',
+                'incredible', 'blessed', 'honored',
+                'incrível', 'abençoado', 'grato',
+                'obrigado', 'obrigada']
         };
         let totalEngaged = 0;
         let scrollCount = 0;
@@ -663,6 +929,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             getReactionType(
                                 postText, reactionKeywords
                             );
+                        console.log(
+                            '[LinkedIn Bot] Reaction type: ' +
+                            reactionType + ' (' +
+                            REACTION_MAP[reactionType] + ')'
+                        );
                         const reacted = await reactToPost(
                             post, reactionType
                         );
@@ -675,12 +946,22 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     }
 
                     if (doComment) {
+                        const lang = detectLanguage(postText);
+                        const category =
+                            classifyPost(postText);
                         const comment =
                             buildCommentFromPost(
                                 postText,
                                 commentTemplates.length > 0
                                     ? commentTemplates : null
                             );
+                        console.log(
+                            '[LinkedIn Bot] Comment: lang=' +
+                            lang + ' cat=' + category +
+                            ' text="' +
+                            (comment || '').substring(0, 80) +
+                            '"'
+                        );
                         if (comment) {
                             await delay(
                                 2000 + Math.random() * 2000
@@ -691,6 +972,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 );
                             if (commented) {
                                 actions.push('commented');
+                            } else {
+                                console.log(
+                                    '[LinkedIn Bot] Comment ' +
+                                    'failed to post'
+                                );
                             }
                         }
                     }

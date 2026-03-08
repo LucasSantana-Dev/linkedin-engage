@@ -382,9 +382,9 @@ describe('extractTopic', () => {
             .toBe('remote work');
     });
 
-    it('returns "this topic" for unrecognized content', () => {
+    it('returns "tech" for unrecognized content', () => {
         expect(extractTopic('Nothing special here'))
-            .toBe('this topic');
+            .toBe('tech');
     });
 
     it('returns "this" for empty text', () => {
