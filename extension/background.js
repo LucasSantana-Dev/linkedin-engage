@@ -1,5 +1,26 @@
 let activeTabId = null;
 
+importScripts('lib/rate-limiter.js');
+
+async function checkRateLimit(mode) {
+    return new Promise(resolve => {
+        const hKey = getHourKey(mode);
+        const dKey = getDayKey(mode);
+        const wKey = getWeekKey();
+        chrome.storage.local.get(
+            [hKey, dKey, wKey],
+            (data) => {
+                resolve(checkLimits(
+                    data[hKey] || 0,
+                    data[dKey] || 0,
+                    data[wKey] || 0,
+                    mode
+                ));
+            }
+        );
+    });
+}
+
 function notifyError(msg) {
     activeTabId = null;
     chrome.notifications.create({
@@ -76,7 +97,10 @@ function launchAutomation(config) {
                     }
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
-                        files: ['lib/invite-utils.js'],
+                        files: [
+                            'lib/invite-utils.js',
+                            'lib/human-behavior.js'
+                        ],
                         world: 'MAIN'
                     }, () => {
                         if (chrome.runtime.lastError) {
@@ -183,6 +207,7 @@ function launchCompanyFollow(config) {
             injectAndStart(tab.id,
                 ['lib/feed-utils.js',
                     'lib/company-utils.js',
+                    'lib/human-behavior.js',
                     'company-follow.js'],
                 'LINKEDIN_COMPANY_FOLLOW_START',
                 {
@@ -210,7 +235,9 @@ function launchFeedEngage(config) {
             }
             activeTabId = tab.id;
             injectAndStart(tab.id,
-                ['lib/feed-utils.js', 'feed-engage.js'],
+                ['lib/feed-utils.js',
+                    'lib/human-behavior.js',
+                    'feed-engage.js'],
                 'LINKEDIN_FEED_ENGAGE_START',
                 config
             );
@@ -281,19 +308,49 @@ function injectScriptsSequentially(
 chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
         if (request.action === 'start') {
-            launchAutomation(request);
+            checkRateLimit('connect').then(status => {
+                if (!status.allowed) {
+                    notifyError(
+                        `Rate limit: ${status.reason} ` +
+                        `limit reached for connections.`
+                    );
+                    return;
+                }
+                request.rateRemaining = status.remaining;
+                launchAutomation(request);
+            });
             sendResponse({ status: 'started' });
             return true;
         }
 
         if (request.action === 'startCompanyFollow') {
-            launchCompanyFollow(request);
+            checkRateLimit('companyFollow').then(status => {
+                if (!status.allowed) {
+                    notifyError(
+                        `Rate limit: ${status.reason} ` +
+                        `limit reached for company follows.`
+                    );
+                    return;
+                }
+                request.rateRemaining = status.remaining;
+                launchCompanyFollow(request);
+            });
             sendResponse({ status: 'started' });
             return true;
         }
 
         if (request.action === 'startFeedEngage') {
-            launchFeedEngage(request);
+            checkRateLimit('feedEngage').then(status => {
+                if (!status.allowed) {
+                    notifyError(
+                        `Rate limit: ${status.reason} ` +
+                        `limit reached for feed engagement.`
+                    );
+                    return;
+                }
+                request.rateRemaining = status.remaining;
+                launchFeedEngage(request);
+            });
             sendResponse({ status: 'started' });
             return true;
         }
@@ -356,10 +413,25 @@ chrome.runtime.onMessage.addListener(
         if (request.action === 'done') {
             activeTabId = null;
             const r = request.result;
+            const logCount = (r?.log || []).filter(
+                e => !e.status?.startsWith('skipped')
+            ).length;
+            if (logCount > 0 && r?.mode) {
+                const rateMode = r.mode === 'company'
+                    ? 'companyFollow'
+                    : r.mode === 'feed'
+                        ? 'feedEngage' : 'connect';
+                for (let i = 0; i < logCount; i++) {
+                    incrementCount(
+                        rateMode, chrome.storage.local
+                    );
+                }
+            }
+            cleanupOldKeys(chrome.storage.local);
             chrome.notifications.create({
                 type: 'basic',
                 iconUrl: 'icons/icon128.png',
-                title: 'LinkedIn Auto-Connect',
+                title: 'LinkedIn Engage',
                 message: r?.success
                     ? r.message || 'Automation complete.'
                     : 'Stopped: ' + (r?.error || 'Unknown')

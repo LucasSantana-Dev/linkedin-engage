@@ -6,6 +6,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     const engageLog = [];
     let consecutiveFails = 0;
     let backoffMultiplier = 1;
+    const profile = typeof sessionProfile === 'function'
+        ? sessionProfile() : {
+            avgDelay: 3000, burstChance: 0.08,
+            pauseChance: 0.05, scrollMultiplier: 1
+        };
 
     function detectChallenge() {
         const url = window.location.href;
@@ -915,11 +920,24 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     }
 
                     post.scrollIntoView({
-                        behavior: 'smooth',
+                        behavior: typeof scrollBehavior
+                            === 'function'
+                            ? scrollBehavior() : 'smooth',
                         block: 'center'
                     });
+                    const postLen =
+                        (postText || '').length;
+                    const readTime =
+                        typeof shouldSimulateReading
+                            === 'function' &&
+                        shouldSimulateReading(postLen)
+                            ? readingDuration(postLen)
+                            : 0;
                     await delay(
-                        1000 + Math.random() * 1500
+                        (typeof actionDelay === 'function'
+                            ? actionDelay(profile)
+                            : 1000 + Math.random() * 1500)
+                        + readTime
                     );
 
                     let actions = [];
@@ -1002,9 +1020,25 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         }, '*');
                     }
 
-                    await delay(
-                        2000 + Math.random() * 3000
-                    );
+                    if (typeof shouldTakePause === 'function'
+                        && shouldTakePause(
+                            profile, totalEngaged
+                        )) {
+                        const p = typeof pauseDuration
+                            === 'function'
+                            ? pauseDuration() : 15000;
+                        console.log(
+                            '[LinkedIn Bot] Human pause: ' +
+                            Math.round(p / 1000) + 's'
+                        );
+                        await delay(p);
+                    } else {
+                        await delay(
+                            typeof actionDelay === 'function'
+                                ? actionDelay(profile)
+                                : 2000 + Math.random() * 3000
+                        );
+                    }
 
                     } catch (postErr) {
                         console.log(
@@ -1036,11 +1070,19 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                 if (totalEngaged >= limit) break;
 
                 window.scrollBy({
-                    top: window.innerHeight * 0.8,
-                    behavior: 'smooth'
+                    top: typeof scrollVariation === 'function'
+                        ? scrollVariation()
+                        : window.innerHeight * 0.8,
+                    behavior: typeof scrollBehavior
+                        === 'function'
+                        ? scrollBehavior() : 'smooth'
                 });
                 scrollCount++;
-                await delay(3000 + Math.random() * 2000);
+                await delay(
+                    typeof humanDelay === 'function'
+                        ? humanDelay(3000, 1500)
+                        : 3000 + Math.random() * 2000
+                );
             }
 
             if (newUrns.length > 0) {

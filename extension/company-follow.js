@@ -6,6 +6,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     const followLog = [];
     let consecutiveFails = 0;
     let backoffMultiplier = 1;
+    const profile = typeof sessionProfile === 'function'
+        ? sessionProfile() : {
+            avgDelay: 3000, burstChance: 0.08,
+            pauseChance: 0.05, scrollMultiplier: 1
+        };
 
     function detectChallenge() {
         const url = window.location.href;
@@ -106,14 +111,22 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             }
 
             followBtn.scrollIntoView({
-                behavior: 'smooth',
+                behavior: typeof scrollBehavior
+                    === 'function'
+                    ? scrollBehavior() : 'smooth',
                 block: 'center'
             });
             await delay(
-                800 + Math.random() * 1200
+                typeof actionDelay === 'function'
+                    ? actionDelay(profile)
+                    : 800 + Math.random() * 1200
             );
             followBtn.click();
-            await delay(1000);
+            await delay(
+                typeof humanDelay === 'function'
+                    ? humanDelay(1000, 400)
+                    : 1000
+            );
 
             const btnText =
                 (followBtn.innerText ||
@@ -142,9 +155,25 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             reportProgress(
                 totalFollowed, limit, 0
             );
-            await delay(
-                1500 + Math.random() * 2500
-            );
+            if (typeof shouldTakePause === 'function'
+                && shouldTakePause(
+                    profile, totalFollowed
+                )) {
+                const p = typeof pauseDuration
+                    === 'function'
+                    ? pauseDuration() : 15000;
+                console.log(
+                    '[LinkedIn Bot] Human pause: ' +
+                    Math.round(p / 1000) + 's'
+                );
+                await delay(p);
+            } else {
+                await delay(
+                    typeof actionDelay === 'function'
+                        ? actionDelay(profile)
+                        : 1500 + Math.random() * 2500
+                );
+            }
 
             } catch (cardErr) {
                 console.log(
