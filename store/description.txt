@@ -1,0 +1,42 @@
+LinkedIn Engage helps you grow your professional network on LinkedIn with smart automation tools — all running locally in your browser.
+
+FEATURES
+
+Connection Automation
+Build your network faster with tag-based search queries. Select Role, Industry, Market Focus, and Level tags to compose targeted LinkedIn searches. Choose from 6 note templates or write your own. Smart prioritization processes mutual connections first.
+
+Feed Engagement
+React and comment on LinkedIn feed posts with context-aware responses. The extension classifies posts into 13 categories (technical, achievement, humor, hiring, and more) and generates appropriate reactions and comments. Supports both English and Portuguese.
+
+AI-Powered Comments (Optional)
+Connect your own Groq API key for AI-generated comments that match the post's tone, language, and context. The AI analyzes the post text, existing comments, and reaction patterns to generate natural responses.
+
+Company Follow
+Search and follow companies in your target industry. Includes 60 curated mid-size companies as defaults with batch rotation for scheduled runs.
+
+Dashboard & Analytics
+Track your networking activity with a stats dashboard showing weekly totals, acceptance rates, reaction breakdowns, and a 14-day activity chart. Export your connection log as CSV.
+
+Smart Safety Features
+- Rate limit detection with automatic backoff
+- Weekly invite limit guard (150 max)
+- CAPTCHA and security challenge detection
+- Duplicate post and profile tracking
+- Human-like delays between actions
+
+SCHEDULING
+Set up recurring runs with Chrome's Alarms API. Configure intervals, query rotation, and batch sizes. The extension handles pagination, rate limits, and cooldowns automatically.
+
+PRIVACY
+All data stays on your device — no external servers, no tracking, no data collection. The only external call is the optional Groq AI integration using YOUR API key.
+
+PERMISSIONS
+- activeTab: Read LinkedIn pages for automation
+- storage: Save your settings locally
+- tabs: Manage automation tabs
+- scripting: Inject automation into LinkedIn
+- alarms: Schedule recurring runs
+- notifications: Alert you on completion
+
+IMPORTANT
+This tool is for personal networking. Use responsibly and within LinkedIn's guidelines. Recommended: 50-100 actions per day with breaks between sessions.
