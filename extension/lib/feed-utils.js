@@ -39,7 +39,11 @@ const POST_CATEGORIES = {
         'database', 'refactor', 'ci/cd', 'pipeline',
         'kubernetes', 'docker', 'api', 'framework',
         'testing', 'debug', 'production', 'latency',
-        'distributed', 'caching'
+        'distributed', 'caching', '.net', 'dependency',
+        'injection', 'singleton', 'design pattern',
+        'infrastructure', 'backend', 'frontend',
+        'full stack', 'devops', 'cloud', 'aws',
+        'azure', 'terraform', 'ansible'
     ],
     question: [
         'what do you think', 'thoughts?', 'agree?',
@@ -850,18 +854,38 @@ function isCompanyFollowText(text) {
 
 function getPostText(postEl) {
     if (!postEl) return '';
-    const sel =
+    const parts = [];
+
+    const bodySel =
         '.feed-shared-text, ' +
         '.feed-shared-inline-show-more-text, ' +
         '.feed-shared-update-v2__description, ' +
         '.update-components-text, ' +
         '[data-test-id="main-feed-activity-content"], ' +
         'span.break-words';
-    const textEl = postEl.querySelector(sel);
-    if (textEl) {
-        return (textEl.innerText ||
-            textEl.textContent || '').trim();
+    const bodyEl = postEl.querySelector(bodySel);
+    if (bodyEl) {
+        parts.push(
+            (bodyEl.innerText ||
+                bodyEl.textContent || '').trim()
+        );
     }
+
+    const titleSel =
+        '.feed-shared-article__title, ' +
+        '.feed-shared-article__title-text, ' +
+        '.update-components-article__title, ' +
+        '.feed-shared-article-card__title, ' +
+        '.article-card__title span';
+    const titleEls = postEl.querySelectorAll(titleSel);
+    for (const el of titleEls) {
+        const t = (el.innerText ||
+            el.textContent || '').trim();
+        if (t && !parts.includes(t)) parts.push(t);
+    }
+
+    if (parts.length > 0) return parts.join(' ');
+
     const spans = postEl.querySelectorAll(
         'span[dir="ltr"]'
     );

@@ -75,6 +75,36 @@ describe('getPostText', () => {
         expect(getPostText(post)).toBe('Some update');
     });
 
+    it('combines body text with article title', () => {
+        const post = document.createElement('div');
+        const body = document.createElement('div');
+        body.className = 'feed-shared-text';
+        body.textContent = 'Check out this article';
+        post.appendChild(body);
+        const title = document.createElement('span');
+        title.className =
+            'feed-shared-article__title';
+        title.textContent =
+            'Understanding .NET Architecture';
+        post.appendChild(title);
+        expect(getPostText(post)).toBe(
+            'Check out this article ' +
+            'Understanding .NET Architecture'
+        );
+    });
+
+    it('extracts article title alone', () => {
+        const post = document.createElement('div');
+        const title = document.createElement('span');
+        title.className =
+            'update-components-article__title';
+        title.textContent = 'DI Service Lifetimes';
+        post.appendChild(title);
+        expect(getPostText(post)).toBe(
+            'DI Service Lifetimes'
+        );
+    });
+
     it('falls back to longest span[dir=ltr]', () => {
         const post = document.createElement('div');
         const s1 = document.createElement('span');

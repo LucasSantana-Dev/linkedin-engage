@@ -126,15 +126,38 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     }
 
     function getPostText(postEl) {
-        const sel =
+        const parts = [];
+
+        const bodySel =
             '.feed-shared-text, ' +
             '.feed-shared-inline-show-more-text, ' +
             '.feed-shared-update-v2__description, ' +
             '.update-components-text, ' +
             '[data-test-id="main-feed-activity-content"], ' +
             'span.break-words';
-        const textEl = postEl.querySelector(sel);
-        if (textEl) return textEl.innerText.trim();
+        const bodyEl = postEl.querySelector(bodySel);
+        if (bodyEl) {
+            parts.push(bodyEl.innerText.trim());
+        }
+
+        const titleSel =
+            '.feed-shared-article__title, ' +
+            '.feed-shared-article__title-text, ' +
+            '.update-components-article__title, ' +
+            '.feed-shared-article-card__title, ' +
+            '.article-card__title span, ' +
+            '.update-components-article ' +
+                '.update-components-article__title, ' +
+            'a[data-tracking-control-name*="article"] ' +
+                'span[dir="ltr"]';
+        const titleEls = postEl.querySelectorAll(titleSel);
+        for (const el of titleEls) {
+            const t = (el.innerText || '').trim();
+            if (t && !parts.includes(t)) parts.push(t);
+        }
+
+        if (parts.length > 0) return parts.join(' ');
+
         const spans = postEl.querySelectorAll(
             'span[dir="ltr"]'
         );
@@ -230,10 +253,23 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
     function setEditorText(editor, text) {
         editor.focus();
+
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        if (document.execCommand('insertText', false, text)) {
+            return;
+        }
+
         editor.innerText = text;
-        editor.dispatchEvent(
-            new Event('input', { bubbles: true })
-        );
+        editor.dispatchEvent(new InputEvent('input', {
+            bubbles: true,
+            inputType: 'insertText',
+            data: text
+        }));
         editor.dispatchEvent(
             new Event('change', { bubbles: true })
         );
@@ -301,47 +337,79 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             commentText.substring(0, 50)
         );
         setEditorText(editor, commentText);
-        await delay(1500);
 
-        const allBtns = postEl.querySelectorAll(
-            'button'
-        );
         let submitBtn = null;
-        for (const btn of allBtns) {
-            const cls = btn.className || '';
-            const label =
-                btn.getAttribute('aria-label') || '';
-            const text = (btn.innerText ||
-                btn.textContent || '').trim();
-            if (cls.includes('submit-button--cr') ||
-                (cls.includes('comment') &&
-                (cls.includes('submit') ||
-                    btn.type === 'submit')) ||
-                label.includes('Post comment') ||
-                label.includes('Publicar comentário') ||
-                (text === 'Post' &&
-                    cls.includes('comment')) ||
-                (text === 'Publicar' &&
-                    cls.includes('comment'))) {
-                if (!btn.disabled) {
-                    submitBtn = btn;
-                    break;
+        for (let attempt = 0; attempt < 6; attempt++) {
+            await delay(800);
+
+            const scopes = [postEl, document];
+            for (const scope of scopes) {
+                if (submitBtn) break;
+                const btns = scope.querySelectorAll('button');
+                for (const btn of btns) {
+                    if (btn.disabled) continue;
+                    const cls = btn.className || '';
+                    const label =
+                        btn.getAttribute('aria-label') || '';
+                    const text = (btn.innerText ||
+                        btn.textContent || '').trim();
+
+                    if (cls.includes('submit-button--cr') ||
+                        cls.includes('comments-comment-box' +
+                            '__submit-button') ||
+                        (cls.includes('comment') &&
+                            (cls.includes('submit') ||
+                            btn.type === 'submit')) ||
+                        label.includes('Post comment') ||
+                        label.includes('Publicar comentário') ||
+                        label.includes('Post') ||
+                        label.includes('Publicar') ||
+                        label.includes('Submit') ||
+                        label.includes('Enviar') ||
+                        (text === 'Post' &&
+                            cls.includes('comment')) ||
+                        (text === 'Publicar' &&
+                            cls.includes('comment')) ||
+                        (text === 'Post' &&
+                            cls.includes('artdeco')) ||
+                        (text === 'Publicar' &&
+                            cls.includes('artdeco'))) {
+                        submitBtn = btn;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!submitBtn) {
-            const fallback = document.querySelectorAll(
-                'button.comments-comment-box' +
-                '__submit-button--cr, ' +
-                'button[type="submit"]' +
-                '.artdeco-button--primary'
-            );
-            for (const btn of fallback) {
-                if (!btn.disabled) {
-                    submitBtn = btn;
-                    break;
+            if (!submitBtn) {
+                const fallbackSel =
+                    'button.comments-comment-box' +
+                    '__submit-button--cr, ' +
+                    'button.comments-comment-box' +
+                    '__submit-button, ' +
+                    'button[type="submit"]' +
+                    '.artdeco-button--primary, ' +
+                    'form.comments-comment-box ' +
+                    'button.artdeco-button--primary';
+                const fallback =
+                    document.querySelectorAll(fallbackSel);
+                for (const btn of fallback) {
+                    if (!btn.disabled) {
+                        submitBtn = btn;
+                        break;
+                    }
                 }
+            }
+
+            if (submitBtn) break;
+
+            if (attempt < 5) {
+                editor.dispatchEvent(new InputEvent(
+                    'input', {
+                        bubbles: true,
+                        inputType: 'insertText',
+                        data: commentText
+                    }
+                ));
             }
         }
 
@@ -355,7 +423,8 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             return true;
         }
         console.log(
-            '[LinkedIn Bot] No submit button found'
+            '[LinkedIn Bot] No submit button found ' +
+            'after 6 attempts'
         );
         return false;
     }
@@ -509,6 +578,14 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
                     const postText = getPostText(post);
                     const author = getPostAuthor(post);
+
+                    console.log(
+                        '[LinkedIn Bot] Post by ' + author +
+                        ': "' + postText.substring(0, 80) +
+                        '..." | lang=' +
+                        detectLanguage(postText) +
+                        ' cat=' + classifyPost(postText)
+                    );
 
                     if (!isReactablePost(post)) continue;
                     if (shouldSkipPost(
