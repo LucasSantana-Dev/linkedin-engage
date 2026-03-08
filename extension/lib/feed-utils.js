@@ -71,72 +71,118 @@ const POST_CATEGORIES = {
 
 const CATEGORY_TEMPLATES = {
     hiring: [
-        'Great opportunity! {topic} roles are in high ' +
-            'demand right now.',
-        'Thanks for sharing this opening. The {topic} ' +
-            'space needs more visibility for roles like this.',
-        'Interesting role. Companies investing in ' +
-            '{topic} talent are making a smart move.'
+        'solid role, sharing with my network',
+        'the {topic} space is so hot right now',
+        'love seeing companies actually invest in ' +
+            '{topic}. good luck with the search!',
+        'this is the kind of role I like seeing ' +
+            'on my feed. {keyPhrase}',
+        'bookmarked. know a few people who might ' +
+            'be a fit',
+        'interesting - what does the tech stack ' +
+            'look like?',
+        'good to see {topic} hiring picking up'
     ],
     achievement: [
-        'Congratulations! Well-deserved achievement ' +
-            'in {topic}.',
-        'Amazing milestone! Your work in {topic} is ' +
-            'truly inspiring.',
-        'So happy to see this! Wishing you continued ' +
-            'success in {topic}.'
+        'congrats!! well deserved',
+        'this is awesome, congrats!',
+        'huge! {keyPhrase}',
+        'love to see it. congrats on the move!',
+        'well deserved - excited to see what you ' +
+            'do next',
+        'congrats! {topic} needs people like you',
+        'this made my day. go get it!!'
     ],
     technical: [
-        'Great technical insight on {topic}. This ' +
-            'resonates with challenges I\'ve seen ' +
-            'in production.',
-        'Solid perspective on {topic}. Would love ' +
-            'to see more posts like this in my feed.',
-        'Really valuable breakdown of {topic}. ' +
-            'The engineering community needs more ' +
-            'knowledge sharing like this.'
+        'been thinking about this a lot lately. ' +
+            '{keyPhrase}',
+        'ran into something similar last quarter. ' +
+            '{topic} is tricky to get right',
+        'this is super underrated. more people ' +
+            'need to talk about {topic}',
+        'solid take. curious what your experience ' +
+            'has been with scale?',
+        'saving this for later. {topic} keeps ' +
+            'coming up in our standups',
+        'yes! {keyPhrase} - we learned this the ' +
+            'hard way too',
+        'the part about {topic} really resonated'
     ],
     question: [
-        'Great question about {topic}! I think the ' +
-            'answer depends a lot on the context and ' +
-            'team dynamics.',
-        'Interesting discussion on {topic}. Would ' +
-            'love to hear more perspectives on this.',
-        'This is a question I\'ve been thinking about ' +
-            'too. {topic} is evolving so fast.'
+        'honestly it depends. but leaning towards ' +
+            '{keyPhrase}',
+        'good question - I\'ve been going back and ' +
+            'forth on this one too',
+        'we tried a few approaches with {topic} ' +
+            'and the answer was always "it depends"',
+        'curious about this too, following for ' +
+            'the replies',
+        'this is one of those topics where ' +
+            'everyone has a different take. ' +
+            'for me, {keyPhrase}',
+        'great thread. {topic} is one of those ' +
+            'things you just have to figure out ' +
+            'by doing'
     ],
     tips: [
-        'Saving this! Really practical advice on ' +
-            '{topic}.',
-        'This is gold. More people need to hear ' +
-            'this about {topic}.',
-        'Great tips on {topic}. Simple but ' +
-            'effective advice.'
+        'needed to hear this today',
+        'saving this. the point about {topic} ' +
+            'is spot on',
+        'wish I had this advice 2 years ago lol',
+        'simple but so true. {keyPhrase}',
+        'screenshot taken, sending to my team',
+        'this. especially the part about {topic}',
+        'adding this to my notes. {keyPhrase}'
     ],
     story: [
-        'Thanks for sharing your experience. Stories ' +
-            'like this about {topic} are so valuable ' +
-            'for the community.',
-        'Really authentic post. Your journey in ' +
-            '{topic} resonates with a lot of people.',
-        'Love the honesty here. More people should ' +
-            'share real experiences like this.'
+        'appreciate you sharing this',
+        'this hits different. {keyPhrase}',
+        'needed this perspective today. thanks ' +
+            'for being real about it',
+        'more of this on LinkedIn please',
+        'I can relate to this more than you know',
+        'thanks for writing this. not enough people ' +
+            'talk about {topic} honestly',
+        'real talk. {keyPhrase}'
     ],
     news: [
-        'Interesting development in {topic}. ' +
-            'Curious to see how this plays out.',
-        'Thanks for sharing this update on {topic}. ' +
-            'The industry is moving fast.',
-        'Important trend to watch. {topic} is ' +
-            'shaping the future of the industry.'
+        'whoa didn\'t see this coming',
+        'been following {topic} closely - this ' +
+            'is a big deal',
+        'interesting. curious how this plays out ' +
+            'for the rest of the market',
+        '{topic} is moving so fast. hard to keep up',
+        'this is going to change things. ' +
+            '{keyPhrase}',
+        'was just talking about this yesterday. ' +
+            '{topic} is wild right now'
     ],
     generic: [
-        'Great insight on {topic}! Thanks for sharing.',
-        'Really interesting perspective on {topic}.',
-        'Thanks for putting this out there. {topic} ' +
-            'is always worth discussing.'
+        'needed to see this today, thanks for posting',
+        'this resonated. {keyPhrase}',
+        'really interesting perspective',
+        'following for more on this',
+        'shared this with my team',
+        'spot on. {keyPhrase}',
+        'appreciate you putting this out there',
+        'this. 100%'
     ]
 };
+
+const FOLLOW_UPS = [
+    '', '', '', '', '',
+    ' what has your experience been?',
+    ' would love to connect and chat more about this.',
+    ' curious how others are handling this.',
+    ' have you written more about this?',
+    ''
+];
+
+const OPENERS = [
+    '', '', '', '',
+    'honestly, ', 'yeah ', 'this - ',
+    'so true. ', '', ''
+];
 
 const TOPIC_MAP = [
     { pattern: /\b(artificial intelligence|ai|gpt|llm|genai)\b/i, label: 'AI' },
@@ -200,6 +246,70 @@ function pickRandom(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function extractKeyPhrase(postText) {
+    if (!postText || postText.length < 10) return '';
+    const sentences = postText
+        .replace(/\n+/g, '. ')
+        .split(/[.!?]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15 && s.length < 120);
+    if (!sentences.length) return '';
+
+    const scored = sentences.map(s => {
+        let score = 0;
+        const lower = s.toLowerCase();
+        const signals = [
+            'important', 'key', 'the truth',
+            'biggest', 'best', 'worst', 'never',
+            'always', 'most people', 'nobody talks',
+            'underrated', 'overrated', 'the problem',
+            'the solution', 'what works', 'game changer',
+            'don\'t', 'stop', 'start', 'here\'s why',
+            'the real', 'actually', 'turns out'
+        ];
+        for (const sig of signals) {
+            if (lower.includes(sig)) score += 2;
+        }
+        if (s.length > 30 && s.length < 80) score += 1;
+        return { text: s, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const best = scored[0];
+    if (best.score === 0) {
+        return scored[
+            Math.floor(Math.random() * Math.min(3,
+                scored.length))
+        ].text;
+    }
+    return best.text;
+}
+
+function lowerFirst(s) {
+    if (!s) return s;
+    if (s.length < 2) return s.toLowerCase();
+    if (/^[A-Z]{2}/.test(s)) return s;
+    return s[0].toLowerCase() + s.slice(1);
+}
+
+function humanize(comment) {
+    let result = comment;
+    if (Math.random() < 0.3 &&
+        result.length > 0 &&
+        /^[a-z]/.test(result)) {
+        result = result[0].toUpperCase() +
+            result.slice(1);
+    }
+    if (Math.random() < 0.15) {
+        result = result.replace(/\.$/, '');
+    }
+    if (Math.random() < 0.1 && !result.endsWith('!') &&
+        !result.endsWith('?')) {
+        result = result.replace(/[.!?]*$/, '...');
+    }
+    return result;
+}
+
 function buildCommentFromPost(postText, userTemplates) {
     const category = classifyPost(postText);
     const topic = extractTopic(postText);
@@ -215,10 +325,38 @@ function buildCommentFromPost(postText, userTemplates) {
 
     const excerpt = (postText || '')
         .substring(0, 50).trim();
-    return template
+
+    const rawPhrase = extractKeyPhrase(postText);
+    const keyPhrase = rawPhrase
+        ? '"' + lowerFirst(rawPhrase) + '"'
+        : '';
+
+    let comment = template
         .replace(/\{topic\}/g, topic)
         .replace(/\{excerpt\}/g, excerpt)
-        .replace(/\{category\}/g, category);
+        .replace(/\{category\}/g, category)
+        .replace(/\{keyPhrase\}/g, keyPhrase);
+
+    comment = comment.replace(/\s{2,}/g, ' ').trim();
+    if (comment.includes('""') ||
+        comment.endsWith('"') && comment.split('"').length < 3) {
+        comment = comment.replace(/\s*""\s*/g, ' ').trim();
+    }
+
+    if (!userTemplates || !userTemplates.length) {
+        const opener = pickRandom(OPENERS);
+        if (opener && !comment.startsWith(opener.trim())) {
+            comment = opener + comment;
+        }
+        const followUp = pickRandom(FOLLOW_UPS);
+        if (followUp) {
+            comment = comment.replace(/[.!?]*$/, '') +
+                followUp;
+        }
+        comment = humanize(comment);
+    }
+
+    return comment;
 }
 
 function isReactablePost(postEl) {
@@ -248,6 +386,8 @@ if (typeof module !== 'undefined' && module.exports) {
         classifyPost,
         buildCommentFromPost,
         extractTopic,
+        extractKeyPhrase,
+        humanize,
         isReactablePost,
         shouldSkipPost,
         isCompanyFollowText,

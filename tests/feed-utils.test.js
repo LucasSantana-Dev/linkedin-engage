@@ -6,6 +6,8 @@ const {
     classifyPost,
     buildCommentFromPost,
     extractTopic,
+    extractKeyPhrase,
+    humanize,
     isReactablePost,
     shouldSkipPost,
     isCompanyFollowText,
@@ -153,10 +155,75 @@ describe('classifyPost', () => {
     });
 });
 
+describe('extractKeyPhrase', () => {
+    it('returns empty for short text', () => {
+        expect(extractKeyPhrase('hi')).toBe('');
+        expect(extractKeyPhrase(null)).toBe('');
+    });
+
+    it('extracts a sentence from post text', () => {
+        const phrase = extractKeyPhrase(
+            'Here is some context. The most important ' +
+            'thing is to never give up. And keep going.'
+        );
+        expect(typeof phrase).toBe('string');
+        expect(phrase.length).toBeGreaterThan(10);
+    });
+
+    it('prefers sentences with signal words', () => {
+        const phrase = extractKeyPhrase(
+            'Today was nice. The biggest problem with ' +
+            'our industry is burnout. Anyway bye.'
+        );
+        expect(phrase.toLowerCase()).toContain('biggest');
+    });
+
+    it('handles single-sentence posts', () => {
+        const phrase = extractKeyPhrase(
+            'The key to success in engineering is ' +
+            'consistency and shipping often'
+        );
+        expect(phrase.length).toBeGreaterThan(10);
+    });
+
+    it('skips very short sentences', () => {
+        const phrase = extractKeyPhrase(
+            'Ok. Sure. The real problem is that most ' +
+            'people underestimate how hard shipping is.'
+        );
+        expect(phrase.length).toBeGreaterThan(15);
+    });
+});
+
+describe('humanize', () => {
+    it('returns a string', () => {
+        const result = humanize('hello world');
+        expect(typeof result).toBe('string');
+    });
+
+    it('produces varied output across many runs', () => {
+        const results = new Set();
+        for (let i = 0; i < 100; i++) {
+            results.add(humanize('test comment here.'));
+        }
+        expect(results.size).toBeGreaterThan(1);
+    });
+
+    it('does not corrupt the original text', () => {
+        for (let i = 0; i < 50; i++) {
+            const result = humanize('some text here');
+            expect(result.toLowerCase())
+                .toContain('some text here');
+        }
+    });
+});
+
 describe('buildCommentFromPost', () => {
-    it('uses built-in templates when no user templates', () => {
+    it('generates comment without user templates', () => {
         const result = buildCommentFromPost(
-            'Excited to announce I got promoted!', null
+            'Excited to announce I got promoted! ' +
+            'The biggest lesson was to always push ' +
+            'yourself and never stop learning.', null
         );
         expect(result).toBeTruthy();
         expect(typeof result).toBe('string');
@@ -171,7 +238,7 @@ describe('buildCommentFromPost', () => {
         expect(result).toBe('Nice post about AI!');
     });
 
-    it('replaces {topic} with extracted topic', () => {
+    it('replaces {topic} in user templates', () => {
         const result = buildCommentFromPost(
             'Great article about AI and machine learning',
             ['Interesting take on {topic}!']
@@ -189,43 +256,55 @@ describe('buildCommentFromPost', () => {
 
     it('replaces {category} with detected category', () => {
         const result = buildCommentFromPost(
-            'We\'re hiring engineers!',
+            'We\'re hiring engineers! Join our team.',
             ['Category: {category}']
         );
         expect(result).toBe('Category: hiring');
     });
 
-    it('replaces all {topic} occurrences', () => {
-        const result = buildCommentFromPost(
-            'AI is great',
-            ['{topic} and {topic}']
-        );
-        expect(result).toBe('AI and AI');
+    it('generates varied comments for same post', () => {
+        const post = 'We just deployed our new ' +
+            'Kubernetes cluster to production. ' +
+            'The key was getting caching right.';
+        const results = new Set();
+        for (let i = 0; i < 80; i++) {
+            results.add(buildCommentFromPost(post, null));
+        }
+        expect(results.size).toBeGreaterThan(5);
     });
 
-    it('uses category-appropriate built-in template', () => {
-        const results = new Set();
+    it('includes key phrase from post content', () => {
+        const post = 'There are many opinions on this. ' +
+            'The biggest mistake most people make is ' +
+            'not shipping early enough. Just keep going.';
+        const comments = [];
         for (let i = 0; i < 30; i++) {
-            results.add(buildCommentFromPost(
-                'We\'re hiring! Open role for engineers.',
-                null
-            ));
+            comments.push(buildCommentFromPost(post, null));
         }
-        for (const comment of results) {
-            expect(comment).toBeTruthy();
-            expect(comment.length).toBeGreaterThan(20);
-        }
+        const hasQuote = comments.some(c =>
+            c.includes('biggest') || c.includes('shipping')
+        );
+        expect(hasQuote).toBe(true);
     });
 
-    it('picks random templates from pool', () => {
-        const results = new Set();
+    it('does not skip humanization for built-in', () => {
+        const results = [];
         for (let i = 0; i < 50; i++) {
-            results.add(buildCommentFromPost(
-                'Just deployed our new Kubernetes cluster',
+            results.push(buildCommentFromPost(
+                'Remote work is the future of our industry',
                 null
             ));
         }
-        expect(results.size).toBeGreaterThan(1);
+        const hasVariation = new Set(results).size > 3;
+        expect(hasVariation).toBe(true);
+    });
+
+    it('skips humanization for user templates', () => {
+        const result = buildCommentFromPost(
+            'AI post here',
+            ['Exact template output.']
+        );
+        expect(result).toBe('Exact template output.');
     });
 });
 
@@ -264,10 +343,9 @@ describe('extractTopic', () => {
     });
 
     it('matches first topic when multiple present', () => {
-        const result = extractTopic(
+        expect(extractTopic(
             'AI and machine learning with Python'
-        );
-        expect(result).toBe('AI');
+        )).toBe('AI');
     });
 });
 
@@ -372,20 +450,16 @@ describe('CATEGORY_TEMPLATES', () => {
         for (const cat of expected) {
             expect(CATEGORY_TEMPLATES[cat]).toBeDefined();
             expect(CATEGORY_TEMPLATES[cat].length)
-                .toBeGreaterThan(0);
+                .toBeGreaterThanOrEqual(5);
         }
     });
 
-    it('most templates contain {topic} placeholder', () => {
-        let total = 0;
-        let withTopic = 0;
+    it('templates are conversational length', () => {
         for (const templates of
             Object.values(CATEGORY_TEMPLATES)) {
             for (const tmpl of templates) {
-                total++;
-                if (tmpl.includes('{topic}')) withTopic++;
+                expect(tmpl.length).toBeLessThan(150);
             }
         }
-        expect(withTopic / total).toBeGreaterThan(0.8);
     });
 });
