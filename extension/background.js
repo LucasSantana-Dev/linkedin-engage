@@ -340,8 +340,169 @@ function injectScriptsSequentially(
     });
 }
 
+async function generateAIComment(data) {
+    const { postText, existingComments, author,
+        authorTitle, lang, category, apiKey } = data;
+    if (!apiKey) return null;
+
+    const commentsCtx = existingComments?.length
+        ? '\n\nOther comments on this post:\n' +
+            existingComments.slice(0, 5).map(
+                c => '- ' + (c.author || '') + ': ' +
+                    c.text
+            ).join('\n')
+        : '';
+
+    const cat = category || 'generic';
+    var toneGuide = '';
+    if (cat === 'humor') {
+        toneGuide =
+            '\nTone: HUMOROUS post.' +
+            ' Play along with the joke.' +
+            ' Be witty or add a related joke.' +
+            ' Keep it light and fun.' +
+            ' Do NOT respond seriously to a joke.';
+    } else if (cat === 'achievement' ||
+        cat === 'career' || cat === 'newjob') {
+        toneGuide =
+            '\nTone: ACHIEVEMENT post.' +
+            ' ONLY write "Congrats!" or' +
+            ' "Parabéns!" (if Portuguese).' +
+            ' Nothing else. No "well deserved",' +
+            ' no "merecido", no names, no details,' +
+            ' no repeating what they achieved.' +
+            ' Max 15 chars. Just congratulate.';
+    } else if (cat === 'critique') {
+        toneGuide =
+            '\nTone: OPINION post.' +
+            ' Acknowledge neutrally.' +
+            ' Do NOT take sides or debate.';
+    } else if (cat === 'technical') {
+        toneGuide =
+            '\nTone: TECHNICAL post.' +
+            ' Show you understood the content.' +
+            ' Ask a smart follow-up question OR' +
+            ' share a brief related experience.';
+    }
+
+    var authorCtx = 'Post by ' +
+        (author || 'someone');
+    if (authorTitle) {
+        authorCtx += ' (' + authorTitle + ')';
+    }
+
+    var langRule = lang === 'pt'
+        ? '\n- LANGUAGE: Write ONLY in Brazilian' +
+            ' Portuguese. NEVER use English words.' +
+            ' Match the tone of the other comments.'
+        : '\n- LANGUAGE: Write ONLY in English.' +
+            ' Match the tone of the other comments.';
+
+    const prompt =
+        'You are commenting on a LinkedIn post.' +
+        ' Write a comment that shows you READ' +
+        ' and UNDERSTOOD the post.' +
+        toneGuide +
+        '\n\nRules:' +
+        langRule +
+        '\n- Max 120 chars, 1-2 sentences' +
+        '\n- Show you understood what the post' +
+        ' is about' +
+        '\n- Use proper capitalization and grammar' +
+        '\n- Look at the other comments below for' +
+        ' tone and style reference — write' +
+        ' something similar in length and vibe' +
+        '\n- NEVER parrot or repeat the post text' +
+        '\n- NEVER mention the author\'s name,' +
+        ' degree, company, role, or any specific' +
+        ' detail about them' +
+        '\n- NEVER say "faz sentido", "nice",' +
+        ' "cool", "interesting", "Great post",' +
+        ' "Love this", "Thanks for sharing"' +
+        '\n- NEVER use hashtags or emojis' +
+        '\n- NEVER be ironic, sarcastic, offensive' +
+        ', polemic, or dismissive' +
+        '\n- NEVER create discussion or controversy' +
+        '\n- Be SAFE: if unsure, output "SKIP"' +
+        '\n- Don\'t repeat what others said' +
+        '\n\n' + authorCtx +
+        ':\n' + (postText || '').substring(0, 800) +
+        commentsCtx +
+        '\n\nYour comment (raw text, no quotes,' +
+        ' or "SKIP" if no good comment):';
+
+    var result = null;
+
+    try {
+        const resp = await fetch(
+            'https://api.groq.com/openai/v1/' +
+            'chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiKey
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [{
+                        role: 'user',
+                        content: prompt
+                    }],
+                    max_tokens: 80,
+                    temperature: 0.7
+                })
+            }
+        );
+        if (!resp.ok) {
+            console.log(
+                '[LinkedIn Bot] AI API error: ' +
+                resp.status
+            );
+            return null;
+        }
+        const json = await resp.json();
+        let comment = json.choices?.[0]
+            ?.message?.content?.trim();
+        if (!comment) return null;
+        comment = comment
+            .replace(/^["']|["']$/g, '')
+            .replace(/^Comment:\s*/i, '')
+            .trim();
+        var qWords = /^(how|what|where|when|why|which|is |are |do |does |can |could |would |have |has |como|qual|onde|quando|por que|você|vocês)/i;
+        if (qWords.test(comment) &&
+            !/[?]$/.test(comment)) {
+            comment = comment.replace(/[.]$/, '') + '?';
+        }
+        if (/^skip$/i.test(comment)) {
+            console.log(
+                '[LinkedIn Bot] AI chose to SKIP'
+            );
+            return null;
+        }
+        if (comment.length < 5 ||
+            comment.length > 300) {
+            return null;
+        }
+        return comment;
+    } catch (e) {
+        console.log(
+            '[LinkedIn Bot] AI error: ' + e.message
+        );
+        return null;
+    }
+}
+
 chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
+        if (request.action === 'generateAIComment') {
+            generateAIComment(request).then(
+                comment => sendResponse({ comment })
+            ).catch(() => sendResponse({
+                comment: null
+            }));
+            return true;
+        }
+
         if (request.action === 'start') {
             checkRateLimit('connect').then(status => {
                 if (!status.allowed) {

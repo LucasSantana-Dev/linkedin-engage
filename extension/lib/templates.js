@@ -1,4 +1,4 @@
-const POST_CATEGORIES = {
+var POST_CATEGORIES = {
     hiring: [
         'hiring', 'we\'re looking', 'job opening',
         'open role', 'apply now', 'join our team',
@@ -15,7 +15,12 @@ const POST_CATEGORIES = {
         'feliz em anunciar', 'feliz em compartilhar',
         'começando como', 'anunciar que', 'nova fase',
         'promovido', 'certificado', 'aprovado',
-        'muito feliz', 'alcancei', 'consegui'
+        'muito feliz', 'alcancei', 'consegui',
+        'alegria', 'empolgado', 'empolgada',
+        'compartilho', 'novo desafio', 'nova etapa',
+        'formado', 'formei', 'graduação',
+        'mestrado', 'doutorado', 'pós-graduação',
+        'diploma', 'concluí'
     ],
     technical: [
         'architecture', 'algorithm', 'deploy',
@@ -78,7 +83,20 @@ const POST_CATEGORIES = {
         'chaos', 'moved it somewhere', 'pain',
         'relatable', 'accurate', 'friday deploy',
         'hotfix', 'prod', 'css', 'merge conflict',
-        'piada', 'kkkk', 'rsrs', 'engraçado'
+        'piada', 'kkkk', 'rsrs', 'engraçado',
+        'plot twist', 'spoiler', 'nobody told me',
+        'surprise', 'turns out', 'apparently',
+        'the real', 'truth is', 'unpaid intern',
+        'ctrl+z', 'git blame', 'rubber duck',
+        'works in production', 'ship it',
+        'no one:', 'me:', 'reality:',
+        'expectation', 'vs reality',
+        'never getting paid', 'paid for thinking',
+        'send help', 'pray for me',
+        'ask me how i know', 'don\'t ask',
+        'learned the hard way', 'why is this',
+        'ninguém me avisou', 'socorro', 'rindo',
+        'chorei', 'mas pelo menos', 'e eu achando'
     ],
     critique: [
         'unpopular opinion', 'hot take', 'overrated',
@@ -124,185 +142,123 @@ const POST_CATEGORIES = {
         'got my first job', 'my first job',
         'landed a job', 'got the job',
         'primeiro dia', 'comecei na', 'entrando na',
-        'novo emprego', 'nova posição', 'fui contratado'
+        'novo emprego', 'nova posição', 'fui contratado',
+        'fazer parte', 'novo desafio', 'nova jornada',
+        'bora pro próximo', 'vamos pra cima',
+        'nova oportunidade', 'aceitei'
     ]
 };
 
-const CATEGORY_TEMPLATES = {
+var CATEGORY_TEMPLATES = {
     hiring: [
-        'solid role. sharing with my network for ' +
-            'visibility',
-        'the {topic} space is heating up. love to ' +
-            'see companies investing in talent',
-        'great opportunity. what does the day-to-day ' +
-            'look like for this role?',
-        'this is the kind of role I like seeing. ' +
-            '{keyPhrase}',
-        'bookmarked. know a few people who might ' +
-            'be interested',
-        'the tech stack on this sounds exciting. ' +
-            'any remote flexibility?',
-        'good to see {topic} hiring. the market ' +
-            'needed this',
-        'reposting for reach. companies that ' +
-            'invest in {topic} talent tend to ' +
-            'build great products'
+        'what does the day-to-day look like?',
+        'any remote flexibility on this one?',
+        'know someone who might be a good fit, ' +
+            'sharing',
+        'is {topic} the main focus or more of ' +
+            'a cross-functional thing?',
+        'what\'s the team size?',
+        'is this open to candidates ' +
+            'relocating from abroad?'
     ],
     achievement: [
-        'huge milestone. {topic} is not easy to ' +
-            'break into',
-        'earned it. excited to see what comes next',
-        'that takes real work. {keyPhrase}',
-        'really happy to see this. {topic} needs ' +
-            'more people like you',
-        'the journey to get here is no joke. ' +
-            'looking forward to what you build next',
-        'big move. {topic} is a great space to be ' +
-            'in right now',
-        'this is inspiring. go get it'
+        'congrats!',
+        'congrats, good luck!',
+        'happy for you!',
+        'congrats!'
     ],
     technical: [
-        'great visual breakdown. {topic} is one of ' +
-            'those things that clicks once you see ' +
-            'it diagrammed like this',
-        'we use this approach in production. the key ' +
-            'is knowing when NOT to apply {topic}',
-        'solid reference material. I always explain ' +
-            '{topic} to juniors using examples like this',
-        'this is exactly the kind of content that ' +
-            'makes {topic} accessible to more devs',
-        'saving this. {topic} comes up in every ' +
-            'system design interview too',
-        'been thinking about this a lot lately. ' +
-            '{keyPhrase}',
-        'ran into something similar last quarter. ' +
-            '{topic} is tricky to get right',
-        'this is super underrated. more people ' +
-            'need to talk about {topic}',
-        'yes! {keyPhrase} - we learned this the ' +
-            'hard way too',
-        'clean explanation. the separation of ' +
-            'concerns here is what makes {topic} ' +
-            'so powerful in practice',
-        'I refactored a whole module using this ' +
-            'approach. {topic} made the codebase ' +
-            'way more maintainable',
-        'this is the kind of post I wish existed ' +
-            'when I was learning {topic}. clear and ' +
-            'practical'
+        'we ran into this last month, ' +
+            'wish we had this diagram then',
+        'the tricky part with {topic} is ' +
+            'knowing when NOT to use it',
+        'had to learn {topic} the hard way ' +
+            'on a deadline, this would\'ve helped',
+        'bookmarking, {topic} always comes up ' +
+            'in interviews',
+        '{keyPhrase} - yep, learned that one ' +
+            'the hard way',
+        'we debated this exact thing on our ' +
+            'team last week',
+        'how do you handle {topic} at scale ' +
+            'though? that\'s where it gets messy',
+        'our team switched to this approach ' +
+            'and it made a real difference',
+        '{topic} is one of those things ' +
+            'that looks simple until you implement it'
     ],
     question: [
-        'honestly it depends. but leaning towards ' +
-            '{keyPhrase}',
-        'good question - I\'ve been going back and ' +
-            'forth on this one too',
-        'we tried a few approaches with {topic} ' +
-            'and the answer was always "it depends"',
-        'curious about this too, following for ' +
-            'the replies',
-        'this is one of those topics where ' +
-            'everyone has a different take. ' +
-            'for me, {keyPhrase}',
-        'great thread. {topic} is one of those ' +
-            'things you just have to figure out ' +
-            'by doing'
+        'honestly depends on the context but ' +
+            'I\'d lean {keyPhrase}',
+        'been going back and forth on this too',
+        'we tried both and honestly {topic} ' +
+            'came down to "it depends"',
+        'following, curious what others think',
+        'for me {keyPhrase}, but I get the ' +
+            'other side too'
     ],
     tips: [
-        'the point about {topic} is spot on. ' +
-            'bookmarked',
-        'saving this. practical and to the point',
-        'wish someone told me this a couple ' +
-            'years ago. {keyPhrase}',
-        'simple but effective. sending to my team',
-        'the {topic} tip alone makes this worth ' +
-            'sharing',
-        'adding this to my notes. {keyPhrase}',
-        'underrated advice. especially the part ' +
-            'about {topic}'
+        'the {topic} one is so true',
+        'wish someone told me {keyPhrase} ' +
+            'like 2 years ago',
+        'sending this to my team',
+        'the {topic} tip alone is worth it',
+        '{keyPhrase} is underrated advice'
     ],
     story: [
-        'not enough people talk about {topic} ' +
-            'honestly. glad you did',
-        '{keyPhrase}. that part hit different',
-        'went through something similar. it ' +
-            'changes your perspective',
-        'more of this on LinkedIn please',
-        'I can relate to this more than you know',
-        'the honesty here is refreshing. {topic} ' +
-            'is rarely discussed this openly',
-        'real talk. {keyPhrase}'
+        'been through something similar, ' +
+            'it really shifts your perspective',
+        'you don\'t hear people talk about ' +
+            '{topic} this honestly',
+        '{keyPhrase} - yeah, that part',
+        'appreciate you sharing this'
     ],
     news: [
-        'whoa didn\'t see this coming',
-        'been following {topic} closely - this ' +
-            'is a big deal',
-        'interesting. curious how this plays out ' +
-            'for the rest of the market',
-        '{topic} is moving so fast. hard to keep up',
-        'this is going to change things. ' +
-            '{keyPhrase}',
-        'was just talking about this yesterday. ' +
-            '{topic} is wild right now'
+        'didn\'t see this coming',
+        'been watching {topic}, this is big',
+        'curious how this plays out',
+        '{topic} is moving so fast',
+        'was literally talking about this yesterday'
     ],
     humor: [
-        'ok this one got me',
-        'the accuracy hurts',
-        'I feel personally attacked by this',
-        'showed this to my team and we all ' +
-            'felt called out',
-        'whoever made this has clearly lived it',
-        'why is this so accurate though',
-        'I should not be laughing this hard at work',
-        'the {topic} part is painfully accurate',
-        'sent this to my group chat immediately'
+        'lmaooo',
+        'hahaha too real',
+        'ok I laughed',
+        'didn\'t have to call us out like that',
+        'sent this to my team chat',
+        'me every monday honestly',
+        'this is why I have trust issues with {topic}',
+        'stop it, it\'s too early for this',
+        'alright alright fair enough haha'
     ],
     critique: [
-        'finally someone said it',
-        'this needed to be said. {keyPhrase}',
-        'agree 100%. more people need to hear this',
-        'brave take but honestly fair. {keyPhrase}',
-        'been thinking this for a while. glad ' +
-            'someone put it into words',
-        'this is the kind of honest take we need ' +
-            'more of on here',
-        'uncomfortable truths. {keyPhrase}',
-        'the {topic} industry really needs ' +
-            'this conversation'
+        'fair point honestly',
+        'been thinking about this too',
+        'interesting perspective',
+        'yeah this keeps coming up lately',
+        '{keyPhrase} - interesting take'
     ],
     motivation: [
-        'came at the right time. saving this',
-        'keeping this for the tough days',
-        'the part about {topic} really hit home',
-        'good reminder when things get hard',
-        'forwarding this to someone who could ' +
-            'use it today',
-        'simple but powerful. {keyPhrase}',
-        'more of this mindset please'
+        'needed to hear this today',
+        'forwarding this to a friend',
+        'the {topic} part is so true',
+        'yeah, good reminder'
     ],
     project: [
-        'clean execution. {topic} needs more ' +
-            'people actually building',
-        'just checked it out. solid work',
-        'the {topic} space needs more builders ' +
-            'like this',
-        'shipping over talking. always respect ' +
-            'people who build in public',
-        'bookmarked. going to try this out',
-        'how long did it take to build? the ' +
-            '{topic} part looks well thought out',
-        'interesting approach. saving for reference'
+        'just checked it out, pretty cool',
+        'how long did this take?',
+        'is the code open source?',
+        'the {topic} part is nice, ' +
+            'what stack did you use?',
+        'bookmarked, might try this out'
     ],
     jobseeking: [
-        'hope you land something great soon. ' +
-            'sharing for visibility',
-        'boosting this. someone in my network ' +
-            'might have something',
-        'the right role is out there. rooting for you',
-        '{topic} people are in demand - won\'t ' +
-            'take long',
-        'reposting for reach. good luck!',
-        'your background is solid. sending good ' +
-            'vibes on the search',
+        'sharing for reach, good luck!',
+        'someone in my network might have ' +
+            'something, sharing',
+        'good luck with the search!',
+        '{topic} people are in demand, ' +
+            'you\'ll find something',
         'commented for the algorithm. you got this'
     ],
     newjob: [
@@ -318,24 +274,16 @@ const CATEGORY_TEMPLATES = {
         'earned it. excited for what comes next'
     ],
     generic: [
-        'interesting perspective. {keyPhrase}',
-        'this resonated more than expected. ' +
-            '{keyPhrase}',
-        'been seeing more posts about {topic} ' +
-            'lately and this one stands out',
-        'shared this with a colleague who was ' +
-            'just talking about {topic} yesterday',
-        'saving this for reference. {keyPhrase}',
-        'underrated take. more people in the ' +
-            '{topic} space should see this',
-        'the way you framed {topic} here made ' +
-            'something click for me',
-        'hadn\'t considered it from this angle. ' +
-            'good perspective'
+        'interesting take on {topic}',
+        'hadn\'t thought about it that way',
+        'a colleague was just talking about ' +
+            'this yesterday',
+        'yeah {keyPhrase}, makes sense',
+        'curious what others think about this'
     ]
 };
 
-const CATEGORY_TEMPLATES_PT = {
+var CATEGORY_TEMPLATES_PT = {
     hiring: [
         'vaga top, vou compartilhar na minha rede',
         'a área de {topic} tá muito aquecida',
@@ -348,193 +296,115 @@ const CATEGORY_TEMPLATES_PT = {
         'bom ver {topic} contratando'
     ],
     achievement: [
-        'grande marco. {topic} não é fácil de ' +
-            'entrar',
-        'merecido. ansioso pra ver o que vem ' +
-            'por aí',
-        'dá pra ver o trabalho por trás. {keyPhrase}',
-        'muito bom ver isso. {topic} precisa de ' +
-            'mais gente assim',
-        'o caminho até aqui não é fácil. animado ' +
-            'pra ver o que vc constrói',
-        'grande movimento. {topic} é uma ótima ' +
-            'área pra estar agora',
-        'isso inspira. vai com tudo'
+        'parabéns!',
+        'parabéns, boa sorte!',
+        'parabéns, sucesso!',
+        'parabéns!'
     ],
     technical: [
-        'ótima visualização. {topic} é daqueles ' +
-            'conceitos que faz sentido quando vc ' +
-            'vê um diagrama assim',
-        'a gente usa essa abordagem em produção. ' +
-            'o segredo é saber quando NÃO aplicar ' +
-            '{topic}',
-        'material de referência. sempre explico ' +
-            '{topic} pra juniors com exemplos assim',
-        'exatamente o tipo de conteúdo que torna ' +
-            '{topic} acessível pra mais devs',
-        'salvando. {topic} aparece em toda ' +
-            'entrevista de system design também',
-        'tenho pensado muito nisso ultimamente. ' +
-            '{keyPhrase}',
-        'passei por algo parecido. {topic} é ' +
-            'difícil de acertar',
-        'isso é super subestimado. mais gente ' +
-            'precisa falar sobre {topic}',
-        'sim! {keyPhrase} - a gente aprendeu ' +
-            'isso da pior forma também',
-        'explicação limpa. a separação de ' +
-            'responsabilidades é o que torna ' +
-            '{topic} tão poderoso na prática',
-        'refatorei um módulo inteiro usando essa ' +
-            'abordagem. {topic} deixou o código ' +
-            'muito mais sustentável',
-        'esse é o tipo de post que eu queria que ' +
-            'existisse quando eu tava aprendendo ' +
-            '{topic}. claro e prático'
+        'a gente passou por isso mês passado, ' +
+            'queria ter visto esse diagrama antes',
+        'o pulo do gato com {topic} é saber ' +
+            'quando NÃO usar',
+        'tive que aprender {topic} no susto, ' +
+            'isso aqui teria ajudado demais',
+        'salvando, {topic} sempre cai em entrevista',
+        '{keyPhrase} - é, aprendi na marra também',
+        'a gente debateu exatamente isso no time ' +
+            'semana passada',
+        'como vc lida com {topic} em escala? ' +
+            'é aí que complica',
+        'nosso time migrou pra essa abordagem ' +
+            'e fez diferença real'
     ],
     question: [
-        'sinceramente depende. mas tendendo pra ' +
+        'depende do contexto mas eu iria de ' +
             '{keyPhrase}',
-        'boa pergunta - também fico indo e ' +
-            'voltando nisso',
-        'a gente tentou várias abordagens com ' +
-            '{topic} e a resposta sempre foi "depende"',
-        'também curioso sobre isso, seguindo ' +
-            'pelas respostas',
-        'esse é daqueles temas que cada um tem ' +
-            'uma opinião diferente. pra mim, {keyPhrase}',
-        'boa thread. {topic} é uma daquelas ' +
-            'coisas que só fazendo pra entender'
+        'também fico nessa dúvida',
+        'a gente tentou dos dois jeitos e {topic} ' +
+            'sempre foi "depende"',
+        'seguindo, curioso pelas respostas',
+        'pra mim {keyPhrase}, mas entendo ' +
+            'o outro lado'
     ],
     tips: [
-        'o ponto sobre {topic} tá certíssimo. ' +
-            'salvei',
-        'salvando. prático e direto ao ponto',
-        'queria ter visto isso uns anos atrás. ' +
-            '{keyPhrase}',
-        'simples mas eficaz. mandei pro time',
-        'a dica de {topic} sozinha já vale o post',
-        'anotando. {keyPhrase}',
-        'conselho subestimado. principalmente a ' +
-            'parte de {topic}'
+        'a de {topic} é muito boa',
+        'queria ter ouvido {keyPhrase} ' +
+            'uns 2 anos atrás',
+        'mandei pro time',
+        'só a dica de {topic} já vale'
     ],
     story: [
-        'pouca gente fala sobre {topic} de ' +
-            'verdade. bom que vc falou',
-        '{keyPhrase}. essa parte pegou diferente',
-        'passei por algo parecido. muda a ' +
-            'perspectiva',
-        'mais disso no LinkedIn por favor',
-        'me identifico mais do que vc imagina',
-        'a honestidade aqui é rara. {topic} ' +
-            'raramente é discutido assim',
-        'real. {keyPhrase}'
+        'passei por algo parecido, muda ' +
+            'a perspectiva',
+        'vc não vê gente falando de {topic} ' +
+            'assim com essa honestidade',
+        '{keyPhrase} - é, essa parte',
+        'valeu por compartilhar'
     ],
     news: [
-        'eita não esperava essa',
-        'acompanhando {topic} de perto - isso ' +
-            'é grande',
-        'interessante. curioso como isso afeta ' +
-            'o resto do mercado',
-        '{topic} tá andando rápido demais. ' +
-            'difícil acompanhar',
-        'isso vai mudar as coisas. {keyPhrase}',
-        'tava falando sobre isso ontem. {topic} ' +
-            'tá insano'
+        'eita, não esperava essa',
+        'acompanhando {topic}, isso é grande',
+        'curioso como isso vai afetar o mercado',
+        '{topic} tá voando',
+        'tava falando disso ontem literalmente'
     ],
     humor: [
-        'ok essa me pegou',
-        'a precisão dói',
-        'me senti pessoalmente atacado',
-        'mostrei pro time e todo mundo se sentiu ' +
-            'representado',
-        'quem fez isso claramente já viveu',
-        'por que isso é tão preciso',
-        'não deveria tá rindo tanto no trabalho',
-        'a parte de {topic} é dolorosamente precisa',
-        'mandei pro grupo na hora'
+        'kkkkk',
+        'hahahaha real demais',
+        'ok eu ri',
+        'não precisava me atacar assim',
+        'mandei pro grupo do time',
+        'eu toda segunda basicamente',
+        'por isso que eu tenho trauma de {topic}',
+        'para, é cedo demais pra isso',
+        'tá bom tá bom justo hahaha'
     ],
     critique: [
-        'finalmente alguém falou',
-        'isso precisava ser dito. {keyPhrase}',
-        'concordo 100%. mais gente precisa ouvir isso',
-        'take corajoso mas honesto. {keyPhrase}',
-        'penso nisso faz tempo. bom que alguém ' +
-            'colocou em palavras',
-        'esse tipo de honestidade que a gente ' +
-            'precisa mais aqui',
-        'verdades inconvenientes. {keyPhrase}',
-        'a indústria de {topic} precisa muito ' +
-            'dessa conversa'
+        'justo, faz sentido',
+        'tô pensando nisso também',
+        'perspectiva interessante',
+        'esse assunto tá aparecendo bastante',
+        '{keyPhrase} - ponto interessante'
     ],
     motivation: [
-        'chegou na hora certa. salvando',
-        'guardando isso pros dias difíceis',
-        'a parte sobre {topic} me pegou',
-        'bom lembrete quando as coisas apertam',
-        'mandando pra alguém que pode precisar ' +
-            'disso hoje',
-        'simples mas poderoso. {keyPhrase}',
-        'mais dessa mentalidade por favor'
+        'precisava ouvir isso hoje',
+        'mandei pra um amigo',
+        'a parte de {topic} é muito real',
+        'é, bom lembrete'
     ],
     project: [
-        'execução limpa. {topic} precisa de mais ' +
-            'gente construindo',
-        'dei uma olhada. trabalho sólido',
-        'a área de {topic} precisa de mais builders ' +
-            'assim',
-        'shipar > falar. sempre respeito quem ' +
-            'constrói em público',
-        'salvei. vou testar',
-        'quanto tempo levou? a parte de {topic} ' +
-            'parece bem pensada',
-        'abordagem interessante. salvando pra ' +
-            'referência'
+        'dei uma olhada, bem legal',
+        'quanto tempo levou?',
+        'o código tá aberto?',
+        'a parte de {topic} ficou boa, ' +
+            'qual stack vc usou?',
+        'salvei, quero testar'
     ],
     jobseeking: [
-        'espero que ache algo incrível logo. ' +
-            'compartilhando pra dar visibilidade',
-        'dando boost. alguém da minha rede pode ' +
-            'ter algo',
-        'a vaga certa tá aí. torcendo por vc',
-        'gente de {topic} tá em alta - não vai ' +
-            'demorar',
-        'repostando pro alcance. boa sorte!',
-        'seu perfil é muito bom. mandando ' +
-            'boas energias na busca',
-        'comentando pro algoritmo. vc consegue'
+        'compartilhando, boa sorte!',
+        'alguém da minha rede pode ter algo, ' +
+            'compartilhando',
+        'boa sorte na busca!',
+        'gente de {topic} tá em alta, ' +
+            'vai dar certo'
     ],
     newjob: [
-        'grande movimento. {topic} é uma ótima ' +
-            'área pra estar agora',
-        'parece encaixar bem. animado por vc',
-        'eles ganharam alguém bom. desejando o ' +
-            'melhor',
-        'acompanhando sua trajetória. bom ver isso',
-        'novo capítulo. vai fazer a diferença',
-        '{topic} tem sorte de ter vc. ansioso pra ' +
-            'ver o que vc constrói',
-        'merecido. animado pelo que vem por aí'
+        'parabéns pela nova fase!',
+        'show, boa sorte!',
+        'boa, sucesso!',
+        'parabéns!'
     ],
     generic: [
-        'perspectiva interessante. {keyPhrase}',
-        'isso fez mais sentido do que eu esperava. ' +
-            '{keyPhrase}',
-        'tô vendo mais posts sobre {topic} ' +
-            'ultimamente e esse se destaca',
-        'mandei pra um colega que tava falando ' +
-            'sobre {topic} ontem mesmo',
-        'salvando pra referência. {keyPhrase}',
-        'take subestimado. mais gente da área de ' +
-            '{topic} devia ver isso',
-        'a forma que vc colocou {topic} aqui fez ' +
-            'algo clicar pra mim',
-        'não tinha pensado por esse ângulo. boa ' +
-            'perspectiva'
+        'olha interessante sobre {topic}',
+        'não tinha pensado por esse lado',
+        'um colega tava falando disso ontem',
+        'é, {keyPhrase}, faz sentido',
+        'curioso o que os outros acham disso'
     ]
 };
 
-const CATEGORY_FOLLOW_UPS = {
+var CATEGORY_FOLLOW_UPS = {
     technical: [
         '', '',
         ' what stack are you using for this?',
@@ -595,7 +465,7 @@ const CATEGORY_FOLLOW_UPS = {
     ]
 };
 
-const CATEGORY_FOLLOW_UPS_PT = {
+var CATEGORY_FOLLOW_UPS_PT = {
     technical: [
         '', '',
         ' qual stack vc tá usando?',
@@ -655,19 +525,19 @@ const CATEGORY_FOLLOW_UPS_PT = {
     ]
 };
 
-const OPENERS = [
-    '', '', '', '',
-    'honestly, ', 'yeah ', 'this - ',
-    'so true. ', '', ''
+var OPENERS = [
+    '', '', '', '', '',
+    'honestly, ', 'yeah, ', '',
+    '', ''
 ];
 
-const OPENERS_PT = [
-    '', '', '', '',
-    'sinceramente, ', 'sim ', 'isso - ',
-    'muito real. ', '', ''
+var OPENERS_PT = [
+    '', '', '', '', '',
+    'sinceramente, ', '', '',
+    '', ''
 ];
 
-const TOPIC_MAP = [
+var TOPIC_MAP = [
     { pattern: /\b(design pattern|adapter pattern|strategy pattern|factory pattern|observer pattern|singleton|builder pattern|decorator pattern|facade pattern|proxy pattern|padr[ãõ][oe]s?\sde\sprojeto|adapter|strategy)\b/i, label: 'design patterns' },
     { pattern: /\b(solid|clean code|clean architecture|hexagonal|ddd|domain.driven|arquitetura\slimpa|arquitetura\shexagonal)\b/i, label: 'software architecture' },
     { pattern: /\b(artificial intelligence|ai|gpt|llm|genai|copilot|chatgpt|claude)\b/i, label: 'AI' },
@@ -702,12 +572,12 @@ const TOPIC_MAP = [
     { pattern: /\b(refactor|legacy|tech debt|technical debt|migration)\b/i, label: 'code quality' }
 ];
 
-const HIGH_SIGNAL_CATEGORIES = new Set([
+var HIGH_SIGNAL_CATEGORIES = new Set([
     'achievement', 'hiring', 'jobseeking', 'newjob',
     'humor'
 ]);
 
-const PT_MARKERS = [
+var PT_MARKERS = [
     'você', 'vocês', 'não', 'está', 'também',
     'muito', 'como', 'isso', 'aqui', 'mais',
     'sobre', 'ainda', 'quando', 'porque', 'então',
@@ -739,7 +609,7 @@ const PT_MARKERS = [
     'deveria', 'kkk', 'rsrs', 'hein', 'eita'
 ];
 
-const CONCEPT_PATTERNS = [
+var CONCEPT_PATTERNS = [
     /\b(\w+[\s-]\w*(?:Pattern|Architecture|Design|Framework|Protocol|Algorithm|Principle|Strategy|Approach|System|Service|Layer|Pipeline|Queue|Cache|Stack))\b/gi,
     /\b((?:adapter|strategy|factory|observer|singleton|decorator|facade|proxy|builder|mediator|command|iterator)\s*(?:pattern)?)\b/gi,
     /\b(SOLID|DRY|KISS|YAGNI|TDD|BDD|DDD|CQRS|MVC|MVVM|REST|GraphQL|gRPC|OAuth|JWT|CI\/CD)\b/g,
@@ -755,521 +625,229 @@ const CONCEPT_PATTERNS = [
     /\b(Module\s+Federation|Micro\s+Frontend|Server\s+Components|Edge\s+Computing)\b/gi
 ];
 
-const COMPOSED_EN = {
+var COMPOSED_EN = {
     technical: [
-        (c) => 'great breakdown of ' + c[0] +
-            (c[1]
-                ? '. the connection with ' + c[1] +
-                  ' makes a lot of sense'
-                : '. really clear example'),
-        (c) => 'we had a similar discussion about ' +
-            c[0] + ' at work recently' +
-            (c[1] ? ', ended up going with ' + c[1] : '') +
-            '. sharing this with the team',
-        (c) => 'went through this exact problem ' +
-            'with ' + c[0] + ' in production' +
-            (c[1]
-                ? ', combining it with ' + c[1] +
-                  ' helped a lot'
-                : '. wish I had this reference before'),
-        (c) => c[0] + ' explained with a real use case ' +
-            'like this makes all the difference',
-        (c) => 'saving this. ' + c[0] +
-            ' keeps coming up in code reviews and ' +
-            'this is one of the better explanations',
-        (c) => 'interesting approach with ' + c[0] +
-            (c[1]
-                ? ' and ' + c[1]
-                : '') +
-            '. definitely trying this',
+        (c) => 'we ran into ' + c[0] +
+            ' last month' +
+            (c[1] ? ', ended up going with ' + c[1]
+                : '') + '. wish we had this then',
+        (c) => c[0] + ' looks simple until you ' +
+            'actually build it',
         (c) => 'had to learn ' + c[0] +
-            ' the hard way. this would have saved ' +
-            'me a lot of time',
-        (c) => c[0] + ' seems straightforward until ' +
-            'you actually implement it. good to ' +
-            'see the details here',
+            ' on a deadline, not fun. ' +
+            'bookmarking this',
+        (c) => 'how do you handle ' + c[0] +
+            ' at scale though?',
+        (c) => 'our team debated ' + c[0] +
+            (c[1] ? ' vs ' + c[1] : '') +
+            ' just last week haha',
         (c) => 'been using ' + c[0] +
-            ' for a while but never thought about' +
-            (c[1]
-                ? ' combining it with ' + c[1] +
-                  '. interesting idea'
-                : ' it from this angle'),
-        (c) => 'the ' + c[0] + ' example is really ' +
-            'practical' +
-            (c[1]
-                ? '. the ' + c[1] + ' comparison ' +
-                  'helps it click'
-                : ''),
+            ' for a while but never thought ' +
+            'about it this way',
     ],
     hiring: [
-        (c) => (c[0] ? c[0] : 'this stack') +
-            (c[1] ? ' + ' + c[1] : '') +
-            ' is a solid combination. sharing with ' +
-            'my network',
-        (c) => (c[0] ? c[0] + ' roles' : 'roles like this') +
-            ' are hard to find. is this remote?',
-        (c) => 'know a few people who would be a ' +
-            'great fit. sharing',
-        (c) => (c[0] || 'this role') +
-            ' sounds interesting. what does the ' +
-            'day-to-day look like?',
+        (c) => 'is this remote friendly?',
+        (c) => 'know someone who\'d be a fit, sharing',
+        (c) => 'what\'s the team size' +
+            (c[0] ? ' for ' + c[0] : '') + '?',
+        (c) => 'cool, what\'s the stack?',
+        (c) => 'sharing for reach',
     ],
     achievement: [
-        (c) => 'huge milestone' +
-            (c[0]
-                ? '. ' + c[0] + ' is not easy to ' +
-                  'break into'
-                : '. takes real work to get there'),
-        (c) => 'earned it. ' +
-            (c[0]
-                ? 'excited to see what you do ' +
-                  'with ' + c[0]
-                : 'exciting times ahead'),
-        (c) => 'big move' +
-            (c[0]
-                ? '. ' + c[0] + ' is a great space ' +
-                  'to be in right now'
-                : '. looking forward to what comes next'),
-        (c) => (c[0]
-                ? c[0] + ' needs more people like you'
-                : 'the journey to get here is no joke') +
-            '. looking forward to seeing what you ' +
-            'build next',
+        (c) => 'congrats!',
+        (c) => 'congrats, good luck!',
+        (c) => 'happy for you!',
     ],
     question: [
-        (c) => 'good question' +
-            (c[0]
-                ? '. ' + c[0] + ' really depends ' +
-                  'on the context and team'
-                : '') + '. curious to see the answers',
-        (c) => 'honestly it depends, but ' +
-            (c[0]
-                ? 'with ' + c[0] + ' I would say'
+        (c) => 'honestly depends, ' +
+            (c[0] ? 'with ' + c[0] + ' I\'d say'
                 : 'in my experience') +
-            ' start simple and iterate from there',
-        (c) => 'been thinking about this too' +
-            (c[0]
-                ? '. ' + c[0] + ' has so many ' +
-                  'valid approaches'
-                : '') +
-            '. following for the discussion',
+            ' start simple',
+        (c) => 'been going back and forth on this too' +
+            (c[0] ? ', especially with ' + c[0] : ''),
+        (c) => 'following, curious what others think',
     ],
     tips: [
-        (c) => 'solid advice' +
-            (c[0]
-                ? ', especially the ' + c[0] + ' part'
-                : '') +
-            '. bookmarked',
-        (c) => 'wish I had this a couple years ago' +
-            (c[0]
-                ? '. the ' + c[0] + ' tip alone is ' +
-                  'worth it'
-                : ''),
-        (c) => 'this is practical. ' +
-            (c[0]
-                ? c[0] + ' is one of those things ' +
-                  'you usually learn the hard way'
-                : 'saving for reference'),
-        (c) => 'good stuff' +
-            (c[0]
-                ? '. ' + c[0] + ' is underrated ' +
-                  'and people skip it too often'
-                : '. simple but effective'),
+        (c) => c[0]
+            ? 'the ' + c[0] + ' one is so true'
+            : 'bookmarking this',
+        (c) => 'wish I knew ' +
+            (c[0] || 'this') + ' 2 years ago',
+        (c) => 'sending this to my team',
     ],
     story: [
-        (c) => 'the honesty here is rare' +
-            (c[0]
-                ? '. the ' + c[0] + ' part is ' +
-                  'really relatable'
-                : '') +
-            '. more people should talk about it',
-        (c) => 'went through something similar' +
-            (c[0]
-                ? ' with ' + c[0]
-                : '') +
-            '. appreciate the honesty',
-        (c) => 'posts like this actually help people' +
-            (c[0]
-                ? '. ' + c[0] + ' is tough and ' +
-                  'nobody talks about it enough'
-                : ''),
+        (c) => 'been through something similar' +
+            (c[0] ? ' with ' + c[0] : ''),
+        (c) => 'appreciate you sharing this',
+        (c) => 'you don\'t hear people talk about ' +
+            (c[0] || 'this') + ' honestly like this',
     ],
     news: [
-        (c) => (c[0] ? c[0] + ' is' : 'this is') +
-            ' moving fast. did not expect this',
-        (c) => 'been following ' +
+        (c) => (c[0] || 'this') +
+            ' is moving fast',
+        (c) => 'been watching ' +
             (c[0] || 'this') +
-            ' closely. curious where it goes',
-        (c) => 'interesting. ' +
-            (c[0] ? c[0] : 'this') +
-            ' could change a lot of things',
+            ', curious where it goes',
     ],
     humor: [
-        (c) => 'too accurate' +
-            (c[0]
-                ? '. the ' + c[0] + ' part especially'
-                : ''),
-        (c) => 'showed this to my team and everyone ' +
-            'felt called out',
-        (c) => 'the accuracy is painful' +
-            (c[0]
-                ? '. ' + c[0] + ' devs know exactly ' +
-                  'what this feels like'
-                : ''),
-        (c) => 'ok this one got me' +
-            (c[0]
-                ? '. the ' + c[0] + ' bit is spot on'
-                : '. so true'),
+        (c) => 'hahaha' +
+            (c[0] ? ' the ' + c[0] + ' part' : ''),
+        (c) => 'lol sent this to my team chat',
+        (c) => 'ok I laughed' +
+            (c[0] ? ', the ' + c[0] +
+                ' bit is too real' : ''),
+        (c) => 'didn\'t have to call us out ' +
+            'like that haha',
     ],
     critique: [
-        (c) => 'glad someone said it' +
-            (c[0] ? ' about ' + c[0] : '') +
-            '. needed to be said',
-        (c) => 'been thinking the same thing' +
-            (c[0]
-                ? ' about ' + c[0]
-                : '') +
-            '. valid points here',
-        (c) => 'fair take' +
-            (c[0]
-                ? '. ' + c[0] + ' definitely needs ' +
-                  'more of this kind of discussion'
-                : '. more people should be honest ' +
-                  'about this'),
+        (c) => 'fair point' +
+            (c[0] ? ' about ' + c[0] : ''),
+        (c) => 'been thinking about this too',
+        (c) => 'interesting take' +
+            (c[0] ? ' on ' + c[0] : ''),
+        (c) => 'yeah this comes up a lot in' +
+            ' conversations lately',
     ],
     motivation: [
-        (c) => 'came at the right time' +
-            (c[0]
-                ? '. the ' + c[0] + ' part resonated'
-                : ''),
-        (c) => 'keeping this for the tough days' +
-            (c[0]
-                ? '. ' + c[0] + ' is not an easy path'
-                : ''),
-        (c) => 'good reminder' +
-            (c[0]
-                ? '. ' + c[0] + ' takes a lot of ' +
-                  'persistence'
-                : '. easy to forget this when ' +
-                  'things get hard'),
+        (c) => 'needed to hear this today',
+        (c) => 'forwarding this',
+        (c) => 'yeah' +
+            (c[0] ? ', ' + c[0] + ' is no joke' : '') +
+            '. good reminder',
     ],
     project: [
-        (c) => 'this is really cool' +
-            (c[0] ? '. ' + c[0] : '') +
-            (c[1]
-                ? ' with ' + c[1] + ' is a nice touch'
-                : ' looks solid') +
-            '. how long did it take?',
-        (c) => 'nice work' +
-            (c[0]
-                ? '. the ' + c[0] + ' part is well done'
-                : '') +
-            '. is the code open source?',
-        (c) => 'was looking for something like this' +
-            (c[0]
-                ? '. the ' + c[0] + ' approach is clean'
-                : ''),
+        (c) => 'how long did ' +
+            (c[0] || 'this') + ' take?',
+        (c) => 'just checked it out, cool. ' +
+            'is the code open source?',
+        (c) => 'bookmarked, might try this',
     ],
     jobseeking: [
-        (c) => 'sharing for visibility. ' +
-            (c[0]
-                ? c[0] + ' professionals are in demand'
-                : 'strong profile'),
-        (c) => (c[0]
-                ? c[0] + ' background'
-                : 'your profile') +
-            ' is solid. should not take long',
-        (c) => 'good luck with the search' +
-            (c[0]
-                ? '. ' + c[0] + ' roles are out there'
-                : '') +
-            '. rooting for you',
+        (c) => 'sharing for reach, good luck!',
+        (c) => (c[0] || 'your background') +
+            ' is in demand, you\'ll find something',
     ],
     newjob: [
-        (c) => 'huge move. ' +
-            (c[0] ? c[0] + ' is' : 'that is') +
-            ' a great space to be in',
-        (c) => 'they got a good one' +
-            (c[0]
-                ? '. ' + c[0] + ' is lucky to have you'
-                : '. wishing you the best'),
-        (c) => 'been following your journey. ' +
-            (c[0]
-                ? c[0] + ' sounds like a great fit'
-                : 'happy to see this'),
+        (c) => 'congrats!',
+        (c) => 'nice, good luck!',
     ],
     generic: [
-        (c) => 'interesting angle' +
-            (c[0]
-                ? '. ' + c[0] + ' is worth digging into'
-                : '. more people should see this'),
         (c) => 'hadn\'t thought about ' +
-            (c[0] || 'it') +
-            ' this way. good perspective',
-        (c) => 'shared this with my team. ' +
-            (c[0]
-                ? c[0] + ' keeps coming up in our ' +
-                  'discussions'
-                : 'relevant to what we are working on'),
+            (c[0] || 'it') + ' that way',
+        (c) => 'a coworker was just talking about ' +
+            (c[0] || 'this') + ' yesterday',
+        (c) => 'interesting take',
     ]
 };
 
-const COMPOSED_PT = {
+var COMPOSED_PT = {
     technical: [
-        (c) => 'boa explicação de ' + c[0] +
-            (c[1]
-                ? '. a relação com ' + c[1] +
-                  ' faz bastante sentido'
-                : '. exemplo bem claro'),
-        (c) => 'a gente teve uma discussão parecida ' +
-            'sobre ' + c[0] + ' recentemente' +
-            (c[1] ? ', acabamos indo com ' + c[1] : '') +
-            '. mandei pro time',
-        (c) => 'passei por esse problema com ' +
-            c[0] + ' em produção' +
-            (c[1]
-                ? ', combinar com ' + c[1] +
-                  ' ajudou bastante'
-                : '. queria ter essa referência antes'),
-        (c) => c[0] + ' explicado com caso de uso real ' +
-            'assim faz toda a diferença',
-        (c) => 'salvando. ' + c[0] +
-            ' aparece bastante em code review e ' +
-            'essa é uma das melhores explicações',
-        (c) => 'abordagem interessante com ' + c[0] +
-            (c[1]
-                ? ' e ' + c[1]
-                : '') +
-            '. vou tentar isso',
-        (c) => 'aprendi ' + c[0] +
-            ' da forma difícil. isso teria me ' +
-            'economizado bastante tempo',
+        (c) => 'a gente passou por isso com ' + c[0] +
+            ' mês passado' +
+            (c[1] ? ', acabamos indo de ' + c[1] : ''),
         (c) => c[0] + ' parece simples até vc ' +
-            'implementar de verdade. bom ver ' +
-            'os detalhes aqui',
+            'implementar de verdade',
+        (c) => 'tive que aprender ' + c[0] +
+            ' no susto, isso teria ajudado',
+        (c) => 'como vc lida com ' + c[0] +
+            ' em escala?',
+        (c) => 'o time debateu ' + c[0] +
+            (c[1] ? ' vs ' + c[1] : '') +
+            ' semana passada haha',
         (c) => 'uso ' + c[0] +
-            ' faz um tempo mas nunca pensei' +
-            (c[1]
-                ? ' em combinar com ' + c[1] +
-                  '. ideia interessante'
-                : ' por esse ângulo'),
-        (c) => 'o exemplo de ' + c[0] +
-            ' é bem prático' +
-            (c[1]
-                ? '. a comparação com ' + c[1] +
-                  ' ajuda a entender'
-                : ''),
+            ' faz tempo mas nunca pensei ' +
+            'por esse lado',
     ],
     hiring: [
-        (c) => (c[0] ? c[0] : 'essa stack') +
-            (c[1] ? ' + ' + c[1] : '') +
-            ' é uma boa combinação. compartilhando',
-        (c) => (c[0] ? 'vagas de ' + c[0] : 'vagas assim') +
-            ' são difíceis de achar. aceita remoto?',
-        (c) => 'conheço gente que se encaixaria bem. ' +
-            'compartilhando',
-        (c) => (c[0] || 'essa vaga') +
-            ' parece interessante. como é o dia a dia?',
+        (c) => 'aceita remoto?',
+        (c) => 'conheço gente que pode se encaixar',
+        (c) => 'como é o time' +
+            (c[0] ? ' de ' + c[0] : '') + '?',
+        (c) => 'compartilhando pra dar alcance',
+        (c) => 'qual a stack?',
     ],
     achievement: [
-        (c) => 'grande marco' +
-            (c[0]
-                ? '. ' + c[0] + ' não é fácil de ' +
-                  'entrar'
-                : '. dá pra ver o trabalho por trás'),
-        (c) => 'merecido. ' +
-            (c[0]
-                ? 'ansioso pra ver o que vc faz ' +
-                  'com ' + c[0]
-                : 'momento muito bom'),
-        (c) => 'grande movimento' +
-            (c[0]
-                ? '. ' + c[0] + ' é uma área ótima ' +
-                  'pra estar agora'
-                : '. animado pelo que vem por aí'),
-        (c) => (c[0]
-                ? c[0] + ' precisa de mais gente assim'
-                : 'o caminho até aqui não é fácil') +
-            '. ansioso pra ver o que vc constrói',
+        (c) => 'parabéns!',
+        (c) => 'parabéns, boa sorte!',
+        (c) => 'parabéns, sucesso!',
     ],
     question: [
-        (c) => 'boa pergunta' +
-            (c[0]
-                ? '. ' + c[0] + ' depende muito ' +
-                  'do contexto e do time'
-                : '') + '. curioso pelas respostas',
-        (c) => 'sinceramente depende, mas ' +
-            (c[0]
-                ? 'com ' + c[0] + ' eu diria'
+        (c) => 'depende, mas ' +
+            (c[0] ? 'com ' + c[0] + ' eu iria de'
                 : 'pela minha experiência') +
-            ' começar simples e iterar',
-        (c) => 'também tenho pensado nisso' +
-            (c[0]
-                ? '. ' + c[0] + ' tem muitas ' +
-                  'abordagens válidas'
-                : '') +
-            '. seguindo a discussão',
+            ' começar simples',
+        (c) => 'também fico nessa' +
+            (c[0] ? ', ainda mais com ' + c[0] : ''),
+        (c) => 'seguindo, curioso pelas respostas',
     ],
     tips: [
-        (c) => 'conselho sólido' +
-            (c[0]
-                ? ', principalmente a parte de ' + c[0]
-                : '') +
-            '. salvei',
-        (c) => 'queria ter visto isso uns anos atrás' +
-            (c[0]
-                ? '. a dica de ' + c[0] + ' sozinha ' +
-                  'já vale'
-                : ''),
-        (c) => 'bem prático. ' +
-            (c[0]
-                ? c[0] + ' é uma daquelas coisas que ' +
-                  'a gente geralmente aprende errando'
-                : 'salvando pra referência'),
-        (c) => 'bom demais' +
-            (c[0]
-                ? '. ' + c[0] + ' é subestimado e ' +
-                  'muita gente pula'
-                : '. simples mas eficaz'),
+        (c) => c[0]
+            ? 'a de ' + c[0] + ' é muito boa'
+            : 'salvando',
+        (c) => 'queria ter ouvido isso ' +
+            'uns 2 anos atrás',
+        (c) => 'mandei pro time',
     ],
     story: [
-        (c) => 'a honestidade aqui é rara' +
-            (c[0]
-                ? '. a parte de ' + c[0] + ' é bem ' +
-                  'identificável'
-                : '') +
-            '. mais gente devia falar sobre isso',
         (c) => 'passei por algo parecido' +
-            (c[0]
-                ? ' com ' + c[0]
-                : '') +
-            '. valeu pela honestidade',
-        (c) => 'post assim que realmente ajuda ' +
-            'as pessoas' +
-            (c[0]
-                ? '. ' + c[0] + ' é difícil e ' +
-                  'pouca gente fala sobre'
-                : ''),
+            (c[0] ? ' com ' + c[0] : ''),
+        (c) => 'valeu por compartilhar',
+        (c) => 'vc não vê gente falando de ' +
+            (c[0] || 'isso') + ' assim',
     ],
     news: [
-        (c) => (c[0] ? c[0] + ' tá' : 'isso tá') +
-            ' andando rápido. não esperava',
+        (c) => (c[0] || 'isso') + ' tá voando',
         (c) => 'acompanhando ' +
             (c[0] || 'isso') +
-            ' de perto. curioso pra ver onde vai dar',
-        (c) => 'interessante. ' +
-            (c[0] ? c[0] : 'isso') +
-            ' pode mudar muita coisa',
+            ', curioso onde vai dar',
     ],
     humor: [
-        (c) => 'preciso demais' +
-            (c[0]
-                ? '. a parte de ' + c[0] + ' principalmente'
-                : ''),
-        (c) => 'mostrei pro time e todo mundo se ' +
-            'sentiu representado',
-        (c) => 'a precisão dói' +
-            (c[0]
-                ? '. quem trabalha com ' + c[0] +
-                  ' sabe exatamente como é'
-                : ''),
-        (c) => 'essa me pegou' +
-            (c[0]
-                ? '. a parte de ' + c[0] + ' é certeira'
-                : '. muito real'),
+        (c) => 'kkkkk' +
+            (c[0] ? ' a parte de ' + c[0] : ''),
+        (c) => 'mandei pro grupo do time',
+        (c) => 'ok eu ri' +
+            (c[0] ? ', ' + c[0] +
+                ' é real demais' : ''),
+        (c) => 'não precisava atacar assim hahaha',
     ],
     critique: [
-        (c) => 'bom que alguém falou' +
-            (c[0] ? ' sobre ' + c[0] : '') +
-            '. precisava ser dito',
-        (c) => 'tenho pensado a mesma coisa' +
-            (c[0]
-                ? ' sobre ' + c[0]
-                : '') +
-            '. pontos válidos',
-        (c) => 'take justo' +
-            (c[0]
-                ? '. ' + c[0] + ' precisa de mais ' +
-                  'esse tipo de discussão'
-                : '. mais gente devia ser honesta ' +
-                  'sobre isso'),
+        (c) => 'justo' +
+            (c[0] ? ' sobre ' + c[0] : ''),
+        (c) => 'tô pensando nisso também',
+        (c) => 'ponto interessante' +
+            (c[0] ? ' sobre ' + c[0] : ''),
+        (c) => 'esse assunto tá aparecendo bastante' +
+            ' ultimamente',
     ],
     motivation: [
-        (c) => 'chegou na hora certa' +
-            (c[0]
-                ? '. a parte de ' + c[0] + ' fez sentido'
-                : ''),
-        (c) => 'guardando pra os dias difíceis' +
-            (c[0]
-                ? '. ' + c[0] + ' não é um caminho fácil'
-                : ''),
-        (c) => 'bom lembrete' +
-            (c[0]
-                ? '. ' + c[0] + ' exige muita ' +
-                  'persistência'
-                : '. fácil esquecer disso quando ' +
-                  'as coisas apertam'),
+        (c) => 'precisava ouvir isso hoje',
+        (c) => 'mandei pra um amigo',
+        (c) => 'é' +
+            (c[0] ? ', ' + c[0] + ' não é fácil' : '') +
+            '. bom lembrete',
     ],
     project: [
-        (c) => 'muito legal' +
-            (c[0] ? '. ' + c[0] : '') +
-            (c[1]
-                ? ' com ' + c[1] + ' ficou bom'
-                : ' tá sólido') +
-            '. quanto tempo levou?',
-        (c) => 'bom trabalho' +
-            (c[0]
-                ? '. a parte de ' + c[0] + ' ficou ' +
-                  'bem feita'
-                : '') +
-            '. o código é open source?',
-        (c) => 'tava procurando algo assim' +
-            (c[0]
-                ? '. a abordagem com ' + c[0] + ' é limpa'
-                : ''),
+        (c) => 'quanto tempo levou ' +
+            (c[0] || 'isso') + '?',
+        (c) => 'dei uma olhada, legal. ' +
+            'o código tá aberto?',
+        (c) => 'salvei, quero testar',
     ],
     jobseeking: [
-        (c) => 'compartilhando pra dar visibilidade. ' +
-            (c[0]
-                ? 'profissionais de ' + c[0] +
-                  ' estão em alta'
-                : 'perfil forte'),
-        (c) => (c[0]
-                ? 'experiência com ' + c[0]
-                : 'seu perfil') +
-            ' é sólida. não deve demorar',
-        (c) => 'boa sorte na busca' +
-            (c[0]
-                ? '. vagas de ' + c[0] + ' existem'
-                : '') +
-            '. torcendo por vc',
+        (c) => 'compartilhando, boa sorte!',
+        (c) => (c[0] || 'sua experiência') +
+            ' tá em alta, vai dar certo',
     ],
     newjob: [
-        (c) => 'grande movimento. ' +
-            (c[0] ? c[0] + ' é' : 'isso é') +
-            ' uma ótima área pra estar',
-        (c) => 'eles ganharam alguém bom' +
-            (c[0]
-                ? '. ' + c[0] + ' tem sorte de ter vc'
-                : '. desejando o melhor'),
-        (c) => 'acompanhando sua trajetória. ' +
-            (c[0]
-                ? c[0] + ' tá numa fase ótima agora'
-                : 'desejando o melhor'),
+        (c) => 'parabéns!',
+        (c) => 'show, boa sorte!',
     ],
     generic: [
-        (c) => 'ângulo interessante' +
-            (c[0]
-                ? '. ' + c[0] + ' vale aprofundar'
-                : 'mais gente devia ver isso'),
         (c) => 'não tinha pensado em ' +
-            (c[0] || 'isso') +
-            ' assim. boa perspectiva',
-        (c) => 'mandei pro time. ' +
-            (c[0]
-                ? c[0] + ' tem aparecido bastante nas ' +
-                  'nossas discussões'
-                : 'relevante pro que estamos trabalhando'),
+            (c[0] || 'isso') + ' assim',
+        (c) => 'um colega tava falando de ' +
+            (c[0] || 'isso') + ' ontem',
+        (c) => 'interessante',
     ]
 };
 

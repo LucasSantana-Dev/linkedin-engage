@@ -199,6 +199,8 @@ function saveState() {
             'feedReactCheckbox').checked,
         feedComment: document.getElementById(
             'feedCommentCheckbox').checked,
+        aiApiKey: document.getElementById(
+            'aiApiKeyInput').value,
         commentTemplates: document.getElementById(
             'commentTemplatesInput').value,
         skipKeywords: document.getElementById(
@@ -235,6 +237,12 @@ function saveState() {
 }
 
 function loadState() {
+    chrome.storage.local.get('groqApiKey', (data) => {
+        if (data.groqApiKey) {
+            document.getElementById('aiApiKeyInput')
+                .value = data.groqApiKey;
+        }
+    });
     chrome.storage.local.get('popupState', ({ popupState }) => {
         if (!popupState) {
             setActiveTemplate('senior');
@@ -333,6 +341,15 @@ function loadState() {
                 true;
             document.getElementById('commentSection')
                 .style.display = 'block';
+        }
+        if (popupState.aiApiKey &&
+            !document.getElementById('aiApiKeyInput')
+                .value) {
+            document.getElementById('aiApiKeyInput')
+                .value = popupState.aiApiKey;
+            chrome.storage.local.set({
+                groqApiKey: popupState.aiApiKey
+            });
         }
         if (popupState.commentTemplates) {
             document.getElementById('commentTemplatesInput').value =
@@ -743,13 +760,18 @@ function startFeedEngage() {
         'Navigating to feed...'
     );
 
+    const aiApiKey = document.getElementById(
+        'aiApiKeyInput'
+    ).value.trim();
+
     chrome.runtime.sendMessage({
         action: 'startFeedEngage',
         limit,
         react,
         comment,
         commentTemplates,
-        skipKeywords
+        skipKeywords,
+        aiApiKey
     }, handleLaunchResponse);
 }
 
@@ -1107,6 +1129,13 @@ document.getElementById('feedCommentCheckbox')
 
 document.getElementById('feedReactCheckbox')
     .addEventListener('change', saveState);
+document.getElementById('aiApiKeyInput')
+    .addEventListener('change', () => {
+        const key = document.getElementById(
+            'aiApiKeyInput').value.trim();
+        chrome.storage.local.set({ groqApiKey: key });
+        saveState();
+    });
 document.getElementById('companyQueryInput')
     .addEventListener('input', saveState);
 document.getElementById('targetCompanies')

@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2026-03-08
+
+### Fixed
+- **Robotic comment tone**: Complete rewrite of all EN + PT-BR templates (CATEGORY_TEMPLATES and COMPOSED variants) for natural, casual human tone — achievement comments simplified to "congrats!" style, humor uses "hahaha too real" / "kkkkk", technical references real anecdotes
+- **Humor misclassification**: Added structural humor detection (punchline patterns, contrast patterns, irony signals) — humor posts now correctly classified even without explicit humor keywords
+- **Author misattribution**: `getPostAuthor()` now skips social proof links ("X liked/commented/reposted") that appeared before the actual post author in DOM
+- **Critique misclassification**: Added critique boost for strong opinion signals ("hot take", "unpopular opinion", "overrated", "stop pretending") — opinion posts no longer classified as technical just because they mention tech terms
+- **Hiring comment phrasing**: Fixed composed hiring templates producing awkward "React is this remote friendly?" — concepts no longer prefixed to questions
+
+### Improved
+- **AI prompt anti-robotic overhaul**: Category-aware tone guide (humor → play along, achievement → short congrats, critique → engage with argument), explicit banned phrases list ("Great post", "Love this", "Thanks for sharing", etc.), max 120 chars, casual tone instruction
+- **Category field passed through full pipeline**: feed-engage → bridge → background for AI prompt context
+- **Template variety**: Hiring and critique composed pools expanded from 3 to 5 templates each (EN + PT)
+
+## [1.14.0] - 2026-03-08
+
+### Added
+- **AI-powered comment generation**: Groq API (llama-3.3-70b-versatile) integration for context-aware comments — runs in background service worker (bypasses LinkedIn CSP), with 15s timeout and template fallback
+- **Submit button proximity detection**: Distinguishes comment submit (~12px from editor) from action bar "Comment" buttons (~979px) using `editorRect.bottom - btnRect.top < 200px`
+- **TipTap/ProseMirror editor support**: Text input via `document.execCommand('insertText')` into `[role="textbox"][contenteditable="true"]`
+- **Bridge relay for AI comments**: MAIN → ISOLATED → background → ISOLATED → MAIN pipeline with `requestId` matching
+
+### Fixed
+- **LinkedIn March 2026 DOM redesign**: `feed-shared-update-v2`, `role="listitem"`, `data-urn`, `data-id` ALL REMOVED — posts now discovered as direct children of `[data-testid="mainFeed"]` with hashed CSS classes
+- **Language detection for PT-BR**: Fixed detection threshold for short Portuguese posts
+
 ## [1.13.0] - 2026-03-08
 
 ### Fixed

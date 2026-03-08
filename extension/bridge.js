@@ -113,6 +113,24 @@ window.addEventListener('message', (event) => {
             });
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_AI_COMMENT') {
+        chrome.runtime.sendMessage({
+            action: 'generateAIComment',
+            postText: event.data.postText,
+            existingComments: event.data.existingComments,
+            author: event.data.author,
+            authorTitle: event.data.authorTitle,
+            lang: event.data.lang,
+            category: event.data.category,
+            apiKey: event.data.apiKey
+        }, (response) => {
+            window.postMessage({
+                type: 'LINKEDIN_BOT_AI_COMMENT_RESULT',
+                comment: response?.comment || null,
+                requestId: event.data.requestId
+            }, '*');
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({
             action: 'progress',

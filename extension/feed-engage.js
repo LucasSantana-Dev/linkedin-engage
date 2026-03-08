@@ -12,6 +12,41 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             pauseChance: 0.05, scrollMultiplier: 1
         };
 
+    let aiRequestId = 0;
+    function requestAIComment(data) {
+        return new Promise((resolve) => {
+            const rid = ++aiRequestId;
+            const timeout = setTimeout(
+                () => {
+                    window.removeEventListener(
+                        'message', handler
+                    );
+                    resolve(null);
+                }, 15000
+            );
+            function handler(event) {
+                if (event.data?.type !==
+                    'LINKEDIN_BOT_AI_COMMENT_RESULT')
+                    return;
+                if (event.data.requestId !== rid)
+                    return;
+                clearTimeout(timeout);
+                window.removeEventListener(
+                    'message', handler
+                );
+                resolve(event.data.comment || null);
+            }
+            window.addEventListener(
+                'message', handler
+            );
+            window.postMessage({
+                type: 'LINKEDIN_BOT_AI_COMMENT',
+                ...data,
+                requestId: rid
+            }, '*');
+        });
+    }
+
     function detectChallenge() {
         const url = window.location.href;
         if (/checkpoint|authwall|challenge/i.test(url)) {
@@ -22,28 +57,27 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     }
 
     async function expandSeeMore(postEl) {
-        const moreBtn = postEl.querySelector(
-            'button.feed-shared-inline-show-more-text' +
-            ', button[aria-expanded="false"]' +
-            '.feed-shared-inline-show-more-text' +
-            ', span.feed-shared-inline-show-more-text'
+        var seeMoreBtn = postEl.querySelector(
+            '[data-testid="expandable-text-button"]'
         );
-        if (moreBtn) {
-            moreBtn.click();
+        if (seeMoreBtn) {
+            seeMoreBtn.click();
             await delay(300);
             return;
         }
-        const links = postEl.querySelectorAll(
+        var links = postEl.querySelectorAll(
             'a, button, span'
         );
-        for (const el of links) {
-            const text = (el.innerText ||
+        for (var el of links) {
+            var text = (el.innerText ||
                 el.textContent || '').trim().toLowerCase();
             if (text === '…more' || text === '...more' ||
                 text === 'more' || text === '…mais' ||
                 text === '...mais' || text === 'mais' ||
                 text === 'see more' ||
-                text === 'ver mais') {
+                text === 'ver mais' ||
+                text === '\u2026 more' ||
+                text === '\u2026 mais') {
                 el.click();
                 await delay(300);
                 return;
@@ -72,34 +106,45 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     function ensureActionBar(el) {
         if (!el) return el;
         const hasBtn = el.querySelector(
+            'button[aria-label*="Reaction button"], ' +
+            'button[aria-label*="Open reactions"], ' +
             'button[aria-label*="Like"], ' +
-            'button[aria-label*="React"], ' +
-            'button[aria-label*="Comment"], ' +
-            'button[aria-label*="Gostei"], ' +
-            'button[aria-label*="Reagir"], ' +
-            'button[aria-label*="Comentar"], ' +
-            '.feed-shared-social-action-bar'
+            'button[aria-label*="React"]'
         );
         if (hasBtn) return el;
         let parent = el.parentElement;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 8; i++) {
             if (!parent) break;
+            if (parent.getAttribute('role') === 'listitem') {
+                return parent;
+            }
             if (parent.classList?.contains(
                 'feed-shared-update-v2') ||
                 parent.classList?.contains(
                     'occludable-update')) {
                 return parent;
             }
-            const bar = parent.querySelector(
-                '.feed-shared-social-action-bar'
-            );
-            if (bar) return parent;
             parent = parent.parentElement;
         }
         return el;
     }
 
     function findActionButtons(postEl) {
+        const likeBtn = postEl.querySelector(
+            'button[aria-label*="Reaction button"], ' +
+            'button[aria-label*="Open reactions"]'
+        );
+        if (likeBtn) {
+            let container = likeBtn.parentElement;
+            for (let i = 0; i < 6; i++) {
+                if (!container) break;
+                const btns = container.querySelectorAll(
+                    'button'
+                );
+                if (btns.length >= 3) return btns;
+                container = container.parentElement;
+            }
+        }
         const bar = postEl.querySelector(
             '.feed-shared-social-action-bar, ' +
             '[class*="social-action-bar"], ' +
@@ -110,16 +155,46 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     }
 
     function findPosts() {
+        const feedList = document.querySelector(
+            '[data-testid="mainFeed"]'
+        );
+        if (feedList) {
+            const items = feedList.querySelectorAll(
+                '[role="listitem"]'
+            );
+            if (items.length > 0) {
+                console.log(
+                    '[LinkedIn Bot] findPosts: matched ' +
+                    items.length +
+                    ' via mainFeed listitem'
+                );
+                return [...items];
+            }
+            var postChildren = [];
+            for (var c of feedList.children) {
+                if (c.querySelector(
+                    '[data-testid="expandable-text-box"]'
+                ) || c.querySelector(
+                    'button[aria-label*="Reaction"]'
+                )) {
+                    postChildren.push(c);
+                }
+            }
+            if (postChildren.length > 0) {
+                console.log(
+                    '[LinkedIn Bot] findPosts: matched ' +
+                    postChildren.length +
+                    ' via mainFeed children'
+                );
+                return postChildren;
+            }
+        }
+
         const sel =
             'div[data-urn*="activity"], ' +
             'div[data-urn*="ugcPost"], ' +
-            'div[data-id*="activity"], ' +
-            'div[data-id*="ugcPost"], ' +
-            'div[data-entity-urn*="activity"], ' +
-            'div[data-entity-urn*="ugcPost"], ' +
             '.feed-shared-update-v2, ' +
-            '.occludable-update, ' +
-            'div.fie-impression-container';
+            '.occludable-update';
         let posts = document.querySelectorAll(sel);
         if (posts.length > 0) {
             const adjusted = [];
@@ -127,7 +202,6 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             for (const p of posts) {
                 const wide = ensureActionBar(p);
                 const key = wide.getAttribute('data-urn') ||
-                    wide.getAttribute('data-entity-urn') ||
                     wide.getAttribute('data-id') ||
                     wide.className;
                 if (!seen.has(key)) {
@@ -137,18 +211,17 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             }
             console.log(
                 '[LinkedIn Bot] findPosts: matched ' +
-                adjusted.length + ' via primary selectors'
+                adjusted.length + ' via legacy selectors'
             );
             return adjusted;
         }
 
         const likeBtns = document.querySelectorAll(
+            'button[aria-label*="Reaction button"], ' +
             'button[aria-label*="Like"], ' +
             'button[aria-label*="Gostei"], ' +
             'button[aria-label*="React"], ' +
-            'button[aria-label*="Reagir"], ' +
-            'button[aria-label*="Comment"], ' +
-            'button[aria-label*="Comentar"]'
+            'button[aria-label*="Reagir"]'
         );
         console.log(
             '[LinkedIn Bot] findPosts: primary=0, ' +
@@ -161,8 +234,17 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         for (const btn of likeBtns) {
             let el = btn.parentElement;
             let depth = 0;
-            while (el && depth < 10) {
-                const urn = el.getAttribute('data-urn') ||
+            while (el && depth < 12) {
+                if (el.getAttribute('role') ===
+                    'listitem') {
+                    if (!seen.has(el)) {
+                        seen.add(el);
+                        real.push(el);
+                    }
+                    break;
+                }
+                const urn =
+                    el.getAttribute('data-urn') ||
                     el.getAttribute('data-id') || '';
                 if (urn && (urn.includes('activity') ||
                     urn.includes('ugcPost'))) {
@@ -172,22 +254,10 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     }
                     break;
                 }
-                if (el.classList &&
-                    (el.classList.contains(
-                        'feed-shared-update-v2') ||
-                    el.classList.contains(
-                        'occludable-update'))) {
-                    const id = el.id || el.className;
-                    if (!seen.has(id)) {
-                        seen.add(id);
-                        real.push(el);
-                    }
-                    break;
-                }
                 el = el.parentElement;
                 depth++;
             }
-            if (!el || depth >= 10) {
+            if (!el || depth >= 12) {
                 let container = btn;
                 for (let i = 0; i < 8; i++) {
                     if (!container.parentElement) break;
@@ -196,10 +266,8 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         container.getBoundingClientRect();
                     if (rect.height > 150 &&
                         rect.width > 400) {
-                        const key = container.tagName +
-                            rect.top + rect.left;
-                        if (!seen.has(key)) {
-                            seen.add(key);
+                        if (!seen.has(container)) {
+                            seen.add(container);
                             real.push(container);
                         }
                         break;
@@ -215,131 +283,129 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         return real;
     }
 
+    const BOILERPLATE_RE = new RegExp(
+        '^(' +
+        'like|comment|repost|send|share|follow|' +
+        'gostei|comentar|compartilhar|enviar|seguir|' +
+        'reaction button|open reactions|' +
+        'feed post|promoted|\\d+\\s*(comments?|' +
+        'reactions?|reposts?|likes?|views?)' +
+        ')$', 'i'
+    );
+
     function getPostText(postEl) {
-        const parts = [];
-
-        const bodySelectors = [
-            '.feed-shared-text',
-            '.feed-shared-inline-show-more-text',
-            '.feed-shared-update-v2__description',
-            '.update-components-text',
-            '[data-test-id="main-feed-activity-content"]',
-            'span.break-words',
-            '.feed-shared-text-view span[dir="ltr"]',
-            'div.feed-shared-update-v2__commentary ' +
-                'span[dir="ltr"]',
-            '[class*="update-components-text"] ' +
-                'span[dir="ltr"]'
-        ];
-        for (const sel of bodySelectors) {
-            const el = postEl.querySelector(sel);
-            if (el) {
-                const t = (el.innerText ||
-                    el.textContent || '').trim();
-                if (t && t.length > 10 &&
-                    !parts.includes(t)) {
-                    parts.push(t);
-                    break;
-                }
-            }
-        }
-
-        const titleSel =
-            '.feed-shared-article__title, ' +
-            '.feed-shared-article__title-text, ' +
-            '.update-components-article__title, ' +
-            '.feed-shared-article-card__title, ' +
-            '.article-card__title span, ' +
-            '.update-components-article ' +
-                '.update-components-article__title, ' +
-            'a[data-tracking-control-name*="article"] ' +
-                'span[dir="ltr"]';
-        const titleEls = postEl.querySelectorAll(titleSel);
-        for (const el of titleEls) {
-            const t = (el.innerText ||
-                el.textContent || '').trim();
-            if (t && !parts.includes(t)) parts.push(t);
-        }
-
-        if (parts.length > 0) return parts.join(' ');
-
-        const spans = postEl.querySelectorAll(
-            'span[dir="ltr"]'
+        if (!postEl) return '';
+        var textBox = postEl.querySelector(
+            '[data-testid="expandable-text-box"]'
         );
-        let longest = '';
-        for (const s of spans) {
-            const t = (s.innerText ||
-                s.textContent || '').trim();
-            if (t.length > longest.length) longest = t;
+        if (textBox) {
+            var t = (textBox.innerText || '').trim();
+            if (t.length > 10) return t;
         }
-        if (longest) return longest;
-
-        const allText = (postEl.innerText || '').trim();
-        if (allText.length > 50) {
-            const lines = allText.split('\n')
-                .filter(l => l.trim().length > 15);
-            if (lines.length > 0) {
-                return lines.slice(0, 3).join(' ');
-            }
+        var allText = (postEl.innerText || '').trim();
+        if (!allText) return '';
+        var lines = allText.split('\n')
+            .map(function(l) { return l.trim(); })
+            .filter(function(l) {
+                return l.length > 5 &&
+                    !BOILERPLATE_RE.test(l);
+            });
+        var content = lines.filter(
+            function(l) { return l.length > 30; }
+        );
+        if (content.length > 0) {
+            return content.slice(0, 10).join(' ');
         }
-        return allText.substring(0, 500);
+        return lines.slice(0, 5).join(' ')
+            .substring(0, 500);
     }
 
     function getPostAuthor(postEl) {
-        const sel =
+        if (!postEl) return 'Unknown';
+        var stripRe =
+            /\s*(Premium Profile|Verified|Profile|\d+(st|nd|rd|th)\+?)\s*/gi;
+        var links = postEl.querySelectorAll(
+            'a[href*="/in/"]'
+        );
+        for (var a of links) {
+            var raw = (a.innerText || '').trim();
+            if (raw.length < 3) continue;
+            var name = raw.split('\n')[0].trim()
+                .replace(stripRe, ' ').trim();
+            if (name.length > 2 && name.length < 60) {
+                return name;
+            }
+        }
+        var companyLinks = postEl.querySelectorAll(
+            'a[href*="/company/"]'
+        );
+        for (var c of companyLinks) {
+            var cRaw = (c.innerText || '').trim();
+            if (cRaw.length < 3) continue;
+            var cName = cRaw.split('\n')[0].trim();
+            if (cName.length > 2 && cName.length < 60) {
+                return cName;
+            }
+        }
+        var oldSel =
             '.update-components-actor__name span, ' +
-            '.feed-shared-actor__name span, ' +
-            'a.update-components-actor__meta-link span, ' +
-            '[data-test-id*="actor-name"] span, ' +
-            'span.feed-shared-actor__title span';
-        const authorEl = postEl.querySelector(sel);
-        return authorEl
-            ? authorEl.innerText.trim().split('\n')[0]
+            '.feed-shared-actor__name span';
+        var el = postEl.querySelector(oldSel);
+        return el
+            ? el.innerText.trim().split('\n')[0]
             : 'Unknown';
     }
 
     function getPostUrn(postEl) {
+        if (!postEl) return '';
         const urn = postEl.getAttribute('data-urn') ||
             postEl.getAttribute('data-entity-urn') ||
-            postEl.getAttribute('data-id') ||
-            postEl.querySelector('[data-urn]')
-                ?.getAttribute('data-urn') ||
-            postEl.querySelector('[data-entity-urn]')
-                ?.getAttribute('data-entity-urn') ||
-            postEl.querySelector('[data-id]')
-                ?.getAttribute('data-id') || '';
-        return urn;
+            postEl.getAttribute('data-id') || '';
+        if (urn) return urn;
+        const tracked = postEl.querySelector(
+            '[data-view-tracking-scope]'
+        );
+        if (tracked) {
+            const scope = tracked.getAttribute(
+                'data-view-tracking-scope'
+            ) || '';
+            const m = scope.match(
+                /"contentTrackingId":"([^"]+)"/
+            );
+            if (m) return m[1];
+        }
+        const idx = [...(postEl.parentElement
+            ?.children || [])].indexOf(postEl);
+        return 'post-' + idx;
     }
 
     async function reactToPost(postEl, reactionType) {
-        const actionBtns = findActionButtons(postEl);
-        let likeBtn = null;
-        for (const btn of actionBtns) {
-            const label = (
-                btn.getAttribute('aria-label') || ''
-            ).toLowerCase();
-            const text = (
-                btn.innerText || btn.textContent || ''
-            ).trim().toLowerCase();
-            if (label.includes('like') ||
-                label.includes('gostei') ||
-                label.includes('react') ||
-                label.includes('reagir') ||
-                text === 'like' || text === 'gostei') {
-                likeBtn = btn;
-                break;
+        let likeBtn = postEl.querySelector(
+            'button[aria-label*="Reaction button"]'
+        );
+        if (!likeBtn) {
+            const actionBtns = findActionButtons(postEl);
+            for (const btn of actionBtns) {
+                const label = (
+                    btn.getAttribute('aria-label') || ''
+                ).toLowerCase();
+                const text = (
+                    btn.innerText ||
+                    btn.textContent || ''
+                ).trim().toLowerCase();
+                if (label.includes('like') ||
+                    label.includes('gostei') ||
+                    label.includes('react') ||
+                    label.includes('reagir') ||
+                    text === 'like' ||
+                    text === 'gostei') {
+                    likeBtn = btn;
+                    break;
+                }
             }
         }
         if (!likeBtn) {
-            likeBtn = postEl.querySelector(
-                'button.react-button, ' +
-                'button.react-button__trigger, ' +
-                'button.reactions-react-button, ' +
-                'button.social-actions-button, ' +
-                'button[aria-label*="React Like"]'
-            );
-        }
-        if (!likeBtn) {
+            const actionBtns = findActionButtons(postEl);
             console.log(
                 '[LinkedIn Bot] No like button found. ' +
                 'Buttons in scope: ' +
@@ -351,8 +417,16 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             return false;
         }
 
+        const btnLabel = (
+            likeBtn.getAttribute('aria-label') || ''
+        ).toLowerCase();
         const alreadyLiked =
-            likeBtn.getAttribute('aria-pressed') === 'true';
+            likeBtn.getAttribute('aria-pressed') ===
+                'true' ||
+            btnLabel.includes('liked') ||
+            btnLabel.includes('reacted') ||
+            (btnLabel.includes('reaction button') &&
+                !btnLabel.includes('no reaction'));
         if (alreadyLiked) return false;
 
         if (reactionType === 'LIKE') {
@@ -362,65 +436,52 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         }
 
         async function tryOpenReactionPopup() {
-            const rect = likeBtn.getBoundingClientRect();
-            const cx = rect.x + rect.width / 2;
-            const cy = rect.y + rect.height / 2;
-
-            likeBtn.dispatchEvent(new PointerEvent(
-                'pointerdown', {
-                    bubbles: true, cancelable: true,
-                    clientX: cx, clientY: cy,
-                    button: 0, pointerId: 1
+            const menuBtn = postEl.querySelector(
+                'button[aria-label="Open reactions menu"]'
+            );
+            if (menuBtn) {
+                menuBtn.click();
+                await delay(1000);
+            } else {
+                const rect =
+                    likeBtn.getBoundingClientRect();
+                const cx = rect.x + rect.width / 2;
+                const cy = rect.y + rect.height / 2;
+                for (const evt of [
+                    'pointerenter', 'mouseenter',
+                    'mouseover'
+                ]) {
+                    likeBtn.dispatchEvent(
+                        new MouseEvent(evt, {
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: cx, clientY: cy
+                        })
+                    );
                 }
-            ));
-            for (const evt of [
-                'mousedown', 'pointerenter',
-                'mouseenter', 'mouseover'
-            ]) {
-                likeBtn.dispatchEvent(new MouseEvent(
-                    evt, {
-                        bubbles: true, cancelable: true,
-                        clientX: cx, clientY: cy
-                    }
-                ));
+                await delay(2000);
             }
 
-            await delay(2000);
-
-            likeBtn.dispatchEvent(new PointerEvent(
-                'pointerup', {
-                    bubbles: true, cancelable: true,
-                    clientX: cx, clientY: cy,
-                    button: 0, pointerId: 1
-                }
-            ));
-            likeBtn.dispatchEvent(new MouseEvent(
-                'mouseup', {
-                    bubbles: true, cancelable: true,
-                    clientX: cx, clientY: cy
-                }
-            ));
-
-            await delay(500);
-
             const popupSels = [
+                '[role="toolbar"]',
+                '[role="listbox"]',
                 '.reactions-menu',
                 '[class*="reactions-menu"]',
-                '.react-button__popup',
-                '[class*="react-button"] [role="toolbar"]',
-                '[class*="react-button"] [role="listbox"]',
-                'div[class*="reaction"][class*="bar"]',
-                '.artdeco-hoverable-content--visible',
-                '[class*="reactions-bar"]',
-                '[data-test-id*="reaction"]'
+                '.artdeco-hoverable-content--visible'
             ];
             for (const sel of popupSels) {
                 const el = document.querySelector(sel);
-                if (el) return el;
+                if (el &&
+                    el.querySelectorAll('button, img')
+                        .length >= 2) {
+                    return el;
+                }
             }
 
+            const rect = likeBtn.getBoundingClientRect();
             const above = document.elementsFromPoint(
-                cx, rect.y - 40
+                rect.x + rect.width / 2,
+                rect.y - 40
             );
             for (const el of above) {
                 if (el.querySelector &&
@@ -576,21 +637,31 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         let container = postEl;
         for (let i = 0; i < 5; i++) {
             if (!container) break;
-            const section = container.querySelector(
-                '.comments-comment-box, ' +
-                '.comments-comment-texteditor, ' +
-                'form[class*="comment"], ' +
-                'div[class*="comments-comment-box"]'
-            );
-            if (section) return section;
             const editor = container.querySelector(
                 'div[role="textbox"]' +
                 '[contenteditable="true"]'
             );
-            if (editor) return editor.closest(
-                'form, [class*="comment-box"], ' +
-                '[class*="comments"]'
-            ) || editor.parentElement;
+            if (editor) {
+                const form = editor.closest('form');
+                if (form) return form;
+                let parent = editor.parentElement;
+                for (let d = 0; d < 8; d++) {
+                    if (!parent) break;
+                    if (parent.querySelectorAll(
+                        'button'
+                    ).length >= 2) {
+                        return parent;
+                    }
+                    parent = parent.parentElement;
+                }
+                return editor.parentElement;
+            }
+            const section = container.querySelector(
+                '.comments-comment-box, ' +
+                'form[class*="comment"], ' +
+                'div[class*="comments-comment-box"]'
+            );
+            if (section) return section;
             container = container.parentElement;
         }
         return null;
@@ -742,11 +813,26 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         label === 'Enviar' ||
                         label === 'Comment' ||
                         label === 'Comentar';
+                    const nearEditor = (() => {
+                        if (!editor) return false;
+                        let p = editor.parentElement;
+                        for (let d = 0; d < 6; d++) {
+                            if (!p) return false;
+                            if (p.contains(btn))
+                                return true;
+                            p = p.parentElement;
+                        }
+                        return false;
+                    })();
                     const isSubmitText =
-                        (text === 'Post' || text === 'Publicar' ||
-                        text === 'Comment' || text === 'Comentar' ||
-                        text === 'Submit' || text === 'Enviar') &&
-                        (cls.includes('comment') ||
+                        (text === 'Post' ||
+                        text === 'Publicar' ||
+                        text === 'Comment' ||
+                        text === 'Comentar' ||
+                        text === 'Submit' ||
+                        text === 'Enviar') &&
+                        (nearEditor ||
+                        cls.includes('comment') ||
                         cls.includes('artdeco') ||
                         cls.includes('submit') ||
                         btn.closest(
@@ -857,6 +943,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         const limit = config?.limit || 20;
         const doReact = config?.react !== false;
         const doComment = config?.comment === true;
+        const aiApiKey = config?.aiApiKey || '';
         const commentTemplates =
             config?.commentTemplates || [];
         const skipKeywords =
@@ -1008,6 +1095,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     await expandSeeMore(post);
                     const postText = getPostText(post);
                     const author = getPostAuthor(post);
+                    const authorTitle =
+                        typeof getPostAuthorTitle ===
+                            'function'
+                            ? getPostAuthorTitle(post)
+                            : '';
 
                     console.log(
                         '[LinkedIn Bot] Post by ' + author +
@@ -1073,16 +1165,107 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         }
                     }
 
+                    let skipComment = false;
                     if (doComment) {
-                        const lang = detectLanguage(postText);
+                        var detectedLang =
+                            detectLanguage(postText);
                         const category =
                             classifyPost(postText);
-                        const comment =
-                            buildCommentFromPost(
-                                postText,
-                                commentTemplates.length > 0
-                                    ? commentTemplates : null
+                        const existing =
+                            typeof getExistingComments ===
+                                'function'
+                                ? getExistingComments(post)
+                                : [];
+                        if (existing.length > 0) {
+                            var ptComments = existing
+                                .filter(function(c) {
+                                    return detectLanguage(
+                                        c.text) === 'pt';
+                                }).length;
+                            if (ptComments >
+                                existing.length / 2) {
+                                detectedLang = 'pt';
+                            }
+                        }
+                        const lang = detectedLang;
+                        if (typeof isPolemicPost ===
+                            'function' &&
+                            isPolemicPost(
+                                postText, existing)) {
+                            console.log(
+                                '[LinkedIn Bot] Skipping' +
+                                ' comment — polemic post'
                             );
+                            skipComment = true;
+                        }
+                        if (existing.length > 0) {
+                            console.log(
+                                '[LinkedIn Bot] Found ' +
+                                existing.length +
+                                ' existing comments: ' +
+                                existing.map(function(c) {
+                                    return c.sentiment;
+                                }).join(', ')
+                            );
+                        }
+
+                        let comment = null;
+                        if (skipComment) {
+                            comment = null;
+                        } else if (aiApiKey) {
+                            console.log(
+                                '[LinkedIn Bot] Requesting' +
+                                ' AI comment...'
+                            );
+                            comment =
+                                await requestAIComment({
+                                    postText,
+                                    existingComments: existing,
+                                    author,
+                                    authorTitle,
+                                    lang,
+                                    category,
+                                    apiKey: aiApiKey
+                                });
+                            if (comment) {
+                                console.log(
+                                    '[LinkedIn Bot] AI' +
+                                    ' comment: "' +
+                                    comment.substring(0, 80)
+                                    + '"'
+                                );
+                            } else {
+                                console.log(
+                                    '[LinkedIn Bot] AI' +
+                                    ' failed, using' +
+                                    ' template fallback'
+                                );
+                            }
+                        }
+
+                        if (!comment) {
+                            comment =
+                                buildCommentFromPost(
+                                    postText,
+                                    commentTemplates
+                                        .length > 0
+                                        ? commentTemplates
+                                        : null,
+                                    existing
+                                );
+                        }
+                        if (comment &&
+                            typeof isLowQualityComment ===
+                                'function' &&
+                            isLowQualityComment(
+                                comment, postText)) {
+                            console.log(
+                                '[LinkedIn Bot] Skipping' +
+                                ' low quality comment: "' +
+                                comment.substring(0, 60) + '"'
+                            );
+                            comment = null;
+                        }
                         console.log(
                             '[LinkedIn Bot] Comment: lang=' +
                             lang + ' cat=' + category +

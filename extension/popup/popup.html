@@ -663,8 +663,27 @@
                 </div>
                 <div id="commentSection" style="display:none;">
                     <div class="input-group">
+                        <label for="aiApiKeyInput">
+                            AI API Key (Groq — free)
+                        </label>
+                        <input type="password"
+                            id="aiApiKeyInput"
+                            class="note-area"
+                            style="font-size:11px;
+                                padding:6px 8px;"
+                            placeholder="gsk_... (get free key at console.groq.com)" />
+                    </div>
+                    <div style="font-size:10px;
+                        color:var(--text-muted);
+                        margin-top:4px;">
+                        AI generates human-like comments
+                        using post + comment context.
+                        Falls back to templates if empty.
+                    </div>
+                    <div class="input-group"
+                        style="margin-top:8px;">
                         <label for="commentTemplatesInput">
-                            Comment templates (one per line)
+                            Fallback templates (one per line)
                         </label>
                         <textarea id="commentTemplatesInput"
                             class="note-area" rows="3"
@@ -672,7 +691,7 @@
                     </div>
                     <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">
                         {topic} = auto-detected from post content.
-                        A random template is picked per post.
+                        Used when AI key is not set.
                     </div>
                 </div>
                 <div class="input-group" style="margin-top:8px;">

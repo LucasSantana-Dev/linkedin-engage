@@ -13,6 +13,9 @@ const {
     isReactablePost,
     shouldSkipPost,
     isCompanyFollowText,
+    getExistingComments,
+    classifyCommentSentiment,
+    SENTIMENT_PATTERNS,
     POST_CATEGORIES,
     CATEGORY_TEMPLATES,
     CATEGORY_TEMPLATES_PT
@@ -278,7 +281,7 @@ describe('buildCommentFromPost', () => {
         );
         expect(result).toBeTruthy();
         expect(typeof result).toBe('string');
-        expect(result.length).toBeGreaterThan(10);
+        expect(result.length).toBeGreaterThan(3);
     });
 
     it('uses user templates when provided', () => {
@@ -505,7 +508,7 @@ describe('CATEGORY_TEMPLATES', () => {
         for (const cat of expected) {
             expect(CATEGORY_TEMPLATES[cat]).toBeDefined();
             expect(CATEGORY_TEMPLATES[cat].length)
-                .toBeGreaterThanOrEqual(5);
+                .toBeGreaterThanOrEqual(3);
         }
     });
 
@@ -565,7 +568,7 @@ describe('CATEGORY_TEMPLATES_PT', () => {
             expect(CATEGORY_TEMPLATES_PT[cat])
                 .toBeDefined();
             expect(CATEGORY_TEMPLATES_PT[cat].length)
-                .toBeGreaterThanOrEqual(5);
+                .toBeGreaterThanOrEqual(3);
         }
     });
 
@@ -606,7 +609,7 @@ describe('buildCommentFromPost PT-BR', () => {
         }
         const allComments = [...results];
         const hasEn = allComments.some(c =>
-            /role|network|stack|hiring|bookmarked/i
+            /remote|day-to-day|fit|team|stack|sharing/i
                 .test(c)
         );
         expect(hasEn).toBe(true);
@@ -869,5 +872,247 @@ describe('composed template integration', () => {
             results.add(buildCommentFromPost(post, null));
         }
         expect(results.size).toBeGreaterThan(3);
+    });
+});
+
+describe('classifyCommentSentiment', () => {
+    it('detects celebration', () => {
+        expect(classifyCommentSentiment(
+            'Congratulations! 🎉'
+        )).toBe('celebration');
+    });
+
+    it('detects PT-BR celebration', () => {
+        expect(classifyCommentSentiment(
+            'Parabéns!'
+        )).toBe('celebration');
+    });
+
+    it('detects agreement', () => {
+        expect(classifyCommentSentiment(
+            'I totally agree with this'
+        )).toBe('agreement');
+    });
+
+    it('detects gratitude', () => {
+        expect(classifyCommentSentiment(
+            'Thanks for sharing this!'
+        )).toBe('gratitude');
+    });
+
+    it('detects question', () => {
+        expect(classifyCommentSentiment(
+            'How did you do that?'
+        )).toBe('question');
+    });
+
+    it('detects insight', () => {
+        expect(classifyCommentSentiment(
+            'Great point about scaling'
+        )).toBe('insight');
+    });
+
+    it('detects support', () => {
+        expect(classifyCommentSentiment(
+            'Keep going, you got this!'
+        )).toBe('support');
+    });
+
+    it('detects personal experience', () => {
+        expect(classifyCommentSentiment(
+            'I also had this experience at work'
+        )).toBe('personal');
+    });
+
+    it('returns generic for unclassified', () => {
+        expect(classifyCommentSentiment(
+            'Nice post'
+        )).toBe('generic');
+    });
+
+    it('handles null/empty', () => {
+        expect(classifyCommentSentiment(null))
+            .toBe('generic');
+        expect(classifyCommentSentiment(''))
+            .toBe('generic');
+    });
+});
+
+describe('SENTIMENT_PATTERNS', () => {
+    it('exports all sentiment categories', () => {
+        expect(Object.keys(SENTIMENT_PATTERNS))
+            .toEqual(expect.arrayContaining([
+                'celebration', 'agreement', 'gratitude',
+                'question', 'insight', 'support', 'personal'
+            ]));
+    });
+
+    it('each pattern is a RegExp', () => {
+        for (const p of Object.values(SENTIMENT_PATTERNS)) {
+            expect(p).toBeInstanceOf(RegExp);
+        }
+    });
+});
+
+describe('getExistingComments', () => {
+    it('returns empty array for null', () => {
+        expect(getExistingComments(null)).toEqual([]);
+    });
+
+    it('returns empty when no commentList', () => {
+        const el = document.createElement('div');
+        expect(getExistingComments(el)).toEqual([]);
+    });
+
+    it('extracts comments from DOM', () => {
+        const post = document.createElement('div');
+        const list = document.createElement('div');
+        list.setAttribute(
+            'data-testid', 'abc-commentList-xyz'
+        );
+
+        const c1 = document.createElement('div');
+        const tb1 = document.createElement('div');
+        tb1.setAttribute(
+            'data-testid', 'expandable-text-box'
+        );
+        tb1.textContent = 'Congratulations! 🎉';
+        const a1 = document.createElement('a');
+        a1.href = '/in/john-doe/';
+        a1.textContent = 'John Doe';
+        c1.appendChild(a1);
+        c1.appendChild(tb1);
+
+        const sep = document.createElement('div');
+
+        const c2 = document.createElement('div');
+        const tb2 = document.createElement('div');
+        tb2.setAttribute(
+            'data-testid', 'expandable-text-box'
+        );
+        tb2.textContent = 'How did you achieve this?';
+        c2.appendChild(tb2);
+
+        list.appendChild(c1);
+        list.appendChild(sep);
+        list.appendChild(c2);
+        post.appendChild(list);
+
+        const result = getExistingComments(post);
+        expect(result).toHaveLength(2);
+        expect(result[0].text)
+            .toBe('Congratulations! 🎉');
+        expect(result[0].author).toBe('John Doe');
+        expect(result[0].sentiment)
+            .toBe('celebration');
+        expect(result[1].text)
+            .toBe('How did you achieve this?');
+        expect(result[1].sentiment).toBe('question');
+    });
+
+    it('skips empty text boxes', () => {
+        const post = document.createElement('div');
+        const list = document.createElement('div');
+        list.setAttribute(
+            'data-testid', 'test-commentList-id'
+        );
+        const c1 = document.createElement('div');
+        const tb1 = document.createElement('div');
+        tb1.setAttribute(
+            'data-testid', 'expandable-text-box'
+        );
+        tb1.textContent = '';
+        c1.appendChild(tb1);
+        list.appendChild(c1);
+        post.appendChild(list);
+
+        expect(getExistingComments(post)).toEqual([]);
+    });
+
+    it('strips badges from author names', () => {
+        const post = document.createElement('div');
+        const list = document.createElement('div');
+        list.setAttribute(
+            'data-testid', 'x-commentList-y'
+        );
+        const c1 = document.createElement('div');
+        const a1 = document.createElement('a');
+        a1.href = '/in/jane/';
+        a1.textContent = 'Jane Smith Verified Pro';
+        c1.appendChild(a1);
+        const tb1 = document.createElement('div');
+        tb1.setAttribute(
+            'data-testid', 'expandable-text-box'
+        );
+        tb1.textContent = 'Great insights!';
+        c1.appendChild(tb1);
+        list.appendChild(c1);
+        post.appendChild(list);
+
+        const result = getExistingComments(post);
+        expect(result[0].author).toBe('Jane Smith');
+    });
+});
+
+describe('buildCommentFromPost with context', () => {
+    it('still works with no existing comments', () => {
+        const result = buildCommentFromPost(
+            'Excited about our new product launch!',
+            null, []
+        );
+        expect(result).toBeTruthy();
+        expect(result.length).toBeGreaterThan(5);
+    });
+
+    it('still works with undefined comments', () => {
+        const result = buildCommentFromPost(
+            'Excited about our new product launch!',
+            null, undefined
+        );
+        expect(result).toBeTruthy();
+    });
+
+    it('avoids celebration when others celebrate', () => {
+        const post = 'Excited to share I got promoted!';
+        const existing = [
+            {
+                text: 'Congratulations!',
+                author: 'A',
+                sentiment: 'celebration'
+            },
+            {
+                text: 'Parabéns!',
+                author: 'B',
+                sentiment: 'celebration'
+            }
+        ];
+        const results = new Set();
+        for (let i = 0; i < 50; i++) {
+            results.add(
+                buildCommentFromPost(post, null, existing)
+            );
+        }
+        const celebrationRe =
+            /congrat|parabéns|amazing|awesome|🎉|👏/i;
+        const allCelebration = [...results].every(
+            c => celebrationRe.test(c)
+        );
+        expect(allCelebration).toBe(false);
+    });
+
+    it('user templates bypass context filtering', () => {
+        const existing = [
+            {
+                text: 'Congratulations!',
+                author: 'A',
+                sentiment: 'celebration'
+            }
+        ];
+        const result = buildCommentFromPost(
+            'Got promoted!',
+            ['Congrats on {topic}!'],
+            existing
+        );
+        expect(result).toContain('Congrats');
     });
 });

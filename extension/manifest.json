@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Engage",
-  "version": "1.13.0",
+  "version": "1.15.0",
   "description": "Automate LinkedIn networking: connect with profiles, follow companies, and engage with feed posts.",
   "icons": {
     "16": "icons/icon16.png",
@@ -17,7 +17,8 @@
     "notifications"
   ],
   "host_permissions": [
-    "https://www.linkedin.com/*"
+    "https://www.linkedin.com/*",
+    "https://api.groq.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
