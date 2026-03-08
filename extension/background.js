@@ -339,6 +339,20 @@ chrome.runtime.onMessage.addListener(
             });
         }
 
+        if (request.action === 'loginRequired') {
+            activeTabId = null;
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'icons/icon128.png',
+                title: 'LinkedIn Auto-Connect',
+                message:
+                    'LinkedIn login required. Please ' +
+                    'log in and restart the automation.'
+            });
+            sendResponse({ status: 'login_required' });
+            return true;
+        }
+
         if (request.action === 'done') {
             activeTabId = null;
             const r = request.result;

@@ -3,6 +3,7 @@ linkedin_session/
 user_data/
 cached-selectors.json
 .tasks.json
+linkedin_cookies.json
 .env
 *.log
 .DS_Store

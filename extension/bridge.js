@@ -69,6 +69,11 @@ window.addEventListener('message', (event) => {
             }, '*');
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_LOGIN_REQUIRED') {
+        chrome.runtime.sendMessage({
+            action: 'loginRequired'
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({
             action: 'progress',

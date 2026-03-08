@@ -33,10 +33,113 @@ const LOGIN_TIMEOUT = parseInt(process.env.LOGIN_TIMEOUT) || 120000;
 // Delay helper for human-like pauses
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const COOKIES_FILE = path.join(
+    __dirname, 'linkedin_cookies.json'
+);
+
+async function isLoggedIn(page) {
+    const url = page.url();
+    if (/login|authwall|checkpoint|challenge/i.test(url)) {
+        return false;
+    }
+    const hasSession = await page.evaluate(() => {
+        return document.cookie.includes('li_at') ||
+            document.cookie.includes('JSESSIONID');
+    }).catch(() => false);
+    return hasSession;
+}
+
+async function saveCookies(context) {
+    try {
+        const cookies = await context.cookies(
+            'https://www.linkedin.com'
+        );
+        fs.writeFileSync(
+            COOKIES_FILE,
+            JSON.stringify(cookies, null, 2)
+        );
+        logger.info(
+            `Saved ${cookies.length} cookies for reuse`
+        );
+    } catch (err) {
+        logger.warn('Cookie save failed: ' + err.message);
+    }
+}
+
+async function loadCookies(context) {
+    try {
+        if (!fs.existsSync(COOKIES_FILE)) return false;
+        const cookies = JSON.parse(
+            fs.readFileSync(COOKIES_FILE, 'utf8')
+        );
+        if (!cookies.length) return false;
+        await context.addCookies(cookies);
+        logger.info(
+            `Loaded ${cookies.length} saved cookies`
+        );
+        return true;
+    } catch (err) {
+        logger.warn('Cookie load failed: ' + err.message);
+        return false;
+    }
+}
+
+async function ensureLoggedIn(page, context, targetUrl) {
+    await page.goto(
+        'https://www.linkedin.com/feed/',
+        { waitUntil: 'domcontentloaded', timeout: 30000 }
+    );
+    await delay(2000);
+
+    if (await isLoggedIn(page)) {
+        logger.info(chalk.green('Session valid.'));
+        return true;
+    }
+
+    logger.warn(chalk.yellow(
+        'Session expired. Attempting cookie restore...'
+    ));
+    const loaded = await loadCookies(context);
+    if (loaded) {
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await delay(2000);
+        if (await isLoggedIn(page)) {
+            logger.info(chalk.green(
+                'Session restored from cookies.'
+            ));
+            return true;
+        }
+    }
+
+    logger.warn(chalk.yellow(
+        'Manual login required. You have ' +
+        (LOGIN_TIMEOUT / 1000) +
+        's to log in via the browser window.'
+    ));
+    try {
+        await page.waitForURL(
+            url => !(/login|authwall|checkpoint/i
+                .test(url.toString())),
+            { timeout: LOGIN_TIMEOUT }
+        );
+        await delay(3000);
+        if (await isLoggedIn(page)) {
+            await saveCookies(context);
+            logger.info(chalk.green(
+                'Login detected! Cookies saved for ' +
+                'future sessions.'
+            ));
+            return true;
+        }
+    } catch {
+        logger.error(chalk.red('Login timeout.'));
+    }
+    return false;
+}
+
 async function runAutomation(searchQuery) {
   let context;
   try {
-    // 1. Launch Persistent Browser
     logger.info(chalk.cyan('Launching browser...'));
     context = await chromium.launchPersistentContext(USER_DATA_DIR, {
       headless: HEADLESS,
@@ -46,31 +149,43 @@ async function runAutomation(searchQuery) {
 
     const page = await context.newPage();
 
-    // 2. Navigate and Check Login Options
     let searchUrl = '';
     if (searchQuery.startsWith('http')) {
-        logger.info(chalk.cyan(`Navigating to provided search URL: ${searchQuery.substring(0, 50)}...`));
+        logger.info(chalk.cyan(
+            `Navigating to: ${searchQuery.substring(0, 50)}...`
+        ));
         searchUrl = searchQuery;
     } else {
-        logger.info(chalk.blue(`[BOT] Navigating to search URL with keyword query: `) + chalk.yellow(searchQuery));
-        const encodedQuery = encodeURIComponent(searchQuery);
-        // Includes: US (103644278), Canada (101121807), UK (101165590), Germany (101282230), Netherlands (102890719)
-        const geoFilter = '%5B%22103644278%22%2C%22101121807%22%2C%22101165590%22%2C%22101282230%22%2C%22102890719%22%5D';
-        searchUrl = `https://www.linkedin.com/search/results/people/?geoUrn=${geoFilter}&keywords=${encodedQuery}&origin=FACETED_SEARCH`;
+        logger.info(chalk.blue(
+            '[BOT] Search query: '
+        ) + chalk.yellow(searchQuery));
+        const encodedQuery =
+            encodeURIComponent(searchQuery);
+        const geoFilter =
+            '%5B%22103644278%22%2C%22101121807%22' +
+            '%2C%22101165590%22%2C%22101282230%22' +
+            '%2C%22102890719%22%5D';
+        searchUrl =
+            'https://www.linkedin.com/search/results/' +
+            'people/?geoUrn=' + geoFilter +
+            '&keywords=' + encodedQuery +
+            '&origin=FACETED_SEARCH';
     }
 
-    await page.goto(searchUrl, { waitUntil: 'load', timeout: 60000 });
-
-    // Check if we hit the login gate
-    const currentUrl = page.url();
-    if (currentUrl.includes('login') || currentUrl.includes('authwall') || currentUrl.includes('checkpoint')) {
-      logger.warn(chalk.yellow('Not logged in. You have 120 seconds to login manually in the browser window.'));
-      logger.info(chalk.cyan('Awaiting manual login...'));
-      await page.waitForURL('**/search/results/people/**', { timeout: LOGIN_TIMEOUT });
-      logger.info(chalk.green('Manual login detected! Continuing automation...'));
-    } else {
-        logger.info(chalk.green('Already logged in, proceeding with search results.'));
+    const loggedIn = await ensureLoggedIn(
+        page, context, searchUrl
+    );
+    if (!loggedIn) {
+        await context.close();
+        return {
+            success: false,
+            error: 'Login failed or timed out.'
+        };
     }
+
+    await page.goto(searchUrl, {
+        waitUntil: 'load', timeout: 60000
+    });
 
     // Give the page a moment to fully render the results
     await delay(3000);
@@ -348,6 +463,25 @@ app.post('/api/linkedin/webhook', (req, res) => {
     res.json({ received: true, event });
 });
 
+app.get('/api/linkedin/session', async (req, res) => {
+    const hasCookies = fs.existsSync(COOKIES_FILE);
+    const hasSession = fs.existsSync(USER_DATA_DIR);
+    let cookieAge = null;
+    if (hasCookies) {
+        const stat = fs.statSync(COOKIES_FILE);
+        cookieAge = Math.round(
+            (Date.now() - stat.mtimeMs) / 3600000
+        );
+    }
+    res.json({
+        hasSession,
+        hasCookies,
+        cookieAgeHours: cookieAge,
+        sessionDir: USER_DATA_DIR,
+        loginTimeout: LOGIN_TIMEOUT
+    });
+});
+
 app.post('/api/linkedin/cleanup', (req, res) => {
     cleanOldSessions();
     res.json({ success: true, message: 'Session cleanup complete.' });
@@ -366,6 +500,7 @@ app.listen(PORT, () => {
     logger.info(chalk.yellow(`  GET  /api/linkedin/tasks/pending`));
     logger.info(chalk.yellow(`  POST /api/linkedin/tasks/:id/complete`));
     logger.info(chalk.yellow(`  GET  /api/linkedin/status`));
+    logger.info(chalk.yellow(`  GET  /api/linkedin/session`));
     logger.info(chalk.yellow(`  POST /api/linkedin/webhook`));
     logger.info(chalk.yellow(`  POST /api/linkedin/cleanup`));
     logger.info(chalk.bold.green(`========================================\n`));

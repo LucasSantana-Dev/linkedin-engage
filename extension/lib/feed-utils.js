@@ -39,11 +39,9 @@ const POST_CATEGORIES = {
         'database', 'refactor', 'ci/cd', 'pipeline',
         'kubernetes', 'docker', 'api', 'framework',
         'testing', 'debug', 'production', 'latency',
-        'distributed', 'caching', '.net', 'dependency',
-        'injection', 'singleton', 'design pattern',
-        'infrastructure', 'backend', 'frontend',
-        'full stack', 'devops', 'cloud', 'aws',
-        'azure', 'terraform', 'ansible'
+        'distributed', 'caching', '.net', 'dependency injection',
+        'singleton', 'design pattern', 'service mesh',
+        'terraform', 'ansible'
     ],
     question: [
         'what do you think', 'thoughts?', 'agree?',

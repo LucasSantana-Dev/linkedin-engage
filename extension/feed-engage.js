@@ -16,6 +16,36 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         return /security verification|unusual activity|verificação de segurança/i.test(text);
     }
 
+    async function expandSeeMore(postEl) {
+        const moreBtn = postEl.querySelector(
+            'button.feed-shared-inline-show-more-text' +
+            ', button[aria-expanded="false"]' +
+            '.feed-shared-inline-show-more-text' +
+            ', span.feed-shared-inline-show-more-text'
+        );
+        if (moreBtn) {
+            moreBtn.click();
+            await delay(300);
+            return;
+        }
+        const links = postEl.querySelectorAll(
+            'a, button, span'
+        );
+        for (const el of links) {
+            const text = (el.innerText ||
+                el.textContent || '').trim().toLowerCase();
+            if (text === '…more' || text === '...more' ||
+                text === 'more' || text === '…mais' ||
+                text === '...mais' || text === 'mais' ||
+                text === 'see more' ||
+                text === 'ver mais') {
+                el.click();
+                await delay(300);
+                return;
+            }
+        }
+    }
+
     const REACTION_MAP = {
         'LIKE': 'Like',
         'PRAISE': 'Celebrate',
@@ -501,6 +531,24 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
         try {
             await delay(3000);
+
+            if (detectChallenge()) {
+                console.log(
+                    '[LinkedIn Bot] Login wall or ' +
+                    'challenge detected at start'
+                );
+                window.postMessage({
+                    type: 'LINKEDIN_BOT_LOGIN_REQUIRED'
+                }, '*');
+                return {
+                    success: false,
+                    mode: 'feed',
+                    error: 'Login required. Please log ' +
+                        'into LinkedIn and try again.',
+                    log: engageLog
+                };
+            }
+
             if (findPosts().length === 0) {
                 console.log(
                     '[LinkedIn Bot] No posts on first ' +
@@ -576,6 +624,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         processedUrns.add(urn);
                     }
 
+                    await expandSeeMore(post);
                     const postText = getPostText(post);
                     const author = getPostAuthor(post);
 
