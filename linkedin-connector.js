@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -21,8 +22,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const CACHED_SELECTORS_FILE = path.join(__dirname, 'cached-selectors.json');
-const USER_DATA_DIR = path.join(__dirname, 'linkedin_session');
+const CACHED_SELECTORS_FILE = process.env.CACHED_SELECTORS_FILE
+    || path.join(__dirname, 'cached-selectors.json');
+const USER_DATA_DIR = process.env.USER_DATA_DIR
+    || path.join(__dirname, 'linkedin_session');
+const HEADLESS = process.env.HEADLESS === 'true';
+const CLICK_LIMIT = parseInt(process.env.CLICK_LIMIT) || 5;
+const LOGIN_TIMEOUT = parseInt(process.env.LOGIN_TIMEOUT) || 120000;
 
 // Delay helper for human-like pauses
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -33,7 +39,7 @@ async function runAutomation(searchQuery) {
     // 1. Launch Persistent Browser
     logger.info(chalk.cyan('Launching browser...'));
     context = await chromium.launchPersistentContext(USER_DATA_DIR, {
-      headless: false, // Keep false for manual login if needed, true for production background
+      headless: HEADLESS,
       channel: 'chrome',
       args: ['--disable-notifications']
     });
@@ -60,7 +66,7 @@ async function runAutomation(searchQuery) {
     if (currentUrl.includes('login') || currentUrl.includes('authwall') || currentUrl.includes('checkpoint')) {
       logger.warn(chalk.yellow('Not logged in. You have 120 seconds to login manually in the browser window.'));
       logger.info(chalk.cyan('Awaiting manual login...'));
-      await page.waitForURL('**/search/results/people/**', { timeout: 120000 });
+      await page.waitForURL('**/search/results/people/**', { timeout: LOGIN_TIMEOUT });
       logger.info(chalk.green('Manual login detected! Continuing automation...'));
     } else {
         logger.info(chalk.green('Already logged in, proceeding with search results.'));
@@ -91,7 +97,7 @@ async function runAutomation(searchQuery) {
     logger.info(chalk.blue(`[BOT] Found `) + chalk.green(connectButtons.length) + chalk.blue(` potential 'Connect' buttons in the current view.`));
 
     for (const button of connectButtons) {
-        if (buttonsClicked >= 5) { // Limit for testing/safety
+        if (buttonsClicked >= CLICK_LIMIT) {
             logger.warn(chalk.yellow('Reached limit of 5 clicks per run.'));
             break;
         }

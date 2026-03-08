@@ -684,6 +684,38 @@
                         placeholder="sponsored&#10;ad&#10;promoted"></textarea>
                 </div>
             </div>
+
+            <hr class="divider">
+
+            <div class="section">
+                <div class="checkbox-group">
+                    <label for="feedScheduleCheckbox">
+                        Schedule recurring feed engagement
+                    </label>
+                    <input type="checkbox"
+                        id="feedScheduleCheckbox" />
+                </div>
+                <div id="feedScheduleOptions"
+                    style="display:none;">
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="feedScheduleInterval">
+                            Run every (hours)
+                        </label>
+                        <input type="number"
+                            id="feedScheduleInterval"
+                            value="12" min="1" max="168"
+                            style="width:80px;" />
+                    </div>
+                    <div style="font-size:10px;
+                        color:var(--text-muted);
+                        margin-top:4px;">
+                        Engages with feed posts on a schedule.
+                        Uses your current react/comment settings.
+                        Chrome must be running.
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- CONNECT SECTION (existing) -->

@@ -497,6 +497,24 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
+        if (request.action === 'setFeedSchedule') {
+            chrome.alarms.clear('feedSchedule');
+            if (request.enabled && request.intervalHours > 0) {
+                chrome.alarms.create('feedSchedule', {
+                    delayInMinutes: request.intervalHours * 60,
+                    periodInMinutes: request.intervalHours * 60
+                });
+            }
+            chrome.storage.local.set({
+                feedSchedule: {
+                    enabled: request.enabled,
+                    intervalHours: request.intervalHours
+                }
+            });
+            sendResponse({ status: 'scheduled' });
+            return true;
+        }
+
         if (request.action === 'setCompanySchedule') {
             chrome.alarms.clear('companySchedule');
             if (request.enabled && request.intervalHours > 0) {
@@ -588,6 +606,58 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     message:
                         'Quota retry: testing with 10 ' +
                         'invites to check if limit reset.'
+                });
+            }
+        );
+        return;
+    }
+
+    if (alarm.name === 'feedSchedule') {
+        chrome.storage.local.get(
+            ['popupState', 'feedSchedule'],
+            (data) => {
+                const state = data.popupState;
+                const schedule = data.feedSchedule;
+                if (!schedule?.enabled || !state) return;
+
+                const limit = parseInt(
+                    state.limit
+                ) || 20;
+                const react = state.feedReact !== false;
+                const comment = state.feedComment || false;
+
+                const rawTemplates =
+                    (state.commentTemplates || '').trim();
+                const commentTemplates = rawTemplates
+                    ? rawTemplates.split('\n')
+                        .map(s => s.trim())
+                        .filter(Boolean)
+                    : [];
+                const rawSkip =
+                    (state.skipKeywords || '').trim();
+                const skipKeywords = rawSkip
+                    ? rawSkip.split('\n')
+                        .map(s => s.trim())
+                        .filter(Boolean)
+                    : [];
+
+                launchFeedEngage({
+                    limit,
+                    react,
+                    comment,
+                    commentTemplates,
+                    skipKeywords
+                });
+
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: 'icons/icon128.png',
+                    title: 'LinkedIn Auto-Connect',
+                    message:
+                        `Scheduled feed engagement: ` +
+                        `${limit} posts` +
+                        (comment ? ' (react+comment)'
+                            : ' (react only)')
                 });
             }
         );

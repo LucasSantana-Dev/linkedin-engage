@@ -21,7 +21,7 @@ function loadDashboard() {
         [
             weekKey, 'sentProfileUrls',
             'acceptedUrls', 'schedule',
-            'companySchedule',
+            'companySchedule', 'feedSchedule',
             'connectionHistory', 'fuseLimitRetry',
             'companyFollowHistory', 'feedEngageHistory'
         ],
@@ -128,6 +128,12 @@ function loadDashboard() {
                         `Companies: every ` +
                         `${data.companySchedule.intervalHours}h` +
                         ` (batch ${data.companySchedule.batchSize || 10})`
+                    );
+                }
+                if (data.feedSchedule?.enabled) {
+                    parts.push(
+                        `Feed: every ` +
+                        `${data.feedSchedule.intervalHours}h`
                     );
                 }
                 if (parts.length) {

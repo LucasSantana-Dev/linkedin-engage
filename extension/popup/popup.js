@@ -208,7 +208,11 @@ function saveState() {
         companyScheduleInterval: document.getElementById(
             'companyScheduleInterval').value,
         companyBatchSize: document.getElementById(
-            'companyBatchSize').value
+            'companyBatchSize').value,
+        feedScheduleEnabled: document.getElementById(
+            'feedScheduleCheckbox').checked,
+        feedScheduleInterval: document.getElementById(
+            'feedScheduleInterval').value
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -343,6 +347,19 @@ function loadState() {
             document.getElementById(
                 'companyBatchSize'
             ).value = popupState.companyBatchSize;
+        }
+        if (popupState.feedScheduleEnabled) {
+            document.getElementById(
+                'feedScheduleCheckbox'
+            ).checked = true;
+            document.getElementById(
+                'feedScheduleOptions'
+            ).style.display = 'block';
+        }
+        if (popupState.feedScheduleInterval) {
+            document.getElementById(
+                'feedScheduleInterval'
+            ).value = popupState.feedScheduleInterval;
         }
 
         setActiveTemplate(popupState.activeTemplate || 'senior');
@@ -1038,6 +1055,45 @@ document.getElementById('companyScheduleInterval')
 
 document.getElementById('companyBatchSize')
     .addEventListener('change', saveState);
+
+document.getElementById('feedScheduleCheckbox')
+    .addEventListener('change', (e) => {
+        const opts = document.getElementById(
+            'feedScheduleOptions'
+        );
+        opts.style.display = e.target.checked
+            ? 'block' : 'none';
+        const hours = parseInt(
+            document.getElementById(
+                'feedScheduleInterval'
+            ).value
+        ) || 12;
+        chrome.runtime.sendMessage({
+            action: 'setFeedSchedule',
+            enabled: e.target.checked,
+            intervalHours: hours
+        });
+        saveState();
+    });
+
+document.getElementById('feedScheduleInterval')
+    .addEventListener('change', () => {
+        const enabled = document.getElementById(
+            'feedScheduleCheckbox'
+        ).checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById(
+                'feedScheduleInterval'
+            ).value
+        ) || 12;
+        chrome.runtime.sendMessage({
+            action: 'setFeedSchedule',
+            enabled: true,
+            intervalHours: hours
+        });
+        saveState();
+    });
 
 loadState();
 updateWeeklyDisplay();

@@ -6,13 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Scheduled company follow**: Chrome Alarms-based recurring company follow with batch rotation — configurable interval and batch size, rotates through company list across runs
+- **Scheduled feed engagement**: Chrome Alarms-based recurring feed engagement with current react/comment settings
 - **Feed analytics dashboard**: Comment success rate, reaction breakdown bar chart, top reaction type, feed skip count — new metrics grid in options page
 - **38 new tests**: `tests/company-follow.test.js` covering URL building, button detection, CAPTCHA detection, batch rotation scheduling, and integration flows (total: 196 tests across 4 suites)
 - **Extracted company-follow functions**: `detectChallenge`, `buildCompanySearchUrl`, `findCompanyCards`, `findFollowBtnInCard`, `buildBatchFromRotation` moved to `company-utils.js` for testability
+- **dotenv support**: `.env` configuration for PORT, HEADLESS, CLICK_LIMIT, LOGIN_TIMEOUT, USER_DATA_DIR, CACHED_SELECTORS_FILE
+- `.env.example` template included
 
 ### Fixed
 - **detectChallenge jsdom compatibility**: `innerText || textContent` fallback for test environments
-- **Dashboard schedule display**: Shows both Connect and Company schedule status when both are active
+- **Dashboard schedule display**: Shows Connect, Company, and Feed schedule status when active
 
 ## [1.9.0] - 2026-03-08
 
