@@ -219,58 +219,134 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
     function setEditorText(editor, text) {
         editor.focus();
-        editor.textContent = '';
-        const p = document.createElement('p');
-        p.textContent = text;
-        editor.appendChild(p);
+        editor.innerText = text;
         editor.dispatchEvent(
             new Event('input', { bubbles: true })
+        );
+        editor.dispatchEvent(
+            new Event('change', { bubbles: true })
         );
     }
 
     async function commentOnPost(postEl, commentText) {
-        const commentBtn = postEl.querySelector(
-            'button[aria-label*="Comment"], ' +
-            'button[aria-label*="Comentar"], ' +
-            'button.comment-button'
+        const commentBtns = postEl.querySelectorAll(
+            'button'
         );
-        if (!commentBtn) return false;
+        let commentBtn = null;
+        for (const btn of commentBtns) {
+            const label =
+                btn.getAttribute('aria-label') || '';
+            const text = (btn.innerText ||
+                btn.textContent || '').trim();
+            if (label.includes('Comment') ||
+                label.includes('Comentar') ||
+                text === 'Comment' ||
+                text === 'Comentar') {
+                commentBtn = btn;
+                break;
+            }
+        }
+        if (!commentBtn) {
+            console.log(
+                '[LinkedIn Bot] No comment button found'
+            );
+            return false;
+        }
 
         commentBtn.click();
-        await delay(1500);
+        await delay(2000);
 
-        const editor = postEl.querySelector(
-            '.ql-editor[contenteditable="true"], ' +
-            '[role="textbox"][contenteditable="true"], ' +
-            '.comments-comment-box__form ' +
+        let editor = postEl.querySelector(
+            'div[role="textbox"]' +
             '[contenteditable="true"]'
         );
-        if (editor) {
-            setEditorText(editor, commentText);
-        } else {
-            const globalEditor = document.querySelector(
-                '.ql-editor[contenteditable="true"], ' +
-                '[role="textbox"]' +
+        if (!editor) {
+            editor = document.querySelector(
+                'div[role="textbox"]' +
                 '[contenteditable="true"]'
             );
-            if (!globalEditor) return false;
-            setEditorText(globalEditor, commentText);
+        }
+        if (!editor) {
+            editor = postEl.querySelector(
+                '.ql-editor[contenteditable="true"], ' +
+                '[contenteditable="true"]' +
+                '[data-placeholder]'
+            );
+        }
+        if (!editor) {
+            editor = document.querySelector(
+                '.ql-editor[contenteditable="true"], ' +
+                '[contenteditable="true"]' +
+                '[data-placeholder*="comment"], ' +
+                '[contenteditable="true"]' +
+                '[data-placeholder*="comentário"]'
+            );
+        }
+        if (!editor) {
+            console.log(
+                '[LinkedIn Bot] No comment editor found'
+            );
+            return false;
         }
 
-        await delay(1000);
-
-        const submitBtn = document.querySelector(
-            'button.comments-comment-box__submit-button, ' +
-            'button[class*="comment"]' +
-            '[type="submit"], ' +
-            'form.comments-comment-box__form ' +
-            'button[type="submit"]'
+        console.log(
+            '[LinkedIn Bot] Found editor, typing: ' +
+            commentText.substring(0, 50)
         );
-        if (submitBtn && !submitBtn.disabled) {
+        setEditorText(editor, commentText);
+        await delay(1500);
+
+        const allBtns = document.querySelectorAll(
+            'button'
+        );
+        let submitBtn = null;
+        for (const btn of allBtns) {
+            const cls = btn.className || '';
+            const label =
+                btn.getAttribute('aria-label') || '';
+            const text = (btn.innerText ||
+                btn.textContent || '').trim();
+            if ((cls.includes('comment') &&
+                (cls.includes('submit') ||
+                    btn.type === 'submit')) ||
+                label.includes('Post comment') ||
+                label.includes('Publicar comentário') ||
+                (text === 'Post' &&
+                    cls.includes('comment')) ||
+                (text === 'Publicar' &&
+                    cls.includes('comment'))) {
+                if (!btn.disabled) {
+                    submitBtn = btn;
+                    break;
+                }
+            }
+        }
+
+        if (!submitBtn) {
+            const nearby = postEl.querySelectorAll(
+                'button[type="submit"], ' +
+                'button.artdeco-button--primary'
+            );
+            for (const btn of nearby) {
+                if (!btn.disabled) {
+                    submitBtn = btn;
+                    break;
+                }
+            }
+        }
+
+        if (submitBtn) {
+            console.log(
+                '[LinkedIn Bot] Clicking submit: ' +
+                (submitBtn.innerText || '').trim()
+            );
             submitBtn.click();
-            await delay(1500);
+            await delay(2000);
             return true;
         }
+        console.log(
+            '[LinkedIn Bot] No submit button found'
+        );
         return false;
     }
 

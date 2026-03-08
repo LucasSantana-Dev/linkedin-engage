@@ -155,6 +155,54 @@ describe('classifyPost', () => {
             'Estamos contratando! Vaga para dev senior.'
         )).toBe('hiring');
     });
+
+    it('classifies humor/meme posts', () => {
+        expect(classifyPost(
+            'AI didn\'t remove the chaos from ' +
+            'software development. Junior dev using ' +
+            'AI to write code. Senior dev reviewing ' +
+            '500 lines of spaghetti lol 😂'
+        )).toBe('humor');
+    });
+
+    it('classifies critique posts', () => {
+        expect(classifyPost(
+            'Unpopular opinion: hustle culture is ' +
+            'toxic and we need to stop glorifying ' +
+            'burnout in tech.'
+        )).toBe('critique');
+    });
+
+    it('classifies motivation posts', () => {
+        expect(classifyPost(
+            'Never give up on your dream. ' +
+            'Consistency and discipline are ' +
+            'the secret to success.'
+        )).toBe('motivation');
+    });
+
+    it('classifies project showcase posts', () => {
+        expect(classifyPost(
+            'Just launched my side project! ' +
+            'Check out the demo I built with React.'
+        )).toBe('project');
+    });
+
+    it('classifies job seeking posts', () => {
+        expect(classifyPost(
+            'Open to work! I was recently laid off ' +
+            'and looking for new opportunity. ' +
+            'Any leads appreciated. #opentowork'
+        )).toBe('jobseeking');
+    });
+
+    it('classifies new job posts', () => {
+        expect(classifyPost(
+            'Excited to start my first day at ' +
+            'Google! Grateful to announce I\'m ' +
+            'joining their cloud team.'
+        )).toBe('newjob');
+    });
 });
 
 describe('extractKeyPhrase', () => {
@@ -433,7 +481,9 @@ describe('POST_CATEGORIES', () => {
     it('has all expected categories', () => {
         const expected = [
             'hiring', 'achievement', 'technical',
-            'question', 'tips', 'story', 'news'
+            'question', 'tips', 'story', 'news',
+            'humor', 'critique', 'motivation',
+            'project', 'jobseeking', 'newjob'
         ];
         for (const cat of expected) {
             expect(POST_CATEGORIES[cat]).toBeDefined();
@@ -447,7 +497,9 @@ describe('CATEGORY_TEMPLATES', () => {
     it('has templates for all categories plus generic', () => {
         const expected = [
             'hiring', 'achievement', 'technical',
-            'question', 'tips', 'story', 'news', 'generic'
+            'question', 'tips', 'story', 'news',
+            'humor', 'critique', 'motivation',
+            'project', 'jobseeking', 'newjob', 'generic'
         ];
         for (const cat of expected) {
             expect(CATEGORY_TEMPLATES[cat]).toBeDefined();
@@ -504,7 +556,9 @@ describe('CATEGORY_TEMPLATES_PT', () => {
     it('has templates for all categories plus generic', () => {
         const expected = [
             'hiring', 'achievement', 'technical',
-            'question', 'tips', 'story', 'news', 'generic'
+            'question', 'tips', 'story', 'news',
+            'humor', 'critique', 'motivation',
+            'project', 'jobseeking', 'newjob', 'generic'
         ];
         for (const cat of expected) {
             expect(CATEGORY_TEMPLATES_PT[cat])

@@ -66,6 +66,59 @@ const POST_CATEGORIES = {
         'according to', 'study finds', 'survey',
         'market', 'industry trend', 'funding',
         'acquisition', 'ipo', 'valuation', 'layoffs'
+    ],
+    humor: [
+        'lol', 'lmao', 'haha', 'meme', 'spaghetti',
+        'junior dev', 'senior dev', 'project manager',
+        'it works on my machine', 'stackoverflow',
+        'stack overflow', '😂', '🤣', '💀',
+        'chaos', 'moved it somewhere', 'pain',
+        'relatable', 'accurate', 'friday deploy',
+        'hotfix', 'prod', 'css', 'merge conflict',
+        'piada', 'kkkk', 'rsrs', 'engraçado'
+    ],
+    critique: [
+        'unpopular opinion', 'hot take', 'overrated',
+        'stop pretending', 'toxic', 'the problem with',
+        'we need to talk about', 'enough with',
+        'stop glorifying', 'hustle culture', 'burnout',
+        'nobody asked', 'controversial', 'wrong',
+        'disagree', 'wake up', 'reality check',
+        'opinião impopular', 'chega de'
+    ],
+    motivation: [
+        'never give up', 'keep going', 'you got this',
+        'believe in yourself', 'hustle', 'grind',
+        'mindset', 'consistency', 'discipline',
+        'success is', 'the secret to', 'work hard',
+        'dream big', 'no excuses', 'motivation',
+        'inspire', 'resilience', 'persistence',
+        'não desista', 'força', 'persistência'
+    ],
+    project: [
+        'built', 'launched', 'shipped', 'side project',
+        'open source', 'portfolio', 'demo', 'prototype',
+        'check out', 'just released', 'i made',
+        'i created', 'my project', 'show you',
+        'working on', 'finally finished',
+        'construí', 'lancei', 'meu projeto'
+    ],
+    jobseeking: [
+        'open to work', 'looking for', 'job search',
+        'available for', 'seeking', 'laid off',
+        'let go', 'hiring me', 'reach out',
+        'any leads', 'on the market', 'new opportunity',
+        'résumé', 'resume', '#opentowork',
+        'buscando oportunidade', 'disponível',
+        'aberto a propostas', 'em busca de'
+    ],
+    newjob: [
+        'first day', 'just started', 'new position',
+        'joining', 'new adventure', 'new beginning',
+        'grateful to announce', 'excited to start',
+        'happy to join', 'i\'m joining',
+        'new team', 'day one', 'onboarding',
+        'primeiro dia', 'comecei na', 'entrando na'
     ]
 };
 
@@ -156,6 +209,77 @@ const CATEGORY_TEMPLATES = {
             '{keyPhrase}',
         'was just talking about this yesterday. ' +
             '{topic} is wild right now'
+    ],
+    humor: [
+        'ok this one got me 😂',
+        'the accuracy hurts lol',
+        'I feel personally attacked by this',
+        'showed this to my team and we all ' +
+            'felt called out',
+        'this is too real 💀',
+        'whoever made this has clearly lived it',
+        'why is this so accurate though',
+        'I shouldn\'t be laughing this hard at work',
+        'the {topic} part is painfully accurate',
+        'sent this to my group chat immediately'
+    ],
+    critique: [
+        'finally someone said it',
+        'this needed to be said. {keyPhrase}',
+        'agree 100%. more people need to hear this',
+        'brave take but honestly fair. {keyPhrase}',
+        'been thinking this for a while. glad ' +
+            'someone put it into words',
+        'this is the kind of honest take we need ' +
+            'more of on here',
+        'uncomfortable truths. {keyPhrase}',
+        'the {topic} industry really needs ' +
+            'this conversation'
+    ],
+    motivation: [
+        'needed this energy today',
+        'saving this for the tough days',
+        'the part about {topic} really hit home',
+        'this is the reminder I needed',
+        'sharing this with someone who needs to ' +
+            'hear it today',
+        'simple but powerful. {keyPhrase}',
+        'more of this mindset please'
+    ],
+    project: [
+        'this is really cool, nice work!',
+        'love seeing people build stuff. ' +
+            '{topic} needs more of this',
+        'just checked it out - solid execution',
+        'the {topic} space needs more builders ' +
+            'like this. props!',
+        'this is the kind of content I follow ' +
+            'LinkedIn for. shipping > talking',
+        'bookmarked. gonna try this out',
+        'clean work. how long did it take to build?'
+    ],
+    jobseeking: [
+        'hope you land something great soon. ' +
+            'sharing for visibility',
+        'boosting this. someone in my network ' +
+            'might have something',
+        'the right role is out there. rooting for you',
+        '{topic} people are in demand - won\'t ' +
+            'take long',
+        'reposting for reach. good luck!',
+        'your background is solid. sending good ' +
+            'vibes on the search',
+        'commented for the algorithm. you got this'
+    ],
+    newjob: [
+        'congrats on the new gig!! go crush it',
+        'huge move! excited for you',
+        'love to see it. great fit by the sounds of it',
+        'congrats! {topic} is an exciting space ' +
+            'to be in right now',
+        'that\'s awesome, congrats on the move!',
+        'new chapter energy. go get it!',
+        'congrats!! they\'re lucky to have you'
     ],
     generic: [
         'needed to see this today, thanks for posting',
@@ -251,6 +375,77 @@ const CATEGORY_TEMPLATES_PT = {
         'isso vai mudar as coisas. {keyPhrase}',
         'tava falando sobre isso ontem. {topic} ' +
             'tá insano'
+    ],
+    humor: [
+        'ok essa me pegou 😂',
+        'a precisão dói kk',
+        'me senti pessoalmente atacado',
+        'mostrei pro time e todo mundo se sentiu ' +
+            'representado',
+        'isso é real demais 💀',
+        'quem fez isso claramente já viveu',
+        'por que isso é tão preciso',
+        'não deveria tá rindo tanto no trabalho',
+        'a parte de {topic} é dolorosamente precisa',
+        'mandei pro grupo na hora'
+    ],
+    critique: [
+        'finalmente alguém falou',
+        'isso precisava ser dito. {keyPhrase}',
+        'concordo 100%. mais gente precisa ouvir isso',
+        'take corajoso mas honesto. {keyPhrase}',
+        'penso nisso faz tempo. bom que alguém ' +
+            'colocou em palavras',
+        'esse tipo de honestidade que a gente ' +
+            'precisa mais aqui',
+        'verdades inconvenientes. {keyPhrase}',
+        'a indústria de {topic} precisa muito ' +
+            'dessa conversa'
+    ],
+    motivation: [
+        'precisava dessa energia hoje',
+        'guardando isso pros dias difíceis',
+        'a parte sobre {topic} me pegou',
+        'esse é o lembrete que eu precisava',
+        'vou mandar pra alguém que precisa ouvir ' +
+            'isso hoje',
+        'simples mas poderoso. {keyPhrase}',
+        'mais dessa mentalidade por favor'
+    ],
+    project: [
+        'que massa, belo trabalho!',
+        'adoro ver gente construindo. {topic} ' +
+            'precisa de mais disso',
+        'dei uma olhada - execução sólida',
+        'a área de {topic} precisa de mais builders ' +
+            'assim. parabéns!',
+        'esse é o tipo de conteúdo que eu sigo ' +
+            'o LinkedIn pra ver. shipar > falar',
+        'salvei. vou testar',
+        'trabalho limpo. quanto tempo levou pra fazer?'
+    ],
+    jobseeking: [
+        'espero que ache algo incrível logo. ' +
+            'compartilhando pra dar visibilidade',
+        'dando boost. alguém da minha rede pode ' +
+            'ter algo',
+        'a vaga certa tá aí. torcendo por vc',
+        'gente de {topic} tá em alta - não vai ' +
+            'demorar',
+        'repostando pro alcance. boa sorte!',
+        'seu perfil é muito bom. mandando ' +
+            'boas energias na busca',
+        'comentando pro algoritmo. vc consegue'
+    ],
+    newjob: [
+        'parabéns pelo novo trampo!! vai arrasar',
+        'que move! animado por vc',
+        'bom demais. parece encaixar certinho',
+        'parabéns! {topic} tá num momento ' +
+            'incrível pra estar',
+        'demais, parabéns pela mudança!',
+        'energia de novo capítulo. vai com tudo!',
+        'parabéns!! eles têm sorte de ter vc'
     ],
     generic: [
         'precisava ver isso hoje, valeu por postar',

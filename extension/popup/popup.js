@@ -11,6 +11,34 @@ const MAX_CHARS = 300;
 const WEEKLY_LIMIT = 150;
 let useCustomQuery = false;
 
+const DEFAULT_LATAM_COMPANIES = [
+    'Google', 'Microsoft', 'Amazon', 'Meta', 'Apple',
+    'Netflix', 'Spotify', 'Stripe', 'Shopify',
+    'Twilio', 'Cloudflare', 'Datadog', 'GitLab',
+    'GitHub', 'Elastic', 'MongoDB', 'HashiCorp',
+    'Canonical', 'Red Hat', 'IBM',
+    'Thoughtworks', 'EPAM', 'Globant', 'Endava',
+    'CI&T', 'BairesDev', 'Turing',
+    'Toptal', 'Deel', 'Remote',
+    'Coinbase', 'Binance', 'Mercado Libre',
+    'Nubank', 'iFood', 'Rappi', 'VTEX',
+    'PagSeguro', 'Stone', 'XP Inc',
+    'Salesforce', 'HubSpot', 'Atlassian',
+    'Oracle', 'SAP', 'VMware', 'Cisco',
+    'Uber', 'Airbnb', 'DoorDash', 'Block',
+    'Vercel', 'Supabase', 'PlanetScale',
+    'Notion', 'Figma', 'Canva', 'Linear',
+    'Wildlife Studios', 'Ubisoft', 'Rockstar',
+    'Andela', 'Nearform', 'X-Team',
+    'CrossOver', 'Terminal', 'Arc',
+    'Automattic', 'Basecamp', 'Zapier',
+    'Grafana Labs', 'Sentry', 'LaunchDarkly',
+    'Twitch', 'Discord', 'Slack',
+    'PayPal', 'Wise', 'Revolut',
+    'Docker', 'JetBrains', 'CircleCI',
+    'DigitalOcean', 'Akamai', 'Fastly'
+].join('\n');
+
 function getWeekKey() {
     const now = new Date();
     const jan1 = new Date(now.getFullYear(), 0, 1);
@@ -923,6 +951,12 @@ document.getElementById('commentTemplatesInput')
     .addEventListener('input', saveState);
 document.getElementById('skipKeywordsInput')
     .addEventListener('input', saveState);
+document.getElementById('loadDefaultCompanies')
+    .addEventListener('click', () => {
+        document.getElementById('targetCompanies')
+            .value = DEFAULT_LATAM_COMPANIES;
+        saveState();
+    });
 
 loadState();
 updateWeeklyDisplay();

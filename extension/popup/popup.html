@@ -582,8 +582,27 @@
                         class="note-area" rows="3"
                         placeholder="Google&#10;Microsoft&#10;Meta&#10;Amazon&#10;Apple"></textarea>
                 </div>
-                <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">
-                    Leave empty to follow all results.
+                <div style="margin-top:4px; display:flex;
+                    justify-content:space-between;
+                    align-items:center;">
+                    <span style="font-size:10px;
+                        color:var(--text-muted);">
+                        Leave empty to follow all results.
+                    </span>
+                    <button id="loadDefaultCompanies"
+                        type="button"
+                        style="font-size:10px;
+                        padding:2px 8px;
+                        border:1px solid var(--border);
+                        border-radius:4px;
+                        background:var(--input-bg);
+                        color:var(--primary);
+                        cursor:pointer;">
+                        Load LATAM defaults
+                    </button>
+                </div>
+                <div style="font-size:10px; color:var(--text-muted);">
+                    70+ companies that hire from LATAM.
                     Fill in to only follow matching companies.
                 </div>
             </div>
