@@ -212,7 +212,9 @@ function saveState() {
         feedScheduleEnabled: document.getElementById(
             'feedScheduleCheckbox').checked,
         feedScheduleInterval: document.getElementById(
-            'feedScheduleInterval').value
+            'feedScheduleInterval').value,
+        smartMode: document.getElementById(
+            'smartModeCheckbox').checked
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -293,6 +295,10 @@ function loadState() {
         if (popupState.savedQueries) {
             document.getElementById('savedQueries').value =
                 popupState.savedQueries;
+        }
+        if (popupState.smartMode) {
+            document.getElementById(
+                'smartModeCheckbox').checked = true;
         }
         if (popupState.useCustomQuery) {
             useCustomQuery = true;
@@ -453,12 +459,16 @@ document.getElementById('scheduleCheckbox').addEventListener(
         const hours = parseInt(
             document.getElementById('scheduleInterval').value
         ) || 24;
+        const smart = document.getElementById(
+            'smartModeCheckbox').checked;
         chrome.runtime.sendMessage({
             action: 'setSchedule',
             enabled: e.target.checked,
-            intervalHours: hours
+            intervalHours: hours,
+            smartMode: smart
         });
         saveState();
+        if (e.target.checked) fetchScheduleInsight();
     }
 );
 
@@ -475,14 +485,67 @@ document.getElementById('scheduleInterval').addEventListener(
         const hours = parseInt(
             document.getElementById('scheduleInterval').value
         ) || 24;
+        const smart = document.getElementById(
+            'smartModeCheckbox').checked;
         chrome.runtime.sendMessage({
             action: 'setSchedule',
             enabled: true,
-            intervalHours: hours
+            intervalHours: hours,
+            smartMode: smart
         });
         saveState();
     }
 );
+
+document.getElementById('smartModeCheckbox').addEventListener(
+    'change', () => {
+        const enabled = document.getElementById(
+            'scheduleCheckbox').checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById('scheduleInterval').value
+        ) || 24;
+        const smart = document.getElementById(
+            'smartModeCheckbox').checked;
+        chrome.runtime.sendMessage({
+            action: 'setSchedule',
+            enabled: true,
+            intervalHours: hours,
+            smartMode: smart
+        });
+        saveState();
+        if (smart) fetchScheduleInsight();
+    }
+);
+
+function fetchScheduleInsight() {
+    chrome.runtime.sendMessage(
+        { action: 'getScheduleInsight' },
+        (rec) => {
+            if (chrome.runtime.lastError || !rec) return;
+            const box = document.getElementById(
+                'scheduleInsight');
+            const text = document.getElementById(
+                'insightText');
+            if (!box || !text) return;
+
+            const windows = (rec.windows || [])
+                .map(w => `${w.start}:00-${w.end}:00 ` +
+                    `(${w.label})`)
+                .join(', ');
+            const days = (rec.bestDays || []).join(', ');
+
+            let msg = rec.recommended
+                ? 'Now is a good time to run.'
+                : rec.suggestion || 'Waiting for optimal window.';
+            msg += ` Best windows: ${windows || 'default'}.`;
+            msg += ` Top days: ${days || 'weekdays'}.`;
+
+            text.textContent = msg;
+            box.style.display = 'block';
+        }
+    );
+}
 
 document.getElementById('startBtn').addEventListener('click', async () => {
     if (currentMode === 'companies') {
@@ -1133,3 +1196,8 @@ document.getElementById('feedScheduleInterval')
 loadState();
 updateWeeklyDisplay();
 loadRecentProfiles();
+
+if (document.getElementById('scheduleCheckbox').checked &&
+    document.getElementById('smartModeCheckbox').checked) {
+    fetchScheduleInsight();
+}

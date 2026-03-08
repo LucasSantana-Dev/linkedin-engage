@@ -903,6 +903,25 @@
                     Leave empty to use current search.
                     Chrome must be running.
                 </div>
+                <div class="checkbox-group"
+                    style="margin-top:10px;">
+                    <label for="smartModeCheckbox">
+                        Smart timing (skip bad hours)
+                    </label>
+                    <input type="checkbox"
+                        id="smartModeCheckbox" />
+                </div>
+                <div id="scheduleInsight" style="
+                    display:none; margin-top:8px;
+                    padding:8px 10px;
+                    background:var(--primary-light);
+                    border-radius:var(--radius-sm);
+                    font-size:11px;
+                    color:var(--text-main);
+                    line-height:1.4;
+                ">
+                    <span id="insightText"></span>
+                </div>
             </div>
         </div>
 

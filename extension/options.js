@@ -695,5 +695,85 @@ function renderHourAcceptance(history, accepted) {
 document.getElementById('exportBtn')
     .addEventListener('click', exportCsv);
 
+function renderNurtureList() {
+    chrome.storage.local.get('nurtureList', (data) => {
+        const list = data.nurtureList || [];
+        const container = document.getElementById(
+            'nurtureList');
+        const empty = document.getElementById(
+            'nurtureEmpty');
+        if (!container) return;
+
+        if (!list.length) {
+            empty.style.display = 'block';
+            while (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+            return;
+        }
+
+        empty.style.display = 'none';
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+
+        const now = new Date();
+        for (const entry of list) {
+            const row = document.createElement('div');
+            row.style.cssText =
+                'display:flex; align-items:center; ' +
+                'justify-content:space-between; ' +
+                'padding:8px 12px; ' +
+                'border-bottom:1px solid var(--border); ' +
+                'font-size:13px;';
+
+            const info = document.createElement('div');
+            const nameEl = document.createElement('strong');
+            nameEl.textContent = entry.name || 'Unknown';
+            info.appendChild(nameEl);
+
+            const meta = document.createElement('div');
+            meta.style.cssText =
+                'font-size:11px; color:var(--muted);';
+            const added = new Date(entry.addedAt);
+            const daysAgo = Math.floor(
+                (now - added) / 86400000);
+            meta.textContent =
+                `${entry.engagements || 0}/3 engagements` +
+                ` · added ${daysAgo}d ago`;
+            info.appendChild(meta);
+
+            const removeBtn = document.createElement(
+                'button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.style.cssText =
+                'background:none; border:1px solid ' +
+                'var(--border); border-radius:6px; ' +
+                'padding:4px 10px; font-size:11px; ' +
+                'color:var(--muted); cursor:pointer;';
+            removeBtn.addEventListener('click', () => {
+                removeNurtureEntry(entry.profileUrl);
+            });
+
+            row.appendChild(info);
+            row.appendChild(removeBtn);
+            container.appendChild(row);
+        }
+    });
+}
+
+function removeNurtureEntry(profileUrl) {
+    chrome.storage.local.get('nurtureList', (data) => {
+        const list = (data.nurtureList || []).filter(
+            e => e.profileUrl !== profileUrl
+        );
+        chrome.storage.local.set(
+            { nurtureList: list },
+            () => renderNurtureList()
+        );
+    });
+}
+
 loadDashboard();
 renderAnalytics();
+renderNurtureList();
