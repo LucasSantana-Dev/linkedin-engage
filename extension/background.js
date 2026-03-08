@@ -342,48 +342,48 @@ chrome.runtime.onMessage.addListener(
         if (request.action === 'start') {
             checkRateLimit('connect').then(status => {
                 if (!status.allowed) {
-                    notifyError(
-                        `Rate limit: ${status.reason} ` +
-                        `limit reached for connections.`
-                    );
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
                     return;
                 }
                 request.rateRemaining = status.remaining;
                 launchAutomation(request);
+                sendResponse({ status: 'started' });
             });
-            sendResponse({ status: 'started' });
             return true;
         }
 
         if (request.action === 'startCompanyFollow') {
             checkRateLimit('companyFollow').then(status => {
                 if (!status.allowed) {
-                    notifyError(
-                        `Rate limit: ${status.reason} ` +
-                        `limit reached for company follows.`
-                    );
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
                     return;
                 }
                 request.rateRemaining = status.remaining;
                 launchCompanyFollow(request);
+                sendResponse({ status: 'started' });
             });
-            sendResponse({ status: 'started' });
             return true;
         }
 
         if (request.action === 'startFeedEngage') {
             checkRateLimit('feedEngage').then(status => {
                 if (!status.allowed) {
-                    notifyError(
-                        `Rate limit: ${status.reason} ` +
-                        `limit reached for feed engagement.`
-                    );
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
                     return;
                 }
                 request.rateRemaining = status.remaining;
                 launchFeedEngage(request);
+                sendResponse({ status: 'started' });
             });
-            sendResponse({ status: 'started' });
             return true;
         }
 

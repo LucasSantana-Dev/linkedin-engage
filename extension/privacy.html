@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Engage — Privacy Policy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont,
+                'Segoe UI', Roboto, sans-serif;
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        h1 { color: #0a66c2; font-size: 24px; }
+        h2 { font-size: 18px; margin-top: 28px; }
+        .updated {
+            color: #666; font-size: 13px;
+            margin-bottom: 24px;
+        }
+        ul { padding-left: 24px; }
+        li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: March 2026</p>
+
+    <h2>What Data We Collect</h2>
+    <p>LinkedIn Engage stores the following data
+        locally on your device using Chrome's
+        storage API:</p>
+    <ul>
+        <li>Your automation preferences and settings</li>
+        <li>Profile URLs of connections you've sent
+            invitations to (for deduplication)</li>
+        <li>Engagement analytics (post categories,
+            reaction types, timestamps)</li>
+        <li>Nurture list entries (profile URLs, names,
+            engagement counts)</li>
+        <li>Rate limiting counters</li>
+    </ul>
+
+    <h2>Where Data Is Stored</h2>
+    <p>All data is stored exclusively in your browser's
+        local storage via <code>chrome.storage.local</code>.
+        No data is transmitted to any external server,
+        API, or third-party service.</p>
+
+    <h2>Data We Do NOT Collect</h2>
+    <ul>
+        <li>LinkedIn credentials or session tokens</li>
+        <li>Message content or connection note text
+            (templates are stored locally, never sent
+            externally)</li>
+        <li>Browsing history outside of LinkedIn</li>
+        <li>Personal information beyond what you
+            configure in the extension</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <p>This extension does not integrate with any
+        third-party analytics, advertising, or tracking
+        services. It communicates only with
+        <code>linkedin.com</code> domains as required
+        for its automation functionality.</p>
+
+    <h2>Permissions Explained</h2>
+    <ul>
+        <li><strong>activeTab</strong>: Interact with
+            the current LinkedIn tab</li>
+        <li><strong>storage</strong>: Save your settings
+            and engagement history locally</li>
+        <li><strong>tabs</strong>: Open LinkedIn pages
+            for automation</li>
+        <li><strong>scripting</strong>: Inject automation
+            scripts into LinkedIn pages</li>
+        <li><strong>alarms</strong>: Schedule recurring
+            automation runs</li>
+        <li><strong>notifications</strong>: Alert you when
+            automation completes or errors occur</li>
+        <li><strong>host_permissions (linkedin.com)</strong>:
+            Required to interact with LinkedIn pages</li>
+    </ul>
+
+    <h2>Data Retention</h2>
+    <ul>
+        <li>Analytics log: capped at 5,000 entries</li>
+        <li>Sent profile URLs: capped at 2,000 entries</li>
+        <li>Nurture list: capped at 50 profiles,
+            auto-cleaned after 10 days</li>
+        <li>Rate limit counters: auto-cleaned weekly</li>
+    </ul>
+
+    <h2>Your Control</h2>
+    <p>You can clear all stored data at any time by:</p>
+    <ul>
+        <li>Removing the extension from Chrome</li>
+        <li>Using Chrome's "Clear browsing data"
+            for extensions</li>
+        <li>Using the extension's dashboard to
+            reset settings</li>
+    </ul>
+
+    <h2>Changes to This Policy</h2>
+    <p>Updates will be reflected in this page with a
+        revised "Last updated" date. Significant changes
+        will be noted in the extension's changelog.</p>
+
+    <h2>Contact</h2>
+    <p>For questions about this privacy policy, open an
+        issue on the project's GitHub repository.</p>
+</body>
+</html>
