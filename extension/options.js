@@ -466,7 +466,234 @@ function exportCsv() {
     );
 }
 
+function renderAnalytics() {
+    chrome.storage.local.get(
+        ['analyticsLog', 'connectionHistory',
+            'acceptedUrls'],
+        (data) => {
+            const log = data.analyticsLog || [];
+            if (!log.length) return;
+
+            document.getElementById('analyticsSection')
+                .style.display = 'block';
+
+            const stats = computeAnalyticsStats(log);
+
+            document.getElementById('analyticsAvgDay')
+                .textContent = stats.avgPerDay;
+            document.getElementById('analyticsActiveDays')
+                .textContent =
+                stats.activeDays + ' active days';
+            document.getElementById('analyticsBestHour')
+                .textContent = stats.bestHour !== null
+                ? stats.bestHour + ':00' : '—';
+            document.getElementById('analyticsBestDay')
+                .textContent = stats.bestDay || '—';
+            document.getElementById('analyticsTopCategory')
+                .textContent = stats.topCategory || '—';
+
+            const history = data.connectionHistory || [];
+            const accepted = data.acceptedUrls || [];
+            if (history.length > 0 && accepted.length > 0) {
+                renderTemplateAcceptance(
+                    history, accepted
+                );
+                renderHourAcceptance(history, accepted);
+            }
+        }
+    );
+}
+
+function computeAnalyticsStats(log) {
+    const byHour = {};
+    const byDayOfWeek = {};
+    const byCategory = {};
+    const dayNames = [
+        'Sun', 'Mon', 'Tue', 'Wed',
+        'Thu', 'Fri', 'Sat'
+    ];
+    const days = new Set();
+    let commentCount = 0;
+    let engagedCount = 0;
+
+    for (const e of log) {
+        if (e.category) {
+            byCategory[e.category] =
+                (byCategory[e.category] || 0) + 1;
+        }
+        if (e.timestamp) {
+            const d = new Date(e.timestamp);
+            const hour = d.getUTCHours();
+            byHour[hour] = (byHour[hour] || 0) + 1;
+            const day = dayNames[d.getDay()];
+            byDayOfWeek[day] =
+                (byDayOfWeek[day] || 0) + 1;
+            days.add(e.timestamp.substring(0, 10));
+        }
+        if (e.commented) commentCount++;
+        if (!e.status?.startsWith('skipped')) {
+            engagedCount++;
+        }
+    }
+
+    const topKey = (obj) => {
+        let best = null, bestVal = -1;
+        for (const [k, v] of Object.entries(obj)) {
+            if (v > bestVal) { bestVal = v; best = k; }
+        }
+        return best;
+    };
+
+    const activeDays = days.size;
+    return {
+        total: log.length,
+        avgPerDay: activeDays > 0
+            ? Math.round(
+                log.length / activeDays * 10
+            ) / 10 : 0,
+        activeDays,
+        bestHour: topKey(byHour) !== null
+            ? parseInt(topKey(byHour)) : null,
+        bestDay: topKey(byDayOfWeek),
+        topCategory: topKey(byCategory),
+        commentRate: engagedCount > 0
+            ? Math.round(
+                (commentCount / engagedCount) * 100
+            ) : 0
+    };
+}
+
+function renderTemplateAcceptance(history, accepted) {
+    const acceptedSet = new Set(accepted);
+    const templates = {};
+
+    for (const r of history) {
+        const tpl = r.templateId || r.template ||
+            'unknown';
+        if (!templates[tpl]) {
+            templates[tpl] = { sent: 0, accepted: 0 };
+        }
+        templates[tpl].sent++;
+        if (r.profileUrl && acceptedSet.has(r.profileUrl)) {
+            templates[tpl].accepted++;
+        }
+    }
+
+    const entries = Object.entries(templates)
+        .filter(([, v]) => v.sent >= 3);
+    if (!entries.length) return;
+
+    document.getElementById('templateAcceptance')
+        .style.display = 'block';
+    const container =
+        document.getElementById('templateBars');
+    container.textContent = '';
+
+    for (const [name, data] of entries) {
+        const rate = Math.round(
+            (data.accepted / data.sent) * 100
+        );
+        const card = document.createElement('div');
+        card.style.cssText =
+            'background:var(--primary-light);' +
+            'border-radius:8px; padding:12px 16px;' +
+            'min-width:120px;';
+
+        const title = document.createElement('div');
+        title.textContent = name;
+        title.style.cssText =
+            'font-weight:600; font-size:13px;' +
+            'margin-bottom:4px;';
+
+        const rateLine = document.createElement('div');
+        rateLine.textContent = rate + '% accepted';
+        rateLine.style.cssText =
+            'font-size:18px; font-weight:700;' +
+            'color:var(--primary);';
+
+        const detail = document.createElement('div');
+        detail.textContent =
+            `${data.accepted}/${data.sent} sent`;
+        detail.style.cssText =
+            'font-size:11px; color:var(--muted);' +
+            'margin-top:2px;';
+
+        card.appendChild(title);
+        card.appendChild(rateLine);
+        card.appendChild(detail);
+        container.appendChild(card);
+    }
+}
+
+function renderHourAcceptance(history, accepted) {
+    const acceptedSet = new Set(accepted);
+    const hours = {};
+
+    for (const r of history) {
+        if (!r.time) continue;
+        const h = new Date(r.time).getUTCHours();
+        if (!hours[h]) {
+            hours[h] = { sent: 0, accepted: 0 };
+        }
+        hours[h].sent++;
+        if (r.profileUrl && acceptedSet.has(r.profileUrl)) {
+            hours[h].accepted++;
+        }
+    }
+
+    const hasData = Object.values(hours)
+        .some(v => v.accepted > 0);
+    if (!hasData) return;
+
+    document.getElementById('hourAcceptance')
+        .style.display = 'block';
+    const container =
+        document.getElementById('hourBars');
+    container.textContent = '';
+
+    const maxSent = Math.max(
+        ...Object.values(hours).map(v => v.sent), 1
+    );
+
+    for (let h = 0; h < 24; h++) {
+        const data = hours[h] || { sent: 0, accepted: 0 };
+        const rate = data.sent > 0
+            ? Math.round(
+                (data.accepted / data.sent) * 100
+            ) : 0;
+        const pct = (data.sent / maxSent) * 100;
+
+        const col = document.createElement('div');
+        col.style.cssText =
+            'flex:1; display:flex; flex-direction:column;' +
+            'align-items:center; gap:2px;';
+
+        const bar = document.createElement('div');
+        bar.style.cssText =
+            `width:100%; border-radius:2px 2px 0 0;` +
+            `height:${Math.max(pct, 3)}%;` +
+            `background:${rate > 30
+                ? 'var(--success)'
+                : rate > 0
+                    ? 'var(--primary)'
+                    : 'var(--border)'};` +
+            `opacity:${data.sent > 0 ? 0.8 : 0.3};`;
+        bar.title = `${h}:00 — ${data.sent} sent, ` +
+            `${data.accepted} accepted (${rate}%)`;
+
+        const label = document.createElement('span');
+        label.textContent = h % 3 === 0 ? h : '';
+        label.style.cssText =
+            'font-size:8px; color:var(--muted);';
+
+        col.appendChild(bar);
+        col.appendChild(label);
+        container.appendChild(col);
+    }
+}
+
 document.getElementById('exportBtn')
     .addEventListener('click', exportCsv);
 
 loadDashboard();
+renderAnalytics();

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LinkedIn Auto-Connect — Dashboard</title>
+    <title>LinkedIn Engage — Dashboard</title>
     <style>
         :root {
             --primary: #0a66c2;
@@ -401,6 +401,64 @@
             display:flex; gap:8px; align-items:flex-end;
             height:60px; padding:8px 0;
         "></div>
+    </div>
+
+    <div class="section" id="analyticsSection"
+        style="display:none;">
+        <h2>Analytics Insights</h2>
+        <div class="grid"
+            style="grid-template-columns:repeat(4,1fr);
+            margin-bottom:0;">
+            <div class="card">
+                <div class="card-label">Avg / Day</div>
+                <div class="card-value" id="analyticsAvgDay"
+                    style="font-size:24px">—</div>
+                <div class="card-sub"
+                    id="analyticsActiveDays">—</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Best Hour</div>
+                <div class="card-value" id="analyticsBestHour"
+                    style="font-size:24px">—</div>
+                <div class="card-sub">UTC</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Best Day</div>
+                <div class="card-value" id="analyticsBestDay"
+                    style="font-size:24px">—</div>
+                <div class="card-sub">day of week</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Top Category</div>
+                <div class="card-value"
+                    id="analyticsTopCategory"
+                    style="font-size:18px">—</div>
+                <div class="card-sub">
+                    most engaged post type
+                </div>
+            </div>
+        </div>
+        <div id="templateAcceptance"
+            style="margin-top:16px; display:none;">
+            <h3 style="font-size:14px; margin-bottom:8px;
+                color:var(--muted);">
+                Acceptance by Note Template
+            </h3>
+            <div id="templateBars" style="
+                display:flex; gap:8px; flex-wrap:wrap;
+            "></div>
+        </div>
+        <div id="hourAcceptance"
+            style="margin-top:16px; display:none;">
+            <h3 style="font-size:14px; margin-bottom:8px;
+                color:var(--muted);">
+                Acceptance by Hour (UTC)
+            </h3>
+            <div id="hourBars" style="
+                display:flex; gap:2px; align-items:flex-end;
+                height:60px; padding:8px 0;
+            "></div>
+        </div>
     </div>
 
     <div class="section">

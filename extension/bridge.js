@@ -74,6 +74,18 @@ window.addEventListener('message', (event) => {
             action: 'loginRequired'
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_ANALYTICS') {
+        chrome.storage.local.get('analyticsLog', (data) => {
+            const log = data.analyticsLog || [];
+            log.push({
+                ...event.data.entry,
+                timestamp: new Date().toISOString()
+            });
+            chrome.storage.local.set({
+                analyticsLog: log.slice(-5000)
+            });
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({
             action: 'progress',

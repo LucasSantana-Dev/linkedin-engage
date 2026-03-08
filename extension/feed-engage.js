@@ -1004,13 +1004,34 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         consecutiveFails = 0;
                         backoffMultiplier = 1;
                         if (urn) newUrns.push(urn);
-                        engageLog.push({
+                        const logEntry = {
                             author,
                             postText:
                                 postText.substring(0, 100),
                             status: actions.join('+'),
                             time: new Date().toISOString()
-                        });
+                        };
+                        engageLog.push(logEntry);
+                        window.postMessage({
+                            type: 'LINKEDIN_BOT_ANALYTICS',
+                            entry: {
+                                mode: 'feed',
+                                category: classifyPost(
+                                    postText
+                                ),
+                                reaction: actions.find(
+                                    a => a !== 'commented'
+                                ) || null,
+                                commented: actions.includes(
+                                    'commented'
+                                ),
+                                lang: detectLanguage(
+                                    postText
+                                ),
+                                postLength:
+                                    (postText || '').length
+                            }
+                        }, '*');
                         window.postMessage({
                             type: 'LINKEDIN_BOT_PROGRESS',
                             sent: totalEngaged,
