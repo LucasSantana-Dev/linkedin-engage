@@ -8,11 +8,13 @@ const {
     extractTopic,
     extractKeyPhrase,
     humanize,
+    detectLanguage,
     isReactablePost,
     shouldSkipPost,
     isCompanyFollowText,
     POST_CATEGORIES,
-    CATEGORY_TEMPLATES
+    CATEGORY_TEMPLATES,
+    CATEGORY_TEMPLATES_PT
 } = require('../extension/lib/feed-utils');
 
 describe('getReactionType', () => {
@@ -461,5 +463,106 @@ describe('CATEGORY_TEMPLATES', () => {
                 expect(tmpl.length).toBeLessThan(150);
             }
         }
+    });
+});
+
+describe('detectLanguage', () => {
+    it('returns pt for Portuguese text', () => {
+        expect(detectLanguage(
+            'Estamos contratando! Nossa empresa ' +
+            'precisa de pessoas com experiência ' +
+            'em desenvolvimento.'
+        )).toBe('pt');
+    });
+
+    it('returns en for English text', () => {
+        expect(detectLanguage(
+            'We are hiring engineers to join ' +
+            'our growing team.'
+        )).toBe('en');
+    });
+
+    it('returns en for empty/null', () => {
+        expect(detectLanguage('')).toBe('en');
+        expect(detectLanguage(null)).toBe('en');
+    });
+
+    it('returns pt with 3+ PT markers', () => {
+        expect(detectLanguage(
+            'Isso também é muito importante'
+        )).toBe('pt');
+    });
+
+    it('returns en with fewer than 3 markers', () => {
+        expect(detectLanguage(
+            'Check this AI tool'
+        )).toBe('en');
+    });
+});
+
+describe('CATEGORY_TEMPLATES_PT', () => {
+    it('has templates for all categories plus generic', () => {
+        const expected = [
+            'hiring', 'achievement', 'technical',
+            'question', 'tips', 'story', 'news', 'generic'
+        ];
+        for (const cat of expected) {
+            expect(CATEGORY_TEMPLATES_PT[cat])
+                .toBeDefined();
+            expect(CATEGORY_TEMPLATES_PT[cat].length)
+                .toBeGreaterThanOrEqual(5);
+        }
+    });
+
+    it('templates are conversational length', () => {
+        for (const templates of
+            Object.values(CATEGORY_TEMPLATES_PT)) {
+            for (const tmpl of templates) {
+                expect(tmpl.length).toBeLessThan(150);
+            }
+        }
+    });
+});
+
+describe('buildCommentFromPost PT-BR', () => {
+    it('generates PT comment for PT post', () => {
+        const post = 'Estamos contratando! Nossa empresa ' +
+            'precisa de pessoas com experiência em ' +
+            'desenvolvimento e tecnologia.';
+        const results = new Set();
+        for (let i = 0; i < 50; i++) {
+            results.add(buildCommentFromPost(post, null));
+        }
+        const allComments = [...results];
+        const hasPt = allComments.some(c =>
+            /vaga|compartilh|stack|contratando|rede/i
+                .test(c)
+        );
+        expect(hasPt).toBe(true);
+    });
+
+    it('generates EN comment for EN post', () => {
+        const post = 'We are hiring engineers to work ' +
+            'on our cloud infrastructure team. ' +
+            'Apply now and join us!';
+        const results = new Set();
+        for (let i = 0; i < 50; i++) {
+            results.add(buildCommentFromPost(post, null));
+        }
+        const allComments = [...results];
+        const hasEn = allComments.some(c =>
+            /role|network|stack|hiring|bookmarked/i
+                .test(c)
+        );
+        expect(hasEn).toBe(true);
+    });
+
+    it('uses user templates regardless of language', () => {
+        const post = 'Nossa equipe está muito orgulhosa ' +
+            'dessa conquista incrível!';
+        const result = buildCommentFromPost(
+            post, ['Custom: {topic}']
+        );
+        expect(result).toContain('Custom:');
     });
 });

@@ -169,6 +169,101 @@ const CATEGORY_TEMPLATES = {
     ]
 };
 
+const CATEGORY_TEMPLATES_PT = {
+    hiring: [
+        'vaga top, vou compartilhar na minha rede',
+        'a área de {topic} tá muito aquecida',
+        'bom ver empresas investindo em {topic}. ' +
+            'boa sorte na busca!',
+        'esse tipo de vaga que eu gosto de ver ' +
+            'no feed. {keyPhrase}',
+        'salvei. conheço gente que pode se encaixar',
+        'interessante - como é a stack?',
+        'bom ver {topic} contratando'
+    ],
+    achievement: [
+        'parabéns!! merecido demais',
+        'que massa, parabéns!',
+        'enorme! {keyPhrase}',
+        'bom demais ver isso. parabéns pela conquista!',
+        'merecido - ansioso pra ver o próximo passo',
+        'parabéns! {topic} precisa de gente como vc',
+        'isso alegrou meu dia. vai com tudo!!'
+    ],
+    technical: [
+        'tenho pensado muito nisso ultimamente. ' +
+            '{keyPhrase}',
+        'passei por algo parecido. {topic} é ' +
+            'difícil de acertar',
+        'isso é super subestimado. mais gente ' +
+            'precisa falar sobre {topic}',
+        'ponto sólido. curioso sobre sua ' +
+            'experiência com escala',
+        'salvando pra depois. {topic} sempre ' +
+            'aparece nas nossas dailys',
+        'sim! {keyPhrase} - a gente aprendeu ' +
+            'isso da pior forma também',
+        'a parte sobre {topic} fez muito sentido'
+    ],
+    question: [
+        'sinceramente depende. mas tendendo pra ' +
+            '{keyPhrase}',
+        'boa pergunta - também fico indo e ' +
+            'voltando nisso',
+        'a gente tentou várias abordagens com ' +
+            '{topic} e a resposta sempre foi "depende"',
+        'também curioso sobre isso, seguindo ' +
+            'pelas respostas',
+        'esse é daqueles temas que cada um tem ' +
+            'uma opinião diferente. pra mim, {keyPhrase}',
+        'boa thread. {topic} é uma daquelas ' +
+            'coisas que só fazendo pra entender'
+    ],
+    tips: [
+        'precisava ouvir isso hoje',
+        'salvando isso. o ponto sobre {topic} ' +
+            'tá certíssimo',
+        'queria ter essa dica 2 anos atrás kk',
+        'simples mas muito verdade. {keyPhrase}',
+        'print feito, mandando pro time',
+        'isso. principalmente a parte de {topic}',
+        'anotando. {keyPhrase}'
+    ],
+    story: [
+        'valeu por compartilhar isso',
+        'isso pega diferente. {keyPhrase}',
+        'precisava dessa perspectiva hoje. ' +
+            'valeu pela honestidade',
+        'mais disso no LinkedIn por favor',
+        'me identifico mais do que vc imagina',
+        'valeu por escrever isso. pouca gente ' +
+            'fala sobre {topic} de verdade',
+        'real. {keyPhrase}'
+    ],
+    news: [
+        'eita não esperava essa',
+        'acompanhando {topic} de perto - isso ' +
+            'é grande',
+        'interessante. curioso como isso afeta ' +
+            'o resto do mercado',
+        '{topic} tá andando rápido demais. ' +
+            'difícil acompanhar',
+        'isso vai mudar as coisas. {keyPhrase}',
+        'tava falando sobre isso ontem. {topic} ' +
+            'tá insano'
+    ],
+    generic: [
+        'precisava ver isso hoje, valeu por postar',
+        'isso fez sentido. {keyPhrase}',
+        'perspectiva muito interessante',
+        'seguindo pra mais sobre isso',
+        'compartilhei com meu time',
+        'certíssimo. {keyPhrase}',
+        'valeu por colocar isso aqui',
+        'isso. 100%'
+    ]
+};
+
 const FOLLOW_UPS = [
     '', '', '', '', '',
     ' what has your experience been?',
@@ -178,10 +273,25 @@ const FOLLOW_UPS = [
     ''
 ];
 
+const FOLLOW_UPS_PT = [
+    '', '', '', '', '',
+    ' qual tem sido sua experiência?',
+    ' bora conectar e trocar mais sobre isso.',
+    ' curioso como outros estão lidando com isso.',
+    ' vc já escreveu mais sobre isso?',
+    ''
+];
+
 const OPENERS = [
     '', '', '', '',
     'honestly, ', 'yeah ', 'this - ',
     'so true. ', '', ''
+];
+
+const OPENERS_PT = [
+    '', '', '', '',
+    'sinceramente, ', 'sim ', 'isso - ',
+    'muito real. ', '', ''
 ];
 
 const TOPIC_MAP = [
@@ -240,6 +350,33 @@ function extractTopic(postText) {
         }
     }
     return 'this topic';
+}
+
+const PT_MARKERS = [
+    'você', 'vocês', 'não', 'está', 'também',
+    'muito', 'como', 'isso', 'aqui', 'mais',
+    'sobre', 'ainda', 'quando', 'porque', 'então',
+    'todos', 'nossa', 'nosso', 'trabalho', 'empresa',
+    'equipe', 'projeto', 'sempre', 'melhor', 'pessoas',
+    'mundo', 'tempo', 'forma', 'importante', 'novo',
+    'nova', 'grande', 'parte', 'dia', 'hoje',
+    'precisamos', 'precisa', 'conhecimento', 'área',
+    'experiência', 'oportunidade', 'resultado',
+    'desenvolvimento', 'tecnologia', 'mercado',
+    'carreira', 'profissional', 'conteúdo',
+    'vaga', 'contratando', 'orgulho', 'conquista',
+    'opinião', 'dica', 'obrigado', 'obrigada',
+    'parabéns', 'incrível', 'demais'
+];
+
+function detectLanguage(text) {
+    if (!text) return 'en';
+    const lower = text.toLowerCase();
+    let score = 0;
+    for (const marker of PT_MARKERS) {
+        if (lower.includes(marker)) score++;
+    }
+    return score >= 3 ? 'pt' : 'en';
 }
 
 function pickRandom(arr) {
@@ -313,13 +450,16 @@ function humanize(comment) {
 function buildCommentFromPost(postText, userTemplates) {
     const category = classifyPost(postText);
     const topic = extractTopic(postText);
+    const lang = detectLanguage(postText);
 
     let template;
     if (userTemplates && userTemplates.length > 0) {
         template = pickRandom(userTemplates);
     } else {
-        const pool = CATEGORY_TEMPLATES[category] ||
-            CATEGORY_TEMPLATES.generic;
+        const templates = lang === 'pt'
+            ? CATEGORY_TEMPLATES_PT : CATEGORY_TEMPLATES;
+        const pool = templates[category] ||
+            templates.generic;
         template = pickRandom(pool);
     }
 
@@ -344,11 +484,15 @@ function buildCommentFromPost(postText, userTemplates) {
     }
 
     if (!userTemplates || !userTemplates.length) {
-        const opener = pickRandom(OPENERS);
+        const openers = lang === 'pt'
+            ? OPENERS_PT : OPENERS;
+        const followUps = lang === 'pt'
+            ? FOLLOW_UPS_PT : FOLLOW_UPS;
+        const opener = pickRandom(openers);
         if (opener && !comment.startsWith(opener.trim())) {
             comment = opener + comment;
         }
-        const followUp = pickRandom(FOLLOW_UPS);
+        const followUp = pickRandom(followUps);
         if (followUp) {
             comment = comment.replace(/[.!?]*$/, '') +
                 followUp;
@@ -388,11 +532,13 @@ if (typeof module !== 'undefined' && module.exports) {
         extractTopic,
         extractKeyPhrase,
         humanize,
+        detectLanguage,
         isReactablePost,
         shouldSkipPost,
         isCompanyFollowText,
         POST_CATEGORIES,
         CATEGORY_TEMPLATES,
+        CATEGORY_TEMPLATES_PT,
         TOPIC_MAP
     };
 }
