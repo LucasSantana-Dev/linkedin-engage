@@ -215,4 +215,54 @@ function renderChart(history) {
     }
 }
 
+function exportCsv() {
+    chrome.storage.local.get(
+        ['connectionHistory', 'acceptedUrls'],
+        (data) => {
+            const history = data.connectionHistory || [];
+            const acceptedSet = new Set(
+                data.acceptedUrls || []
+            );
+            const rows = [
+                ['Name', 'Headline', 'Profile URL',
+                 'Status', 'Time'].join(',')
+            ];
+            for (const r of history) {
+                let status = r.status || '';
+                if (r.profileUrl &&
+                    acceptedSet.has(r.profileUrl) &&
+                    status === 'sent') {
+                    status = 'accepted';
+                }
+                const name = (r.name || '')
+                    .replace(/"/g, '""');
+                const headline = (r.headline || '')
+                    .replace(/"/g, '""');
+                rows.push([
+                    `"${name}"`,
+                    `"${headline}"`,
+                    r.profileUrl || '',
+                    status,
+                    r.time || ''
+                ].join(','));
+            }
+            const blob = new Blob(
+                [rows.join('\n')],
+                { type: 'text/csv' }
+            );
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'linkedin-connections-' +
+                new Date().toISOString().slice(0, 10) +
+                '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    );
+}
+
+document.getElementById('exportBtn')
+    .addEventListener('click', exportCsv);
+
 loadDashboard();
