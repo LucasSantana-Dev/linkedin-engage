@@ -1114,6 +1114,15 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                 );
             }
 
+            if (config?.nurtureTarget?.profileUrl &&
+                totalEngaged > 0) {
+                window.postMessage({
+                    type: 'LINKEDIN_BOT_NURTURE_ENGAGED',
+                    profileUrl:
+                        config.nurtureTarget.profileUrl
+                }, '*');
+            }
+
             return {
                 success: true,
                 mode: 'feed',

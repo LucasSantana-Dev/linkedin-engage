@@ -93,6 +93,16 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return { name, headline, profileUrl };
     }
 
+    function notifyNurture(info) {
+        if (info?.profileUrl) {
+            window.postMessage({
+                type: 'LINKEDIN_BOT_NURTURE_ADD',
+                profileUrl: info.profileUrl,
+                name: info.name
+            }, '*');
+        }
+    }
+
     window.addEventListener('message', (event) => {
         if (event.source !== window) return;
         if (event.data?.type === 'LINKEDIN_BOT_STOP') {
@@ -890,6 +900,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                     time: new Date()
                                         .toISOString()
                                 });
+                                notifyNurture(sentInfo);
                             } else {
                                 totalSkipped++;
                                 connectionLog.push({
@@ -1011,6 +1022,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                             time: new Date()
                                                 .toISOString()
                                         });
+                                        notifyNurture(sentInfo);
                                     } else {
                                         totalSkipped++;
                                         connectionLog.push({
@@ -1080,6 +1092,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                     time: new Date()
                                         .toISOString()
                                 });
+                                notifyNurture(sentInfo2);
                             } else {
                                 totalSkipped++;
                                 connectionLog.push({

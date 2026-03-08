@@ -1,6 +1,7 @@
 let activeTabId = null;
 
 importScripts('lib/rate-limiter.js');
+importScripts('lib/nurture.js');
 
 async function checkRateLimit(mode) {
     return new Promise(resolve => {
@@ -245,6 +246,35 @@ function launchFeedEngage(config) {
     );
 }
 
+function launchNurture(target, config) {
+    const url = buildNurtureUrl(target.profileUrl);
+    chrome.tabs.create(
+        { url, active: true },
+        (tab) => {
+            if (chrome.runtime.lastError || !tab) {
+                notifyError(
+                    'Failed to open nurture tab: ' +
+                    (chrome.runtime.lastError?.message
+                        || 'unknown error')
+                );
+                return;
+            }
+            activeTabId = tab.id;
+            injectAndStart(tab.id,
+                ['lib/feed-utils.js',
+                    'lib/human-behavior.js',
+                    'feed-engage.js'],
+                'LINKEDIN_FEED_ENGAGE_START',
+                {
+                    ...config,
+                    nurtureTarget: target,
+                    limit: config.limit || 3
+                }
+            );
+        }
+    );
+}
+
 function injectAndStart(tabId, scripts, msgType, config) {
     const timeout = setTimeout(() => {
         chrome.tabs.onUpdated.removeListener(listener);
@@ -407,6 +437,17 @@ chrome.runtime.onMessage.addListener(
                     'log in and restart the automation.'
             });
             sendResponse({ status: 'login_required' });
+            return true;
+        }
+
+        if (request.action === 'nurtureEngaged') {
+            if (request.profileUrl) {
+                recordNurtureEngagement(
+                    request.profileUrl,
+                    chrome.storage.local
+                );
+            }
+            sendResponse({ status: 'ok' });
             return true;
         }
 
@@ -595,6 +636,28 @@ chrome.runtime.onMessage.addListener(
                 feedSchedule: {
                     enabled: request.enabled,
                     intervalHours: request.intervalHours
+                }
+            });
+            sendResponse({ status: 'scheduled' });
+            return true;
+        }
+
+        if (request.action === 'setNurtureSchedule') {
+            chrome.alarms.clear('nurtureSchedule');
+            if (request.enabled &&
+                request.intervalHours > 0) {
+                chrome.alarms.create('nurtureSchedule', {
+                    delayInMinutes:
+                        request.intervalHours * 60,
+                    periodInMinutes:
+                        request.intervalHours * 60
+                });
+            }
+            chrome.storage.local.set({
+                nurtureSchedule: {
+                    enabled: request.enabled,
+                    intervalHours: request.intervalHours,
+                    limit: request.limit || 3
                 }
             });
             sendResponse({ status: 'scheduled' });
@@ -806,6 +869,45 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         return;
     }
 
+    if (alarm.name === 'nurtureSchedule') {
+        chrome.storage.local.get(
+            ['nurtureSchedule', 'nurtureList'],
+            (data) => {
+                const schedule = data.nurtureSchedule;
+                if (!schedule?.enabled) return;
+
+                const list = data.nurtureList || [];
+                const targets =
+                    getActiveNurtureTargets(list);
+                if (!targets.length) return;
+
+                const target = targets[
+                    Math.floor(
+                        Math.random() * targets.length
+                    )
+                ];
+
+                launchNurture(target, {
+                    limit: schedule.limit || 3,
+                    react: true,
+                    comment: false,
+                    commentTemplates: [],
+                    skipKeywords: []
+                });
+
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: 'icons/icon128.png',
+                    title: 'LinkedIn Engage',
+                    message:
+                        `Nurturing ${target.name}: ` +
+                        `engaging with recent posts`
+                });
+            }
+        );
+        return;
+    }
+
     if (alarm.name !== 'linkedinSchedule') return;
 
     chrome.storage.local.get(
@@ -948,3 +1050,11 @@ function getTemplate(key, lang) {
     const templates = lang === 'pt' ? pt : en;
     return templates[key] || templates.networking;
 }
+
+chrome.runtime.onInstalled.addListener(() => {
+    cleanExpiredNurtures(chrome.storage.local);
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    cleanExpiredNurtures(chrome.storage.local);
+});

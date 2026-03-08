@@ -74,6 +74,33 @@ window.addEventListener('message', (event) => {
             action: 'loginRequired'
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_NURTURE_ADD') {
+        chrome.storage.local.get('nurtureList', (data) => {
+            const list = data.nurtureList || [];
+            const url = event.data.profileUrl;
+            if (!url) return;
+            const exists = list.some(
+                p => p.profileUrl === url
+            );
+            if (exists) return;
+            list.push({
+                profileUrl: url,
+                name: event.data.name || 'Unknown',
+                addedAt: new Date().toISOString(),
+                engagements: 0,
+                lastEngaged: null
+            });
+            chrome.storage.local.set({
+                nurtureList: list.slice(-50)
+            });
+        });
+    }
+    if (event.data?.type === 'LINKEDIN_BOT_NURTURE_ENGAGED') {
+        chrome.runtime.sendMessage({
+            action: 'nurtureEngaged',
+            profileUrl: event.data.profileUrl
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_ANALYTICS') {
         chrome.storage.local.get('analyticsLog', (data) => {
             const log = data.analyticsLog || [];
