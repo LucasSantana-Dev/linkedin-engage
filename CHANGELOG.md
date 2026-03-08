@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file.
 - **Composed template system**: `COMPOSED_EN` and `COMPOSED_PT` template functions generate context-aware comments using extracted concepts for 10 post categories (hiring, achievement, technical, question, opinion, motivation, project, jobseeking, newjob, generic)
 - **Expanded PT-BR keywords**: Achievement, technical, hiring, newjob categories now include Portuguese keywords for better bilingual classification
 - **Expanded reaction keywords**: Tech-specific terms (shipped, launched, certified, burnout, laid off, clean code, ci/cd, friday deploy) and PT-BR equivalents for smarter reaction selection
-- **Server hardening**: Added `helmet`, `express-rate-limit`, and `zod` dependencies for Playwright connector security
+- **API security hardening**: Helmet security headers, express-rate-limit (30 req/min), Zod schema validation on `/connect`, `/schedule`, `/webhook` endpoints. JSON body limit 16KB. Configurable CORS origins via `CORS_ORIGINS` env var
+- **40 new tests**: `extractConcepts` (14), composed template integration (7), Zod schema validation (18), total 321 across 8 suites
 
 ### Improved
 - **Post text extraction**: Individual selector iteration with length validation replaces combined selector string — catches more LinkedIn DOM variants including `span[dir="ltr"]` nested in commentary divs
