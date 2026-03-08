@@ -214,7 +214,13 @@ function saveState() {
         feedScheduleInterval: document.getElementById(
             'feedScheduleInterval').value,
         smartMode: document.getElementById(
-            'smartModeCheckbox').checked
+            'smartModeCheckbox').checked,
+        nurtureScheduleEnabled: document.getElementById(
+            'nurtureScheduleCheckbox').checked,
+        nurtureScheduleInterval: document.getElementById(
+            'nurtureScheduleInterval').value,
+        nurturePostLimit: document.getElementById(
+            'nurturePostLimit').value
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -366,6 +372,24 @@ function loadState() {
             document.getElementById(
                 'feedScheduleInterval'
             ).value = popupState.feedScheduleInterval;
+        }
+        if (popupState.nurtureScheduleEnabled) {
+            document.getElementById(
+                'nurtureScheduleCheckbox'
+            ).checked = true;
+            document.getElementById(
+                'nurtureScheduleOptions'
+            ).style.display = 'block';
+        }
+        if (popupState.nurtureScheduleInterval) {
+            document.getElementById(
+                'nurtureScheduleInterval'
+            ).value = popupState.nurtureScheduleInterval;
+        }
+        if (popupState.nurturePostLimit) {
+            document.getElementById(
+                'nurturePostLimit'
+            ).value = popupState.nurturePostLimit;
         }
 
         setActiveTemplate(popupState.activeTemplate || 'senior');
@@ -1062,6 +1086,9 @@ function setMode(mode) {
     startBtn.disabled = false;
 
     saveState();
+    if (typeof loadRateLimitStatus === 'function') {
+        loadRateLimitStatus();
+    }
 }
 
 document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -1193,11 +1220,179 @@ document.getElementById('feedScheduleInterval')
         saveState();
     });
 
+document.getElementById('nurtureScheduleCheckbox')
+    .addEventListener('change', (e) => {
+        const opts = document.getElementById(
+            'nurtureScheduleOptions'
+        );
+        opts.style.display = e.target.checked
+            ? 'block' : 'none';
+        const hours = parseInt(
+            document.getElementById(
+                'nurtureScheduleInterval'
+            ).value
+        ) || 8;
+        const limit = parseInt(
+            document.getElementById(
+                'nurturePostLimit'
+            ).value
+        ) || 3;
+        chrome.runtime.sendMessage({
+            action: 'setNurtureSchedule',
+            enabled: e.target.checked,
+            intervalHours: hours,
+            limit
+        });
+        saveState();
+        if (e.target.checked) loadNurtureStatus();
+    });
+
+document.getElementById('nurtureScheduleInterval')
+    .addEventListener('change', () => {
+        const enabled = document.getElementById(
+            'nurtureScheduleCheckbox'
+        ).checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById(
+                'nurtureScheduleInterval'
+            ).value
+        ) || 8;
+        const limit = parseInt(
+            document.getElementById(
+                'nurturePostLimit'
+            ).value
+        ) || 3;
+        chrome.runtime.sendMessage({
+            action: 'setNurtureSchedule',
+            enabled: true,
+            intervalHours: hours,
+            limit
+        });
+        saveState();
+    });
+
+document.getElementById('nurturePostLimit')
+    .addEventListener('change', () => {
+        const enabled = document.getElementById(
+            'nurtureScheduleCheckbox'
+        ).checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById(
+                'nurtureScheduleInterval'
+            ).value
+        ) || 8;
+        const limit = parseInt(
+            document.getElementById(
+                'nurturePostLimit'
+            ).value
+        ) || 3;
+        chrome.runtime.sendMessage({
+            action: 'setNurtureSchedule',
+            enabled: true,
+            intervalHours: hours,
+            limit
+        });
+        saveState();
+    });
+
+function loadNurtureStatus() {
+    chrome.storage.local.get('nurtureList', (data) => {
+        const list = data.nurtureList || [];
+        const box = document.getElementById(
+            'nurtureStatus');
+        const text = document.getElementById(
+            'nurtureStatusText');
+        if (!box || !text) return;
+
+        if (!list.length) {
+            text.textContent =
+                'No nurture targets yet. ' +
+                'Connect with people to start nurturing.';
+            box.style.display = 'block';
+            return;
+        }
+
+        const now = new Date();
+        const cutoff = new Date(
+            now.getTime() - 7 * 86400000
+        );
+        const active = list.filter(e => {
+            const added = new Date(e.addedAt);
+            if (added < cutoff) return false;
+            if (e.engagements >= 3) return false;
+            if (e.lastEngaged) {
+                const last = new Date(e.lastEngaged);
+                if ((now - last) < 12 * 3600000) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        text.textContent =
+            `${list.length} total, ` +
+            `${active.length} active targets ready.`;
+        box.style.display = 'block';
+    });
+}
+
+function loadRateLimitStatus() {
+    const now = new Date();
+    const h = now.getUTCHours();
+    const d = now.toISOString().substring(0, 10);
+    const mode = currentMode === 'companies'
+        ? 'companyFollow'
+        : currentMode === 'feed'
+            ? 'feedEngage' : 'connect';
+    const hKey = `rate_${mode}_${d}_${h}`;
+    const dKey = `rate_${mode}_${d}`;
+
+    const limits = {
+        connect: { hourly: 12, daily: 40 },
+        companyFollow: { hourly: 10, daily: 30 },
+        feedEngage: { hourly: 15, daily: 50 }
+    };
+    const lim = limits[mode] || { hourly: 12, daily: 40 };
+
+    chrome.storage.local.get([hKey, dKey], (data) => {
+        const hourCount = data[hKey] || 0;
+        const dayCount = data[dKey] || 0;
+        const bar = document.getElementById(
+            'rateLimitBar');
+        const text = document.getElementById(
+            'rateLimitText');
+        if (!bar || !text) return;
+
+        const hourLeft = Math.max(
+            0, lim.hourly - hourCount);
+        const dayLeft = Math.max(
+            0, lim.daily - dayCount);
+
+        text.textContent =
+            `Rate limits: ${hourLeft}/${lim.hourly} ` +
+            `this hour · ${dayLeft}/${lim.daily} today`;
+
+        if (hourLeft === 0 || dayLeft === 0) {
+            text.style.color = 'var(--warning)';
+        } else {
+            text.style.color = 'var(--text-muted)';
+        }
+        bar.style.display = 'block';
+    });
+}
+
 loadState();
 updateWeeklyDisplay();
 loadRecentProfiles();
+loadRateLimitStatus();
 
 if (document.getElementById('scheduleCheckbox').checked &&
     document.getElementById('smartModeCheckbox').checked) {
     fetchScheduleInsight();
+}
+if (document.getElementById('nurtureScheduleCheckbox')
+    .checked) {
+    loadNurtureStatus();
 }

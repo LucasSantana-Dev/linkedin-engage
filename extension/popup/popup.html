@@ -716,6 +716,56 @@
                     </div>
                 </div>
             </div>
+
+            <div class="section">
+                <div class="checkbox-group">
+                    <label for="nurtureScheduleCheckbox">
+                        Nurture new connections
+                    </label>
+                    <input type="checkbox"
+                        id="nurtureScheduleCheckbox" />
+                </div>
+                <div id="nurtureScheduleOptions"
+                    style="display:none;">
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="nurtureScheduleInterval">
+                            Check every (hours)
+                        </label>
+                        <input type="number"
+                            id="nurtureScheduleInterval"
+                            value="8" min="2" max="72"
+                            style="width:80px;" />
+                    </div>
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="nurturePostLimit">
+                            Posts per visit
+                        </label>
+                        <input type="number"
+                            id="nurturePostLimit"
+                            value="3" min="1" max="10"
+                            style="width:80px;" />
+                    </div>
+                    <div style="font-size:10px;
+                        color:var(--text-muted);
+                        margin-top:4px;">
+                        Visits a nurture target's recent
+                        activity and reacts to their posts.
+                        Max 3 engagements per connection
+                        over 7 days. 12h cooldown between.
+                    </div>
+                    <div id="nurtureStatus" style="
+                        display:none; margin-top:8px;
+                        padding:6px 10px;
+                        background:var(--primary-light);
+                        border-radius:var(--radius-sm);
+                        font-size:11px;
+                    ">
+                        <span id="nurtureStatusText"></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- CONNECT SECTION (existing) -->
@@ -933,6 +983,14 @@
             / <span id="weeklyLimit">150</span> invites
         </div>
         </div><!-- /connectSection -->
+
+        <div id="rateLimitBar" style="
+            font-size:10px; text-align:center;
+            margin-bottom:8px; color:var(--text-muted);
+            display:none;
+        ">
+            <span id="rateLimitText"></span>
+        </div>
 
         <button id="startBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
