@@ -606,6 +606,47 @@
                     Fill in to only follow matching companies.
                 </div>
             </div>
+
+            <hr class="divider">
+
+            <div class="section">
+                <div class="checkbox-group">
+                    <label for="companyScheduleCheckbox">
+                        Schedule recurring company follows
+                    </label>
+                    <input type="checkbox"
+                        id="companyScheduleCheckbox" />
+                </div>
+                <div id="companyScheduleOptions"
+                    style="display:none;">
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="companyScheduleInterval">
+                            Run every (hours)
+                        </label>
+                        <input type="number"
+                            id="companyScheduleInterval"
+                            value="24" min="1" max="168"
+                            style="width:80px;" />
+                    </div>
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="companyBatchSize">
+                            Companies per batch
+                        </label>
+                        <input type="number"
+                            id="companyBatchSize"
+                            value="10" min="1" max="50"
+                            style="width:80px;" />
+                    </div>
+                    <div style="font-size:10px;
+                        color:var(--text-muted);
+                        margin-top:4px;">
+                        Rotates through your company list in
+                        batches. Chrome must be running.
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- FEED ENGAGE SECTION -->

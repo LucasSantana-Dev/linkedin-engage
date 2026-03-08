@@ -202,7 +202,13 @@ function saveState() {
         commentTemplates: document.getElementById(
             'commentTemplatesInput').value,
         skipKeywords: document.getElementById(
-            'skipKeywordsInput').value
+            'skipKeywordsInput').value,
+        companyScheduleEnabled: document.getElementById(
+            'companyScheduleCheckbox').checked,
+        companyScheduleInterval: document.getElementById(
+            'companyScheduleInterval').value,
+        companyBatchSize: document.getElementById(
+            'companyBatchSize').value
     };
 
     document.querySelectorAll('.tag').forEach(tag => {
@@ -319,6 +325,24 @@ function loadState() {
         if (popupState.skipKeywords) {
             document.getElementById('skipKeywordsInput').value =
                 popupState.skipKeywords;
+        }
+        if (popupState.companyScheduleEnabled) {
+            document.getElementById(
+                'companyScheduleCheckbox'
+            ).checked = true;
+            document.getElementById(
+                'companyScheduleOptions'
+            ).style.display = 'block';
+        }
+        if (popupState.companyScheduleInterval) {
+            document.getElementById(
+                'companyScheduleInterval'
+            ).value = popupState.companyScheduleInterval;
+        }
+        if (popupState.companyBatchSize) {
+            document.getElementById(
+                'companyBatchSize'
+            ).value = popupState.companyBatchSize;
         }
 
         setActiveTemplate(popupState.activeTemplate || 'senior');
@@ -960,6 +984,60 @@ document.getElementById('loadDefaultCompanies')
         }
         saveState();
     });
+
+document.getElementById('companyScheduleCheckbox')
+    .addEventListener('change', (e) => {
+        const opts = document.getElementById(
+            'companyScheduleOptions'
+        );
+        opts.style.display = e.target.checked
+            ? 'block' : 'none';
+        const hours = parseInt(
+            document.getElementById(
+                'companyScheduleInterval'
+            ).value
+        ) || 24;
+        const batchSize = parseInt(
+            document.getElementById(
+                'companyBatchSize'
+            ).value
+        ) || 10;
+        chrome.runtime.sendMessage({
+            action: 'setCompanySchedule',
+            enabled: e.target.checked,
+            intervalHours: hours,
+            batchSize
+        });
+        saveState();
+    });
+
+document.getElementById('companyScheduleInterval')
+    .addEventListener('change', () => {
+        const enabled = document.getElementById(
+            'companyScheduleCheckbox'
+        ).checked;
+        if (!enabled) return;
+        const hours = parseInt(
+            document.getElementById(
+                'companyScheduleInterval'
+            ).value
+        ) || 24;
+        const batchSize = parseInt(
+            document.getElementById(
+                'companyBatchSize'
+            ).value
+        ) || 10;
+        chrome.runtime.sendMessage({
+            action: 'setCompanySchedule',
+            enabled: true,
+            intervalHours: hours,
+            batchSize
+        });
+        saveState();
+    });
+
+document.getElementById('companyBatchSize')
+    .addEventListener('change', saveState);
 
 loadState();
 updateWeeklyDisplay();

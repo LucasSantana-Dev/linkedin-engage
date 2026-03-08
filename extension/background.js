@@ -496,6 +496,25 @@ chrome.runtime.onMessage.addListener(
             sendResponse({ status: 'scheduled' });
             return true;
         }
+
+        if (request.action === 'setCompanySchedule') {
+            chrome.alarms.clear('companySchedule');
+            if (request.enabled && request.intervalHours > 0) {
+                chrome.alarms.create('companySchedule', {
+                    delayInMinutes: request.intervalHours * 60,
+                    periodInMinutes: request.intervalHours * 60
+                });
+            }
+            chrome.storage.local.set({
+                companySchedule: {
+                    enabled: request.enabled,
+                    intervalHours: request.intervalHours,
+                    batchSize: request.batchSize || 10
+                }
+            });
+            sendResponse({ status: 'scheduled' });
+            return true;
+        }
     }
 );
 
@@ -569,6 +588,62 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     message:
                         'Quota retry: testing with 10 ' +
                         'invites to check if limit reset.'
+                });
+            }
+        );
+        return;
+    }
+
+    if (alarm.name === 'companySchedule') {
+        chrome.storage.local.get(
+            ['popupState', 'companySchedule',
+                'companyRotationIndex'],
+            (data) => {
+                const state = data.popupState;
+                const schedule = data.companySchedule;
+                if (!schedule?.enabled || !state) return;
+
+                const raw = state.targetCompanies || '';
+                const allCompanies = raw
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                if (!allCompanies.length) return;
+
+                const batchSize =
+                    schedule.batchSize || 10;
+                const startIdx =
+                    (data.companyRotationIndex || 0)
+                    % allCompanies.length;
+                const batch = allCompanies.slice(
+                    startIdx, startIdx + batchSize
+                );
+                const nextIdx = startIdx + batch.length;
+                chrome.storage.local.set({
+                    companyRotationIndex:
+                        nextIdx >= allCompanies.length
+                            ? 0 : nextIdx
+                });
+
+                const limit = parseInt(
+                    state.limit
+                ) || 50;
+
+                launchCompanyFollow({
+                    query: state.companyQuery
+                        || 'software technology',
+                    limit,
+                    targetCompanies: batch
+                });
+
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: 'icons/icon128.png',
+                    title: 'LinkedIn Auto-Connect',
+                    message:
+                        `Scheduled company follow: ` +
+                        `batch of ${batch.length} ` +
+                        `(${batch[0]}...)`
                 });
             }
         );

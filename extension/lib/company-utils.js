@@ -42,11 +42,71 @@ function isNextPageButton(btn) {
     return label === 'Next' || label === 'Avançar';
 }
 
+function detectChallenge() {
+    const url = (typeof window !== 'undefined'
+        ? window.location.href : '');
+    if (/checkpoint|authwall|challenge/i.test(url)) {
+        return true;
+    }
+    const body = typeof document !== 'undefined'
+        ? document.body : null;
+    const text = (body?.innerText ||
+        body?.textContent || '');
+    return /security verification|unusual activity|verificação de segurança/i.test(text);
+}
+
+function buildCompanySearchUrl(query) {
+    return 'https://www.linkedin.com/search/results/' +
+        'companies/' +
+        `?keywords=${encodeURIComponent(query)}` +
+        '&origin=FACETED_SEARCH';
+}
+
+function findCompanyCards(root) {
+    const el = root || document;
+    return el.querySelectorAll(
+        '.entity-result, ' +
+        '[data-chameleon-result-urn], ' +
+        '.reusable-search__result-container'
+    );
+}
+
+function findFollowBtnInCard(card) {
+    const btns = card.querySelectorAll('button');
+    for (const btn of btns) {
+        if (isCompanyFollowText(
+            btn.innerText || btn.textContent
+        ) && !btn.disabled) {
+            return btn;
+        }
+    }
+    return null;
+}
+
+function isCompanyFollowText(text) {
+    const t = (text || '').trim().replace(/^\+\s*/, '');
+    return t === 'Follow' || t === 'Seguir';
+}
+
+function buildBatchFromRotation(
+    allCompanies, startIdx, batchSize
+) {
+    if (!allCompanies || !allCompanies.length) return [];
+    const start = startIdx % allCompanies.length;
+    return allCompanies.slice(start, start + batchSize);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         extractCompanyInfo,
         matchesTargetCompanies,
         isFollowingText,
-        isNextPageButton
+        isNextPageButton,
+        detectChallenge,
+        buildCompanySearchUrl,
+        findCompanyCards,
+        findFollowBtnInCard,
+        isCompanyFollowText,
+        buildBatchFromRotation
     };
 }

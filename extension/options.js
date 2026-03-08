@@ -21,6 +21,7 @@ function loadDashboard() {
         [
             weekKey, 'sentProfileUrls',
             'acceptedUrls', 'schedule',
+            'companySchedule',
             'connectionHistory', 'fuseLimitRetry',
             'companyFollowHistory', 'feedEngageHistory'
         ],
@@ -114,14 +115,30 @@ function loadDashboard() {
                     'Quota limit hit — auto-retry at ' +
                     retryDate.toLocaleString();
                 sEl.style.color = 'var(--warning)';
-            } else if (schedule?.enabled) {
-                sEl.textContent =
-                    `Active — runs every ` +
-                    `${schedule.intervalHours}h`;
-                sEl.style.color = '#057642';
             } else {
-                sEl.textContent = 'Not scheduled';
+                const parts = [];
+                if (schedule?.enabled) {
+                    parts.push(
+                        `Connect: every ` +
+                        `${schedule.intervalHours}h`
+                    );
+                }
+                if (data.companySchedule?.enabled) {
+                    parts.push(
+                        `Companies: every ` +
+                        `${data.companySchedule.intervalHours}h` +
+                        ` (batch ${data.companySchedule.batchSize || 10})`
+                    );
+                }
+                if (parts.length) {
+                    sEl.textContent = parts.join(' · ');
+                    sEl.style.color = '#057642';
+                } else {
+                    sEl.textContent = 'Not scheduled';
+                }
             }
+
+            renderFeedMetrics(feedHistory);
 
             const companyEntries = companyHistory.map(r => ({
                 name: r.name || 'Unknown',
@@ -222,6 +239,97 @@ function loadDashboard() {
             }
         }
     );
+}
+
+function renderFeedMetrics(feedHistory) {
+    if (!feedHistory || !feedHistory.length) return;
+
+    document.getElementById('feedMetricsGrid')
+        .style.display = 'grid';
+
+    let commentCount = 0;
+    let engagedCount = 0;
+    let skippedCount = 0;
+    const reactions = {};
+
+    for (const r of feedHistory) {
+        const s = r.status || '';
+        if (s.startsWith('skipped')) {
+            skippedCount++;
+            continue;
+        }
+        engagedCount++;
+        if (s.includes('commented')) {
+            commentCount++;
+        }
+        const parts = s.split('+');
+        for (const p of parts) {
+            if (p === 'commented') continue;
+            const name = p.trim();
+            if (name) {
+                reactions[name] =
+                    (reactions[name] || 0) + 1;
+            }
+        }
+    }
+
+    document.getElementById('totalComments')
+        .textContent = commentCount;
+    document.getElementById('feedSkipped')
+        .textContent = skippedCount;
+
+    if (engagedCount > 0) {
+        const pct = Math.round(
+            (commentCount / engagedCount) * 100
+        );
+        document.getElementById('commentPct')
+            .textContent = pct + '%';
+        document.getElementById('commentRate')
+            .textContent =
+            `${commentCount} of ${engagedCount} posts`;
+    }
+
+    const sorted = Object.entries(reactions)
+        .sort((a, b) => b[1] - a[1]);
+    if (sorted.length > 0) {
+        document.getElementById('topReaction')
+            .textContent = sorted[0][0];
+        document.getElementById('topReactionCount')
+            .textContent = sorted[0][1] + ' times';
+    }
+
+    if (sorted.length > 1) {
+        document.getElementById('reactionBreakdown')
+            .style.display = 'block';
+        const container = document.getElementById(
+            'reactionBars'
+        );
+        container.textContent = '';
+        const max = sorted[0][1];
+
+        for (const [name, count] of sorted) {
+            const col = document.createElement('div');
+            col.className = 'reaction-bar-col';
+
+            const countEl = document.createElement('span');
+            countEl.className = 'reaction-bar-count';
+            countEl.textContent = count;
+
+            const bar = document.createElement('div');
+            bar.className = 'reaction-bar-fill';
+            const pct = (count / max) * 100;
+            bar.style.height = Math.max(pct, 5) + '%';
+
+            const label = document.createElement('span');
+            label.className = 'reaction-bar-label';
+            label.textContent = name;
+
+            col.appendChild(countEl);
+            col.appendChild(bar);
+            col.appendChild(label);
+            container.appendChild(col);
+        }
+    }
 }
 
 function renderChart(history) {

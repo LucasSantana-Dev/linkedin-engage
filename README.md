@@ -18,7 +18,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Connection log export** — download CSV of sent/skipped profiles with timestamps
 - **Scheduled runs** — recurring automation via Chrome Alarms API (configurable interval)
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
-- **Company follow mode** — searches each target company by name individually for high hit rate; 60 curated mid-size (150-500 employee) LATAM-hiring companies as defaults
+- **Company follow mode** — searches each target company by name individually for high hit rate; 60 curated mid-size (150-500 employee) LATAM-hiring companies as defaults; scheduled recurring runs with batch rotation
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching
 - **13 post categories** — hiring, achievement, technical, question, tips, story, news, humor, critique, motivation, project, jobseeking, newjob — each with dedicated comment templates
 - **Smart comment generation** — category-aware follow-ups, post-length awareness (short posts get short comments), `{keyPhrase}` templates only when extractable, `{topic}` auto-detected from post content
@@ -36,6 +36,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Error resilience** — tab load timeout, script injection error handling, tab close detection with notifications
 - **Dark mode** — respects system `prefers-color-scheme` with GitHub-inspired dark palette
 - **Activity chart** — 14-day bar chart on dashboard showing daily send volume
+- **Feed analytics** — comment success rate, reaction breakdown chart, top reaction type, skip counts on dashboard
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
 - **Custom query mode** — toggle between tag builder and manual query input
 - **Auto-pagination** — navigates through search result pages automatically
