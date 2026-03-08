@@ -447,7 +447,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         let totalSkipped = 0;
         let currentPage = 1;
         let consecutiveFails = 0;
+        let backoffMultiplier = 1;
         const MAX_CONSECUTIVE_FAILS = 3;
+        const MAX_BACKOFF_MS = 300000;
         stopRequested = false;
         connectionLog.length = 0;
         const sentUrls = new Set(config?.sentUrls || []);
@@ -783,9 +785,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                         await delay(1000);
                                         if (consecutiveFails >=
                                             MAX_CONSECUTIVE_FAILS) {
-                                            const backoff =
-                                                30000 +
-                                                Math.random() * 30000;
+                                            const backoff = Math.min(
+                                                30000 * backoffMultiplier +
+                                                Math.random() * 30000,
+                                                MAX_BACKOFF_MS
+                                            );
+                                            backoffMultiplier *= 2;
                                             reportProgress(
                                                 totalSent, limit,
                                                 currentPage,
@@ -798,6 +803,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                     }
 
                                     consecutiveFails = 0;
+                                    backoffMultiplier = 1;
                                     const noteVerified =
                                         await verifyPendingState(
                                             button);
@@ -851,9 +857,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                 await delay(1000);
                                 if (consecutiveFails >=
                                     MAX_CONSECUTIVE_FAILS) {
-                                    const backoff =
-                                        30000 +
-                                        Math.random() * 30000;
+                                    const backoff = Math.min(
+                                        30000 * backoffMultiplier +
+                                        Math.random() * 30000,
+                                        MAX_BACKOFF_MS
+                                    );
+                                    backoffMultiplier *= 2;
                                     reportProgress(
                                         totalSent, limit,
                                         currentPage, totalSkipped
@@ -865,6 +874,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             }
 
                             consecutiveFails = 0;
+                            backoffMultiplier = 1;
                             const noNoteVerified =
                                 await verifyPendingState(
                                     button);
