@@ -155,10 +155,17 @@ function launchAutomation(config) {
 }
 
 function launchCompanyFollow(config) {
+    const companies = config.targetCompanies || [];
+    const query = config.query || '';
+    const searches = companies.length > 0
+        ? companies.map(c => c.trim()).filter(Boolean)
+        : [query];
+
+    const firstQuery = searches[0] || query;
     let searchUrl =
         'https://www.linkedin.com/search/results/' +
         'companies/' +
-        `?keywords=${encodeURIComponent(config.query)}` +
+        `?keywords=${encodeURIComponent(firstQuery)}` +
         '&origin=FACETED_SEARCH';
 
     chrome.tabs.create(
@@ -178,7 +185,10 @@ function launchCompanyFollow(config) {
                     'lib/company-utils.js',
                     'company-follow.js'],
                 'LINKEDIN_COMPANY_FOLLOW_START',
-                config
+                {
+                    ...config,
+                    companySearchQueue: searches.slice(1)
+                }
             );
         }
     );

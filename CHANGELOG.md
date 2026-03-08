@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-03-08
+
+### Added
+- **6 new post categories**: humor, critique, motivation, project, jobseeking, newjob — with EN + PT-BR conversational templates
+- **Curated company list**: DEFAULT_LATAM_COMPANIES now 60 mid-size (150-500 employee) companies that actively hire from Brazil/LATAM (Hotjar, Doist, Toggl, QuintoAndar, CloudWalk, Creditas, etc.)
+- **Per-company search**: Company follow now searches each target company name individually instead of one broad query — much higher hit rate
+- **Category-aware follow-ups**: Follow-up questions match post category (e.g., "what stack?" for technical, "is it open source?" for projects)
+- **Smart template selection**: Skips `{keyPhrase}` templates when no phrase extracted; prefers short templates for short posts
+
+### Fixed
+- **Bottom-up post discovery**: `findPosts()` now finds Like/Comment buttons first and walks UP DOM tree to container — more resilient than class-based selectors
+- **Comment editor polling**: Replaced fixed 2s delay with polling loop (500ms × 10 attempts) for editor to appear
+- **Submit button scoping**: Search within post element first, document fallback only if needed
+- **Comment text input**: Uses `innerText` + dispatch input event instead of DOM manipulation (createElement)
+- Added `submit-button--cr` class variant for LinkedIn's current comment submit button
+
 ## [1.8.1] - 2026-03-07
 
 ### Added

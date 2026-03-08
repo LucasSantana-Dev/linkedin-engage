@@ -18,9 +18,10 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **Connection log export** — download CSV of sent/skipped profiles with timestamps
 - **Scheduled runs** — recurring automation via Chrome Alarms API (configurable interval)
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
-- **Company follow mode** — search and auto-follow companies (big tech, startups, etc.) with optional target company filter
+- **Company follow mode** — searches each target company by name individually for high hit rate; 60 curated mid-size (150-500 employee) LATAM-hiring companies as defaults
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching
-- **Comment templates** — `{topic}` auto-detected from post content (AI, leadership, hiring, etc.) and `{excerpt}` for quoting; skip keywords to avoid sponsored content
+- **13 post categories** — hiring, achievement, technical, question, tips, story, news, humor, critique, motivation, project, jobseeking, newjob — each with dedicated comment templates
+- **Smart comment generation** — category-aware follow-ups, post-length awareness (short posts get short comments), `{keyPhrase}` templates only when extractable, `{topic}` auto-detected from post content
 - **PT-BR comments** — auto-detects Portuguese posts and generates conversational PT-BR comments with language-appropriate openers/follow-ups
 - **Duplicate post guard** — persists engaged post URNs across sessions to avoid re-engaging the same posts
 - **429 rate limit backoff** — detects failed sends, exponential backoff (30s, 60s, 120s... up to 5min) after 3 consecutive failures

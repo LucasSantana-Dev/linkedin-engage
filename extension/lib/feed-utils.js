@@ -459,23 +459,126 @@ const CATEGORY_TEMPLATES_PT = {
     ]
 };
 
-const FOLLOW_UPS = [
-    '', '', '', '', '',
-    ' what has your experience been?',
-    ' would love to connect and chat more about this.',
-    ' curious how others are handling this.',
-    ' have you written more about this?',
-    ''
-];
+const CATEGORY_FOLLOW_UPS = {
+    technical: [
+        '', '',
+        ' what stack are you using for this?',
+        ' curious how you measured the impact.',
+        ' have you benchmarked this?',
+        ''
+    ],
+    question: [
+        '', '',
+        ' would love to hear more takes on this.',
+        ' what has your experience been?',
+        ''
+    ],
+    hiring: [
+        '', '', '',
+        ' is this remote-friendly?',
+        ''
+    ],
+    project: [
+        '', '',
+        ' what was the hardest part to build?',
+        ' is it open source?',
+        ''
+    ],
+    humor: ['', '', '', '', ''],
+    newjob: ['', '', '', '', ''],
+    achievement: ['', '', '', '', ''],
+    jobseeking: [
+        '', '',
+        ' what kind of role are you targeting?',
+        ''
+    ],
+    critique: [
+        '', '',
+        ' curious how others are handling this.',
+        ''
+    ],
+    story: [
+        '', '',
+        ' have you written more about this?',
+        ''
+    ],
+    tips: [
+        '', '',
+        ' any more resources on this?',
+        ''
+    ],
+    motivation: ['', '', '', '', ''],
+    news: [
+        '', '',
+        ' curious how this plays out long-term.',
+        ''
+    ],
+    generic: [
+        '', '', '', '',
+        ' would love to connect and chat more.',
+        ''
+    ]
+};
 
-const FOLLOW_UPS_PT = [
-    '', '', '', '', '',
-    ' qual tem sido sua experiência?',
-    ' bora conectar e trocar mais sobre isso.',
-    ' curioso como outros estão lidando com isso.',
-    ' vc já escreveu mais sobre isso?',
-    ''
-];
+const CATEGORY_FOLLOW_UPS_PT = {
+    technical: [
+        '', '',
+        ' qual stack vc tá usando?',
+        ' curioso como mediu o impacto.',
+        ''
+    ],
+    question: [
+        '', '',
+        ' quero ver mais opiniões sobre isso.',
+        ' qual tem sido sua experiência?',
+        ''
+    ],
+    hiring: [
+        '', '', '',
+        ' aceita remoto?',
+        ''
+    ],
+    project: [
+        '', '',
+        ' qual foi a parte mais difícil de construir?',
+        ' é open source?',
+        ''
+    ],
+    humor: ['', '', '', '', ''],
+    newjob: ['', '', '', '', ''],
+    achievement: ['', '', '', '', ''],
+    jobseeking: [
+        '', '',
+        ' que tipo de vaga vc tá buscando?',
+        ''
+    ],
+    critique: [
+        '', '',
+        ' curioso como outros estão lidando com isso.',
+        ''
+    ],
+    story: [
+        '', '',
+        ' vc já escreveu mais sobre isso?',
+        ''
+    ],
+    tips: [
+        '', '',
+        ' tem mais material sobre isso?',
+        ''
+    ],
+    motivation: ['', '', '', '', ''],
+    news: [
+        '', '',
+        ' curioso como isso se desenrola.',
+        ''
+    ],
+    generic: [
+        '', '', '', '',
+        ' bora conectar e trocar mais sobre isso.',
+        ''
+    ]
+};
 
 const OPENERS = [
     '', '', '', '',
@@ -646,6 +749,14 @@ function buildCommentFromPost(postText, userTemplates) {
     const category = classifyPost(postText);
     const topic = extractTopic(postText);
     const lang = detectLanguage(postText);
+    const textLen = (postText || '').length;
+    const isShortPost = textLen < 150;
+
+    const rawPhrase = extractKeyPhrase(postText);
+    const hasKeyPhrase = rawPhrase && rawPhrase.length > 0;
+    const keyPhrase = hasKeyPhrase
+        ? '"' + lowerFirst(rawPhrase) + '"'
+        : '';
 
     let template;
     if (userTemplates && userTemplates.length > 0) {
@@ -655,16 +766,25 @@ function buildCommentFromPost(postText, userTemplates) {
             ? CATEGORY_TEMPLATES_PT : CATEGORY_TEMPLATES;
         const pool = templates[category] ||
             templates.generic;
-        template = pickRandom(pool);
+
+        let candidates = pool;
+        if (!hasKeyPhrase) {
+            const noPhrase = pool.filter(
+                t => !t.includes('{keyPhrase}')
+            );
+            if (noPhrase.length > 0) candidates = noPhrase;
+        }
+        if (isShortPost) {
+            const short = candidates.filter(
+                t => t.length < 60
+            );
+            if (short.length > 0) candidates = short;
+        }
+        template = pickRandom(candidates);
     }
 
     const excerpt = (postText || '')
         .substring(0, 50).trim();
-
-    const rawPhrase = extractKeyPhrase(postText);
-    const keyPhrase = rawPhrase
-        ? '"' + lowerFirst(rawPhrase) + '"'
-        : '';
 
     let comment = template
         .replace(/\{topic\}/g, topic)
@@ -674,23 +794,32 @@ function buildCommentFromPost(postText, userTemplates) {
 
     comment = comment.replace(/\s{2,}/g, ' ').trim();
     if (comment.includes('""') ||
-        comment.endsWith('"') && comment.split('"').length < 3) {
+        comment.endsWith('"') &&
+        comment.split('"').length < 3) {
         comment = comment.replace(/\s*""\s*/g, ' ').trim();
     }
 
     if (!userTemplates || !userTemplates.length) {
         const openers = lang === 'pt'
             ? OPENERS_PT : OPENERS;
-        const followUps = lang === 'pt'
-            ? FOLLOW_UPS_PT : FOLLOW_UPS;
         const opener = pickRandom(openers);
-        if (opener && !comment.startsWith(opener.trim())) {
+        if (opener &&
+            !comment.startsWith(opener.trim())) {
             comment = opener + comment;
         }
-        const followUp = pickRandom(followUps);
-        if (followUp) {
-            comment = comment.replace(/[.!?]*$/, '') +
-                followUp;
+
+        if (!isShortPost) {
+            const followUpMap = lang === 'pt'
+                ? CATEGORY_FOLLOW_UPS_PT
+                : CATEGORY_FOLLOW_UPS;
+            const followUps = followUpMap[category] ||
+                followUpMap.generic;
+            const followUp = pickRandom(followUps);
+            if (followUp) {
+                comment = comment.replace(
+                    /[.!?]*$/, ''
+                ) + followUp;
+            }
         }
         comment = humanize(comment);
     }

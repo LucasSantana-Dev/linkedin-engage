@@ -544,16 +544,6 @@ function startCompanyFollow() {
     const query = document.getElementById(
         'companyQueryInput'
     ).value.trim();
-    if (!query) {
-        setStatusMessage(
-            'Enter a company search query.',
-            'warning'
-        );
-        return;
-    }
-    const limit = parseInt(
-        document.getElementById('limitInput').value
-    ) || 50;
     const raw = document.getElementById(
         'targetCompanies'
     ).value.trim();
@@ -561,14 +551,26 @@ function startCompanyFollow() {
         ? raw.split('\n').map(s => s.trim()).filter(Boolean)
         : [];
 
+    if (!query && targetCompanies.length === 0) {
+        setStatusMessage(
+            'Enter a search query or add target companies.',
+            'warning'
+        );
+        return;
+    }
+
+    const limit = parseInt(
+        document.getElementById('limitInput').value
+    ) || 50;
+
     lastReportedSent = 0;
     showProgressUI('Followed', limit,
-        'Navigating to company search...'
+        'Searching companies by name...'
     );
 
     chrome.runtime.sendMessage({
         action: 'startCompanyFollow',
-        query,
+        query: query || 'software technology',
         limit,
         targetCompanies
     });
@@ -954,8 +956,7 @@ document.getElementById('loadDefaultCompanies')
         const queryInput = document.getElementById(
             'companyQueryInput');
         if (!queryInput.value.trim()) {
-            queryInput.value =
-                'remote software engineer hiring LATAM';
+            queryInput.value = 'software technology';
         }
         saveState();
     });

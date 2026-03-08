@@ -43,6 +43,92 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         }, '*');
     }
 
+    function navigateToCompanySearch(query) {
+        const url =
+            'https://www.linkedin.com/search/results/' +
+            'companies/' +
+            `?keywords=${encodeURIComponent(query)}` +
+            '&origin=FACETED_SEARCH';
+        window.location.href = url;
+    }
+
+    async function processCurrentPage(
+        companies, limit, totalFollowed
+    ) {
+        await delay(2000);
+        const cards = findCompanyCards();
+        console.log(
+            `[LinkedIn Bot] ${cards.length} company ` +
+            `cards on page`
+        );
+
+        for (const card of cards) {
+            if (totalFollowed >= limit ||
+                stopRequested) break;
+
+            const info = extractCompanyInfo(card);
+
+            if (companies.length > 0 &&
+                !matchesTargetCompanies(
+                    info.name, companies
+                )) {
+                continue;
+            }
+
+            const followBtn =
+                findFollowBtnInCard(card);
+            if (!followBtn) {
+                followLog.push({
+                    ...info,
+                    status: 'skipped-already-following',
+                    time: new Date().toISOString()
+                });
+                continue;
+            }
+
+            followBtn.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            await delay(
+                800 + Math.random() * 1200
+            );
+            followBtn.click();
+            await delay(1000);
+
+            const btnText =
+                (followBtn.innerText ||
+                    followBtn.textContent || '')
+                    .trim();
+            const success = isFollowingText(btnText) ||
+                followBtn.disabled;
+
+            if (success) {
+                totalFollowed++;
+                followLog.push({
+                    ...info,
+                    status: 'followed',
+                    time: new Date().toISOString()
+                });
+            } else {
+                followLog.push({
+                    ...info,
+                    status: 'skipped-failed',
+                    time: new Date().toISOString()
+                });
+            }
+
+            reportProgress(
+                totalFollowed, limit, 0
+            );
+            await delay(
+                1500 + Math.random() * 2500
+            );
+        }
+
+        return totalFollowed;
+    }
+
     async function runCompanyFollow(config) {
         console.log(
             '[LinkedIn Bot] Company follow started',
@@ -50,100 +136,40 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         );
         const limit = config?.limit || 50;
         const companies = config?.targetCompanies || [];
+        const searchQueue =
+            config?.companySearchQueue || [];
         let totalFollowed = 0;
-        let currentPage = 1;
         stopRequested = false;
         followLog.length = 0;
 
         try {
-            while (totalFollowed < limit) {
-                if (stopRequested) break;
+            totalFollowed = await processCurrentPage(
+                companies, limit, totalFollowed
+            );
 
-                await delay(2000);
-                const cards = findCompanyCards();
+            let queueIdx = 0;
+            while (totalFollowed < limit &&
+                !stopRequested &&
+                queueIdx < searchQueue.length) {
+                const nextCompany =
+                    searchQueue[queueIdx++];
                 console.log(
-                    `[LinkedIn Bot] Page ${currentPage}: ` +
-                    `${cards.length} company cards found`
+                    '[LinkedIn Bot] Searching: ' +
+                    nextCompany
                 );
+                navigateToCompanySearch(nextCompany);
+                await delay(5000);
 
-                for (const card of cards) {
-                    if (totalFollowed >= limit ||
-                        stopRequested) break;
-
-                    const info = extractCompanyInfo(card);
-
-                    if (!matchesTargetCompanies(
-                        info.name, companies
-                    )) {
-                        continue;
+                for (let i = 0; i < 10; i++) {
+                    if (findCompanyCards().length > 0) {
+                        break;
                     }
-
-                    const followBtn =
-                        findFollowBtnInCard(card);
-                    if (!followBtn) {
-                        followLog.push({
-                            ...info,
-                            status: 'skipped-already-following',
-                            time: new Date().toISOString()
-                        });
-                        continue;
-                    }
-
-                    followBtn.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                    await delay(
-                        800 + Math.random() * 1200
-                    );
-                    followBtn.click();
                     await delay(1000);
-
-                    const btnText =
-                        (followBtn.innerText ||
-                            followBtn.textContent || '')
-                            .trim();
-                    const success = isFollowingText(btnText) ||
-                        followBtn.disabled;
-
-                    if (success) {
-                        totalFollowed++;
-                        followLog.push({
-                            ...info,
-                            status: 'followed',
-                            time: new Date().toISOString()
-                        });
-                    } else {
-                        followLog.push({
-                            ...info,
-                            status: 'skipped-failed',
-                            time: new Date().toISOString()
-                        });
-                    }
-
-                    reportProgress(
-                        totalFollowed, limit, currentPage
-                    );
-                    await delay(
-                        1500 + Math.random() * 2500
-                    );
                 }
 
-                if (totalFollowed >= limit) break;
-
-                const nextBtn = findNextPageButton();
-                if (nextBtn) {
-                    currentPage++;
-                    nextBtn.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                    await delay(1000);
-                    nextBtn.click();
-                    await delay(6000);
-                } else {
-                    break;
-                }
+                totalFollowed = await processCurrentPage(
+                    companies, limit, totalFollowed
+                );
             }
 
             return {
