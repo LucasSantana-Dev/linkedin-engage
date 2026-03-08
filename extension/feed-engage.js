@@ -12,6 +12,45 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
             pauseChance: 0.05, scrollMultiplier: 1
         };
 
+    function getMyName() {
+        var el = document.querySelector(
+            '.feed-identity-module__actor-meta a,' +
+            'a[href*="/in/"][class*="ember-view"]' +
+            '[data-test-global-nav-item],' +
+            '.global-nav__me-photo,' +
+            'img.feed-identity-module__member-photo'
+        );
+        if (el) {
+            var alt = el.getAttribute('alt') || '';
+            if (alt.length > 2) return alt.trim();
+            var txt = (el.innerText ||
+                el.textContent || '').trim();
+            if (txt.length > 2)
+                return txt.split('\n')[0].trim();
+        }
+        var meLink = document.querySelector(
+            '.feed-identity-module a[href*="/in/"]'
+        );
+        if (meLink) {
+            return (meLink.innerText ||
+                meLink.textContent || '').trim()
+                .split('\n')[0].trim();
+        }
+        return '';
+    }
+
+    function alreadyCommented(existing, myName) {
+        if (!myName || !existing || !existing.length)
+            return false;
+        var lower = myName.toLowerCase();
+        return existing.some(function(c) {
+            return (c.author || '').toLowerCase()
+                .includes(lower) ||
+                lower.includes(
+                    (c.author || '').toLowerCase());
+        });
+    }
+
     let aiRequestId = 0;
     function requestAIComment(data) {
         return new Promise((resolve) => {
@@ -1176,6 +1215,14 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 'function'
                                 ? getExistingComments(post)
                                 : [];
+                        if (alreadyCommented(
+                            existing, getMyName())) {
+                            console.log(
+                                '[LinkedIn Bot] Already' +
+                                ' commented, skipping'
+                            );
+                            skipComment = true;
+                        }
                         if (existing.length > 0) {
                             var ptComments = existing
                                 .filter(function(c) {
