@@ -174,7 +174,9 @@ function launchCompanyFollow(config) {
             }
             activeTabId = tab.id;
             injectAndStart(tab.id,
-                ['lib/feed-utils.js', 'company-follow.js'],
+                ['lib/feed-utils.js',
+                    'lib/company-utils.js',
+                    'company-follow.js'],
                 'LINKEDIN_COMPANY_FOLLOW_START',
                 config
             );

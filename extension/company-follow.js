@@ -13,33 +13,12 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         );
     }
 
-    function extractCompanyInfo(card) {
-        const nameEl = card.querySelector(
-            '.entity-result__title-text a span, ' +
-            '.entity-result__title-text a, ' +
-            '.app-aware-link span[dir]'
-        );
-        const name = nameEl
-            ? nameEl.innerText.trim().split('\n')[0]
-            : 'Unknown';
-        const subtitleEl = card.querySelector(
-            '.entity-result__primary-subtitle'
-        );
-        const subtitle = subtitleEl
-            ? subtitleEl.innerText.trim() : '';
-        const linkEl = card.querySelector(
-            'a[href*="/company/"]'
-        );
-        const companyUrl = linkEl
-            ? linkEl.href.split('?')[0] : '';
-        return { name, subtitle, companyUrl };
-    }
-
     function findFollowBtnInCard(card) {
         const btns = card.querySelectorAll('button');
         for (const btn of btns) {
-            if (isCompanyFollowText(btn.innerText) &&
-                !btn.disabled) {
+            if (isCompanyFollowText(
+                btn.innerText || btn.textContent
+            ) && !btn.disabled) {
                 return btn;
             }
         }
@@ -47,11 +26,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     }
 
     function findNextPageButton() {
-        const nextBtns = document.querySelectorAll(
+        const btns = document.querySelectorAll(
             'button[aria-label="Next"], ' +
             'button[aria-label="Avançar"]'
         );
-        for (const btn of nextBtns) {
+        for (const btn of btns) {
             if (!btn.disabled) return btn;
         }
         return null;
@@ -93,11 +72,9 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
 
                     const info = extractCompanyInfo(card);
 
-                    if (companies.length > 0 &&
-                        !companies.some(c =>
-                            info.name.toLowerCase()
-                                .includes(c.toLowerCase())
-                        )) {
+                    if (!matchesTargetCompanies(
+                        info.name, companies
+                    )) {
                         continue;
                     }
 
@@ -123,9 +100,10 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     await delay(1000);
 
                     const btnText =
-                        (followBtn.innerText || '').trim();
-                    const success = btnText === 'Following' ||
-                        btnText === 'Seguindo' ||
+                        (followBtn.innerText ||
+                            followBtn.textContent || '')
+                            .trim();
+                    const success = isFollowingText(btnText) ||
                         followBtn.disabled;
 
                     if (success) {
