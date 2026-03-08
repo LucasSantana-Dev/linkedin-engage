@@ -238,14 +238,41 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-label">Total Sent</div>
+            <div class="card-label">Verified Sent</div>
             <div class="card-value" id="totalSent">0</div>
             <div class="card-sub">all time</div>
         </div>
         <div class="card">
             <div class="card-label">Accepted</div>
             <div class="card-value" id="totalAccepted">0</div>
-            <div class="card-sub">connections made</div>
+            <div class="card-sub"
+                id="acceptRate">connections made</div>
+        </div>
+    </div>
+    <div class="grid">
+        <div class="card">
+            <div class="card-label">Skipped</div>
+            <div class="card-value" id="totalSkipped"
+                style="color:var(--warning)">0</div>
+            <div class="card-sub">
+                duplicate, email, unverified
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-label">Quota Blocked</div>
+            <div class="card-value" id="totalQuota"
+                style="color:var(--error)">0</div>
+            <div class="card-sub">
+                rejected by LinkedIn (429)
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-label">Accept Rate</div>
+            <div class="card-value" id="acceptPct"
+                style="color:var(--success)">—</div>
+            <div class="card-sub">
+                accepted / verified sent
+            </div>
         </div>
     </div>
 

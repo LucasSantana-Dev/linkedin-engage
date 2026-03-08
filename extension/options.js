@@ -21,7 +21,7 @@ function loadDashboard() {
         [
             weekKey, 'sentProfileUrls',
             'acceptedUrls', 'schedule',
-            'connectionHistory'
+            'connectionHistory', 'fuseLimitRetry'
         ],
         (data) => {
             const weekCount = data[weekKey] || 0;
@@ -37,11 +37,52 @@ function loadDashboard() {
             document.getElementById('totalAccepted')
                 .textContent = accepted.length;
 
+            const acceptedSet = new Set(accepted);
+            const history = data.connectionHistory || [];
+
+            let skippedCount = 0;
+            let quotaCount = 0;
+            for (const r of history) {
+                if (r.status?.startsWith('skipped')) {
+                    skippedCount++;
+                }
+                if (r.status === 'stopped-quota') {
+                    quotaCount++;
+                }
+                if (r.profileUrl &&
+                    acceptedSet.has(r.profileUrl) &&
+                    r.status === 'sent') {
+                    r.status = 'accepted';
+                }
+            }
+
+            document.getElementById('totalSkipped')
+                .textContent = skippedCount;
+            document.getElementById('totalQuota')
+                .textContent = quotaCount;
+
+            if (sentUrls.length > 0) {
+                const pct = Math.round(
+                    (accepted.length / sentUrls.length) *
+                    100
+                );
+                document.getElementById('acceptPct')
+                    .textContent = pct + '%';
+            }
+
             const schedule = data.schedule;
             const sEl = document.getElementById(
                 'scheduleStatus'
             );
-            if (schedule?.enabled) {
+            if (data.fuseLimitRetry?.retryAt) {
+                const retryDate = new Date(
+                    data.fuseLimitRetry.retryAt
+                );
+                sEl.textContent =
+                    'Quota limit hit — auto-retry at ' +
+                    retryDate.toLocaleString();
+                sEl.style.color = 'var(--warning)';
+            } else if (schedule?.enabled) {
                 sEl.textContent =
                     `Active — runs every ` +
                     `${schedule.intervalHours}h`;
@@ -50,7 +91,6 @@ function loadDashboard() {
                 sEl.textContent = 'Not scheduled';
             }
 
-            const history = data.connectionHistory || [];
             renderChart(history);
             if (!history.length) return;
 
@@ -88,15 +128,19 @@ function loadDashboard() {
                 const badge =
                     document.createElement('span');
                 badge.className = 'badge ';
-                if (r.status === 'sent') {
-                    badge.className += 'badge-sent';
-                } else if (r.status?.includes('accepted')) {
+                if (r.status === 'accepted') {
                     badge.className += 'badge-accepted';
+                } else if (r.status === 'sent') {
+                    badge.className += 'badge-sent';
+                } else if (r.status === 'stopped-quota') {
+                    badge.className += 'badge-skipped';
                 } else {
                     badge.className += 'badge-skipped';
                 }
-                badge.textContent =
-                    (r.status || '').replace('skipped-', '');
+                let label = r.status || '';
+                label = label.replace('skipped-', '');
+                label = label.replace('stopped-', '');
+                badge.textContent = label;
                 tdStatus.appendChild(badge);
 
                 const tdTime =

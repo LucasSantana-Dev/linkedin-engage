@@ -164,15 +164,25 @@ chrome.runtime.onMessage.addListener(
         if (request.action === 'progress' &&
             request.error === 'FUSE_LIMIT_EXCEEDED') {
             activeTabId = null;
+            const retryHours = 24;
+            chrome.alarms.create('fuseLimitRetry', {
+                delayInMinutes: retryHours * 60
+            });
+            chrome.storage.local.set({
+                fuseLimitRetry: {
+                    triggeredAt: new Date().toISOString(),
+                    retryAt: new Date(
+                        Date.now() + retryHours * 3600000
+                    ).toISOString()
+                }
+            });
             chrome.notifications.create({
                 type: 'basic',
                 iconUrl: 'icons/icon128.png',
                 title: 'LinkedIn Auto-Connect',
                 message:
-                    'Weekly invitation limit reached ' +
-                    '(FUSE_LIMIT_EXCEEDED). ' +
-                    'LinkedIn is rejecting new invites. ' +
-                    'Try again in a few days.'
+                    'Weekly invitation limit reached. ' +
+                    `Auto-retry scheduled in ${retryHours}h.`
             });
         }
 
@@ -320,6 +330,80 @@ chrome.runtime.onMessage.addListener(
 );
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'fuseLimitRetry') {
+        chrome.storage.local.remove('fuseLimitRetry');
+        chrome.storage.local.get(
+            ['popupState', 'sentProfileUrls'],
+            (data) => {
+                const state = data.popupState;
+                if (!state) return;
+
+                const savedQueries =
+                    (state.savedQueries || '')
+                        .split('\n')
+                        .map(q => q.trim())
+                        .filter(Boolean);
+                const query = savedQueries.length > 0
+                    ? savedQueries[0]
+                    : buildQueryFromTags(state);
+                if (!query) return;
+
+                const networkTypes = [];
+                if (state.degree2nd !== false) {
+                    networkTypes.push('"S"');
+                }
+                if (state.degree3rd !== false) {
+                    networkTypes.push('"O"');
+                }
+                const networkFilter =
+                    networkTypes.length > 0
+                        ? encodeURIComponent(
+                            `[${networkTypes.join(',')}]`
+                        ) : '';
+
+                const ids = (state.region ||
+                    '103644278,101121807,' +
+                    '101165590,101282230,102890719')
+                    .split(',')
+                    .map(id => `"${id.trim()}"`);
+                const geoUrn = encodeURIComponent(
+                    `[${ids.join(',')}]`
+                );
+
+                launchAutomation({
+                    query,
+                    limit: Math.min(
+                        parseInt(state.limit) || 50, 10
+                    ),
+                    sendNote: state.sendNote !== false,
+                    noteTemplate:
+                        state.activeTemplate === 'custom'
+                            ? state.customNote
+                            : getTemplate(
+                                state.activeTemplate,
+                                state.lang || 'en'
+                            ),
+                    geoUrn,
+                    activelyHiring:
+                        state.activelyHiring || false,
+                    networkFilter,
+                    sentUrls:
+                        data.sentProfileUrls || []
+                });
+
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: 'icons/icon128.png',
+                    title: 'LinkedIn Auto-Connect',
+                    message:
+                        'Quota retry: testing with 10 ' +
+                        'invites to check if limit reset.'
+                });
+            }
+        );
+        return;
+    }
+
     if (alarm.name !== 'linkedinSchedule') return;
 
     chrome.storage.local.get(
