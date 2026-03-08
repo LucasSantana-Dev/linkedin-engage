@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-03-07
+
+### Added
+- **Engagement mode**: Profile visit + follow automation as alternative to connect invites
+- Popup toggle: "Engagement only" checkbox skips connect attempts, visits profiles and clicks Follow
+- Auto-fallback: when weekly invite quota is hit mid-run, automatically switches to engagement mode for remaining profiles
+- `runEngagement()` function with hidden iframe profile visits and Follow button detection
+- PT-BR Follow button support (`Seguir`)
+- Dashboard cards: Engaged count and Followed count with purple theme
+- `badge-engaged` status in dashboard log (light/dark mode)
+- Engagement statuses in CSV export: `visited`, `followed`, `visited-followed`
+
+### Fixed
+- `fuseLimitHit` now persisted via `chrome.storage.local` — survives page navigation (content.js re-injection)
+- Bridge.js handles `SET_FUSE_LIMIT` / `CHECK_FUSE_LIMIT` messages for cross-world persistence
+- `fuseLimitRetry` alarm clears persisted fuse flag before retry probe
+
+### Improved
+- Exponential backoff for unverified invite retries: 30s, 60s, 120s... up to 5min cap (was fixed 30-60s)
+- Backoff multiplier resets on successful verified send
+- Shared functions in `lib/invite-utils.js` are now the single source of truth (100 lines removed from content.js)
+
+### CI
+- GitHub Actions workflow for Jest test suite on push/PR to main
+
 ## [1.6.0] - 2026-03-07
 
 ### Fixed

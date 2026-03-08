@@ -109,7 +109,10 @@ function launchAutomation(config) {
                                 noteTemplate:
                                     config.noteTemplate,
                                 sentUrls:
-                                    config.sentUrls || []
+                                    config.sentUrls || [],
+                                engagementOnly:
+                                    config.engagementOnly
+                                    || false
                             },
                             () => {
                                 if (chrome.runtime

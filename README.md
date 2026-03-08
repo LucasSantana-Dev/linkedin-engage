@@ -17,7 +17,8 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn c
 - **CAPTCHA detection** — auto-stops on security challenges (checkpoint, captcha, verification pages)
 - **Connection log export** — download CSV of sent/skipped profiles with timestamps
 - **Scheduled runs** — recurring automation via Chrome Alarms API (configurable interval)
-- **429 rate limit backoff** — detects failed sends, pauses 30-60s after 3 consecutive failures
+- **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
+- **429 rate limit backoff** — detects failed sends, exponential backoff (30s, 60s, 120s... up to 5min) after 3 consecutive failures
 - **Invite verification** — 4-layer defense against false positives: button state filtering, InMails modal handling, DOM pending state polling, and network API interception (catches LinkedIn's `FUSE_LIMIT_EXCEEDED` 429 responses)
 - **Quota detection** — stops immediately and notifies when LinkedIn's weekly invitation limit is exhausted
 - **Duplicate detection** — skips profiles already sent in previous runs via persistent URL tracking
@@ -120,6 +121,7 @@ extension/
 linkedin-connector.js      <- Standalone Playwright version
 n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 .github/workflows/
+  ci.yml        <- Jest test suite on push/PR to main
   release.yml   <- Auto-creates GitHub release + zip on version tags
 ```
 
@@ -150,6 +152,7 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Region | Global (US/CA/UK/DE/NL) | Geographic filter for search results |
 | Connection Degree | 2nd + 3rd+ | Filter by connection degree (uses LinkedIn `network` param) |
 | Actively Hiring | Off | Only show profiles with hiring badge |
+| Engagement Only | Off | Visit profiles + follow instead of connecting |
 | Send Note | On | Include personalized message |
 | Template | Senior Engineer | Pre-written note template |
 | Weekly Limit | 150 | Max invites per week (auto-enforced) |

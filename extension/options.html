@@ -38,6 +38,7 @@
             .badge-sent { background: rgba(63,185,80,0.15); }
             .badge-skipped { background: rgba(210,153,34,0.15); }
             .badge-accepted { background: rgba(112,181,249,0.15); }
+            .badge-engaged { background: rgba(167,139,250,0.15); color: #a78bfa; }
         }
 
         * { box-sizing: border-box; margin: 0; }
@@ -201,6 +202,11 @@
             color: var(--primary);
         }
 
+        .badge-engaged {
+            background: rgba(130, 80, 220, 0.1);
+            color: #7c3aed;
+        }
+
         .empty {
             text-align: center;
             padding: 40px;
@@ -272,6 +278,24 @@
                 style="color:var(--success)">—</div>
             <div class="card-sub">
                 accepted / verified sent
+            </div>
+        </div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+        <div class="card">
+            <div class="card-label">Engaged</div>
+            <div class="card-value" id="totalEngaged"
+                style="color:#7c3aed">0</div>
+            <div class="card-sub">
+                profile visits + follows
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-label">Followed</div>
+            <div class="card-value" id="totalFollowed"
+                style="color:#7c3aed">0</div>
+            <div class="card-sub">
+                follow actions
             </div>
         </div>
     </div>

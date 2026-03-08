@@ -414,22 +414,194 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         });
     }
 
+    async function visitProfile(url) {
+        try {
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText =
+                'width:0;height:0;border:none;' +
+                'position:absolute;left:-9999px';
+            iframe.src = url;
+            document.body.appendChild(iframe);
+            await delay(3000 + Math.random() * 2000);
+            iframe.remove();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function findFollowButtons() {
+        const btns = document.querySelectorAll(
+            'button'
+        );
+        const follows = [];
+        for (const btn of btns) {
+            const text = (btn.innerText || '').trim();
+            if (text === 'Follow' || text === 'Seguir') {
+                if (!btn.disabled) follows.push(btn);
+            }
+        }
+        return follows;
+    }
+
+    async function runEngagement(config) {
+        console.log('[LinkedIn Bot] Engagement mode started');
+        const limit = config?.limit || 50;
+        let totalEngaged = 0;
+        let currentPage = 1;
+        stopRequested = false;
+        connectionLog.length = 0;
+        const sentUrls = new Set(config?.sentUrls || []);
+
+        try {
+            while (totalEngaged < limit) {
+                if (stopRequested) break;
+                if (detectChallenge()) {
+                    return {
+                        success: false,
+                        error: 'CAPTCHA detected',
+                        log: connectionLog
+                    };
+                }
+
+                await delay(2000);
+
+                const cards = document.querySelectorAll(
+                    '.entity-result, ' +
+                    '[data-chameleon-result-urn]'
+                );
+
+                for (const card of cards) {
+                    if (totalEngaged >= limit ||
+                        stopRequested) break;
+
+                    const linkEl = card.querySelector(
+                        'a[href*="/in/"]'
+                    );
+                    const profileUrl = linkEl
+                        ? linkEl.href.split('?')[0] : '';
+
+                    if (!profileUrl ||
+                        sentUrls.has(profileUrl)) continue;
+
+                    const nameEl = card.querySelector(
+                        '.entity-result__title-text ' +
+                        'a span[dir], ' +
+                        '.entity-result__title-text a'
+                    );
+                    const name = nameEl
+                        ? nameEl.innerText.trim()
+                            .split('\n')[0]
+                        : 'Unknown';
+                    const headlineEl = card.querySelector(
+                        '.entity-result__primary-subtitle'
+                    );
+                    const headline = headlineEl
+                        ? headlineEl.innerText.trim() : '';
+
+                    let actions = [];
+
+                    await visitProfile(profileUrl);
+                    actions.push('visited');
+
+                    const followBtn = card.querySelector(
+                        'button'
+                    );
+                    const allBtns = card.querySelectorAll(
+                        'button'
+                    );
+                    let clicked = false;
+                    for (const btn of allBtns) {
+                        const t = (btn.innerText || '')
+                            .trim();
+                        if ((t === 'Follow' ||
+                            t === 'Seguir') &&
+                            !btn.disabled) {
+                            btn.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                            await delay(500);
+                            btn.click();
+                            actions.push('followed');
+                            clicked = true;
+                            break;
+                        }
+                    }
+
+                    const status = actions.length > 1
+                        ? 'visited-followed'
+                        : actions[0] || 'visited';
+
+                    totalEngaged++;
+                    sentUrls.add(profileUrl);
+                    connectionLog.push({
+                        name, headline, profileUrl,
+                        status,
+                        time: new Date().toISOString()
+                    });
+
+                    window.postMessage({
+                        type: 'LINKEDIN_BOT_PROGRESS',
+                        sent: totalEngaged,
+                        limit,
+                        page: currentPage,
+                        skipped: 0
+                    }, '*');
+
+                    await delay(
+                        2000 + Math.random() * 3000
+                    );
+                }
+
+                if (totalEngaged >= limit) break;
+
+                const nextBtn = findNextPageButton();
+                if (nextBtn) {
+                    currentPage++;
+                    nextBtn.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    await delay(1000);
+                    nextBtn.click();
+                    await delay(8000);
+                } else {
+                    break;
+                }
+            }
+
+            return {
+                success: true,
+                message: `Engagement done! Visited/followed ` +
+                    `${totalEngaged} profiles.`,
+                log: connectionLog
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                log: connectionLog
+            };
+        }
+    }
+
     async function runAutomation(config) {
         console.log('[LinkedIn Bot] Started', config);
+
+        if (config?.engagementOnly) {
+            return runEngagement(config);
+        }
 
         const persistedFuse = await checkPersistedFuseLimit();
         if (persistedFuse) {
             console.log(
-                '[LinkedIn Bot] Fuse limit still active ' +
-                'from previous page'
+                '[LinkedIn Bot] Fuse limit active — ' +
+                'switching to engagement mode'
             );
             fuseLimitHit = true;
-            return {
-                success: false,
-                error: 'Weekly invitation limit reached',
-                message: 'FUSE_LIMIT_EXCEEDED (persisted)',
-                log: []
-            };
+            return runEngagement(config);
         }
         fuseLimitHit = false;
 
@@ -612,11 +784,32 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         });
                         window.postMessage({
                             type: 'LINKEDIN_BOT_PROGRESS',
-                            sent: totalSent, limit, page: currentPage,
+                            sent: totalSent, limit,
+                            page: currentPage,
                             skipped: totalSkipped,
                             error: 'FUSE_LIMIT_EXCEEDED'
                         }, '*');
-                        break;
+                        console.log(
+                            '[LinkedIn Bot] Quota hit — ' +
+                            'falling back to engagement'
+                        );
+                        const engResult =
+                            await runEngagement({
+                                limit: limit - totalSent,
+                                sentUrls:
+                                    Array.from(sentUrls)
+                            });
+                        connectionLog.push(
+                            ...engResult.log
+                        );
+                        return {
+                            success: true,
+                            message:
+                                `Sent ${totalSent}, then ` +
+                                `engaged ${engResult.log.length}` +
+                                ` profiles (quota fallback).`,
+                            log: connectionLog
+                        };
                     }
 
                     try {

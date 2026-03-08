@@ -42,12 +42,23 @@ function loadDashboard() {
 
             let skippedCount = 0;
             let quotaCount = 0;
+            let engagedCount = 0;
+            let followedCount = 0;
             for (const r of history) {
                 if (r.status?.startsWith('skipped')) {
                     skippedCount++;
                 }
                 if (r.status === 'stopped-quota') {
                     quotaCount++;
+                }
+                if (r.status === 'visited' ||
+                    r.status === 'visited-followed' ||
+                    r.status === 'followed') {
+                    engagedCount++;
+                }
+                if (r.status === 'followed' ||
+                    r.status === 'visited-followed') {
+                    followedCount++;
                 }
                 if (r.profileUrl &&
                     acceptedSet.has(r.profileUrl) &&
@@ -60,6 +71,10 @@ function loadDashboard() {
                 .textContent = skippedCount;
             document.getElementById('totalQuota')
                 .textContent = quotaCount;
+            document.getElementById('totalEngaged')
+                .textContent = engagedCount;
+            document.getElementById('totalFollowed')
+                .textContent = followedCount;
 
             if (sentUrls.length > 0) {
                 const pct = Math.round(
@@ -132,8 +147,10 @@ function loadDashboard() {
                     badge.className += 'badge-accepted';
                 } else if (r.status === 'sent') {
                     badge.className += 'badge-sent';
-                } else if (r.status === 'stopped-quota') {
-                    badge.className += 'badge-skipped';
+                } else if (r.status === 'visited' ||
+                    r.status === 'followed' ||
+                    r.status === 'visited-followed') {
+                    badge.className += 'badge-engaged';
                 } else {
                     badge.className += 'badge-skipped';
                 }

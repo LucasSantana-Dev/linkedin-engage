@@ -150,6 +150,7 @@ function saveState() {
         limit: document.getElementById('limitInput').value,
         region: document.getElementById('regionSelect').value,
         activelyHiring: document.getElementById('activelyHiringCheckbox').checked,
+        engagementOnly: document.getElementById('engagementOnlyCheckbox').checked,
         degree2nd: document.getElementById('degree2nd').checked,
         degree3rd: document.getElementById('degree3rd').checked,
         sendNote: document.getElementById('sendNoteCheckbox').checked,
@@ -206,6 +207,10 @@ function loadState() {
         if (popupState.activelyHiring !== undefined) {
             document.getElementById('activelyHiringCheckbox').checked =
                 popupState.activelyHiring;
+        }
+        if (popupState.engagementOnly) {
+            document.getElementById('engagementOnlyCheckbox')
+                .checked = true;
         }
         if (popupState.degree2nd !== undefined) {
             document.getElementById('degree2nd').checked =
@@ -324,6 +329,9 @@ document.getElementById('sendNoteCheckbox').addEventListener('change', (e) => {
 document.getElementById('activelyHiringCheckbox').addEventListener(
     'change', saveState
 );
+document.getElementById('engagementOnlyCheckbox').addEventListener(
+    'change', saveState
+);
 document.getElementById('degree2nd').addEventListener('change', saveState);
 document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
@@ -392,15 +400,18 @@ document.getElementById('startBtn').addEventListener('click', async () => {
         document.getElementById('limitInput').value
     ) || 50;
 
+    const isEngagement = document.getElementById(
+        'engagementOnlyCheckbox'
+    ).checked;
     const weeklyCount = await getWeeklyCount();
-    if (weeklyCount >= WEEKLY_LIMIT) {
+    if (!isEngagement && weeklyCount >= WEEKLY_LIMIT) {
         setStatusMessage(
-            `Weekly limit reached (${weeklyCount}/${WEEKLY_LIMIT}). Wait until next week.`,
+            `Weekly limit reached (${weeklyCount}/${WEEKLY_LIMIT}). Wait until next week or use Engagement mode.`,
             'error'
         );
         return;
     }
-    if (weeklyCount + limit > WEEKLY_LIMIT) {
+    if (!isEngagement && weeklyCount + limit > WEEKLY_LIMIT) {
         const remaining = WEEKLY_LIMIT - weeklyCount;
         setStatusMessage(
             `Only ${remaining} invites left this week (${weeklyCount}/${WEEKLY_LIMIT}). Limit auto-adjusted to ${remaining}.`,
@@ -436,14 +447,21 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     startBtn.style.display = 'none';
     stopBtn.style.display = 'flex';
     document.getElementById('progressBox').style.display = 'block';
+    const verb = engagementOnly ? 'Engaged' : 'Sent';
     document.getElementById('progressText').textContent =
-        `Sent 0 / ${limit}`;
+        `${verb} 0 / ${limit}`;
     document.getElementById('progressMeta').textContent =
         'Page 1';
     setStatusMessage(
-        'Navigating to search... Do not close this popup or the tab.',
+        engagementOnly
+            ? 'Navigating to search (engagement mode)...'
+            : 'Navigating to search... Do not close this popup or the tab.',
         'info'
     );
+
+    const engagementOnly = document.getElementById(
+        'engagementOnlyCheckbox'
+    ).checked;
 
     chrome.runtime.sendMessage({
         action: 'start',
@@ -454,7 +472,8 @@ document.getElementById('startBtn').addEventListener('click', async () => {
         geoUrn,
         activelyHiring,
         networkFilter,
-        sentUrls
+        sentUrls,
+        engagementOnly
     });
 });
 
@@ -651,6 +670,12 @@ function renderRecentProfiles(entries) {
         if (r.status === 'sent') {
             badge.className += 'sent';
             badge.textContent = 'Sent';
+        } else if (r.status === 'visited' ||
+            r.status === 'followed' ||
+            r.status === 'visited-followed') {
+            badge.className += 'sent';
+            badge.textContent = r.status
+                .replace('-', '+');
         } else {
             badge.className += 'skipped';
             badge.textContent =
