@@ -24,30 +24,73 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
     };
 
     function findPosts() {
-        return document.querySelectorAll(
+        const sel =
+            'div[data-urn*="activity"], ' +
+            'div[data-urn*="ugcPost"], ' +
+            'div[data-id*="activity"], ' +
+            'div[data-id*="ugcPost"], ' +
             '.feed-shared-update-v2, ' +
-            '[data-urn*="activity"], ' +
-            '.occludable-update'
+            '.occludable-update, ' +
+            'div.fie-impression-container';
+        const posts = document.querySelectorAll(sel);
+        if (posts.length > 0) {
+            console.log(
+                '[LinkedIn Bot] findPosts: matched ' +
+                posts.length + ' via primary selectors'
+            );
+            return posts;
+        }
+        const fallback = document.querySelectorAll(
+            '[role="main"] > div > div > div'
         );
+        const real = [];
+        for (const el of fallback) {
+            if (el.querySelector(
+                'button[aria-label*="Like"], ' +
+                'button[aria-label*="Gostei"], ' +
+                'button[aria-label*="React"], ' +
+                'button[aria-label*="Reagir"]'
+            )) {
+                real.push(el);
+            }
+        }
+        console.log(
+            '[LinkedIn Bot] findPosts: primary=0, ' +
+            'fallback candidates=' + fallback.length +
+            ', with Like btn=' + real.length
+        );
+        return real;
     }
 
     function getPostText(postEl) {
-        const textEl = postEl.querySelector(
+        const sel =
             '.feed-shared-text, ' +
+            '.feed-shared-inline-show-more-text, ' +
             '.feed-shared-update-v2__description, ' +
             '.update-components-text, ' +
+            '[data-test-id="main-feed-activity-content"], ' +
+            'span.break-words';
+        const textEl = postEl.querySelector(sel);
+        if (textEl) return textEl.innerText.trim();
+        const spans = postEl.querySelectorAll(
             'span[dir="ltr"]'
         );
-        return textEl
-            ? textEl.innerText.trim() : '';
+        let longest = '';
+        for (const s of spans) {
+            const t = s.innerText.trim();
+            if (t.length > longest.length) longest = t;
+        }
+        return longest;
     }
 
     function getPostAuthor(postEl) {
-        const authorEl = postEl.querySelector(
+        const sel =
             '.update-components-actor__name span, ' +
             '.feed-shared-actor__name span, ' +
-            'a.update-components-actor__meta-link span'
-        );
+            'a.update-components-actor__meta-link span, ' +
+            '[data-test-id*="actor-name"] span, ' +
+            'span.feed-shared-actor__title span';
+        const authorEl = postEl.querySelector(sel);
         return authorEl
             ? authorEl.innerText.trim().split('\n')[0]
             : 'Unknown';
@@ -55,17 +98,23 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
     function getPostUrn(postEl) {
         const urn = postEl.getAttribute('data-urn') ||
+            postEl.getAttribute('data-id') ||
             postEl.querySelector('[data-urn]')
-                ?.getAttribute('data-urn') || '';
+                ?.getAttribute('data-urn') ||
+            postEl.querySelector('[data-id]')
+                ?.getAttribute('data-id') || '';
         return urn;
     }
 
     async function reactToPost(postEl, reactionType) {
         const likeBtn = postEl.querySelector(
-            'button.react-button, ' +
             'button[aria-label*="Like"], ' +
             'button[aria-label*="Gostei"], ' +
-            'button.reactions-react-button'
+            'button[aria-label*="React"], ' +
+            'button[aria-label*="Reagir"], ' +
+            'button.react-button, ' +
+            'button.reactions-react-button, ' +
+            'button.social-actions-button'
         );
         if (!likeBtn) return false;
 
