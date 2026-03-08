@@ -48,6 +48,27 @@ window.addEventListener('message', (event) => {
             }, '*');
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_SAVE_ENGAGED') {
+        chrome.storage.local.get('engagedPostUrns', (data) => {
+            const existing = data.engagedPostUrns || [];
+            const merged = [...new Set([
+                ...existing,
+                ...(event.data.urns || [])
+            ])];
+            const trimmed = merged.slice(-2000);
+            chrome.storage.local.set({
+                engagedPostUrns: trimmed
+            });
+        });
+    }
+    if (event.data?.type === 'LINKEDIN_BOT_LOAD_ENGAGED') {
+        chrome.storage.local.get('engagedPostUrns', (data) => {
+            window.postMessage({
+                type: 'LINKEDIN_BOT_ENGAGED_LOADED',
+                urns: data.engagedPostUrns || []
+            }, '*');
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({
             action: 'progress',

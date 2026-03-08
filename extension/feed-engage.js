@@ -222,6 +222,38 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         return false;
     }
 
+    function loadEngagedUrns() {
+        return new Promise(resolve => {
+            const handler = (event) => {
+                if (event.source !== window) return;
+                if (event.data?.type ===
+                    'LINKEDIN_BOT_ENGAGED_LOADED') {
+                    window.removeEventListener(
+                        'message', handler
+                    );
+                    resolve(event.data.urns || []);
+                }
+            };
+            window.addEventListener('message', handler);
+            window.postMessage({
+                type: 'LINKEDIN_BOT_LOAD_ENGAGED'
+            }, '*');
+            setTimeout(() => {
+                window.removeEventListener(
+                    'message', handler
+                );
+                resolve([]);
+            }, 3000);
+        });
+    }
+
+    function saveEngagedUrns(urns) {
+        window.postMessage({
+            type: 'LINKEDIN_BOT_SAVE_ENGAGED',
+            urns
+        }, '*');
+    }
+
     async function runFeedEngage(config) {
         console.log(
             '[LinkedIn Bot] Feed engagement started',
@@ -249,7 +281,14 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         let totalEngaged = 0;
         let scrollCount = 0;
         const MAX_SCROLLS = 20;
-        const processedUrns = new Set();
+        const previousUrns = await loadEngagedUrns();
+        const processedUrns = new Set(previousUrns);
+        const newUrns = [];
+        console.log(
+            '[LinkedIn Bot] Loaded ' +
+            previousUrns.length +
+            ' previously engaged URNs'
+        );
         stopRequested = false;
         engageLog.length = 0;
 
@@ -273,7 +312,9 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     if (urn && processedUrns.has(urn)) {
                         continue;
                     }
-                    if (urn) processedUrns.add(urn);
+                    if (urn) {
+                        processedUrns.add(urn);
+                    }
 
                     const postText = getPostText(post);
                     const author = getPostAuthor(post);
@@ -339,6 +380,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
 
                     if (actions.length > 0) {
                         totalEngaged++;
+                        if (urn) newUrns.push(urn);
                         engageLog.push({
                             author,
                             postText:
@@ -368,6 +410,14 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                 });
                 scrollCount++;
                 await delay(3000 + Math.random() * 2000);
+            }
+
+            if (newUrns.length > 0) {
+                saveEngagedUrns(newUrns);
+                console.log(
+                    '[LinkedIn Bot] Saved ' +
+                    newUrns.length + ' new engaged URNs'
+                );
             }
 
             return {
