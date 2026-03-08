@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2026-03-08
+
+### Added
+- **Project rebrand**: "LinkedIn Auto-Connect" → "LinkedIn Engage" across manifest, package.json, README, release workflow
+- **Concept-based comment generation**: `extractConcepts()` pulls specific technologies, patterns, and tools from post text — comments reference actual content instead of generic topics
+- **Composed template system**: `COMPOSED_EN` and `COMPOSED_PT` template functions generate context-aware comments using extracted concepts for 10 post categories (hiring, achievement, technical, question, opinion, motivation, project, jobseeking, newjob, generic)
+- **Expanded PT-BR keywords**: Achievement, technical, hiring, newjob categories now include Portuguese keywords for better bilingual classification
+- **Expanded reaction keywords**: Tech-specific terms (shipped, launched, certified, burnout, laid off, clean code, ci/cd, friday deploy) and PT-BR equivalents for smarter reaction selection
+- **Server hardening**: Added `helmet`, `express-rate-limit`, and `zod` dependencies for Playwright connector security
+
+### Improved
+- **Post text extraction**: Individual selector iteration with length validation replaces combined selector string — catches more LinkedIn DOM variants including `span[dir="ltr"]` nested in commentary divs
+- **Comment submit reliability**: 8 retry attempts (up from 6), keyboard event simulation (keydown/keyup) to trigger React state updates, `focus()` before input dispatch, post-submit verification
+- **React button detection**: `reactToPost()` now iterates all buttons checking aria-label and text content instead of relying on a single combined selector
+- **Comment flow**: Concepts → composed templates → string templates fallback chain. Removed follow-up appending for cleaner output
+
+### Fixed
+- **extractTopic default**: Returns "tech" instead of "this topic" for unrecognized content — more natural in generated comments
+
 ## [1.10.2] - 2026-03-08
 
 ### Added
