@@ -99,6 +99,11 @@ function extractFirstName(fullName) {
     return first || 'there';
 }
 
+function isFollowButtonText(text) {
+    const t = text.trim();
+    return t === 'Follow' || t === 'Seguir';
+}
+
 function extractNameFromAria(ariaLabel) {
     const m = (ariaLabel || '').match(/Invite\s+(\S+)/i);
     return m ? m[1] : null;
@@ -116,6 +121,7 @@ if (typeof module !== 'undefined' && module.exports) {
         detectChallengeFromText,
         isEmailRequiredContent,
         extractFirstName,
-        extractNameFromAria
+        extractNameFromAria,
+        isFollowButtonText
     };
 }

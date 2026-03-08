@@ -12,7 +12,8 @@ const {
     detectChallengeFromText,
     isEmailRequiredContent,
     extractFirstName,
-    extractNameFromAria
+    extractNameFromAria,
+    isFollowButtonText
 } = require('../extension/lib/invite-utils');
 
 describe('isButtonClickable', () => {
@@ -325,5 +326,35 @@ describe('extractNameFromAria', () => {
         expect(extractNameFromAria(
             'invite Maria to connect'
         )).toBe('Maria');
+    });
+});
+
+describe('isFollowButtonText', () => {
+    it('matches "Follow"', () => {
+        expect(isFollowButtonText('Follow')).toBe(true);
+    });
+
+    it('matches "Seguir" (PT-BR)', () => {
+        expect(isFollowButtonText('Seguir')).toBe(true);
+    });
+
+    it('matches with whitespace', () => {
+        expect(isFollowButtonText('  Follow  ')).toBe(true);
+    });
+
+    it('rejects "Following"', () => {
+        expect(isFollowButtonText('Following')).toBe(false);
+    });
+
+    it('rejects "Connect"', () => {
+        expect(isFollowButtonText('Connect')).toBe(false);
+    });
+
+    it('rejects "Unfollow"', () => {
+        expect(isFollowButtonText('Unfollow')).toBe(false);
+    });
+
+    it('rejects empty string', () => {
+        expect(isFollowButtonText('')).toBe(false);
     });
 });

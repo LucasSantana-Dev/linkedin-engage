@@ -431,14 +431,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     function findFollowButtons() {
-        const btns = document.querySelectorAll(
-            'button'
-        );
+        const btns = document.querySelectorAll('button');
         const follows = [];
         for (const btn of btns) {
-            const text = (btn.innerText || '').trim();
-            if (text === 'Follow' || text === 'Seguir') {
-                if (!btn.disabled) follows.push(btn);
+            if (isFollowButtonText(btn.innerText || '') &&
+                !btn.disabled) {
+                follows.push(btn);
             }
         }
         return follows;
@@ -512,10 +510,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     );
                     let clicked = false;
                     for (const btn of allBtns) {
-                        const t = (btn.innerText || '')
-                            .trim();
-                        if ((t === 'Follow' ||
-                            t === 'Seguir') &&
+                        if (isFollowButtonText(
+                            btn.innerText || '') &&
                             !btn.disabled) {
                             btn.scrollIntoView({
                                 behavior: 'smooth',
