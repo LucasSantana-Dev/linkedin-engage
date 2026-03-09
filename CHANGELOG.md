@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.17.2] - 2026-03-09
+
 ### Fixed
 - **Brazil-targeted search now forces PT-BR notes**: Connect automation now receives `geoUrn` in content execution and switches invitation note language to Portuguese whenever the search is scoped to Brazil (geo id `106057199`), even if profile cards expose English headlines or missing location fields
+- **Connected-profile filtering in Connect mode**: Search cards marked as already connected (`1st` / `1º grau`) are now skipped before action selection, reducing noisy results where LinkedIn returns existing 1st-degree connections
 
 ## [1.17.1] - 2026-03-09
 

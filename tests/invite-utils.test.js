@@ -5,6 +5,7 @@ const {
     isButtonClickable,
     isConnectButtonText,
     shouldExcludeButton,
+    isAlreadyConnectedCardText,
     isPendingState,
     isPendingInCard,
     isInviteUrl,
@@ -104,6 +105,26 @@ describe('shouldExcludeButton', () => {
     it('is case insensitive', () => {
         expect(shouldExcludeButton('PENDING')).toBe(true);
         expect(shouldExcludeButton('message')).toBe(true);
+    });
+});
+
+describe('isAlreadyConnectedCardText', () => {
+    it('detects 1st-degree profile badge', () => {
+        expect(isAlreadyConnectedCardText(
+            'John Doe 1st • Software Engineer'
+        )).toBe(true);
+    });
+
+    it('detects PT-BR 1º grau marker', () => {
+        expect(isAlreadyConnectedCardText(
+            'Maria Silva • Conexão de 1º grau'
+        )).toBe(true);
+    });
+
+    it('returns false for non-connected text', () => {
+        expect(isAlreadyConnectedCardText(
+            'Pedro Souza • 2nd • Recruiter'
+        )).toBe(false);
     });
 });
 

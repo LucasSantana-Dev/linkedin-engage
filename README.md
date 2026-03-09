@@ -11,6 +11,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
 - **Follow-to-Connect** — handles profiles showing "Follow" instead of "Connect" by opening the "More" menu to find the hidden Connect option
 - **Connect mode follow fallback** — if a profile has only `Follow` and no `Connect` option, Connect mode follows the person instead of skipping
+- **Already-connected suppression** — Connect mode ignores cards marked as `1st`/`1º grau`, preventing attempts on people who are already in your network
 - **Email modal detection** — auto-skips profiles that require email verification (3rd+ degree with no mutuals)
 - **LATAM recruiter targeting** — Market Focus tags (LATAM, Brazil, Nearshore, Remote) + configurable recruiter region selector
 - **"Actively Hiring" filter** — leverages LinkedIn's undocumented `activelyHiring=true` URL parameter

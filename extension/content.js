@@ -178,6 +178,21 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         }, '*');
     }
 
+    function isAlreadyConnectedElement(el) {
+        const card = el?.closest(
+            '.entity-result, li, ' +
+            '[data-chameleon-result-urn]'
+        );
+        if (!card ||
+            typeof isAlreadyConnectedCardText !==
+            'function') {
+            return false;
+        }
+        return isAlreadyConnectedCardText(
+            card.innerText || ''
+        );
+    }
+
     function getAllDocuments() {
         const docs = [document];
         try {
@@ -730,6 +745,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                              .includes('connect'));
 
                     if (isConnect) {
+                        if (isAlreadyConnectedElement(el)) {
+                            continue;
+                        }
                         seen.add(el);
                         const profile = extractProfileInfo(el);
                         actionTargets.push({
@@ -754,6 +772,11 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                 (parent.innerText || '')
                                     .trim()
                             )) {
+                            if (isAlreadyConnectedElement(
+                                parent
+                            )) {
+                                continue;
+                            }
                             seen.add(parent);
                             const profile =
                                 extractProfileInfo(parent);
@@ -780,6 +803,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         .trim().toLowerCase();
                     if (btnText !== 'follow' &&
                         btnText !== 'seguir') continue;
+                    if (isAlreadyConnectedElement(primaryBtn)) {
+                        continue;
+                    }
 
                     const connectItem =
                         await tryConnectViaMore(card);

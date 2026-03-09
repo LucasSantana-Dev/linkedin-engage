@@ -26,6 +26,15 @@ function shouldExcludeButton(text) {
         lower.includes('pendente');
 }
 
+function isAlreadyConnectedCardText(text) {
+    const lower = (text || '').toLowerCase();
+    return /\b1st\b/.test(lower) ||
+        /\b1º\b/.test(lower) ||
+        lower.includes('1st degree') ||
+        lower.includes('1º grau') ||
+        lower.includes('1o grau');
+}
+
 function isPendingState(button) {
     const text = (button.innerText || '').trim()
         .toLowerCase();
@@ -164,6 +173,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isButtonClickable,
         isConnectButtonText,
         shouldExcludeButton,
+        isAlreadyConnectedCardText,
         isPendingState,
         isPendingInCard,
         isInviteUrl,
