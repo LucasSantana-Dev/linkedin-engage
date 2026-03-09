@@ -9,6 +9,7 @@ const TEMPLATES = {
 
 const MAX_CHARS = 300;
 const WEEKLY_LIMIT = 150;
+const DEFAULT_ROLE_TERMS_LIMIT = 6;
 let useCustomQuery = false;
 
 const DEFAULT_LATAM_COMPANIES = [
@@ -84,6 +85,52 @@ function getSelectedTags(group) {
     return Array.from(tags).map(t => t.dataset.value);
 }
 
+function getRoleTermsLimit() {
+    const input = document.getElementById(
+        'roleTermsLimitInput'
+    );
+    const parsed = parseInt(input?.value, 10);
+    if (!Number.isFinite(parsed)) {
+        return DEFAULT_ROLE_TERMS_LIMIT;
+    }
+    return Math.max(1, Math.min(10, parsed));
+}
+
+function getSafeRoleTerms(roles) {
+    const limit = getRoleTermsLimit();
+    if (!Array.isArray(roles) || roles.length <= limit) {
+        return Array.isArray(roles) ? roles : [];
+    }
+    var priority = [
+        'recruiter',
+        '"talent acquisition"',
+        '"hiring manager"',
+        '"head of talent"',
+        'developer',
+        '"software engineer"',
+        '"product manager"',
+        'qa',
+        '"tech lead"',
+        '"engineering manager"',
+        'sourcer',
+        '"staffing agency"'
+    ];
+    var normalized = roles.map(function(r) {
+        return String(r).toLowerCase();
+    });
+    var ordered = priority
+        .filter(function(p) {
+            return normalized.includes(p);
+        })
+        .map(function(p) {
+            return roles[normalized.indexOf(p)];
+        });
+    for (const role of roles) {
+        if (!ordered.includes(role)) ordered.push(role);
+    }
+    return ordered.slice(0, limit);
+}
+
 function buildQuery() {
     if (useCustomQuery) {
         return document.getElementById('customQueryInput').value.trim();
@@ -96,10 +143,11 @@ function buildQuery() {
 
     const parts = [];
 
-    if (roles.length === 1) {
-        parts.push(roles[0]);
-    } else if (roles.length > 1) {
-        parts.push(roles.join(' OR '));
+    const safeRoles = getSafeRoleTerms(roles);
+    if (safeRoles.length === 1) {
+        parts.push(safeRoles[0]);
+    } else if (safeRoles.length > 1) {
+        parts.push(safeRoles.join(' OR '));
     }
 
     for (const term of industry) parts.push(term);
@@ -171,6 +219,7 @@ function saveState() {
         tags: {},
         currentMode,
         goalMode: document.getElementById('goalMode').value,
+        roleTermsLimit: getRoleTermsLimit(),
         myCompany: document.getElementById(
             'myCompanyInput'
         ).value.trim(),
@@ -272,6 +321,11 @@ function loadState() {
         if (popupState.goalMode) {
             document.getElementById('goalMode').value =
                 popupState.goalMode;
+        }
+        if (popupState.roleTermsLimit) {
+            document.getElementById(
+                'roleTermsLimitInput'
+            ).value = popupState.roleTermsLimit;
         }
         if (popupState.myCompany) {
             document.getElementById('myCompanyInput').value =
@@ -506,6 +560,14 @@ document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
 document.getElementById('goalMode').addEventListener('change', saveState);
+document.getElementById(
+    'roleTermsLimitInput'
+).addEventListener('change', () => {
+    const input = document.getElementById('roleTermsLimitInput');
+    input.value = String(getRoleTermsLimit());
+    updateQueryPreview();
+    saveState();
+});
 document.getElementById('myCompanyInput').addEventListener(
     'input', saveState
 );
