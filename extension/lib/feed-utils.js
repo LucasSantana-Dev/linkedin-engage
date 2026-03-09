@@ -817,6 +817,188 @@ function classifyCommentSentiment(text) {
     return 'generic';
 }
 
+function getCommentThreadDefaults() {
+    return {
+        count: 0,
+        dominantSentiment: 'generic',
+        dominantLanguage: 'en',
+        avgLength: 0,
+        brevity: 'short',
+        energy: 'balanced',
+        styleHint: 'neutral',
+        commonOpeners: []
+    };
+}
+
+function getDominantBucket(counts, fallback) {
+    var entries = Object.entries(counts || {});
+    if (entries.length === 0) return fallback;
+    return entries.sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function collectCommentThreadStats(list) {
+    var stats = {
+        count: 0,
+        totalLen: 0,
+        exclam: 0,
+        emojis: 0,
+        sentiments: {},
+        langs: {},
+        openers: {}
+    };
+    var emojiRe = /[\u{1F300}-\u{1FAFF}]/u;
+    for (var item of list) {
+        var text = (item?.text || '').trim();
+        if (!text) continue;
+        stats.count++;
+        stats.totalLen += text.length;
+        var sentiment = item.sentiment ||
+            classifyCommentSentiment(text);
+        stats.sentiments[sentiment] =
+            (stats.sentiments[sentiment] || 0) + 1;
+        var lang = detectLanguage(text);
+        stats.langs[lang] = (stats.langs[lang] || 0) + 1;
+        if (text.includes('!')) stats.exclam++;
+        if (emojiRe.test(text)) stats.emojis++;
+        var opener = text.split(/\s+/)
+            .slice(0, 3).join(' ').toLowerCase();
+        if (opener.length > 2) {
+            stats.openers[opener] =
+                (stats.openers[opener] || 0) + 1;
+        }
+    }
+    return stats;
+}
+
+function mapSentimentToStyle(sentiment) {
+    var styleMap = {
+        celebration: 'congratulatory',
+        support: 'supportive',
+        insight: 'analytical',
+        personal: 'personal',
+        agreement: 'affirming',
+        gratitude: 'grateful',
+        question: 'curious',
+        generic: 'neutral'
+    };
+    return styleMap[sentiment] || 'neutral';
+}
+
+function summarizeCommentThread(existingComments) {
+    var list = Array.isArray(existingComments)
+        ? existingComments : [];
+    var defaults = getCommentThreadDefaults();
+    if (list.length === 0) return defaults;
+
+    var stats = collectCommentThreadStats(list);
+    if (stats.count === 0) return defaults;
+
+    var avgLength = Math.round(
+        stats.totalLen / stats.count
+    );
+    var exclamRate = stats.exclam / stats.count;
+    var emojiRate = stats.emojis / stats.count;
+    return {
+        count: stats.count,
+        dominantSentiment: getDominantBucket(
+            stats.sentiments, 'generic'
+        ),
+        dominantLanguage: getDominantBucket(
+            stats.langs, 'en'
+        ),
+        avgLength,
+        brevity: avgLength < 70
+            ? 'short' : avgLength < 140
+                ? 'medium' : 'long',
+        energy: (exclamRate > 0.35 || emojiRate > 0.25)
+            ? 'high'
+            : (exclamRate < 0.1 && emojiRate < 0.05)
+                ? 'low' : 'balanced',
+        styleHint: mapSentimentToStyle(
+            getDominantBucket(
+                stats.sentiments, 'generic'
+            )
+        ),
+        commonOpeners: Object.entries(stats.openers)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 2)
+            .map(e => e[0])
+    };
+}
+
+function summarizeReactions(reactions) {
+    var data = reactions && typeof reactions === 'object'
+        ? reactions : {};
+    var keys = [
+        'LIKE',
+        'PRAISE',
+        'EMPATHY',
+        'INTEREST',
+        'ENTERTAINMENT',
+        'APPRECIATION'
+    ];
+    var totalFromTypes = 0;
+    var dominant = 'LIKE';
+    var maxCount = -1;
+
+    for (var key of keys) {
+        var count = Number(data[key] || 0);
+        totalFromTypes += count;
+        if (count > maxCount) {
+            maxCount = count;
+            dominant = key;
+        }
+    }
+    var total = Number.isFinite(data._total)
+        ? Number(data._total) : totalFromTypes;
+    var intensity = total >= 300
+        ? 'high' : total >= 80 ? 'medium' : 'low';
+
+    return { total, dominant, intensity };
+}
+
+function getPostImageSignals(postEl) {
+    if (!postEl || !postEl.querySelectorAll) {
+        return { hasImage: false, cues: [], samples: [] };
+    }
+    var imgs = postEl.querySelectorAll('img');
+    var cues = new Set();
+    var samples = [];
+    var ignoreRe =
+        /profile|avatar|logo|reaction|like|celebrate|support|insightful|funny|love/i;
+
+    for (var img of imgs) {
+        var raw = (img.getAttribute('alt') ||
+            img.getAttribute('aria-label') ||
+            img.getAttribute('title') || '').trim();
+        if (!raw || ignoreRe.test(raw)) continue;
+        var text = raw.toLowerCase();
+        if (/chart|graph|metric|analytics|kpi|growth/i
+            .test(text)) cues.add('chart');
+        if (/screenshot|screen|ui|app|product|dashboard|website/i
+            .test(text)) cues.add('product');
+        if (/code|terminal|github|commit|deploy|debug/i
+            .test(text)) cues.add('code');
+        if (/certificate|certification|badge|diploma/i
+            .test(text)) cues.add('certificate');
+        if (/event|conference|talk|speaker|summit|webinar|stage/i
+            .test(text)) cues.add('event');
+        if (/team|people|colleagues|group|office/i
+            .test(text)) cues.add('people');
+        if (/slide|presentation|deck|book|document/i
+            .test(text)) cues.add('document');
+        if (samples.length < 2) {
+            samples.push(raw.substring(0, 120));
+        }
+    }
+
+    return {
+        hasImage: samples.length > 0,
+        cues: Array.from(cues).slice(0, 4),
+        samples
+    };
+}
+
 function getExistingComments(postEl) {
     if (!postEl || !postEl.querySelector) return [];
     var commentList = postEl.querySelector(
@@ -893,6 +1075,9 @@ if (typeof module !== 'undefined' && module.exports) {
         isCommentButton,
         getExistingComments,
         classifyCommentSentiment,
+        summarizeCommentThread,
+        summarizeReactions,
+        getPostImageSignals,
         isPolemicPost,
         BOILERPLATE_RE,
         SENTIMENT_PATTERNS,

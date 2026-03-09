@@ -340,37 +340,115 @@ function injectScriptsSequentially(
     });
 }
 
+function formatReactionContext(reactions) {
+    if (!reactions || typeof reactions !== 'object') {
+        return '';
+    }
+    var parts = [];
+    if (reactions.ENTERTAINMENT)
+        parts.push(reactions.ENTERTAINMENT + ' Funny');
+    if (reactions.PRAISE)
+        parts.push(reactions.PRAISE + ' Celebrate');
+    if (reactions.EMPATHY)
+        parts.push(reactions.EMPATHY + ' Support');
+    if (reactions.INTEREST)
+        parts.push(reactions.INTEREST + ' Insightful');
+    if (reactions.APPRECIATION)
+        parts.push(reactions.APPRECIATION + ' Love');
+    if (reactions.LIKE)
+        parts.push(reactions.LIKE + ' Like');
+    if (parts.length === 0) return '';
+    return '\nReactions: ' + parts.join(', ');
+}
+
+function inferAuthorRoleTone(authorTitle) {
+    var title = (authorTitle || '').toLowerCase();
+    if (!title) return '';
+    if (/recruit|talent|hr|people ops/.test(title)) {
+        return 'career and people-focused';
+    }
+    if (/founder|ceo|coo|cfo|director|head of|vp/.test(title)) {
+        return 'strategic and leadership-focused';
+    }
+    if (/engineer|developer|architect|devops|data|cto/.test(title)) {
+        return 'technical peer-to-peer';
+    }
+    if (/product|designer|ux|ui/.test(title)) {
+        return 'product and execution-focused';
+    }
+    return 'professional and practical';
+}
+
+function formatThreadStyleContext(commentThreadSummary) {
+    if (!commentThreadSummary ||
+        !commentThreadSummary.count) {
+        return '';
+    }
+    var openers = commentThreadSummary.commonOpeners;
+    var openerText = Array.isArray(openers) &&
+        openers.length
+        ? '\nCommon openings: ' +
+            openers.slice(0, 2).join(' | ')
+        : '';
+    return '\nComment thread style:' +
+        '\n- dominant tone: ' +
+            commentThreadSummary.styleHint +
+        '\n- dominant sentiment: ' +
+            commentThreadSummary.dominantSentiment +
+        '\n- length style: ' +
+            commentThreadSummary.brevity +
+        '\n- energy: ' +
+            commentThreadSummary.energy +
+        openerText;
+}
+
+function formatImageContext(imageSignals) {
+    if (!imageSignals || !imageSignals.hasImage) {
+        return '';
+    }
+    var cues = Array.isArray(imageSignals.cues)
+        ? imageSignals.cues : [];
+    var samples = Array.isArray(imageSignals.samples)
+        ? imageSignals.samples : [];
+    var cueText = cues.length
+        ? '\nImage cues: ' + cues.join(', ')
+        : '';
+    var sampleText = samples.length
+        ? '\nImage text hints: ' +
+            samples.slice(0, 2).join(' | ')
+        : '';
+    return '\nVisual context: post has image(s).' +
+        cueText + sampleText;
+}
+
+function formatEngagementContext(reactionSummary) {
+    if (!reactionSummary ||
+        !reactionSummary.total) {
+        return '';
+    }
+    return '\nEngagement context:' +
+        '\n- total reactions: ' + reactionSummary.total +
+        '\n- dominant reaction: ' +
+            (reactionSummary.dominant || 'LIKE') +
+        '\n- intensity: ' +
+            (reactionSummary.intensity || 'low');
+}
+
 async function generateAIComment(data) {
     const { postText, existingComments, author,
         authorTitle, lang, category, reactions,
-        apiKey } = data;
+        reactionSummary, commentThreadSummary,
+        imageSignals, apiKey } = data;
     if (!apiKey) return null;
 
-    var reactionCtx = '';
-    if (reactions && typeof reactions === 'object') {
-        var parts = [];
-        if (reactions.ENTERTAINMENT)
-            parts.push(reactions.ENTERTAINMENT +
-                ' Funny');
-        if (reactions.PRAISE)
-            parts.push(reactions.PRAISE +
-                ' Celebrate');
-        if (reactions.EMPATHY)
-            parts.push(reactions.EMPATHY +
-                ' Support');
-        if (reactions.INTEREST)
-            parts.push(reactions.INTEREST +
-                ' Insightful');
-        if (reactions.APPRECIATION)
-            parts.push(reactions.APPRECIATION +
-                ' Love');
-        if (reactions.LIKE)
-            parts.push(reactions.LIKE + ' Like');
-        if (parts.length > 0) {
-            reactionCtx = '\nReactions: ' +
-                parts.join(', ');
-        }
-    }
+    var reactionCtx = formatReactionContext(reactions);
+    var threadStyleCtx = formatThreadStyleContext(
+        commentThreadSummary
+    );
+    var imageCtx = formatImageContext(imageSignals);
+    var engagementCtx = formatEngagementContext(
+        reactionSummary
+    );
 
     const commentsCtx = existingComments?.length
         ? '\n\nOther comments on this post:\n' +
@@ -411,6 +489,13 @@ async function generateAIComment(data) {
             ' Share a brief related experience' +
             ' or acknowledge a specific point.';
     }
+    var authorRoleTone = inferAuthorRoleTone(
+        authorTitle
+    );
+    if (authorRoleTone) {
+        toneGuide += '\nAuthor-role style:' +
+            ' keep it ' + authorRoleTone + '.';
+    }
 
     var authorCtx = 'Post by ' +
         (author || 'someone');
@@ -439,6 +524,9 @@ async function generateAIComment(data) {
         '\n- Look at the other comments below for' +
         ' tone and style reference — write' +
         ' something similar in length and vibe' +
+        '\n- Mirror the dominant thread style' +
+        ' (tone, energy, and length) but use' +
+        ' original wording' +
         '\n- NEVER parrot or repeat the post text' +
         '\n- NEVER mention the author\'s name,' +
         ' degree, company, role, or any specific' +
@@ -458,6 +546,9 @@ async function generateAIComment(data) {
         '\n\n' + authorCtx +
         ':\n' + (postText || '').substring(0, 800) +
         reactionCtx +
+        engagementCtx +
+        imageCtx +
+        threadStyleCtx +
         commentsCtx +
         '\n\nYour comment (raw text, no quotes,' +
         ' or "SKIP" if no good comment):';

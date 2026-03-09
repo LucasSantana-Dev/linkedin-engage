@@ -144,6 +144,10 @@ window.addEventListener('message', (event) => {
             lang: event.data.lang,
             category: event.data.category,
             reactions: event.data.reactions,
+            reactionSummary: event.data.reactionSummary,
+            commentThreadSummary:
+                event.data.commentThreadSummary,
+            imageSignals: event.data.imageSignals,
             apiKey: event.data.apiKey
         }, (response) => {
             window.postMessage({

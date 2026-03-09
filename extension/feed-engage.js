@@ -1273,6 +1273,25 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 'function'
                                 ? getExistingComments(post)
                                 : [];
+                        const commentThreadSummary =
+                            typeof summarizeCommentThread ===
+                                'function'
+                                ? summarizeCommentThread(
+                                    existing
+                                )
+                                : null;
+                        const reactionSummary =
+                            typeof summarizeReactions ===
+                                'function'
+                                ? summarizeReactions(
+                                    postReactions
+                                )
+                                : null;
+                        const imageSignals =
+                            typeof getPostImageSignals ===
+                                'function'
+                                ? getPostImageSignals(post)
+                                : null;
 
                         if (urn && commentedPostUrns
                             .has(urn)) {
@@ -1364,6 +1383,9 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                     lang,
                                     category,
                                     reactions: postReactions,
+                                    reactionSummary,
+                                    commentThreadSummary,
+                                    imageSignals,
                                     apiKey: aiApiKey
                                 });
                             if (comment) {

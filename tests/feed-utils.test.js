@@ -15,6 +15,9 @@ const {
     isCompanyFollowText,
     getExistingComments,
     classifyCommentSentiment,
+    summarizeCommentThread,
+    summarizeReactions,
+    getPostImageSignals,
     SENTIMENT_PATTERNS,
     POST_CATEGORIES,
     CATEGORY_TEMPLATES,
@@ -1124,5 +1127,69 @@ describe('buildCommentFromPost with context', () => {
             existing
         );
         expect(result).toContain('Congrats');
+    });
+});
+
+describe('summarizeCommentThread', () => {
+    it('summarizes dominant style from existing comments', () => {
+        const summary = summarizeCommentThread([
+            {
+                text: 'Congrats! Huge win for your team!',
+                sentiment: 'celebration'
+            },
+            {
+                text: 'Amazing milestone, well deserved!',
+                sentiment: 'celebration'
+            },
+            {
+                text: 'Great point on ownership and focus.',
+                sentiment: 'insight'
+            }
+        ]);
+
+        expect(summary.count).toBe(3);
+        expect(summary.dominantSentiment).toBe('celebration');
+        expect(summary.styleHint).toBe('congratulatory');
+        expect(summary.brevity).toBe('short');
+    });
+
+    it('returns safe defaults for empty input', () => {
+        const summary = summarizeCommentThread([]);
+        expect(summary.count).toBe(0);
+        expect(summary.dominantSentiment).toBe('generic');
+        expect(summary.styleHint).toBe('neutral');
+    });
+});
+
+describe('summarizeReactions', () => {
+    it('extracts dominant reaction and intensity', () => {
+        const summary = summarizeReactions({
+            PRAISE: 5,
+            INTEREST: 2,
+            LIKE: 10,
+            _total: 420
+        });
+        expect(summary.total).toBe(420);
+        expect(summary.dominant).toBe('LIKE');
+        expect(summary.intensity).toBe('high');
+    });
+});
+
+describe('getPostImageSignals', () => {
+    it('captures meaningful image cues and ignores avatars', () => {
+        const post = document.createElement('div');
+
+        const avatar = document.createElement('img');
+        avatar.alt = 'John Doe profile photo';
+        post.appendChild(avatar);
+
+        const content = document.createElement('img');
+        content.alt = 'Dashboard screenshot with growth chart and KPI metrics';
+        post.appendChild(content);
+
+        const signals = getPostImageSignals(post);
+        expect(signals.hasImage).toBe(true);
+        expect(signals.cues).toContain('chart');
+        expect(signals.cues).toContain('product');
     });
 });
