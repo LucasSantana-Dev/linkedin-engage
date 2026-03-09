@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.17.4] - 2026-03-09
+
+### Fixed
+- **Auto-strip 1st-degree filter from search URL**: Content script now detects and removes `"F"` (1st degree) from the `network` URL parameter on page load, forcing a reload with only 2nd+3rd degree results even when LinkedIn's UI toggles all filters on
+
 ## [1.17.3] - 2026-03-09
 
 ### Fixed

@@ -49,6 +49,26 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return origXhrSend.apply(this, arguments);
     };
 
+    (function stripFirstDegreeFilter() {
+        const url = new URL(window.location.href);
+        const raw = url.searchParams.get('network');
+        if (!raw) return;
+        try {
+            const arr = JSON.parse(raw);
+            if (!Array.isArray(arr) ||
+                !arr.includes('F')) return;
+            const filtered = arr.filter(v => v !== 'F');
+            if (filtered.length === 0) {
+                filtered.push('S', 'O');
+            }
+            url.searchParams.set(
+                'network',
+                JSON.stringify(filtered)
+            );
+            window.location.replace(url.toString());
+        } catch (e) {}
+    })();
+
     async function verifyPendingState(button) {
         if (lastInviteStatus === 429) return false;
 
