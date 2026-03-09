@@ -720,6 +720,26 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 window.scrollTo(0, 0);
                 await delay(1000);
 
+                const cards = document.querySelectorAll(
+                    '.entity-result, ' +
+                    '.reusable-search__result-container'
+                );
+                for (const card of cards) {
+                    if (
+                        isAlreadyConnectedCardText(
+                            card.innerText || ''
+                        ) ||
+                        (typeof hasMessageButtonInCard ===
+                            'function' &&
+                            hasMessageButtonInCard(card))
+                    ) {
+                        card.style.opacity = '0.25';
+                        card.style.pointerEvents = 'none';
+                        card.style.transition =
+                            'opacity 0.3s ease';
+                    }
+                }
+
                 const actionTargets = [];
                 const seen = new Set();
 

@@ -6,6 +6,7 @@ const {
     isConnectButtonText,
     shouldExcludeButton,
     isAlreadyConnectedCardText,
+    hasMessageButtonInCard,
     isPendingState,
     isPendingInCard,
     isInviteUrl,
@@ -125,6 +126,44 @@ describe('isAlreadyConnectedCardText', () => {
         expect(isAlreadyConnectedCardText(
             'Pedro Souza • 2nd • Recruiter'
         )).toBe(false);
+    });
+});
+
+describe('hasMessageButtonInCard', () => {
+    it('returns false for null card', () => {
+        expect(hasMessageButtonInCard(null)).toBe(false);
+    });
+
+    it('detects Message button in card', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.innerText = 'Message';
+        card.appendChild(btn);
+        expect(hasMessageButtonInCard(card)).toBe(true);
+    });
+
+    it('detects PT-BR Mensagem button', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.innerText = 'Mensagem';
+        card.appendChild(btn);
+        expect(hasMessageButtonInCard(card)).toBe(true);
+    });
+
+    it('returns false when only Connect button', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.innerText = 'Connect';
+        card.appendChild(btn);
+        expect(hasMessageButtonInCard(card)).toBe(false);
+    });
+
+    it('is case insensitive', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.innerText = 'MESSAGE';
+        card.appendChild(btn);
+        expect(hasMessageButtonInCard(card)).toBe(true);
     });
 });
 

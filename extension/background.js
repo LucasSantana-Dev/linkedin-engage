@@ -51,9 +51,9 @@ function launchAutomation(config) {
         searchUrl += '&activelyHiring=true';
     }
 
-    if (config.networkFilter) {
-        searchUrl += `&network=${config.networkFilter}`;
-    }
+    const netFilter = config.networkFilter
+        || encodeURIComponent('["S","O"]');
+    searchUrl += `&network=${netFilter}`;
 
     chrome.tabs.create(
         { url: searchUrl, active: true },

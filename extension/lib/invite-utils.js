@@ -35,6 +35,20 @@ function isAlreadyConnectedCardText(text) {
         lower.includes('1o grau');
 }
 
+function hasMessageButtonInCard(card) {
+    if (!card) return false;
+    const btns = card.querySelectorAll(
+        'button, a[data-control-name]'
+    );
+    for (const b of btns) {
+        const t = (b.innerText || '').trim().toLowerCase();
+        if (t === 'message' || t === 'mensagem') {
+            return true;
+        }
+    }
+    return false;
+}
+
 function isPendingState(button) {
     const text = (button.innerText || '').trim()
         .toLowerCase();
@@ -174,6 +188,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isConnectButtonText,
         shouldExcludeButton,
         isAlreadyConnectedCardText,
+        hasMessageButtonInCard,
         isPendingState,
         isPendingInCard,
         isInviteUrl,

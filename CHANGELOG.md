@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.17.3] - 2026-03-09
+
+### Fixed
+- **Default network filter excludes connected profiles**: Search URL now always includes `network=["S","O"]` (2nd+3rd degree) even when no filter is explicitly set, preventing LinkedIn from returning 1st-degree connections in results
+- **Visual dimming of already-connected cards**: Search result cards with "Message"/"Mensagem" buttons or 1st-degree badges are now dimmed (25% opacity) during automation, providing a clear visual distinction between connectable and already-connected profiles
+
 ## [1.17.2] - 2026-03-09
 
 ### Fixed
