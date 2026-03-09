@@ -648,6 +648,11 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             "and thought it would be great to connect. " +
             "I'm always looking to expand my professional " +
             "network. Looking forward to staying in touch!";
+        const defaultTemplatePt =
+            "Olá {name}, vi seu perfil e achei " +
+            "que seria ótimo nos conectarmos. " +
+            "Estou sempre buscando expandir minha " +
+            "rede profissional. Vamos manter contato!";
         const noteTemplate = config?.noteTemplate
             || defaultTemplate;
         let totalSent = 0;
@@ -958,8 +963,27 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
                             const personName =
                                 extractPersonName(button);
+                            const usePortugueseNote =
+                                typeof isBrazilianProfile ===
+                                'function' &&
+                                isBrazilianProfile(profile);
+                            const templateIsPt =
+                                /ol[áa]|conectar|rede|contato|perfil|profissional/i
+                                    .test(noteTemplate);
+                            const activeTemplate =
+                                usePortugueseNote &&
+                                !templateIsPt
+                                    ? defaultTemplatePt
+                                    : noteTemplate;
+                            if (usePortugueseNote) {
+                                console.log(
+                                    '[LinkedIn Bot] Using ' +
+                                    'PT-BR note for: ' +
+                                    profile.name
+                                );
+                            }
                             const noteText =
-                                noteTemplate.replace(
+                                activeTemplate.replace(
                                     /{name}/gi, personName
                                 );
 

@@ -109,6 +109,41 @@ function extractNameFromAria(ariaLabel) {
     return m ? m[1] : null;
 }
 
+function normalizeLocaleText(text) {
+    return (text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isBrazilianProfile(profile) {
+    const location = normalizeLocaleText(
+        profile?.location || ''
+    );
+    const headline = normalizeLocaleText(
+        profile?.headline || ''
+    );
+    const summary = normalizeLocaleText(
+        profile?.summary || ''
+    );
+    const all = [location, headline, summary]
+        .join(' ');
+    const brazilRe =
+        /brazil|brasil|sao paulo|rio de janeiro|belo horizonte|curitiba|porto alegre|recife|salvador|fortaleza|brasilia/;
+    if (brazilRe.test(all)) return true;
+
+    const ptMarkers = [
+        'engenheiro', 'desenvolvedor', 'produto',
+        'dados', 'atuando', 'tecnologia', 'gestao',
+        'solucoes', 'experiencia', 'times'
+    ];
+    let ptHits = 0;
+    for (const marker of ptMarkers) {
+        if (all.includes(marker)) ptHits++;
+    }
+    return ptHits >= 2;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         isButtonClickable,
@@ -122,6 +157,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isEmailRequiredContent,
         extractFirstName,
         extractNameFromAria,
-        isFollowButtonText
+        isFollowButtonText,
+        isBrazilianProfile
     };
 }

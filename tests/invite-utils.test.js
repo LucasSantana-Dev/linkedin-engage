@@ -13,7 +13,8 @@ const {
     isEmailRequiredContent,
     extractFirstName,
     extractNameFromAria,
-    isFollowButtonText
+    isFollowButtonText,
+    isBrazilianProfile
 } = require('../extension/lib/invite-utils');
 
 describe('isButtonClickable', () => {
@@ -326,6 +327,32 @@ describe('extractNameFromAria', () => {
         expect(extractNameFromAria(
             'invite Maria to connect'
         )).toBe('Maria');
+    });
+});
+
+describe('isBrazilianProfile', () => {
+    it('detects Brazil by location', () => {
+        expect(isBrazilianProfile({
+            location: 'São Paulo, Brazil',
+            headline: 'Software Engineer',
+            summary: ''
+        })).toBe(true);
+    });
+
+    it('detects Portuguese cues in headline/summary', () => {
+        expect(isBrazilianProfile({
+            location: 'Lisbon, Portugal',
+            headline: 'Engenheiro de Software',
+            summary: 'Atuando com times de produto e dados'
+        })).toBe(true);
+    });
+
+    it('returns false for non-Brazilian profile', () => {
+        expect(isBrazilianProfile({
+            location: 'Berlin, Germany',
+            headline: 'Senior Backend Engineer',
+            summary: 'Building distributed systems'
+        })).toBe(false);
     });
 });
 

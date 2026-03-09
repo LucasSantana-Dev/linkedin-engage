@@ -44,6 +44,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Custom query mode** — toggle between tag builder and manual query input
 - **Auto-pagination** — navigates through search result pages automatically
 - **Personalized notes** — extracts first name from invite modal and injects it via `{name}` template variable
+- **Brazilian connect notes in PT-BR** — when profile cues indicate a Brazilian contact, Connect automatically switches the default invite note to Portuguese
 
 ### Standalone Connector
 - **Playwright-based** — runs a full Chromium browser with persistent login session
