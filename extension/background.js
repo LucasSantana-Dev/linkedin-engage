@@ -434,6 +434,40 @@ function formatEngagementContext(reactionSummary) {
             (reactionSummary.intensity || 'low');
 }
 
+function buildHumanVoiceRules(commentThreadSummary, category) {
+    if (!commentThreadSummary ||
+        !commentThreadSummary.count) {
+        return '\n- Keep it conversational, concise,' +
+            ' and natural.';
+    }
+    var targetLen = commentThreadSummary.brevity === 'long'
+        ? '80-140 chars'
+        : commentThreadSummary.brevity === 'medium'
+            ? '55-110 chars'
+            : '35-90 chars';
+    var emojiRule = commentThreadSummary.emojiRate > 0.25
+        ? '\n- Emoji use is common here: you may use' +
+            ' at most one emoji if it feels natural.'
+        : '\n- Avoid emojis unless they feel necessary' +
+            ' for this thread vibe.';
+    var allowQuestion =
+        commentThreadSummary.questionRate > 0.35 &&
+        category !== 'achievement' &&
+        category !== 'newjob' &&
+        category !== 'critique';
+    var questionRule = allowQuestion
+        ? '\n- A short question is allowed if it' +
+            ' mirrors the thread style.'
+        : '\n- Prefer statements over questions.';
+    var energyRule = commentThreadSummary.energy === 'high'
+        ? '\n- Keep an energetic, expressive tone.'
+        : commentThreadSummary.energy === 'low'
+            ? '\n- Keep a calm, understated tone.'
+            : '\n- Keep a balanced conversational tone.';
+    return '\n- Target length: ' + targetLen + '.' +
+        emojiRule + questionRule + energyRule;
+}
+
 async function generateAIComment(data) {
     const { postText, existingComments, author,
         authorTitle, lang, category, reactions,
@@ -471,12 +505,10 @@ async function generateAIComment(data) {
         cat === 'career' || cat === 'newjob') {
         toneGuide =
             '\nTone: ACHIEVEMENT post.' +
-            ' ONLY write "Congrats!" or' +
-            ' "Parabéns!" (if Portuguese).' +
-            ' Nothing else. No "well deserved",' +
-            ' no "merecido", no names, no details,' +
-            ' no repeating what they achieved.' +
-            ' Max 15 chars. Just congratulate.';
+            ' Start with a brief congrats and add' +
+            ' one short human follow-up linked to' +
+            ' the post theme.' +
+            ' Keep it concise and specific.';
     } else if (cat === 'critique') {
         toneGuide =
             '\nTone: OPINION post.' +
@@ -509,6 +541,9 @@ async function generateAIComment(data) {
             ' Match the tone of the other comments.'
         : '\n- LANGUAGE: Write ONLY in English.' +
             ' Match the tone of the other comments.';
+    var humanVoiceRules = buildHumanVoiceRules(
+        commentThreadSummary, cat
+    );
 
     const prompt =
         'You are commenting on a LinkedIn post.' +
@@ -517,16 +552,20 @@ async function generateAIComment(data) {
         toneGuide +
         '\n\nRules:' +
         langRule +
+        humanVoiceRules +
         '\n- Max 120 chars, 1-2 sentences' +
         '\n- Show you understood what the post' +
         ' is about' +
-        '\n- Use proper capitalization and grammar' +
         '\n- Look at the other comments below for' +
         ' tone and style reference — write' +
         ' something similar in length and vibe' +
         '\n- Mirror the dominant thread style' +
         ' (tone, energy, and length) but use' +
         ' original wording' +
+        '\n- Sound like a real person in this' +
+        ' thread, not like an AI assistant' +
+        '\n- Prefer natural contractions and plain' +
+        ' spoken language over formal wording' +
         '\n- NEVER parrot or repeat the post text' +
         '\n- NEVER mention the author\'s name,' +
         ' degree, company, role, or any specific' +
@@ -534,9 +573,7 @@ async function generateAIComment(data) {
         '\n- NEVER say "faz sentido", "nice",' +
         ' "cool", "interesting", "Great post",' +
         ' "Love this", "Thanks for sharing"' +
-        '\n- NEVER use hashtags or emojis' +
-        '\n- NEVER ask questions — no "?", no' +
-        ' "how", "what", "why", "right?"' +
+        '\n- NEVER use hashtags' +
         '\n- NEVER invite a reply or discussion' +
         '\n- NEVER be ironic, sarcastic, offensive' +
         ', polemic, or dismissive' +
@@ -570,8 +607,8 @@ async function generateAIComment(data) {
                         role: 'user',
                         content: prompt
                     }],
-                    max_tokens: 80,
-                    temperature: 0.7
+                    max_tokens: 110,
+                    temperature: 0.85
                 })
             }
         );

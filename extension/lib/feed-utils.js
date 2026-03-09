@@ -825,6 +825,9 @@ function getCommentThreadDefaults() {
         avgLength: 0,
         brevity: 'short',
         energy: 'balanced',
+        exclamationRate: 0,
+        emojiRate: 0,
+        questionRate: 0,
         styleHint: 'neutral',
         commonOpeners: []
     };
@@ -842,6 +845,7 @@ function collectCommentThreadStats(list) {
         totalLen: 0,
         exclam: 0,
         emojis: 0,
+        questions: 0,
         sentiments: {},
         langs: {},
         openers: {}
@@ -860,6 +864,7 @@ function collectCommentThreadStats(list) {
         stats.langs[lang] = (stats.langs[lang] || 0) + 1;
         if (text.includes('!')) stats.exclam++;
         if (emojiRe.test(text)) stats.emojis++;
+        if (text.includes('?')) stats.questions++;
         var opener = text.split(/\s+/)
             .slice(0, 3).join(' ').toLowerCase();
         if (opener.length > 2) {
@@ -898,6 +903,7 @@ function summarizeCommentThread(existingComments) {
     );
     var exclamRate = stats.exclam / stats.count;
     var emojiRate = stats.emojis / stats.count;
+    var questionRate = stats.questions / stats.count;
     return {
         count: stats.count,
         dominantSentiment: getDominantBucket(
@@ -914,6 +920,9 @@ function summarizeCommentThread(existingComments) {
             ? 'high'
             : (exclamRate < 0.1 && emojiRate < 0.05)
                 ? 'low' : 'balanced',
+        exclamationRate: exclamRate,
+        emojiRate: emojiRate,
+        questionRate: questionRate,
         styleHint: mapSentimentToStyle(
             getDominantBucket(
                 stats.sentiments, 'generic'

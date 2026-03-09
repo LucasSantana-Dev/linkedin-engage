@@ -1159,6 +1159,27 @@ describe('summarizeCommentThread', () => {
         expect(summary.dominantSentiment).toBe('generic');
         expect(summary.styleHint).toBe('neutral');
     });
+
+    it('captures expressive thread signals for prompt tuning', () => {
+        const summary = summarizeCommentThread([
+            {
+                text: 'Love this! 👏',
+                sentiment: 'celebration'
+            },
+            {
+                text: 'So true!!',
+                sentiment: 'agreement'
+            },
+            {
+                text: 'Any chance you can share the stack?',
+                sentiment: 'question'
+            }
+        ]);
+
+        expect(summary.exclamationRate).toBeGreaterThan(0);
+        expect(summary.emojiRate).toBeGreaterThan(0);
+        expect(summary.questionRate).toBeGreaterThan(0);
+    });
 });
 
 describe('summarizeReactions', () => {
