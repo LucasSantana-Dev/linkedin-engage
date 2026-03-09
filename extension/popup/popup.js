@@ -94,20 +94,14 @@ function buildQuery() {
     const market = getSelectedTags('market');
     const level = getSelectedTags('level');
 
-    const rolePart = roles.length > 1
-        ? `(${roles.join(' OR ')})`
-        : roles[0] || '';
-    const marketPart = market.length > 1
-        ? `(${market.join(' OR ')})`
-        : market[0] || '';
+    const all = [
+        ...roles,
+        ...industry,
+        ...market,
+        ...level
+    ];
 
-    const parts = [];
-    if (rolePart) parts.push(rolePart);
-    for (const term of industry) parts.push(term);
-    if (marketPart) parts.push(marketPart);
-    for (const term of level) parts.push(term);
-
-    return parts.join(' ');
+    return all.join(' OR ');
 }
 
 function updateQueryPreview() {

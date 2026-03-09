@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-03-09
+
+### Fixed
+- **All tag groups use OR**: Roles, industry, market, and level tags are now joined with OR into a single flat query — LinkedIn doesn't support parenthetical grouping, and AND between groups was too restrictive, returning zero results
+
 ## [1.18.0] - 2026-03-09
 
 ### Changed
