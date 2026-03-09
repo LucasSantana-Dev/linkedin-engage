@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.18.2] - 2026-03-09
+
+### Fixed
+- **Reverted to working query structure**: Roles OR'd, market/industry/level as plain keywords (AND'd). LinkedIn rejects long all-OR queries with 19+ terms
+- **Tag state version migration**: Stale saved popup state (from pre-1.18 with old tags like "remote"/"global") now resets to HTML defaults instead of activating all tags
+- **Removed inner OR from Brazil tag**: `brazil OR brazilian` data-value broke LinkedIn parsing when mixed with other AND terms
+
 ## [1.18.1] - 2026-03-09
 
 ### Fixed

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Engage",
-  "version": "1.18.1",
+  "version": "1.18.2",
   "description": "Grow your LinkedIn network with smart connection automation, feed engagement, and AI-powered comments.",
   "homepage_url": "https://github.com/LucasSantana-Dev/linkedin-engage",
   "icons": {

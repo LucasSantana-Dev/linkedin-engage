@@ -94,14 +94,19 @@ function buildQuery() {
     const market = getSelectedTags('market');
     const level = getSelectedTags('level');
 
-    const all = [
-        ...roles,
-        ...industry,
-        ...market,
-        ...level
-    ];
+    const parts = [];
 
-    return all.join(' OR ');
+    if (roles.length === 1) {
+        parts.push(roles[0]);
+    } else if (roles.length > 1) {
+        parts.push(roles.join(' OR '));
+    }
+
+    for (const term of industry) parts.push(term);
+    for (const term of market) parts.push(term);
+    for (const term of level) parts.push(term);
+
+    return parts.join(' ');
 }
 
 function updateQueryPreview() {
@@ -218,6 +223,7 @@ function saveState() {
             'nurturePostLimit').value
     };
 
+    state.tagVersion = 2;
     document.querySelectorAll('.tag').forEach(tag => {
         const group = tag.dataset.group;
         if (!state.tags[group]) state.tags[group] = [];
@@ -244,7 +250,9 @@ function loadState() {
             return;
         }
 
-        if (popupState.tags) {
+        const TAG_VERSION = 2;
+        if (popupState.tags &&
+            popupState.tagVersion === TAG_VERSION) {
             document.querySelectorAll('.tag').forEach(tag => {
                 const group = tag.dataset.group;
                 const vals = popupState.tags[group] || [];
