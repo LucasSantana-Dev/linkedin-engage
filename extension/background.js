@@ -402,6 +402,27 @@ function formatThreadStyleContext(commentThreadSummary) {
         openerText;
 }
 
+function formatThreadTopicContext(commentThreadSummary) {
+    if (!commentThreadSummary ||
+        !commentThreadSummary.count) {
+        return '';
+    }
+    var keywords = Array.isArray(
+        commentThreadSummary.keywords
+    ) ? commentThreadSummary.keywords.slice(0, 6) : [];
+    var phrases = Array.isArray(
+        commentThreadSummary.samplePhrases
+    ) ? commentThreadSummary.samplePhrases.slice(0, 2) : [];
+    var keywordCtx = keywords.length
+        ? '\nThread keywords: ' + keywords.join(', ')
+        : '';
+    var phraseCtx = phrases.length
+        ? '\nThread phrase samples: ' +
+            phrases.join(' | ')
+        : '';
+    return keywordCtx + phraseCtx;
+}
+
 function formatImageContext(imageSignals) {
     if (!imageSignals || !imageSignals.hasImage) {
         return '';
@@ -468,6 +489,55 @@ function buildHumanVoiceRules(commentThreadSummary, category) {
         emojiRule + questionRule + energyRule;
 }
 
+function tokenizeGroundingText(text) {
+    return ((text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, ' ')
+        .match(/[a-z0-9]{3,}/g)) || [];
+}
+
+function buildContextTokenSet(
+    postText, existingComments, commentThreadSummary
+) {
+    var corpus = [postText || ''];
+    if (Array.isArray(existingComments)) {
+        for (var item of existingComments.slice(0, 12)) {
+            corpus.push(item?.text || '');
+        }
+    }
+    if (Array.isArray(commentThreadSummary?.keywords)) {
+        corpus.push(commentThreadSummary.keywords.join(' '));
+    }
+    if (Array.isArray(commentThreadSummary?.samplePhrases)) {
+        corpus.push(
+            commentThreadSummary.samplePhrases.join(' ')
+        );
+    }
+    return new Set(
+        tokenizeGroundingText(corpus.join(' '))
+    );
+}
+
+function isContextGroundedComment(
+    comment, postText, existingComments, commentThreadSummary
+) {
+    var commentTokens = tokenizeGroundingText(comment);
+    if (commentTokens.length === 0) return false;
+    var contextTokens = buildContextTokenSet(
+        postText, existingComments, commentThreadSummary
+    );
+    if (contextTokens.size === 0) return true;
+    var overlap = 0;
+    for (var token of commentTokens) {
+        if (contextTokens.has(token)) overlap++;
+    }
+    var ratio = overlap / commentTokens.length;
+    var minRatio = existingComments?.length >= 2
+        ? 0.22 : 0.12;
+    return ratio >= minRatio;
+}
+
 async function generateAIComment(data) {
     const { postText, existingComments, author,
         authorTitle, lang, category, reactions,
@@ -477,6 +547,9 @@ async function generateAIComment(data) {
 
     var reactionCtx = formatReactionContext(reactions);
     var threadStyleCtx = formatThreadStyleContext(
+        commentThreadSummary
+    );
+    var threadTopicCtx = formatThreadTopicContext(
         commentThreadSummary
     );
     var imageCtx = formatImageContext(imageSignals);
@@ -562,6 +635,10 @@ async function generateAIComment(data) {
         '\n- Mirror the dominant thread style' +
         ' (tone, energy, and length) but use' +
         ' original wording' +
+        '\n- Use the thread keywords/phrases as the' +
+        ' main base for your comment when present' +
+        '\n- Do not introduce topics that are not in' +
+        ' post text or existing comments' +
         '\n- Sound like a real person in this' +
         ' thread, not like an AI assistant' +
         '\n- Prefer natural contractions and plain' +
@@ -586,6 +663,7 @@ async function generateAIComment(data) {
         engagementCtx +
         imageCtx +
         threadStyleCtx +
+        threadTopicCtx +
         commentsCtx +
         '\n\nYour comment (raw text, no quotes,' +
         ' or "SKIP" if no good comment):';
@@ -643,6 +721,18 @@ async function generateAIComment(data) {
         }
         if (comment.length < 5 ||
             comment.length > 300) {
+            return null;
+        }
+        if (!isContextGroundedComment(
+            comment,
+            postText,
+            existingComments,
+            commentThreadSummary
+        )) {
+            console.log(
+                '[LinkedIn Bot] AI comment not grounded' +
+                ' in thread context'
+            );
             return null;
         }
         return comment;

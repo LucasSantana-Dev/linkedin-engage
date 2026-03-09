@@ -817,6 +817,53 @@ function classifyCommentSentiment(text) {
     return 'generic';
 }
 
+var THREAD_STOP_WORDS = new Set([
+    'this', 'that', 'with', 'from', 'your', 'about',
+    'have', 'just', 'really', 'very', 'more', 'great',
+    'good', 'nice', 'true', 'love', 'like', 'team',
+    'para', 'isso', 'essa', 'esse', 'muito', 'mais',
+    'com', 'sem', 'sobre', 'uma', 'como', 'você',
+    'voce', 'isso', 'aqui', 'esse', 'essa', 'pra',
+    'the', 'and', 'for', 'you', 'are', 'was', 'were',
+    'not', 'but', 'all', 'can', 'our', 'their'
+]);
+
+function normalizeThreadToken(token) {
+    return (token || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function addThreadKeywords(text, keywordCounts) {
+    var parts = (text || '').split(/\s+/);
+    for (var part of parts) {
+        var token = normalizeThreadToken(part);
+        if (token.length < 4) continue;
+        if (THREAD_STOP_WORDS.has(token)) continue;
+        keywordCounts[token] = (keywordCounts[token] || 0) + 1;
+    }
+}
+
+function addThreadPhrase(text, phraseCounts) {
+    var cleaned = (text || '')
+        .replace(/\s+/g, ' ').trim();
+    if (cleaned.length < 12) return;
+    var phrase = cleaned.split(/[.!?]/)[0]
+        .split(/\s+/).slice(0, 8).join(' ')
+        .toLowerCase();
+    if (phrase.length < 10) return;
+    phraseCounts[phrase] = (phraseCounts[phrase] || 0) + 1;
+}
+
+function getTopMapKeys(map, limit) {
+    return Object.entries(map || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(function(item) { return item[0]; });
+}
+
 function getCommentThreadDefaults() {
     return {
         count: 0,
@@ -829,7 +876,9 @@ function getCommentThreadDefaults() {
         emojiRate: 0,
         questionRate: 0,
         styleHint: 'neutral',
-        commonOpeners: []
+        commonOpeners: [],
+        keywords: [],
+        samplePhrases: []
     };
 }
 
@@ -848,7 +897,9 @@ function collectCommentThreadStats(list) {
         questions: 0,
         sentiments: {},
         langs: {},
-        openers: {}
+        openers: {},
+        keywordCounts: {},
+        phraseCounts: {}
     };
     var emojiRe = /[\u{1F300}-\u{1FAFF}]/u;
     for (var item of list) {
@@ -865,6 +916,8 @@ function collectCommentThreadStats(list) {
         if (text.includes('!')) stats.exclam++;
         if (emojiRe.test(text)) stats.emojis++;
         if (text.includes('?')) stats.questions++;
+        addThreadKeywords(text, stats.keywordCounts);
+        addThreadPhrase(text, stats.phraseCounts);
         var opener = text.split(/\s+/)
             .slice(0, 3).join(' ').toLowerCase();
         if (opener.length > 2) {
@@ -928,10 +981,9 @@ function summarizeCommentThread(existingComments) {
                 stats.sentiments, 'generic'
             )
         ),
-        commonOpeners: Object.entries(stats.openers)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 2)
-            .map(e => e[0])
+        commonOpeners: getTopMapKeys(stats.openers, 2),
+        keywords: getTopMapKeys(stats.keywordCounts, 6),
+        samplePhrases: getTopMapKeys(stats.phraseCounts, 3)
     };
 }
 

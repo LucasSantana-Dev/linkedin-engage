@@ -1180,6 +1180,27 @@ describe('summarizeCommentThread', () => {
         expect(summary.emojiRate).toBeGreaterThan(0);
         expect(summary.questionRate).toBeGreaterThan(0);
     });
+
+    it('extracts reusable thread keywords and phrases', () => {
+        const summary = summarizeCommentThread([
+            {
+                text: 'Strong point on observability rollout in production.',
+                sentiment: 'insight'
+            },
+            {
+                text: 'Observability and incident response maturity are key.',
+                sentiment: 'insight'
+            },
+            {
+                text: 'Great practical take on production readiness.',
+                sentiment: 'agreement'
+            }
+        ]);
+
+        expect(summary.keywords).toContain('observability');
+        expect(summary.keywords).toContain('production');
+        expect(summary.samplePhrases.length).toBeGreaterThan(0);
+    });
 });
 
 describe('summarizeReactions', () => {
