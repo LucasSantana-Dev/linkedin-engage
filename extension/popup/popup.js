@@ -94,18 +94,17 @@ function buildQuery() {
     const market = getSelectedTags('market');
     const level = getSelectedTags('level');
 
-    // LinkedIn basic search: keep it flat and simple.
-    // One OR group max (roles), rest are plain keywords.
+    const rolePart = roles.length > 1
+        ? `(${roles.join(' OR ')})`
+        : roles[0] || '';
+    const marketPart = market.length > 1
+        ? `(${market.join(' OR ')})`
+        : market[0] || '';
+
     const parts = [];
-
-    if (roles.length === 1) {
-        parts.push(roles[0]);
-    } else if (roles.length > 1) {
-        parts.push(roles.join(' OR '));
-    }
-
+    if (rolePart) parts.push(rolePart);
     for (const term of industry) parts.push(term);
-    for (const term of market) parts.push(term);
+    if (marketPart) parts.push(marketPart);
     for (const term of level) parts.push(term);
 
     return parts.join(' ');

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-03-09
+
+### Changed
+- **Search query targets offshore Brazilian hiring**: Market focus tags now OR'd together as a group instead of plain AND keywords, producing targeted queries like `recruiter software (latam OR brazil OR nearshore)` instead of diluted keyword soup
+- **Revamped market focus tags**: Removed generic "Remote" and "Global" tags that matched every recruiter; added "Distributed Team" and "Hiring in Brazil" as high-signal phrases; defaults now LATAM + Brazil + Nearshore
+- **Parenthetical grouping in queries**: Both role and market tag groups now wrapped in parentheses when multiple are selected, preventing OR bleeding between groups
+
 ## [1.17.5] - 2026-03-09
 
 ### Added
