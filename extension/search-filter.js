@@ -2,14 +2,34 @@
     if (window.__linkedInSearchFilterActive) return;
     window.__linkedInSearchFilterActive = true;
 
+    const STYLE_ID = 'le-search-filter-style';
+
+    function injectStyle() {
+        if (document.getElementById(STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent =
+            '[data-le-filtered="message"] {' +
+            '  opacity: 0.15 !important;' +
+            '  pointer-events: none !important;' +
+            '  transition: opacity 0.3s ease !important;' +
+            '}';
+        document.head.appendChild(style);
+    }
+
     function dimConnectedCards() {
         const cards = document.querySelectorAll(
             '.entity-result, ' +
-            '.reusable-search__result-container'
+            '.reusable-search__result-container, ' +
+            'li.reusable-search__result-container'
         );
         for (const card of cards) {
-            if (card.dataset.leFiltered) continue;
-            const btns = card.querySelectorAll('button, a');
+            if (card.getAttribute('data-le-filtered')) {
+                continue;
+            }
+            const btns = card.querySelectorAll(
+                'button, a[href*="messaging"]'
+            );
             let hasConnect = false;
             let hasMessage = false;
             for (const b of btns) {
@@ -23,10 +43,9 @@
                 }
             }
             if (hasMessage && !hasConnect) {
-                card.style.opacity = '0.2';
-                card.style.pointerEvents = 'none';
-                card.style.transition = 'opacity 0.3s ease';
-                card.dataset.leFiltered = '1';
+                card.setAttribute(
+                    'data-le-filtered', 'message'
+                );
             }
         }
     }
@@ -52,11 +71,20 @@
     }
 
     stripFirstDegree();
-    dimConnectedCards();
+    injectStyle();
 
-    const observer = new MutationObserver(dimConnectedCards);
-    observer.observe(document.body, {
+    function run() {
+        injectStyle();
+        dimConnectedCards();
+    }
+
+    run();
+
+    const observer = new MutationObserver(run);
+    observer.observe(document.body || document.documentElement, {
         childList: true,
         subtree: true
     });
+
+    setInterval(run, 2000);
 })();
