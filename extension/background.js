@@ -1499,7 +1499,13 @@ function buildQueryFromTags(state) {
     const tags = state.tags || {};
     const parts = [];
     const roles = tags.role || [];
-    const maxRoleTerms = 6;
+    const maxRoleTerms = Math.max(
+        1,
+        Math.min(
+            10,
+            parseInt(state.roleTermsLimit, 10) || 6
+        )
+    );
     let safeRoles = roles;
     if (roles.length > maxRoleTerms) {
         const priority = [

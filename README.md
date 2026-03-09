@@ -187,6 +187,7 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Target Companies | Empty | Only follow companies matching these names (one per line) |
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
+| Role Terms Limit | 6 | Maximum number of role tags included in the `OR` role query (1-10) to keep results precise |
 | Goal Mode | Networking & Visibility | `passive` avoids job-seeking signals; `active` allows stronger hiring-post positioning |
 | Comment Templates | Empty | One template per line; `{topic}` and `{excerpt}` are auto-replaced |
 | Skip Keywords | Empty | Skip posts containing these words (one per line) |
