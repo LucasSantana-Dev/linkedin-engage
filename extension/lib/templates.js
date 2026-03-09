@@ -151,11 +151,12 @@ var POST_CATEGORIES = {
 
 var CATEGORY_TEMPLATES = {
     hiring: [
-        'know someone who might be a good fit, ' +
-            'sharing',
-        'great to see {topic} roles opening up',
-        'sharing for reach',
-        'saved this, know people who\'d be a fit'
+        'solid {topic} stack, this attracts good talent',
+        '{topic} market is moving fast right now',
+        'interesting setup, good to see what teams ' +
+            'are building',
+        'strong combo, {topic} is in high demand',
+        'good to know what\'s out there in {topic}'
     ],
     achievement: [
         'congrats!',
@@ -240,11 +241,13 @@ var CATEGORY_TEMPLATES = {
 
 var CATEGORY_TEMPLATES_PT = {
     hiring: [
-        'vaga top, vou compartilhar na minha rede',
-        'a área de {topic} tá muito aquecida',
-        'bom ver empresas investindo em {topic}',
-        'salvei, conheço gente que pode se encaixar',
-        'compartilhando pra dar alcance'
+        'stack sólida de {topic}, atrai bons ' +
+            'profissionais',
+        'mercado de {topic} tá bem aquecido',
+        'setup interessante, bom ver o que os ' +
+            'times estão construindo',
+        'boa combinação, {topic} tá em alta',
+        'bom saber o que rola no mercado de {topic}'
     ],
     achievement: [
         'parabéns!',

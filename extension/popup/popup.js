@@ -250,7 +250,7 @@ function loadState() {
             return;
         }
 
-        const TAG_VERSION = 2;
+        const TAG_VERSION = 3;
         if (popupState.tags &&
             popupState.tagVersion === TAG_VERSION) {
             document.querySelectorAll('.tag').forEach(tag => {

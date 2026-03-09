@@ -600,6 +600,26 @@ async function generateAIComment(data) {
             '\nTone: OPINION post.' +
             ' Acknowledge neutrally.' +
             ' Do NOT take sides or debate.';
+    } else if (cat === 'hiring') {
+        toneGuide =
+            '\nTone: JOB/HIRING post.' +
+            ' Comment like an industry insider who' +
+            ' knows the tech landscape well.' +
+            ' Sound knowledgeable about the stack,' +
+            ' market, or domain mentioned.' +
+            ' Make the author curious about your' +
+            ' profile without expressing interest' +
+            ' in the role itself.' +
+            ' NEVER say "I\'m interested",' +
+            ' "I\'d love to apply",' +
+            ' "looking for opportunities",' +
+            ' "open to work", or anything that' +
+            ' signals you are job seeking.' +
+            ' Good examples: "solid stack, this' +
+            ' space is growing fast",' +
+            ' "interesting setup, good to see' +
+            ' what teams are building".' +
+            ' Keep it 1 sentence, under 80 chars.';
     } else if (cat === 'technical') {
         toneGuide =
             '\nTone: TECHNICAL post.' +

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.18.3] - 2026-03-09
+
+### Fixed
+- **Card dimming now works**: Changed button text matching from substring (`includes('connect')`) to exact match (`=== 'connect'`). The old approach matched "connections", "connected", "mutual connections" — so every card falsely got `hasConnect = true` and was never dimmed
+- **Narrowed card selector**: Removed bare `li` selector (matched too many unrelated elements). Now targets only `.entity-result` and `.reusable-search__result-container`
+- **Targeted button text lookup**: Query `button span, a span` instead of `button, a` to read only the label text, not the full card contents
+- **Fixed chrome-extension://invalid/ fetch error spam**: Added early return in fetch monkey-patch for `chrome-extension://` URLs, preventing them from being intercepted by the invite status tracker
+
 ## [1.18.2] - 2026-03-09
 
 ### Fixed

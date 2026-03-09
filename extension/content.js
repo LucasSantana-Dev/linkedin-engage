@@ -9,11 +9,15 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
     const origFetch = window.fetch;
     window.fetch = async function(...args) {
+        const reqUrl = typeof args[0] === 'string'
+            ? args[0]
+            : args[0]?.url || '';
+        if (reqUrl.startsWith('chrome-extension://')) {
+            return origFetch.apply(this, args);
+        }
         const res = await origFetch.apply(this, args);
         try {
-            const url = typeof args[0] === 'string'
-                ? args[0]
-                : args[0]?.url || '';
+            const url = reqUrl;
             if (isInviteUrl(url)) {
                 lastInviteStatus = res.status;
                 if (res.status === 429) {

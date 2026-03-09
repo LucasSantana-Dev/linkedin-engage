@@ -2,31 +2,49 @@
     if (window.__leSearchFilter) return;
     window.__leSearchFilter = true;
 
-    console.log('[LE] search-filter.js loaded');
+    function isMessageBtn(btn) {
+        const aria = (
+            btn.getAttribute('aria-label') || ''
+        ).toLowerCase();
+        if (aria.startsWith('message') ||
+            aria.startsWith('mensagem')) {
+            return true;
+        }
+        const text = (btn.innerText || '')
+            .trim().toLowerCase();
+        return text === 'message' || text === 'mensagem';
+    }
+
+    function isConnectBtn(btn) {
+        const aria = (
+            btn.getAttribute('aria-label') || ''
+        ).toLowerCase();
+        if (aria.includes('invite') &&
+            aria.includes('connect')) {
+            return true;
+        }
+        if (aria === 'connect' || aria === 'conectar') {
+            return true;
+        }
+        const text = (btn.innerText || '')
+            .trim().toLowerCase();
+        return text === 'connect' || text === 'conectar';
+    }
 
     function dimCards() {
         const cards = document.querySelectorAll(
             '.entity-result, ' +
             '.reusable-search__result-container, ' +
-            'li'
+            '[data-chameleon-result-urn]'
         );
-        let dimmed = 0;
         for (const card of cards) {
             if (card.dataset.leDone) continue;
             const btns = card.querySelectorAll('button, a');
             let hasConnect = false;
             let hasMessage = false;
             for (const b of btns) {
-                const t = (b.textContent || '')
-                    .trim().toLowerCase();
-                if (t.includes('connect') ||
-                    t.includes('conectar')) {
-                    hasConnect = true;
-                }
-                if (t.includes('message') ||
-                    t.includes('mensagem')) {
-                    hasMessage = true;
-                }
+                if (isMessageBtn(b)) hasMessage = true;
+                if (isConnectBtn(b)) hasConnect = true;
             }
             if (hasMessage && !hasConnect) {
                 card.style.setProperty(
@@ -36,13 +54,9 @@
                     'pointer-events', 'none', 'important'
                 );
                 card.dataset.leDone = 'dim';
-                dimmed++;
             } else if (hasConnect) {
                 card.dataset.leDone = 'ok';
             }
-        }
-        if (dimmed > 0) {
-            console.log(`[LE] dimmed ${dimmed} cards`);
         }
     }
 
