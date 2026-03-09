@@ -63,6 +63,19 @@ describe('humanDelay', () => {
         const val = humanDelay(2000);
         expect(val).toBeGreaterThanOrEqual(500);
     });
+
+    test('keeps floor when burst branch gaussian is negative', () => {
+        const randomSpy = jest.spyOn(Math, 'random');
+        randomSpy
+            .mockImplementationOnce(() => 0.5)
+            .mockImplementationOnce(() => 0.5)
+            .mockImplementationOnce(() => 0.01)
+            .mockImplementationOnce(() => 1e-12)
+            .mockImplementationOnce(() => 0.5);
+
+        expect(humanDelay(100, 10)).toBeGreaterThanOrEqual(500);
+        randomSpy.mockRestore();
+    });
 });
 
 describe('scrollVariation', () => {

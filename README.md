@@ -34,6 +34,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Multi-query rotation** — scheduled runs cycle through multiple saved queries automatically
 - **Recent profiles** — last 5 connection profiles shown inline in popup with avatar, name, headline, and status badge
 - **Error resilience** — tab load timeout, script injection error handling, tab close detection with notifications
+- **Human timing guardrails** — burst delays never reduce below the 500ms floor, preventing unrealistic timing spikes and test flakiness
 - **Dark mode** — respects system `prefers-color-scheme` with GitHub-inspired dark palette
 - **Activity chart** — 14-day bar chart on dashboard showing daily send volume
 - **Feed analytics** — comment success rate, reaction breakdown chart, top reaction type, skip counts on dashboard

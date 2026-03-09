@@ -10,14 +10,14 @@ function gaussianRandom(mean, stdDev) {
 function humanDelay(baseMs, varianceMs) {
     const base = baseMs || 2000;
     const variance = varianceMs || base * 0.4;
-    const delay = Math.max(
+    let delay = Math.max(
         500,
         gaussianRandom(base, variance)
     );
     if (Math.random() < 0.08) {
-        return delay + gaussianRandom(5000, 2000);
+        delay += Math.max(0, gaussianRandom(5000, 2000));
     }
-    return Math.round(delay);
+    return Math.round(Math.max(500, delay));
 }
 
 function scrollVariation() {
