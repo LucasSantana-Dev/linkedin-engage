@@ -793,6 +793,18 @@
         <div class="section">
             <div class="section-label">Search Builder</div>
 
+            <div class="input-group" style="margin-bottom:8px;">
+                <label for="goalMode">Goal</label>
+                <select id="goalMode">
+                    <option value="passive">
+                        Networking & Visibility
+                    </option>
+                    <option value="active">
+                        Actively Looking
+                    </option>
+                </select>
+            </div>
+
             <div class="tag-group">
                 <div class="tag-group-label">Role</div>
                 <span class="tag active" data-group="role" data-value="recruiter">Recruiter</span>
@@ -880,6 +892,14 @@
         <div class="checkbox-group">
             <label for="engagementOnlyCheckbox">Engagement only (visit + follow, no connect)</label>
             <input type="checkbox" id="engagementOnlyCheckbox" />
+        </div>
+
+        <div class="input-group">
+            <label for="myCompanyInput">
+                My Company (skip same company)
+            </label>
+            <input type="text" id="myCompanyInput"
+                placeholder="e.g. Acme Corp" />
         </div>
 
         <div class="input-group">

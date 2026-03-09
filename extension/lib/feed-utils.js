@@ -133,6 +133,15 @@ function classifyPost(postText, reactions) {
         }
     }
 
+    // Safety override for hiring posts: never route to
+    // humor/critique/generic if hiring intent is strong.
+    if ((scores.hiring || 0) >= 2 &&
+        (bestCategory === 'humor' ||
+            bestCategory === 'critique' ||
+            bestCategory === 'generic')) {
+        bestCategory = 'hiring';
+    }
+
     if (bestScore < 1 && lower.length > 20) {
         for (const entry of TOPIC_MAP) {
             if (entry.pattern.test(lower)) {
@@ -331,10 +340,13 @@ function extractConcepts(postText) {
 }
 
 function buildCommentFromPost(
-    postText, userTemplates, existingComments
+    postText, userTemplates, existingComments,
+    goalMode
 ) {
     const category = classifyPost(postText);
     const lang = detectLanguage(postText);
+    const mode = goalMode === 'active'
+        ? 'active' : 'passive';
 
     var usedSentiments = new Set();
     if (existingComments && existingComments.length > 0) {
@@ -379,6 +391,10 @@ function buildCommentFromPost(
         const composed = finalLang === 'pt'
             ? COMPOSED_PT : COMPOSED_EN;
         var preferredCat = category;
+        if (category === 'hiring' &&
+            mode === 'active') {
+            preferredCat = 'hiring_active';
+        }
         if (avoidCelebration &&
             (category === 'career' ||
                 category === 'generic')) {
@@ -405,7 +421,13 @@ function buildCommentFromPost(
 
     const templates = finalLang === 'pt'
         ? CATEGORY_TEMPLATES_PT : CATEGORY_TEMPLATES;
-    const templatePool = templates[category] ||
+    const templateCategory = category === 'hiring' &&
+        mode === 'active'
+        ? 'hiring_active'
+        : category;
+    const templatePool =
+        templates[templateCategory] ||
+        templates[category] ||
         templates.generic;
 
     if (!templatePool || templatePool.length === 0)

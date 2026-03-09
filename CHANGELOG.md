@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-03-09
+
+### Added
+- **Goal mode for engagement strategy**: New popup selector with two modes — `Networking & Visibility` (passive) and `Actively Looking` (active). Mode now propagates through Connect and Feed Engage flows to tune hiring-comment tone.
+- **Same-company Connect safeguard**: New optional `My Company` input in popup; Connect skips profiles whose headline matches the configured company, reducing same-company recruiter outreach.
+- **Active hiring template set**: Added dedicated `hiring_active` templates (EN + PT-BR, simple + composed) so active mode can sound intentional without explicit job-seeking phrases.
+
+### Changed
+- **Thread-first comment grounding**: AI prompt now prioritizes existing comments as primary context and post text as secondary context for safer in-thread tone matching.
+- **No first-comment behavior**: Feed comment automation now skips posts that have zero existing comments, avoiding thread-start risk.
+- **Hiring tone controls by mode**: Hiring prompt guidance now branches by goal mode while explicitly forbidding humor/irony and ambiguous/offensive wording.
+
+### Fixed
+- **Hiring misclassification safety**: Added hard override to keep strong hiring posts in `hiring` category when humor/critique heuristics collide, preventing wrong-tone comments on job posts.
+
 ## [1.18.3] - 2026-03-09
 
 ### Fixed

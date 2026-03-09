@@ -182,6 +182,16 @@ function isBrazilGeoTarget(geoUrn) {
         /"brazil"|"brasil"/i.test(decoded);
 }
 
+function isSameCompany(headline, myCompany) {
+    if (!headline || !myCompany) return false;
+    var normalizedHeadline = String(headline)
+        .toLowerCase();
+    var normalizedCompany = String(myCompany)
+        .toLowerCase().trim();
+    if (!normalizedCompany) return false;
+    return normalizedHeadline.includes(normalizedCompany);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         isButtonClickable,
@@ -200,6 +210,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isFollowButtonText,
         isFollowingButtonText,
         isBrazilianProfile,
-        isBrazilGeoTarget
+        isBrazilGeoTarget,
+        isSameCompany
     };
 }

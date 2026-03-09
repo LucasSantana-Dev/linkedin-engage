@@ -170,6 +170,10 @@ function saveState() {
     const state = {
         tags: {},
         currentMode,
+        goalMode: document.getElementById('goalMode').value,
+        myCompany: document.getElementById(
+            'myCompanyInput'
+        ).value.trim(),
         limit: document.getElementById('limitInput').value,
         region: document.getElementById('regionSelect').value,
         activelyHiring: document.getElementById('activelyHiringCheckbox').checked,
@@ -223,7 +227,7 @@ function saveState() {
             'nurturePostLimit').value
     };
 
-    state.tagVersion = 2;
+    state.tagVersion = 4;
     document.querySelectorAll('.tag').forEach(tag => {
         const group = tag.dataset.group;
         if (!state.tags[group]) state.tags[group] = [];
@@ -250,7 +254,7 @@ function loadState() {
             return;
         }
 
-        const TAG_VERSION = 3;
+        const TAG_VERSION = 4;
         if (popupState.tags &&
             popupState.tagVersion === TAG_VERSION) {
             document.querySelectorAll('.tag').forEach(tag => {
@@ -264,6 +268,14 @@ function loadState() {
 
         if (popupState.limit) {
             document.getElementById('limitInput').value = popupState.limit;
+        }
+        if (popupState.goalMode) {
+            document.getElementById('goalMode').value =
+                popupState.goalMode;
+        }
+        if (popupState.myCompany) {
+            document.getElementById('myCompanyInput').value =
+                popupState.myCompany;
         }
         if (popupState.region) {
             document.getElementById('regionSelect').value = popupState.region;
@@ -493,6 +505,10 @@ document.getElementById('degree2nd').addEventListener('change', saveState);
 document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
+document.getElementById('goalMode').addEventListener('change', saveState);
+document.getElementById('myCompanyInput').addEventListener(
+    'input', saveState
+);
 
 document.getElementById('scheduleCheckbox').addEventListener(
     'change', (e) => {
@@ -646,6 +662,11 @@ async function startConnect() {
     const geoUrn = getSelectedRegionGeoUrn();
     const activelyHiring =
         document.getElementById('activelyHiringCheckbox').checked;
+    const goalMode =
+        document.getElementById('goalMode').value || 'passive';
+    const myCompany = document.getElementById(
+        'myCompanyInput'
+    ).value.trim();
 
     const networkTypes = [];
     if (document.getElementById('degree2nd').checked) {
@@ -679,6 +700,8 @@ async function startConnect() {
         sendNote,
         noteTemplate: noteText,
         geoUrn,
+        goalMode,
+        myCompany,
         activelyHiring,
         networkFilter,
         sentUrls,
@@ -764,12 +787,15 @@ function startFeedEngage() {
     const aiApiKey = document.getElementById(
         'aiApiKeyInput'
     ).value.trim();
+    const goalMode =
+        document.getElementById('goalMode').value || 'passive';
 
     chrome.runtime.sendMessage({
         action: 'startFeedEngage',
         limit,
         react,
         comment,
+        goalMode,
         commentTemplates,
         skipKeywords,
         aiApiKey

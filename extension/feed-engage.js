@@ -1017,6 +1017,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         const doReact = config?.react !== false;
         const doComment = config?.comment === true;
         const aiApiKey = config?.aiApiKey || '';
+        const goalMode = config?.goalMode || 'passive';
         const commentTemplates =
             config?.commentTemplates || [];
         const skipKeywords =
@@ -1332,6 +1333,15 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             );
                             skipComment = true;
                         }
+                        if (!skipComment &&
+                            existing.length === 0) {
+                            console.log(
+                                '[LinkedIn Bot] Skipping ' +
+                                'comment — never first ' +
+                                'comment on a post'
+                            );
+                            skipComment = true;
+                        }
                         if (existing.length > 0) {
                             var ptComments = existing
                                 .filter(function(c) {
@@ -1386,7 +1396,8 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                     reactionSummary,
                                     commentThreadSummary,
                                     imageSignals,
-                                    apiKey: aiApiKey
+                                    apiKey: aiApiKey,
+                                    goalMode
                                 });
                             if (comment) {
                                 console.log(
@@ -1412,7 +1423,8 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                         .length > 0
                                         ? commentTemplates
                                         : null,
-                                    existing
+                                    existing,
+                                    goalMode
                                 );
                         }
                         if (comment &&

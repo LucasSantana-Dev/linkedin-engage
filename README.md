@@ -22,9 +22,12 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
 - **Company follow mode** — searches each target company by name individually for high hit rate; 60 curated mid-size (150-500 employee) LATAM-hiring companies as defaults; scheduled recurring runs with batch rotation
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching; scheduled recurring runs
+- **Goal mode selector** — choose between `Networking & Visibility` (passive) and `Actively Looking` (more direct) to control hiring-post comment tone across Connect and Feed Engage
+- **Never first-comment safeguard** — comment automation skips posts with zero existing comments to avoid starting threads
 - **13 post categories** — hiring, achievement, technical, question, tips, story, news, humor, critique, motivation, project, jobseeking, newjob — each with dedicated comment templates
 - **Smart comment generation** — category-aware follow-ups, post-length awareness (short posts get short comments), `{keyPhrase}` templates only when extractable, `{topic}` auto-detected from post content
 - **Thread-style AI comments** — analyzes existing comments (sentiment, brevity, energy, common openers, emoji/question/exclamation style), extracts thread keywords/phrases, and mirrors the conversation vibe with original wording
+- **Hiring tone safety rails** — hiring posts are forced to hiring category and blocked from humor/irony tone; comments avoid ambiguous or offensive phrasing
 - **Context-aware tone engine** — combines post text, image cues, author title archetype, and reaction intensity/dominant reaction to make comments feel native to each post
 - **PT-BR comments** — auto-detects Portuguese posts and generates conversational PT-BR comments with language-appropriate openers/follow-ups
 - **Duplicate post guard** — persists engaged post URNs across sessions to avoid re-engaging the same posts
@@ -49,6 +52,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Brazilian connect notes in PT-BR** — when profile cues indicate a Brazilian contact, Connect automatically switches the default invite note to Portuguese
 - **PT-BR detection kept in More-menu connect** — when Connect is triggered from the card’s `More` menu, profile context is preserved so Brazilian contacts still receive Portuguese notes
 - **Brazil search language lock** — when Recruiter Location/search geo targets Brazil, Connect enforces PT-BR invitation notes even for English-profile cards
+- **Same-company recruiter skip** — optional `My Company` filter skips Connect attempts when a profile headline matches your current company
 
 ### Standalone Connector
 - **Playwright-based** — runs a full Chromium browser with persistent login session
@@ -183,8 +187,10 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Target Companies | Empty | Only follow companies matching these names (one per line) |
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
+| Goal Mode | Networking & Visibility | `passive` avoids job-seeking signals; `active` allows stronger hiring-post positioning |
 | Comment Templates | Empty | One template per line; `{topic}` and `{excerpt}` are auto-replaced |
 | Skip Keywords | Empty | Skip posts containing these words (one per line) |
+| My Company | Empty | If set, skips connecting with profiles whose headline contains your company name |
 
 ## Releasing
 

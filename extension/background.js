@@ -148,6 +148,10 @@ function launchAutomation(config) {
                                 noteTemplate:
                                     config.noteTemplate,
                                 geoUrn: config.geoUrn,
+                                goalMode:
+                                    config.goalMode || 'passive',
+                                myCompany:
+                                    config.myCompany || '',
                                 sentUrls:
                                     config.sentUrls || [],
                                 engagementOnly:
@@ -555,7 +559,8 @@ async function generateAIComment(data) {
     const { postText, existingComments, author,
         authorTitle, lang, category, reactions,
         reactionSummary, commentThreadSummary,
-        imageSignals, apiKey } = data;
+        imageSignals, apiKey,
+        goalMode } = data;
     if (!apiKey) return null;
 
     var reactionCtx = formatReactionContext(reactions);
@@ -601,25 +606,26 @@ async function generateAIComment(data) {
             ' Acknowledge neutrally.' +
             ' Do NOT take sides or debate.';
     } else if (cat === 'hiring') {
-        toneGuide =
-            '\nTone: JOB/HIRING post.' +
-            ' Comment like an industry insider who' +
-            ' knows the tech landscape well.' +
-            ' Sound knowledgeable about the stack,' +
-            ' market, or domain mentioned.' +
-            ' Make the author curious about your' +
-            ' profile without expressing interest' +
-            ' in the role itself.' +
-            ' NEVER say "I\'m interested",' +
-            ' "I\'d love to apply",' +
-            ' "looking for opportunities",' +
-            ' "open to work", or anything that' +
-            ' signals you are job seeking.' +
-            ' Good examples: "solid stack, this' +
-            ' space is growing fast",' +
-            ' "interesting setup, good to see' +
-            ' what teams are building".' +
-            ' Keep it 1 sentence, under 80 chars.';
+        if (goalMode === 'active') {
+            toneGuide =
+                '\nTone: JOB/HIRING post (ACTIVE mode).' +
+                ' Sound professional and positive about' +
+                ' the team/stack/market.' +
+                ' NEVER use humor, irony, or sarcasm.' +
+                ' Keep it short, respectful, and safe.';
+        } else {
+            toneGuide =
+                '\nTone: JOB/HIRING post (PASSIVE mode).' +
+                ' Comment like an industry insider who' +
+                ' knows the tech landscape well.' +
+                ' Do NOT express interest in the role.' +
+                ' NEVER say "I\'m interested",' +
+                ' "I\'d love to apply",' +
+                ' "looking for opportunities",' +
+                ' or "open to work".' +
+                ' NEVER use humor, irony, or sarcasm.' +
+                ' Keep it 1 sentence, under 80 chars.';
+        }
     } else if (cat === 'technical') {
         toneGuide =
             '\nTone: TECHNICAL post.' +
@@ -662,6 +668,9 @@ async function generateAIComment(data) {
         '\n- Max 120 chars, 1-2 sentences' +
         '\n- Show you understood what the post' +
         ' is about' +
+        '\n- Existing comments are PRIMARY context.' +
+        ' Match their tone, style, and length first.' +
+        ' Post text is secondary context.' +
         '\n- Look at the other comments below for' +
         ' tone and style reference — write' +
         ' something similar in length and vibe' +
@@ -685,19 +694,23 @@ async function generateAIComment(data) {
         ' "Love this", "Thanks for sharing"' +
         '\n- NEVER use hashtags' +
         '\n- NEVER invite a reply or discussion' +
+        '\n- NEVER ask questions' +
         '\n- NEVER be ironic, sarcastic, offensive' +
         ', polemic, or dismissive' +
+        '\n- For hiring/job posts NEVER use humor,' +
+        ' sarcasm, or ambiguous phrasing' +
         '\n- NEVER create discussion or controversy' +
         '\n- Be SAFE: if unsure, output "SKIP"' +
         '\n- Don\'t repeat what others said' +
-        '\n\n' + authorCtx +
-        ':\n' + (postText || '').substring(0, 800) +
+        '\n\n' + authorCtx + ':' +
+        commentsCtx +
+        '\n\nPost text:\n' +
+        (postText || '').substring(0, 800) +
         reactionCtx +
         engagementCtx +
         imageCtx +
         threadStyleCtx +
         threadTopicCtx +
-        commentsCtx +
         '\n\nYour comment (raw text, no quotes,' +
         ' or "SKIP" if no good comment):';
 
@@ -1210,6 +1223,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     limit: Math.min(
                         parseInt(state.limit) || 50, 10
                     ),
+                    goalMode: state.goalMode || 'passive',
+                    myCompany: state.myCompany || '',
                     sendNote: state.sendNote !== false,
                     noteTemplate:
                         state.activeTemplate === 'custom'
@@ -1272,6 +1287,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     limit,
                     react,
                     comment,
+                    goalMode: state.goalMode || 'passive',
                     commentTemplates,
                     skipKeywords
                 });
@@ -1458,6 +1474,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
             launchAutomation({
                 query,
                 limit: parseInt(state.limit) || 50,
+                goalMode: state.goalMode || 'passive',
+                myCompany: state.myCompany || '',
                 sendNote: state.sendNote !== false,
                 noteTemplate: state.activeTemplate === 'custom'
                     ? state.customNote

@@ -936,6 +936,25 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         const profile = targetProfile.name
                             ? targetProfile
                             : extractProfileInfo(button);
+                        if (typeof isSameCompany ===
+                            'function' &&
+                            isSameCompany(
+                                profile.headline,
+                                config?.myCompany
+                            )) {
+                            totalSkipped++;
+                            connectionLog.push({
+                                ...profile,
+                                status: 'skipped-same-company',
+                                company: config.myCompany,
+                                time: new Date().toISOString()
+                            });
+                            reportProgress(
+                                totalSent, limit,
+                                currentPage, totalSkipped
+                            );
+                            continue;
+                        }
                         if (profile.profileUrl &&
                             sentUrls.has(profile.profileUrl)) {
                             totalSkipped++;

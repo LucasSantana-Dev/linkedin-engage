@@ -163,6 +163,13 @@ describe('classifyPost', () => {
         )).toBe('hiring');
     });
 
+    it('forces hiring when hiring signals collide with humor', () => {
+        expect(classifyPost(
+            'We are hiring and recruiting now 😂 lol ' +
+            'for this open role in our team'
+        )).toBe('hiring');
+    });
+
     it('classifies humor/meme posts', () => {
         expect(classifyPost(
             'AI didn\'t remove the chaos from ' +

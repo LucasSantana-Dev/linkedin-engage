@@ -18,7 +18,8 @@ const {
     isFollowButtonText,
     isFollowingButtonText,
     isBrazilianProfile,
-    isBrazilGeoTarget
+    isBrazilGeoTarget,
+    isSameCompany
 } = require('../extension/lib/invite-utils');
 
 describe('isButtonClickable', () => {
@@ -494,5 +495,42 @@ describe('isBrazilGeoTarget', () => {
     it('returns false for empty input', () => {
         expect(isBrazilGeoTarget('')).toBe(false);
         expect(isBrazilGeoTarget(null)).toBe(false);
+    });
+});
+
+describe('isSameCompany', () => {
+    it('matches company in headline', () => {
+        expect(isSameCompany(
+            'Senior Recruiter at Acme Corp',
+            'Acme Corp'
+        )).toBe(true);
+    });
+
+    it('is case insensitive', () => {
+        expect(isSameCompany(
+            'Engineering Manager @ AcMe',
+            'acme'
+        )).toBe(true);
+    });
+
+    it('matches partial company name', () => {
+        expect(isSameCompany(
+            'Product Manager at Acme Corporation',
+            'Acme'
+        )).toBe(true);
+    });
+
+    it('returns false when company is not in headline', () => {
+        expect(isSameCompany(
+            'Tech Recruiter at Beta Labs',
+            'Acme'
+        )).toBe(false);
+    });
+
+    it('returns false for empty inputs', () => {
+        expect(isSameCompany('', 'Acme')).toBe(false);
+        expect(isSameCompany('Recruiter', '')).toBe(false);
+        expect(isSameCompany(null, 'Acme')).toBe(false);
+        expect(isSameCompany('Recruiter', null)).toBe(false);
     });
 });

@@ -158,6 +158,13 @@ var CATEGORY_TEMPLATES = {
         'strong combo, {topic} is in high demand',
         'good to know what\'s out there in {topic}'
     ],
+    hiring_active: [
+        'interesting role setup around {topic}',
+        'good direction for teams building in {topic}',
+        'strong scope for this {topic} position',
+        'nice stack choice for this team',
+        'solid opportunity in this space'
+    ],
     achievement: [
         'congrats!',
         'congrats, good luck!',
@@ -248,6 +255,13 @@ var CATEGORY_TEMPLATES_PT = {
             'times estão construindo',
         'boa combinação, {topic} tá em alta',
         'bom saber o que rola no mercado de {topic}'
+    ],
+    hiring_active: [
+        'setup da vaga em {topic} tá bem interessante',
+        'boa direção para times construindo com {topic}',
+        'escopo forte para essa posição',
+        'stack bem escolhida para o time',
+        'boa oportunidade nessa área'
     ],
     achievement: [
         'parabéns!',
@@ -479,10 +493,17 @@ var COMPOSED_EN = {
             'about it this way',
     ],
     hiring: [
-        (c) => 'know someone who\'d be a fit, sharing',
-        (c) => 'great to see ' +
-            (c[0] || 'this') + ' roles opening up',
-        (c) => 'sharing for reach',
+        (c) => 'solid ' + (c[0] || 'tech') +
+            ' stack here',
+        (c) => 'interesting setup for this team',
+        (c) => 'good visibility for the ' +
+            (c[0] || 'market') + ' space',
+    ],
+    hiring_active: [
+        (c) => 'interesting role direction in ' +
+            (c[0] || 'this area'),
+        (c) => 'nice scope for this team',
+        (c) => 'strong stack choice for hiring',
     ],
     achievement: [
         (c) => 'congrats!',
@@ -583,10 +604,17 @@ var COMPOSED_PT = {
             'por esse lado',
     ],
     hiring: [
-        (c) => 'conheço gente que pode se encaixar',
-        (c) => 'bom ver vagas de ' +
-            (c[0] || 'tech') + ' abrindo',
-        (c) => 'compartilhando pra dar alcance',
+        (c) => 'stack sólida de ' +
+            (c[0] || 'tech') + ' nessa vaga',
+        (c) => 'setup interessante para esse time',
+        (c) => 'boa visibilidade para a área de ' +
+            (c[0] || 'tecnologia'),
+    ],
+    hiring_active: [
+        (c) => 'direção da vaga em ' +
+            (c[0] || 'tecnologia') + ' parece ótima',
+        (c) => 'escopo bem interessante para o time',
+        (c) => 'boa combinação de stack para contratar',
     ],
     achievement: [
         (c) => 'parabéns!',
