@@ -1499,10 +1499,40 @@ function buildQueryFromTags(state) {
     const tags = state.tags || {};
     const parts = [];
     const roles = tags.role || [];
-    if (roles.length === 1) {
-        parts.push(roles[0]);
-    } else if (roles.length > 1) {
-        parts.push(roles.join(' OR '));
+    const maxRoleTerms = 6;
+    let safeRoles = roles;
+    if (roles.length > maxRoleTerms) {
+        const priority = [
+            'recruiter',
+            '"talent acquisition"',
+            '"hiring manager"',
+            '"head of talent"',
+            'developer',
+            '"software engineer"',
+            '"product manager"',
+            'qa',
+            '"tech lead"',
+            '"engineering manager"',
+            'sourcer',
+            '"staffing agency"'
+        ];
+        const normalized = roles.map(r =>
+            String(r).toLowerCase()
+        );
+        safeRoles = priority
+            .filter(p => normalized.includes(p))
+            .map(p => roles[normalized.indexOf(p)]);
+        for (const role of roles) {
+            if (!safeRoles.includes(role)) {
+                safeRoles.push(role);
+            }
+        }
+        safeRoles = safeRoles.slice(0, maxRoleTerms);
+    }
+    if (safeRoles.length === 1) {
+        parts.push(safeRoles[0]);
+    } else if (safeRoles.length > 1) {
+        parts.push(safeRoles.join(' OR '));
     }
     for (const g of ['industry', 'market', 'level']) {
         for (const term of (tags[g] || [])) {

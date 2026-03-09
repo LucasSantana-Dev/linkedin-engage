@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **LinkedIn no-results on oversized role OR queries**: Connect query builder now caps role OR terms to a LinkedIn-safe set (top 6) to avoid People search collapsing to zero results when too many role tags are selected simultaneously.
+
 ## [1.19.0] - 2026-03-09
 
 ### Added

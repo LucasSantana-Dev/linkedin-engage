@@ -9,6 +9,7 @@ const TEMPLATES = {
 
 const MAX_CHARS = 300;
 const WEEKLY_LIMIT = 150;
+const MAX_ROLE_TERMS = 6;
 let useCustomQuery = false;
 
 const DEFAULT_LATAM_COMPANIES = [
@@ -84,6 +85,40 @@ function getSelectedTags(group) {
     return Array.from(tags).map(t => t.dataset.value);
 }
 
+function getSafeRoleTerms(roles) {
+    if (!Array.isArray(roles) || roles.length <= MAX_ROLE_TERMS) {
+        return Array.isArray(roles) ? roles : [];
+    }
+    var priority = [
+        'recruiter',
+        '"talent acquisition"',
+        '"hiring manager"',
+        '"head of talent"',
+        'developer',
+        '"software engineer"',
+        '"product manager"',
+        'qa',
+        '"tech lead"',
+        '"engineering manager"',
+        'sourcer',
+        '"staffing agency"'
+    ];
+    var normalized = roles.map(function(r) {
+        return String(r).toLowerCase();
+    });
+    var ordered = priority
+        .filter(function(p) {
+            return normalized.includes(p);
+        })
+        .map(function(p) {
+            return roles[normalized.indexOf(p)];
+        });
+    for (const role of roles) {
+        if (!ordered.includes(role)) ordered.push(role);
+    }
+    return ordered.slice(0, MAX_ROLE_TERMS);
+}
+
 function buildQuery() {
     if (useCustomQuery) {
         return document.getElementById('customQueryInput').value.trim();
@@ -96,10 +131,11 @@ function buildQuery() {
 
     const parts = [];
 
-    if (roles.length === 1) {
-        parts.push(roles[0]);
-    } else if (roles.length > 1) {
-        parts.push(roles.join(' OR '));
+    const safeRoles = getSafeRoleTerms(roles);
+    if (safeRoles.length === 1) {
+        parts.push(safeRoles[0]);
+    } else if (safeRoles.length > 1) {
+        parts.push(safeRoles.join(' OR '));
     }
 
     for (const term of industry) parts.push(term);
