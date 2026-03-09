@@ -668,6 +668,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             "rede profissional. Vamos manter contato!";
         const noteTemplate = config?.noteTemplate
             || defaultTemplate;
+        const brazilGeoTarget =
+            typeof isBrazilGeoTarget === 'function' &&
+            isBrazilGeoTarget(config?.geoUrn);
         let totalSent = 0;
         let totalSkipped = 0;
         let currentPage = 1;
@@ -1053,9 +1056,10 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             const personName =
                                 extractPersonName(button);
                             const usePortugueseNote =
-                                typeof isBrazilianProfile ===
+                                brazilGeoTarget ||
+                                (typeof isBrazilianProfile ===
                                 'function' &&
-                                isBrazilianProfile(profile);
+                                isBrazilianProfile(profile));
                             const templateIsPt =
                                 /ol[áa]|conectar|rede|contato|perfil|profissional/i
                                     .test(noteTemplate);

@@ -47,6 +47,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Personalized notes** — extracts first name from invite modal and injects it via `{name}` template variable
 - **Brazilian connect notes in PT-BR** — when profile cues indicate a Brazilian contact, Connect automatically switches the default invite note to Portuguese
 - **PT-BR detection kept in More-menu connect** — when Connect is triggered from the card’s `More` menu, profile context is preserved so Brazilian contacts still receive Portuguese notes
+- **Brazil search language lock** — when Recruiter Location/search geo targets Brazil, Connect enforces PT-BR invitation notes even for English-profile cards
 
 ### Standalone Connector
 - **Playwright-based** — runs a full Chromium browser with persistent login session

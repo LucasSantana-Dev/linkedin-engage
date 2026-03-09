@@ -135,6 +135,7 @@ function launchAutomation(config) {
                                 sendNote: config.sendNote,
                                 noteTemplate:
                                     config.noteTemplate,
+                                geoUrn: config.geoUrn,
                                 sentUrls:
                                     config.sentUrls || [],
                                 engagementOnly:

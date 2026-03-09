@@ -149,6 +149,16 @@ function isBrazilianProfile(profile) {
     return ptHits >= 2;
 }
 
+function isBrazilGeoTarget(geoUrn) {
+    if (!geoUrn) return false;
+    let decoded = String(geoUrn);
+    try {
+        decoded = decodeURIComponent(decoded);
+    } catch (e) {}
+    return decoded.includes('106057199') ||
+        /"brazil"|"brasil"/i.test(decoded);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         isButtonClickable,
@@ -164,6 +174,7 @@ if (typeof module !== 'undefined' && module.exports) {
         extractNameFromAria,
         isFollowButtonText,
         isFollowingButtonText,
-        isBrazilianProfile
+        isBrazilianProfile,
+        isBrazilGeoTarget
     };
 }

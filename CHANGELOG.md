@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Brazil-targeted search now forces PT-BR notes**: Connect automation now receives `geoUrn` in content execution and switches invitation note language to Portuguese whenever the search is scoped to Brazil (geo id `106057199`), even if profile cards expose English headlines or missing location fields
+
 ## [1.17.1] - 2026-03-09
 
 ### Fixed

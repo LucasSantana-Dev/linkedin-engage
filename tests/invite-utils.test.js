@@ -15,7 +15,8 @@ const {
     extractNameFromAria,
     isFollowButtonText,
     isFollowingButtonText,
-    isBrazilianProfile
+    isBrazilianProfile,
+    isBrazilGeoTarget
 } = require('../extension/lib/invite-utils');
 
 describe('isButtonClickable', () => {
@@ -410,5 +411,28 @@ describe('isFollowingButtonText', () => {
 
     it('rejects empty string', () => {
         expect(isFollowingButtonText('')).toBe(false);
+    });
+});
+
+describe('isBrazilGeoTarget', () => {
+    it('detects encoded Brazil geo URN id', () => {
+        expect(isBrazilGeoTarget('%5B%22106057199%22%5D'))
+            .toBe(true);
+    });
+
+    it('detects raw Brazil geo URN id', () => {
+        expect(isBrazilGeoTarget('["106057199"]'))
+            .toBe(true);
+    });
+
+    it('returns false for non-Brazil geo URN ids', () => {
+        expect(isBrazilGeoTarget(
+            '%5B%22103644278%22%2C%22101121807%22%5D'
+        )).toBe(false);
+    });
+
+    it('returns false for empty input', () => {
+        expect(isBrazilGeoTarget('')).toBe(false);
+        expect(isBrazilGeoTarget(null)).toBe(false);
     });
 });
