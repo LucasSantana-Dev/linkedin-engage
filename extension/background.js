@@ -16,6 +16,7 @@ importScripts('lib/rate-limiter.js');
 importScripts('lib/nurture.js');
 importScripts('lib/analytics.js');
 importScripts('lib/smart-schedule.js');
+importScripts('lib/pattern-memory.js');
 
 async function checkRateLimit(mode) {
     return new Promise(resolve => {
@@ -480,6 +481,247 @@ function formatEngagementContext(reactionSummary) {
             (reactionSummary.intensity || 'low');
 }
 
+var PATTERN_MIN_CONFIDENCE = 60;
+
+function localStorageGet(keys) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(keys, (data) => {
+            resolve(data || {});
+        });
+    });
+}
+
+function localStorageSet(payload) {
+    return new Promise((resolve) => {
+        chrome.storage.local.set(payload || {}, () => {
+            resolve();
+        });
+    });
+}
+
+async function loadPatternMemoryState() {
+    var data = await localStorageGet([
+        COMMENT_PATTERN_MEMORY_KEY
+    ]);
+    return data[COMMENT_PATTERN_MEMORY_KEY] || {
+        version: COMMENT_PATTERN_MEMORY_VERSION,
+        buckets: {}
+    };
+}
+
+async function updatePatternMemory(lang, category, patternProfile) {
+    if (!patternProfile || !patternProfile.analyzedCount) {
+        return null;
+    }
+    var memory = await loadPatternMemoryState();
+    var merged = mergePatternBucket(
+        memory, lang, category, patternProfile
+    );
+    await localStorageSet({
+        [COMMENT_PATTERN_MEMORY_KEY]: merged
+    });
+    return loadPatternBucket(merged, lang, category);
+}
+
+function formatPatternProfileContext(patternProfile, guidance) {
+    if (!patternProfile) return '';
+    var openers = Array.isArray(guidance?.preferredOpeners)
+        ? guidance.preferredOpeners.slice(0, 3) : [];
+    var ngrams = Array.isArray(guidance?.topNgrams)
+        ? guidance.topNgrams.slice(0, 8) : [];
+    var openerCtx = openers.length
+        ? '\n- preferred openers: ' + openers.join(' | ')
+        : '';
+    var ngramCtx = ngrams.length
+        ? '\n- thread phrase atoms: ' + ngrams.join(', ')
+        : '';
+    return '\n\nTHREAD PATTERN PROFILE (primary):' +
+        '\n- confidence: ' +
+            Number(patternProfile.patternConfidence || 0) +
+        '\n- style family: ' +
+            (guidance?.styleFamily || 'neutral-ack') +
+        '\n- length band: ' +
+            (guidance?.lengthBand || 'short') +
+        '\n- tone intensity: ' +
+            (guidance?.toneIntensity || 'low') +
+        '\n- punctuation rhythm: ' +
+            (guidance?.punctuationRhythm || 'balanced') +
+        openerCtx +
+        ngramCtx;
+}
+
+function formatLearnedPatternContext(bucket, guidance) {
+    if (!bucket) return '';
+    var openers = Array.isArray(guidance?.preferredOpeners)
+        ? guidance.preferredOpeners.slice(0, 2) : [];
+    var ngrams = Array.isArray(guidance?.topNgrams)
+        ? guidance.topNgrams.slice(0, 6) : [];
+    var openerCtx = openers.length
+        ? '\n- learned openers: ' + openers.join(' | ')
+        : '';
+    var ngramCtx = ngrams.length
+        ? '\n- learned n-grams: ' + ngrams.join(', ')
+        : '';
+    return '\n\nLEARNED MEMORY GUIDANCE (secondary):' +
+        '\n- bucket confidence: ' +
+            Number(bucket.confidenceEma || 0) +
+        '\n- preferred style family: ' +
+            (guidance?.styleFamily || 'neutral-ack') +
+        '\n- preferred length: ' +
+            (guidance?.lengthBand || 'short') +
+        openerCtx +
+        ngramCtx;
+}
+
+function getLengthBandForComment(length) {
+    if (length < 55) return 'short';
+    if (length < 120) return 'medium';
+    return 'long';
+}
+
+function getLengthBandIndex(band) {
+    if (band === 'short') return 0;
+    if (band === 'medium') return 1;
+    if (band === 'long') return 2;
+    return 1;
+}
+
+function getCommentToneIntensity(comment) {
+    var text = comment || '';
+    var exclam = (text.match(/!/g) || []).length;
+    var emojiCount = (text.match(/[\u{1F300}-\u{1FAFF}]/gu) || [])
+        .length;
+    var upperWords = (text.match(/\b[A-Z]{3,}\b/g) || []).length;
+    var signal = exclam + emojiCount + upperWords;
+    if (signal >= 3) return 'high';
+    if (signal === 0) return 'low';
+    return 'balanced';
+}
+
+function normalizeCompareText(text) {
+    return (text || '')
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function collectPatternTokens(guidance, bucket) {
+    var set = new Set();
+    var sources = []
+        .concat(guidance?.preferredOpeners || [])
+        .concat(guidance?.topNgrams || []);
+    for (var phrase of sources) {
+        for (var token of tokenizeGroundingText(phrase)) {
+            set.add(token);
+        }
+    }
+    var bucketNgrams = Object.keys(bucket?.ngrams || {})
+        .slice(0, 16);
+    for (var bg of bucketNgrams) {
+        for (var bt of tokenizeGroundingText(bg)) {
+            set.add(bt);
+        }
+    }
+    return set;
+}
+
+function validateCommentPatternFit(
+    comment, patternProfile, bucket, safetyCtx
+) {
+    var text = (comment || '').trim();
+    if (!text) {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    var profileConfidence = Number(
+        patternProfile?.patternConfidence || 0
+    );
+    if (profileConfidence > 0 &&
+        profileConfidence < PATTERN_MIN_CONFIDENCE) {
+        return {
+            ok: false,
+            reason: 'skip-pattern-low-signal'
+        };
+    }
+    var guidance = buildPatternGuidance(
+        patternProfile, bucket
+    );
+    var expectedLength = guidance.lengthBand;
+    var actualLength = getLengthBandForComment(text.length);
+    var distance = Math.abs(
+        getLengthBandIndex(actualLength) -
+        getLengthBandIndex(expectedLength)
+    );
+    if (distance > 1) {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    var actualTone = getCommentToneIntensity(text);
+    if (guidance.toneIntensity === 'low' &&
+        actualTone === 'high') {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    if (guidance.toneIntensity === 'high' &&
+        actualTone === 'low') {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    if (!guidance.allowQuestion && text.includes('?')) {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    var emojiCount = (text.match(/[\u{1F300}-\u{1FAFF}]/gu) || [])
+        .length;
+    if (emojiCount > Number(guidance.maxEmoji || 0)) {
+        return {
+            ok: false,
+            reason: 'skip-pattern-fit'
+        };
+    }
+    var normalized = normalizeCompareText(text);
+    var existingComments = Array.isArray(
+        safetyCtx?.existingComments
+    ) ? safetyCtx.existingComments : [];
+    for (var existing of existingComments) {
+        var prior = normalizeCompareText(existing?.text || '');
+        if (prior && prior.length >= 10 &&
+            prior === normalized) {
+            return {
+                ok: false,
+                reason: 'skip-pattern-fit'
+            };
+        }
+    }
+    var lexicon = collectPatternTokens(guidance, bucket);
+    var commentTokens = tokenizeGroundingText(text);
+    if (lexicon.size >= 6 && commentTokens.length > 0) {
+        var overlap = 0;
+        for (var token of commentTokens) {
+            if (lexicon.has(token)) overlap++;
+        }
+        var ratio = overlap / commentTokens.length;
+        if (ratio < 0.06) {
+            return {
+                ok: false,
+                reason: 'skip-pattern-fit'
+            };
+        }
+    }
+    return { ok: true, reason: null, guidance };
+}
+
 function buildHumanVoiceRules(commentThreadSummary, category) {
     if (!commentThreadSummary ||
         !commentThreadSummary.count) {
@@ -707,7 +949,7 @@ async function generateAIComment(data) {
         authorTitle, lang, category, reactions,
         reactionSummary, commentThreadSummary,
         imageSignals, apiKey,
-        goalMode } = data;
+        goalMode, patternProfile } = data;
     if (!apiKey) return { comment: null, reason: null };
 
     var reactionCtx = formatReactionContext(reactions);
@@ -721,10 +963,31 @@ async function generateAIComment(data) {
     var engagementCtx = formatEngagementContext(
         reactionSummary
     );
+    var memoryLang = lang ||
+        commentThreadSummary?.dominantLanguage || 'en';
+    var memoryCategory = category || 'generic';
+    var bucket = await updatePatternMemory(
+        memoryLang, memoryCategory, patternProfile
+    );
+    var patternGuidance = buildPatternGuidance(
+        patternProfile, bucket
+    );
+    if (patternGuidance.lowSignal) {
+        return {
+            comment: null,
+            reason: 'skip-pattern-low-signal'
+        };
+    }
+    var patternProfileCtx = formatPatternProfileContext(
+        patternProfile, patternGuidance
+    );
+    var learnedPatternCtx = formatLearnedPatternContext(
+        bucket, patternGuidance
+    );
 
     const commentsCtx = existingComments?.length
         ? '\n\nOther comments on this post:\n' +
-            existingComments.slice(0, 5).map(
+            existingComments.slice(0, 8).map(
                 c => '- ' + (c.author || '') + ': ' +
                     c.text
             ).join('\n')
@@ -820,18 +1083,20 @@ async function generateAIComment(data) {
     );
 
     var commentPriorityCtx =
-        '\nPRIMARY CONTEXT (comments/thread):' +
+        '\nPRIMARY CONTEXT (thread comments first):' +
         commentsCtx +
         threadStyleCtx +
-        threadTopicCtx;
+        threadTopicCtx +
+        patternProfileCtx;
+    var learnedPriorityCtx = learnedPatternCtx;
     var reactionPriorityCtx =
-        '\n\nSECONDARY CONTEXT (engagement):' +
+        '\n\nTERTIARY CONTEXT (engagement):' +
         engagementCtx +
         reactionCtx;
     var authorPriorityCtx =
-        '\n\nAUTHOR CONTEXT:\n' + authorCtx;
+        '\n\nTERTIARY CONTEXT (author role):\n' + authorCtx;
     var postPriorityCtx =
-        '\n\nPOST TEXT (tertiary):\n' +
+        '\n\nLAST RESORT CONTEXT (post text/image):\n' +
         (postText || '').substring(0, 800) +
         imageCtx;
 
@@ -855,6 +1120,10 @@ async function generateAIComment(data) {
         '\n- Mirror the dominant thread style' +
         ' (tone, energy, and length) but use' +
         ' original wording' +
+        '\n- Clone style, not text: do NOT copy exact' +
+        ' phrases from existing comments' +
+        '\n- Match sentence shape and tone intensity' +
+        ' from the pattern profile' +
         '\n- Use the thread keywords/phrases as the' +
         ' main base for your comment when present' +
         '\n- Do not introduce topics that are not in' +
@@ -888,6 +1157,7 @@ async function generateAIComment(data) {
         '\n- Be SAFE: if unsure, output "SKIP"' +
         '\n- Don\'t repeat what others said' +
         commentPriorityCtx +
+        learnedPriorityCtx +
         reactionPriorityCtx +
         authorPriorityCtx +
         postPriorityCtx +
@@ -991,6 +1261,18 @@ async function generateAIComment(data) {
                 reason: 'skip-safety-guard'
             };
         }
+        var patternFit = validateCommentPatternFit(
+            comment,
+            patternProfile,
+            bucket,
+            { existingComments }
+        );
+        if (!patternFit.ok) {
+            return {
+                comment: null,
+                reason: patternFit.reason || 'skip-pattern-fit'
+            };
+        }
         var confidence = computeCommentConfidence({
             category: cat,
             reactionSummary,
@@ -1006,21 +1288,6 @@ async function generateAIComment(data) {
             return {
                 comment: null,
                 reason: 'skip-low-confidence'
-            };
-        }
-        if (!isContextGroundedComment(
-            comment,
-            postText,
-            existingComments,
-            commentThreadSummary
-        )) {
-            console.log(
-                '[LinkedIn Bot] AI comment not grounded' +
-                ' in thread context'
-            );
-            return {
-                comment: null,
-                reason: 'skip-context-mismatch'
             };
         }
         return { comment, reason: null };

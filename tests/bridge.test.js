@@ -53,6 +53,10 @@ describe('bridge AI relay', () => {
                 reactionSummary: { total: 12, dominant: 'LIKE' },
                 commentThreadSummary: { count: 2 },
                 imageSignals: { hasImage: false },
+                patternProfile: {
+                    patternConfidence: 82,
+                    styleFamily: 'analytical'
+                },
                 apiKey: 'k',
                 goalMode: 'active'
             }
@@ -61,7 +65,10 @@ describe('bridge AI relay', () => {
         expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
             expect.objectContaining({
                 action: 'generateAIComment',
-                goalMode: 'active'
+                goalMode: 'active',
+                patternProfile: expect.objectContaining({
+                    patternConfidence: 82
+                })
             }),
             expect.any(Function)
         );

@@ -59,7 +59,10 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Connect ranking runtime stability** — ranked-target logging now uses derived counters, preventing runtime `ReferenceError` interruptions during automation
 - **Skip reason insights** — dashboard shows top skip reasons with counts (`open-to-work`, `same-company`, `duplicate`, etc.) for faster filter tuning
 - **Context-first safe commenting v2** — AI comments now prioritize thread context before post text, enforce non-polemic/non-ironic output, and skip on low-confidence context
-- **Comment skip telemetry** — feed comment decisions now log `skip-low-confidence`, `skip-safety-guard`, and `skip-context-mismatch` for faster prompt/filter calibration
+- **Hard comment pattern learning (v3)** — deterministic thread pattern analysis (top 15 comments with recency weighting) extracts opener/length/rhythm/intent/n-gram signals and constrains generation to match thread naturality
+- **Persistent local pattern memory** — stores learned style buckets per `lang|category` in `chrome.storage.local` (`commentPatternMemoryV1`) with bounded EMA/decay maps for openers, n-grams, and intent
+- **Pattern-fit gating + low-signal skip** — comments are skipped when thread pattern signal is weak or generated text breaks dominant thread style constraints
+- **Comment skip telemetry** — feed comment decisions now log `skip-low-confidence`, `skip-safety-guard`, `skip-context-mismatch`, `skip-pattern-low-signal`, and `skip-pattern-fit` for faster prompt/filter calibration
 
 ### Standalone Connector
 - **Playwright-based** — runs a full Chromium browser with persistent login session
@@ -145,6 +148,7 @@ extension/
   lib/
     invite-utils.js  <- Shared invite/connect utility functions
     feed-utils.js    <- Shared feed engagement utility functions
+    pattern-memory.js <- Shared pattern-memory bucket merge/guidance helpers
     company-utils.js <- Shared company follow utility functions
   popup/            <- Settings UI (search builder, templates, filters, schedule)
   options.html      <- Dashboard page (stats, connection history)

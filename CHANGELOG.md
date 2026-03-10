@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-03-10
+
+### Added
+- **Hard comment pattern learning layer (Context-First v3)**: Added deterministic thread pattern extraction (`analyzeCommentPatterns`) using up to 15 comments with recency weighting, extracting opener families, length bands, punctuation rhythm, intent/sentiment mix, frequent n-grams, and risk markers.
+- **Persistent local pattern memory**: New `commentPatternMemoryV1` storage with `lang|category` buckets (`pt|hiring`, `en|technical`, etc.), bounded maps, and decay/EMA merge strategy to keep learned style signals fresh without unbounded growth.
+- **Pattern memory helper module**: Added `extension/lib/pattern-memory.js` with `loadPatternBucket`, `mergePatternBucket`, and `buildPatternGuidance` helpers.
+- **Pattern-fit and low-signal statuses**: Added feed skip reason statuses `skip-pattern-low-signal` and `skip-pattern-fit`, including pattern snapshot fields (`confidence`, `style`, `length band`) in skip logs.
+
+### Changed
+- **AI prompt contract priority update**: Prompt now prioritizes existing comments + thread pattern profile first, learned bucket guidance second, then reactions/author context, and finally post text/image.
+- **Style-cloning constraints**: AI is instructed to mirror thread sentence shape, length band, and tone intensity without copying exact phrases or using generic AI filler.
+- **Fallback comment pipeline under pattern discipline**: `buildCommentFromPost(...)` now accepts optional `patternProfile` and applies pattern-fit validation in addition to existing safety checks.
+- **Bridge relay contract expanded**: `LINKEDIN_BOT_AI_COMMENT` now forwards `patternProfile` payload to background unchanged.
+- **Analytics skip distribution**: `computeStats` now tracks `bySkipReason` and treats both `skipped-*` and `skip-*` statuses as skipped items for engagement-rate calculations.
+
+### Fixed
+- **Pattern analysis runtime error**: Added missing grounding tokenizer in `feed-utils` to resolve `ReferenceError` during pattern extraction/fit validation.
+
 ## [1.20.1] - 2026-03-10
 
 ### Added

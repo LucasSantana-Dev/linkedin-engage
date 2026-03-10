@@ -20,6 +20,7 @@ function computeStats(log) {
             byCategory: {},
             byReaction: {},
             byTemplate: {},
+            bySkipReason: {},
             byHour: {},
             byDayOfWeek: {},
             commentRate: 0,
@@ -36,6 +37,7 @@ function computeStats(log) {
     const byCategory = {};
     const byReaction = {};
     const byTemplate = {};
+    const bySkipReason = {};
     const byHour = {};
     const byDayOfWeek = {};
     const dayNames = [
@@ -64,6 +66,12 @@ function computeStats(log) {
             byTemplate[e.templateId] =
                 (byTemplate[e.templateId] || 0) + 1;
         }
+        if (e.status &&
+            (e.status.startsWith('skipped') ||
+                e.status.startsWith('skip-'))) {
+            bySkipReason[e.status] =
+                (bySkipReason[e.status] || 0) + 1;
+        }
 
         if (e.timestamp) {
             const d = new Date(e.timestamp);
@@ -76,7 +84,8 @@ function computeStats(log) {
         }
 
         if (e.commented) commentCount++;
-        if (!e.status?.startsWith('skipped')) {
+        if (!e.status?.startsWith('skipped') &&
+            !e.status?.startsWith('skip-')) {
             engagedCount++;
         }
     }
@@ -96,6 +105,7 @@ function computeStats(log) {
         byCategory,
         byReaction,
         byTemplate,
+        bySkipReason,
         byHour,
         byDayOfWeek,
         commentRate: engagedCount > 0

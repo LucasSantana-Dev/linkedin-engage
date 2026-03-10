@@ -148,6 +148,7 @@ window.addEventListener('message', (event) => {
             commentThreadSummary:
                 event.data.commentThreadSummary,
             imageSignals: event.data.imageSignals,
+            patternProfile: event.data.patternProfile,
             apiKey: event.data.apiKey,
             goalMode: event.data.goalMode
         }, (response) => {

@@ -1299,6 +1299,34 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 'function'
                                 ? getPostImageSignals(post)
                                 : null;
+                        const patternProfile =
+                            typeof analyzeCommentPatterns ===
+                                'function'
+                                ? analyzeCommentPatterns(
+                                    existing,
+                                    {
+                                        maxComments: 15,
+                                        category
+                                    }
+                                )
+                                : null;
+                        const patternSnapshot =
+                            patternProfile
+                                ? {
+                                    confidence: Number(
+                                        patternProfile
+                                            .patternConfidence || 0
+                                    ),
+                                    styleFamily:
+                                        patternProfile
+                                            .styleFamily ||
+                                        'neutral-ack',
+                                    lengthBand:
+                                        patternProfile
+                                            .lengthBand ||
+                                        'short'
+                                }
+                                : null;
 
                         if (urn && commentedPostUrns
                             .has(urn)) {
@@ -1348,6 +1376,13 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             );
                             skipComment = true;
                         }
+                        let commentSkipReason = null;
+                        if (!skipComment && patternProfile &&
+                            patternProfile.lowSignal) {
+                            skipComment = true;
+                            commentSkipReason =
+                                'skip-pattern-low-signal';
+                        }
                         if (existing.length > 0) {
                             var ptComments = existing
                                 .filter(function(c) {
@@ -1383,7 +1418,6 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         }
 
             let comment = null;
-            let commentSkipReason = null;
             if (skipComment) {
                 comment = null;
             } else if (aiApiKey) {
@@ -1403,6 +1437,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                     reactionSummary,
                         commentThreadSummary,
                         imageSignals,
+                        patternProfile,
                         apiKey: aiApiKey,
                         goalMode
                     });
@@ -1425,7 +1460,10 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                 }
             }
 
-                if (!comment) {
+                var canFallback = !skipComment &&
+                    commentSkipReason !==
+                        'skip-pattern-low-signal';
+                if (!comment && canFallback) {
                     comment =
                         buildCommentFromPost(
                         postText,
@@ -1441,12 +1479,15 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             lang,
                             reactionSummary,
                             commentThreadSummary,
-                            imageSignals
-                        }
+                            imageSignals,
+                            existingComments: existing
+                        },
+                        patternProfile
                     );
                     if (!comment && !commentSkipReason) {
-                        commentSkipReason =
-                            'skip-safety-guard';
+                        commentSkipReason = patternProfile
+                            ? 'skip-pattern-fit'
+                            : 'skip-safety-guard';
                     }
                 }
             if (comment &&
@@ -1476,8 +1517,33 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             postText:
                                 postText.substring(0, 100),
                             status: commentSkipReason,
+                            patternConfidence:
+                                patternSnapshot?.confidence,
+                            patternStyle:
+                                patternSnapshot?.styleFamily,
+                            patternLengthBand:
+                                patternSnapshot?.lengthBand,
                             time: new Date().toISOString()
                         });
+                        window.postMessage({
+                            type: 'LINKEDIN_BOT_ANALYTICS',
+                            entry: {
+                                mode: 'feed',
+                                status: commentSkipReason,
+                                skipReason: commentSkipReason,
+                                category,
+                                lang,
+                                patternConfidence:
+                                    patternSnapshot
+                                        ?.confidence || null,
+                                patternStyle:
+                                    patternSnapshot
+                                        ?.styleFamily || null,
+                                patternLengthBand:
+                                    patternSnapshot
+                                        ?.lengthBand || null
+                            }
+                        }, '*');
                     }
                     if (comment) {
                             await delay(

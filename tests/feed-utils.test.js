@@ -16,8 +16,10 @@ const {
     getExistingComments,
     classifyCommentSentiment,
     summarizeCommentThread,
+    analyzeCommentPatterns,
     summarizeReactions,
     getPostImageSignals,
+    validateCommentPatternFit,
     validateGeneratedCommentSafety,
     SENTIMENT_PATTERNS,
     POST_CATEGORIES,
@@ -1299,5 +1301,136 @@ describe('buildCommentFromPost with reactions context', () => {
             /lol|haha|real one|too real|kkkk/.test(text)
         );
         expect(hasHumor).toBe(true);
+    });
+});
+
+describe('analyzeCommentPatterns', () => {
+    it('derives dominant style and intent from coherent threads', () => {
+        const thread = Array.from({ length: 15 }).map(
+            (_, i) => ({
+                text: i % 2 === 0
+                    ? 'solid point on latency, very practical'
+                    : 'strong take on latency and production focus',
+                sentiment: 'insight'
+            })
+        );
+        const profile = analyzeCommentPatterns(thread, {
+            maxComments: 15,
+            category: 'technical'
+        });
+        expect(profile.analyzedCount).toBe(15);
+        expect(profile.patternConfidence).toBeGreaterThan(60);
+        expect(profile.styleFamily).toBe('analytical');
+        expect(profile.lengthBand).toMatch(/short|medium/);
+        expect(profile.topNgrams.length).toBeGreaterThan(0);
+        expect(profile.lowSignal).toBe(false);
+    });
+
+    it('returns low confidence for sparse/noisy context', () => {
+        const profile = analyzeCommentPatterns([
+            { text: 'nice' }
+        ], {
+            maxComments: 15,
+            category: 'generic'
+        });
+        expect(profile.analyzedCount).toBe(1);
+        expect(profile.patternConfidence).toBeLessThan(60);
+        expect(profile.lowSignal).toBe(true);
+    });
+});
+
+describe('validateCommentPatternFit', () => {
+    const strongProfile = {
+        patternConfidence: 82,
+        lengthBand: 'short',
+        toneIntensity: 'low',
+        punctuationRhythm: 'balanced',
+        styleFamily: 'analytical',
+        openers: [
+            { text: 'solid point', weight: 1.2 }
+        ],
+        topNgrams: [
+            { text: 'latency production', weight: 1.5 },
+            { text: 'production focus', weight: 1.1 }
+        ],
+        recommended: {
+            lengthBand: 'short',
+            toneIntensity: 'low',
+            punctuationRhythm: 'balanced',
+            allowQuestion: false,
+            allowEmoji: false,
+            maxEmoji: 0
+        }
+    };
+
+    it('accepts in-style short neutral output', () => {
+        const result = validateCommentPatternFit(
+            'solid point on production latency',
+            strongProfile,
+            null,
+            { existingComments: [] }
+        );
+        expect(result.ok).toBe(true);
+    });
+
+    it('rejects low-signal profile', () => {
+        const result = validateCommentPatternFit(
+            'solid point',
+            { ...strongProfile, patternConfidence: 35 },
+            null,
+            {}
+        );
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('skip-pattern-low-signal');
+    });
+
+    it('rejects style mismatch and questions', () => {
+        const result = validateCommentPatternFit(
+            'THIS IS AMAZING!!! what do you think?',
+            strongProfile,
+            null,
+            {}
+        );
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('skip-pattern-fit');
+    });
+
+    it('rejects exact phrase copying from existing comments', () => {
+        const result = validateCommentPatternFit(
+            'solid point on latency, very practical',
+            strongProfile,
+            null,
+            {
+                existingComments: [{
+                    text: 'solid point on latency, very practical'
+                }]
+            }
+        );
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('skip-pattern-fit');
+    });
+});
+
+describe('buildCommentFromPost with pattern discipline', () => {
+    it('skips fallback when pattern signal is low', () => {
+        const result = buildCommentFromPost(
+            'Strong technical perspective on latency',
+            ['solid point on latency'],
+            [],
+            'passive',
+            { INTEREST: 5, _total: 40 },
+            { category: 'technical' },
+            {
+                patternConfidence: 40,
+                recommended: {
+                    lengthBand: 'short',
+                    toneIntensity: 'low',
+                    allowQuestion: false,
+                    allowEmoji: false,
+                    maxEmoji: 0
+                }
+            }
+        );
+        expect(result).toBeNull();
     });
 });

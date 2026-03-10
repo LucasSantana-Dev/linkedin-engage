@@ -185,6 +185,30 @@ describe('computeStats', () => {
         const s = computeStats(null);
         expect(s.total).toBe(0);
     });
+
+    test('tracks skip reasons including pattern skips', () => {
+        const s = computeStats([
+            {
+                mode: 'feed',
+                status: 'skip-pattern-low-signal',
+                timestamp: '2026-03-10T10:00:00Z'
+            },
+            {
+                mode: 'feed',
+                status: 'skip-pattern-fit',
+                timestamp: '2026-03-10T10:05:00Z'
+            },
+            {
+                mode: 'feed',
+                status: 'skipped-keyword',
+                timestamp: '2026-03-10T10:10:00Z'
+            }
+        ]);
+        expect(s.bySkipReason['skip-pattern-low-signal']).toBe(1);
+        expect(s.bySkipReason['skip-pattern-fit']).toBe(1);
+        expect(s.bySkipReason['skipped-keyword']).toBe(1);
+        expect(s.commentRate).toBe(0);
+    });
 });
 
 describe('computeAcceptanceByTemplate', () => {
