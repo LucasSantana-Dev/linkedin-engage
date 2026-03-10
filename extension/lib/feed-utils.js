@@ -339,11 +339,16 @@ function extractConcepts(postText) {
         .slice(0, 5);
 }
 
-function finalizeGeneratedComment(comment, safetyContext, patternProfile) {
+function finalizeGeneratedComment(
+    comment, safetyContext, patternProfile, generationOptions
+) {
     if (!validateGeneratedCommentSafety(comment, safetyContext)) {
         return null;
     }
-    if (!patternProfile) return comment;
+    if (!patternProfile ||
+        generationOptions?.allowLowSignalRecovery === true) {
+        return comment;
+    }
     var fit = validateCommentPatternFit(
         comment, patternProfile, null, safetyContext
     );
@@ -352,7 +357,8 @@ function finalizeGeneratedComment(comment, safetyContext, patternProfile) {
 
 function buildCommentFromPost(
     postText, userTemplates, existingComments,
-    goalMode, reactions, safetyContext, patternProfile
+    goalMode, reactions, safetyContext,
+    patternProfile, generationOptions
 ) {
     const category = classifyPost(postText, reactions);
     const lang = detectLanguage(postText);
@@ -390,7 +396,7 @@ function buildCommentFromPost(
             ...(safetyContext || {}),
             category,
             postText
-        }, patternProfile);
+        }, patternProfile, generationOptions);
     }
 
     var avoidCelebration = usedSentiments.has(
@@ -425,7 +431,7 @@ function buildCommentFromPost(
             ...(safetyContext || {}),
             category,
             postText
-        }, patternProfile);
+        }, patternProfile, generationOptions);
     }
 
     const topic = extractTopic(postText);
@@ -510,7 +516,7 @@ function buildCommentFromPost(
         ...(safetyContext || {}),
         category,
         postText
-    }, patternProfile);
+    }, patternProfile, generationOptions);
 }
 
 function isReactablePost(postEl) {
@@ -1752,33 +1758,188 @@ function getPostImageSignals(postEl) {
     };
 }
 
-function getExistingComments(postEl) {
-    if (!postEl || !postEl.querySelector) return [];
-    var commentList = postEl.querySelector(
-        '[data-testid*="commentList"]'
-    );
-    if (!commentList) {
-        var parent = postEl.parentElement;
-        for (var i = 0; i < 3 && parent; i++) {
-            commentList = parent.querySelector(
-                '[data-testid*="commentList"]'
-            );
-            if (commentList) break;
-            parent = parent.parentElement;
+function parseCompactCountToken(token, suffix) {
+    var raw = String(token || '').trim();
+    if (!raw) return 0;
+    var unit = String(suffix || '')
+        .toLowerCase()
+        .replace(/\s+/g, '');
+    if (unit === 'k' || unit === 'm') {
+        var scaled = parseFloat(raw.replace(',', '.'));
+        if (!Number.isFinite(scaled)) return 0;
+        return Math.round(scaled * (unit === 'm' ? 1000000 : 1000));
+    }
+    if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
+        return parseInt(raw.replace(/[.,]/g, ''), 10) || 0;
+    }
+    if (/^\d+,\d+$/.test(raw) || /^\d+\.\d+$/.test(raw)) {
+        var value = parseFloat(raw.replace(',', '.'));
+        if (!Number.isFinite(value)) return 0;
+        return Math.round(value);
+    }
+    return parseInt(raw.replace(/[^\d]/g, ''), 10) || 0;
+}
+
+function extractCommentCountFromText(text) {
+    var input = (text || '').replace(/\s+/g, ' ').trim();
+    if (!input) return 0;
+    var max = 0;
+    var numberRe = /(\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d+)?)(\s*[km])?\+?\s*(?:comments?|coment[aá]rios?|comentarios)\b/gi;
+    var keywordRe = /\b(?:comments?|coment[aá]rios?|comentarios)\b\s*[:\-]?\s*(\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d+)?)(\s*[km])?/gi;
+    var match;
+    while ((match = numberRe.exec(input)) !== null) {
+        var count = parseCompactCountToken(match[1], match[2]);
+        if (count > max) max = count;
+    }
+    while ((match = keywordRe.exec(input)) !== null) {
+        var swapped = parseCompactCountToken(match[1], match[2]);
+        if (swapped > max) max = swapped;
+    }
+    return max;
+}
+
+function getPostCommentSignal(postEl) {
+    if (!postEl || !postEl.querySelectorAll) {
+        return { count: 0, source: 'none' };
+    }
+    var roots = [postEl];
+    var parent = postEl.parentElement;
+    for (var i = 0; i < 3 && parent; i++) {
+        roots.push(parent);
+        parent = parent.parentElement;
+    }
+    var probes = [
+        {
+            source: 'social-counts',
+            selector:
+                '[data-testid*="social-counts"], ' +
+                'span[class*="social-details-social-counts"]'
+        },
+        {
+            source: 'comment-action',
+            selector:
+                'button[aria-label*="comment" i], ' +
+                'a[aria-label*="comment" i], ' +
+                'button[aria-label*="coment" i], ' +
+                'a[aria-label*="coment" i]'
+        },
+        {
+            source: 'visible-label',
+            selector:
+                'span[aria-label*="comment" i], ' +
+                'span[aria-label*="coment" i], ' +
+                'span[class*="comment"]'
+        }
+    ];
+    var bestCount = 0;
+    var bestSource = 'none';
+    for (var root of roots) {
+        for (var probe of probes) {
+            var nodes = root.querySelectorAll(probe.selector);
+            for (var node of nodes) {
+                var blob = [
+                    node.innerText || '',
+                    node.textContent || '',
+                    node.getAttribute('aria-label') || '',
+                    node.getAttribute('title') || ''
+                ].join(' ');
+                var parsed = extractCommentCountFromText(blob);
+                if (parsed > bestCount) {
+                    bestCount = parsed;
+                    bestSource = probe.source;
+                }
+            }
         }
     }
-    if (!commentList) return [];
+    if (bestCount > 0) {
+        return { count: bestCount, source: bestSource };
+    }
+    var visible = getExistingComments(postEl).length;
+    if (visible > 0) {
+        return { count: visible, source: 'visible-thread' };
+    }
+    return { count: 0, source: 'none' };
+}
+
+function getExistingComments(postEl) {
+    if (!postEl || !postEl.querySelector) return [];
+    var listSelectors = [
+        '[data-testid*="commentList"]',
+        'ul.comments-comments-list',
+        'ul[class*="comments-comment-list"]',
+        'div[class*="comments-comment-list"]',
+        'div[class*="comments-comments-list"]',
+        'div[class*="comments-container"]'
+    ];
+    var commentList = null;
+    var searchRoot = postEl;
+    for (var depth = 0; depth < 4 && searchRoot; depth++) {
+        for (var sel of listSelectors) {
+            commentList = searchRoot.querySelector(sel);
+            if (commentList) break;
+        }
+        if (commentList) break;
+        searchRoot = searchRoot.parentElement;
+    }
 
     var comments = [];
-    var children = commentList.children;
-    for (var c = 0; c < children.length; c++) {
-        var child = children[c];
-        var textBox = child.querySelector(
-            '[data-testid="expandable-text-box"]'
+    var itemSelectors =
+        'article.comments-comment-item, ' +
+        'li.comments-comment-item, ' +
+        'div[class*="comments-comment-item"], ' +
+        '[data-urn*="comment"], [data-id*="comment"]';
+    var itemNodes = [];
+    if (commentList) {
+        itemNodes = Array.from(
+            commentList.querySelectorAll(itemSelectors)
         );
-        if (!textBox) continue;
-        var text = (textBox.innerText ||
-            textBox.textContent || '').trim();
+        if (itemNodes.length === 0) {
+            itemNodes = Array.from(commentList.children);
+        }
+    } else {
+        var fallbackRoot = postEl;
+        for (var tries = 0; tries < 4 && fallbackRoot; tries++) {
+            var found = fallbackRoot.querySelectorAll(
+                itemSelectors
+            );
+            if (found.length > 0) {
+                itemNodes = Array.from(found);
+                break;
+            }
+            fallbackRoot = fallbackRoot.parentElement;
+        }
+    }
+    var controlRe =
+        /^(like|reply|responder|curtir|editar|edit|follow|seguir)$/i;
+    for (var child of itemNodes) {
+        var text = '';
+        var textSelectors = [
+            '[data-testid="expandable-text-box"]',
+            'div[class*="comments-comment-item-content-body"]',
+            'div[class*="comments-comment-item__main-content"]',
+            'p',
+            'span[dir="ltr"]'
+        ];
+        for (var textSel of textSelectors) {
+            var textBox = child.querySelector(textSel);
+            var rawText = (textBox?.innerText ||
+                textBox?.textContent || '').trim();
+            if (!rawText) continue;
+            var filtered = rawText.split('\n')
+                .map(function(line) {
+                    return line.trim();
+                })
+                .filter(function(line) {
+                    return line.length > 1 &&
+                        !controlRe.test(line);
+                })
+                .join(' ')
+                .trim();
+            if (filtered.length > 1) {
+                text = filtered;
+                break;
+            }
+        }
         if (text.length < 2) continue;
 
         var authorLinks = child.querySelectorAll(
@@ -1833,6 +1994,7 @@ if (typeof module !== 'undefined' && module.exports) {
         analyzeCommentPatterns,
         summarizeReactions,
         getPostImageSignals,
+        getPostCommentSignal,
         validateCommentPatternFit,
         isPolemicPost,
         BOILERPLATE_RE,

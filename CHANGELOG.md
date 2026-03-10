@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.22.1] - 2026-03-10
+
+### Added
+- **Comment signal detection for thread gating**: Feed now detects real post comment signal from social/action labels (EN/PT, compact counts like `1.2k`) via `getPostCommentSignal`, instead of relying only on visible expanded comments.
+- **Limited thread context hydration**: Before commenting, feed can open the comment area and load up to 2 extra batches to gather visible context for safer, more natural comments.
+
+### Changed
+- **Balanced low-signal recovery after warmup**: Post-warmup comment flow no longer hard-skips solely on low pattern confidence when the post has comment signal; AI/fallback can run in recovery mode with strict safety/context guards still enforced.
+- **Never-first-comment guard refined**: The guard now uses detected post comment signal (`count === 0`) rather than only `existing.length === 0`.
+- **Feed observability diagnostics**: Feed history entries now include `commentSignalCount`, `commentSignalSource`, `visibleCommentsBefore`, `visibleCommentsAfter`, and `usedLowSignalRecovery` for skip tuning.
+
+### Fixed
+- **DOM comment extraction coverage**: `getExistingComments` now supports additional LinkedIn comment container/item variants, reducing false “no context” results on posts that already have comments.
+
 ## [1.22.0] - 2026-03-10
 
 ### Added

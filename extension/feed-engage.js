@@ -722,22 +722,120 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
         return null;
     }
 
-    async function commentOnPost(postEl, commentText) {
+    function findCommentActionButton(postEl) {
         const actionBtns = findActionButtons(postEl);
-        let commentBtn = null;
         for (const btn of actionBtns) {
-            const label =
-                btn.getAttribute('aria-label') || '';
+            const label = btn.getAttribute('aria-label') || '';
             const text = (btn.innerText ||
                 btn.textContent || '').trim();
             if (label.includes('Comment') ||
                 label.includes('Comentar') ||
                 text === 'Comment' ||
                 text === 'Comentar') {
-                commentBtn = btn;
-                break;
+                return btn;
             }
         }
+        return null;
+    }
+
+    function findLoadMoreCommentsButton(postEl) {
+        const selectors = [
+            'button',
+            'a[role="button"]',
+            'span[role="button"]'
+        ];
+        const roots = [postEl];
+        let parent = postEl.parentElement;
+        for (let i = 0; i < 3 && parent; i++) {
+            roots.push(parent);
+            parent = parent.parentElement;
+        }
+        for (const root of roots) {
+            for (const sel of selectors) {
+                const candidates = root.querySelectorAll(sel);
+                for (const node of candidates) {
+                    if (node.disabled) continue;
+                    const text = (
+                        node.innerText ||
+                        node.textContent ||
+                        node.getAttribute('aria-label') ||
+                        ''
+                    ).trim().toLowerCase();
+                    if (!text) continue;
+                    if (
+                        text.includes('load more comments') ||
+                        text.includes('show more comments') ||
+                        text.includes('view more comments') ||
+                        text.includes('more comments') ||
+                        text.includes('ver mais comentários') ||
+                        text.includes('mostrar mais comentários') ||
+                        text.includes('carregar mais comentários') ||
+                        text.includes('mais comentários')
+                    ) {
+                        return node;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    async function hydrateThreadContext(postEl, opts) {
+        const targetVisible = Math.max(
+            1,
+            Number(opts?.targetVisible) || 3
+        );
+        const maxLoadMoreClicks = Math.max(
+            0,
+            Number(opts?.maxLoadMoreClicks) || 2
+        );
+        let existing = typeof getExistingComments === 'function'
+            ? getExistingComments(postEl)
+            : [];
+        const before = existing.length;
+        let loadMoreClicks = 0;
+        if (existing.length < targetVisible) {
+            const commentBtn = findCommentActionButton(postEl);
+            if (commentBtn) {
+                commentBtn.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                await delay(300);
+                commentBtn.click();
+                await delay(800);
+                existing = typeof getExistingComments === 'function'
+                    ? getExistingComments(postEl)
+                    : existing;
+            }
+        }
+        while (existing.length < targetVisible &&
+            loadMoreClicks < maxLoadMoreClicks) {
+            const moreBtn = findLoadMoreCommentsButton(postEl);
+            if (!moreBtn) break;
+            moreBtn.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            await delay(300);
+            moreBtn.click();
+            loadMoreClicks++;
+            await delay(1200);
+            existing = typeof getExistingComments === 'function'
+                ? getExistingComments(postEl)
+                : existing;
+        }
+        return {
+            comments: existing,
+            before,
+            after: existing.length,
+            loadMoreClicks
+        };
+    }
+
+    async function commentOnPost(postEl, commentText) {
+        const actionBtns = findActionButtons(postEl);
+        const commentBtn = findCommentActionButton(postEl);
         if (!commentBtn) {
             console.log(
                 '[LinkedIn Bot] No comment button found.' +
@@ -1264,11 +1362,35 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         const category = classifyPost(
                             postText, postReactions
                         );
-                        const existing =
+                        let existing =
                             typeof getExistingComments ===
                                 'function'
                                 ? getExistingComments(post)
                                 : [];
+                        const commentSignal =
+                            typeof getPostCommentSignal ===
+                                'function'
+                                ? getPostCommentSignal(post)
+                                : { count: 0, source: 'none' };
+                        const visibleCommentsBefore =
+                            existing.length;
+                        let visibleCommentsAfter =
+                            visibleCommentsBefore;
+                        if (doComment &&
+                            commentSignal.count >= 1 &&
+                            existing.length < 3) {
+                            const hydrated =
+                                await hydrateThreadContext(
+                                    post,
+                                    {
+                                        targetVisible: 3,
+                                        maxLoadMoreClicks: 2
+                                    }
+                                );
+                            existing = hydrated.comments;
+                            visibleCommentsAfter =
+                                hydrated.after;
+                        }
                         const commentThreadSummary =
                             typeof summarizeCommentThread ===
                                 'function'
@@ -1379,6 +1501,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         }
 
                         let commentSkipReason = null;
+                        let usedLowSignalRecovery = false;
                         let detectedLang = detectLanguage(postText);
                         if (existing.length > 0) {
                             var ptComments = existing
@@ -1426,17 +1549,28 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 );
                                 skipComment = true;
                             }
-                            if (!skipComment && existing.length === 0) {
+                            if (!skipComment &&
+                                commentSignal.count === 0) {
                                 console.log(
-                                    '[LinkedIn Bot] Skipping comment — never first comment on a post'
+                                    '[LinkedIn Bot] Skipping comment — no comment signal on post'
                                 );
+                                commentSkipReason = 'skip-no-comment-signal';
+                                skipComment = true;
+                            }
+                            if (!skipComment &&
+                                commentSignal.count >= 1 &&
+                                existing.length === 0) {
+                                console.log(
+                                    '[LinkedIn Bot] Skipping comment — thread comments unavailable after hydration'
+                                );
+                                commentSkipReason =
+                                    'skip-thread-context-unavailable';
                                 skipComment = true;
                             }
                             if (!skipComment && patternProfile &&
-                                patternProfile.lowSignal) {
-                                skipComment = true;
-                                commentSkipReason =
-                                    'skip-pattern-low-signal';
+                                patternProfile.lowSignal &&
+                                commentSignal.count >= 1) {
+                                usedLowSignalRecovery = true;
                             }
                             if (!skipComment &&
                                 typeof isPolemicPost === 'function' &&
@@ -1458,6 +1592,10 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                             }
 
                             let comment = null;
+                            const effectivePatternProfile =
+                                usedLowSignalRecovery
+                                    ? null
+                                    : patternProfile;
                             if (!skipComment && aiApiKey) {
                                 console.log(
                                     '[LinkedIn Bot] Requesting AI comment...'
@@ -1474,9 +1612,12 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                         reactionSummary,
                                         commentThreadSummary,
                                         imageSignals,
-                                        patternProfile,
+                                        patternProfile:
+                                            effectivePatternProfile,
                                         apiKey: aiApiKey,
-                                        goalMode
+                                        goalMode,
+                                        allowLowSignalRecovery:
+                                            usedLowSignalRecovery
                                     });
                                 comment = aiResult?.comment || null;
                                 commentSkipReason =
@@ -1494,9 +1635,7 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 }
                             }
 
-                            var canFallback = !skipComment &&
-                                commentSkipReason !==
-                                    'skip-pattern-low-signal';
+                            var canFallback = !skipComment;
                             if (!comment && canFallback) {
                                 comment = buildCommentFromPost(
                                     postText,
@@ -1514,10 +1653,14 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                         imageSignals,
                                         existingComments: existing
                                     },
-                                    patternProfile
+                                    effectivePatternProfile,
+                                    {
+                                        allowLowSignalRecovery:
+                                            usedLowSignalRecovery
+                                    }
                                 );
                                 if (!comment && !commentSkipReason) {
-                                    commentSkipReason = patternProfile
+                                    commentSkipReason = effectivePatternProfile
                                         ? 'skip-pattern-fit'
                                         : 'skip-safety-guard';
                                 }
@@ -1545,6 +1688,13 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                     postText:
                                         postText.substring(0, 100),
                                     status: commentSkipReason,
+                                    commentSignalCount:
+                                        commentSignal.count,
+                                    commentSignalSource:
+                                        commentSignal.source,
+                                    visibleCommentsBefore,
+                                    visibleCommentsAfter,
+                                    usedLowSignalRecovery,
                                     patternConfidence:
                                         patternSnapshot?.confidence,
                                     patternStyle:
@@ -1561,6 +1711,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                         skipReason: commentSkipReason,
                                         category,
                                         lang,
+                                        commentSignalCount:
+                                            commentSignal.count,
+                                        visibleCommentsBefore,
+                                        visibleCommentsAfter,
+                                        usedLowSignalRecovery,
                                         patternConfidence:
                                             patternSnapshot
                                                 ?.confidence || null,
@@ -1606,6 +1761,13 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 author,
                                 postText: postText.substring(0, 100),
                                 status: warmupStatus,
+                                commentSignalCount:
+                                    commentSignal.count,
+                                commentSignalSource:
+                                    commentSignal.source,
+                                visibleCommentsBefore,
+                                visibleCommentsAfter,
+                                usedLowSignalRecovery,
                                 patternConfidence:
                                     patternSnapshot?.confidence,
                                 patternStyle:
@@ -1638,6 +1800,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                     ) || null,
                                     commented: false,
                                     lang,
+                                    commentSignalCount:
+                                        commentSignal.count,
+                                    visibleCommentsBefore,
+                                    visibleCommentsAfter,
+                                    usedLowSignalRecovery,
                                     postLength: (postText || '').length
                                 }
                             }, '*');
@@ -1651,6 +1818,13 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                 postText:
                                     postText.substring(0, 100),
                                 status: actions.join('+'),
+                                commentSignalCount:
+                                    commentSignal.count,
+                                commentSignalSource:
+                                    commentSignal.source,
+                                visibleCommentsBefore,
+                                visibleCommentsAfter,
+                                usedLowSignalRecovery,
                                 time: new Date().toISOString()
                             };
                             engageLog.push(logEntry);
@@ -1666,6 +1840,11 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                                         'commented'
                                     ),
                                     lang,
+                                    commentSignalCount:
+                                        commentSignal.count,
+                                    visibleCommentsBefore,
+                                    visibleCommentsAfter,
+                                    usedLowSignalRecovery,
                                     postLength:
                                         (postText || '').length
                                 }

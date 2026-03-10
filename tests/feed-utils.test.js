@@ -19,6 +19,7 @@ const {
     analyzeCommentPatterns,
     summarizeReactions,
     getPostImageSignals,
+    getPostCommentSignal,
     validateCommentPatternFit,
     validateGeneratedCommentSafety,
     SENTIMENT_PATTERNS,
@@ -1075,6 +1076,87 @@ describe('getExistingComments', () => {
         const result = getExistingComments(post);
         expect(result[0].author).toBe('Jane Smith');
     });
+
+    it('extracts comments from alternative LinkedIn comment list selectors', () => {
+        const post = document.createElement('div');
+        const list = document.createElement('ul');
+        list.className = 'comments-comments-list';
+        const item = document.createElement('li');
+        item.className = 'comments-comment-item';
+        const body = document.createElement('div');
+        body.className = 'comments-comment-item-content-body';
+        body.textContent = 'Great perspective on scaling.';
+        item.appendChild(body);
+        const author = document.createElement('a');
+        author.href = '/in/alex/';
+        author.textContent = 'Alex';
+        item.appendChild(author);
+        list.appendChild(item);
+        post.appendChild(list);
+
+        const result = getExistingComments(post);
+        expect(result).toHaveLength(1);
+        expect(result[0].text).toBe('Great perspective on scaling.');
+    });
+});
+
+describe('getPostCommentSignal', () => {
+    it('parses regular English comment count', () => {
+        const post = document.createElement('div');
+        const social = document.createElement('span');
+        social.className = 'social-details-social-counts';
+        social.textContent = '12 comments';
+        post.appendChild(social);
+        const signal = getPostCommentSignal(post);
+        expect(signal.count).toBe(12);
+    });
+
+    it('parses Portuguese comment count', () => {
+        const post = document.createElement('div');
+        const social = document.createElement('span');
+        social.className = 'social-details-social-counts';
+        social.textContent = '12 comentários';
+        post.appendChild(social);
+        const signal = getPostCommentSignal(post);
+        expect(signal.count).toBe(12);
+    });
+
+    it('parses comma-separated count', () => {
+        const post = document.createElement('div');
+        const social = document.createElement('span');
+        social.className = 'social-details-social-counts';
+        social.textContent = '1,234 comments';
+        post.appendChild(social);
+        const signal = getPostCommentSignal(post);
+        expect(signal.count).toBe(1234);
+    });
+
+    it('parses compact k count', () => {
+        const post = document.createElement('div');
+        const social = document.createElement('span');
+        social.className = 'social-details-social-counts';
+        social.textContent = '1.2k comments';
+        post.appendChild(social);
+        const signal = getPostCommentSignal(post);
+        expect(signal.count).toBe(1200);
+    });
+
+    it('falls back to visible comments when count label is absent', () => {
+        const post = document.createElement('div');
+        const list = document.createElement('div');
+        list.setAttribute('data-testid', 'abc-commentList-xyz');
+        const item = document.createElement('div');
+        const text = document.createElement('div');
+        text.setAttribute('data-testid', 'expandable-text-box');
+        text.textContent = 'Great thread.';
+        item.appendChild(text);
+        list.appendChild(item);
+        post.appendChild(list);
+
+        const signal = getPostCommentSignal(post);
+        expect(signal.count).toBe(1);
+        expect(signal.source).toBe('visible-thread');
+    });
 });
 
 describe('buildCommentFromPost with context', () => {
@@ -1432,5 +1514,28 @@ describe('buildCommentFromPost with pattern discipline', () => {
             }
         );
         expect(result).toBeNull();
+    });
+
+    it('allows explicit low-signal recovery mode for fallback generation', () => {
+        const result = buildCommentFromPost(
+            'Strong technical perspective on latency',
+            ['solid point on latency'],
+            [],
+            'passive',
+            { INTEREST: 5, _total: 40 },
+            { category: 'technical' },
+            {
+                patternConfidence: 40,
+                recommended: {
+                    lengthBand: 'short',
+                    toneIntensity: 'low',
+                    allowQuestion: false,
+                    allowEmoji: false,
+                    maxEmoji: 0
+                }
+            },
+            { allowLowSignalRecovery: true }
+        );
+        expect(result).toBe('solid point on latency');
     });
 });

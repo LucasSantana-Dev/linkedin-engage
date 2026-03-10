@@ -149,6 +149,8 @@ window.addEventListener('message', (event) => {
                 event.data.commentThreadSummary,
             imageSignals: event.data.imageSignals,
             patternProfile: event.data.patternProfile,
+            allowLowSignalRecovery:
+                event.data.allowLowSignalRecovery === true,
             apiKey: event.data.apiKey,
             goalMode: event.data.goalMode
         }, (response) => {

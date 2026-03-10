@@ -1007,7 +1007,8 @@ async function generateAIComment(data) {
         authorTitle, lang, category, reactions,
         reactionSummary, commentThreadSummary,
         imageSignals, apiKey,
-        goalMode, patternProfile } = data;
+        goalMode, patternProfile,
+        allowLowSignalRecovery } = data;
     if (!apiKey) return { comment: null, reason: null };
 
     var reactionCtx = formatReactionContext(reactions);
@@ -1030,7 +1031,8 @@ async function generateAIComment(data) {
     var patternGuidance = buildPatternGuidance(
         patternProfile, bucket
     );
-    if (patternGuidance.lowSignal) {
+    if (patternGuidance.lowSignal &&
+        allowLowSignalRecovery !== true) {
         return {
             comment: null,
             reason: 'skip-pattern-low-signal'
@@ -1319,17 +1321,19 @@ async function generateAIComment(data) {
                 reason: 'skip-safety-guard'
             };
         }
-        var patternFit = validateCommentPatternFit(
-            comment,
-            patternProfile,
-            bucket,
-            { existingComments }
-        );
-        if (!patternFit.ok) {
-            return {
-                comment: null,
-                reason: patternFit.reason || 'skip-pattern-fit'
-            };
+        if (allowLowSignalRecovery !== true) {
+            var patternFit = validateCommentPatternFit(
+                comment,
+                patternProfile,
+                bucket,
+                { existingComments }
+            );
+            if (!patternFit.ok) {
+                return {
+                    comment: null,
+                    reason: patternFit.reason || 'skip-pattern-fit'
+                };
+            }
         }
         var confidence = computeCommentConfidence({
             category: cat,

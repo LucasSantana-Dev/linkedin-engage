@@ -58,7 +58,8 @@ describe('bridge AI relay', () => {
                     styleFamily: 'analytical'
                 },
                 apiKey: 'k',
-                goalMode: 'active'
+                goalMode: 'active',
+                allowLowSignalRecovery: true
             }
         }));
 
@@ -66,6 +67,7 @@ describe('bridge AI relay', () => {
             expect.objectContaining({
                 action: 'generateAIComment',
                 goalMode: 'active',
+                allowLowSignalRecovery: true,
                 patternProfile: expect.objectContaining({
                     patternConfidence: 82
                 })

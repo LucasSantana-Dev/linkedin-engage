@@ -24,8 +24,10 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching; scheduled recurring runs
 - **Warmup-first feed learning** — first feed runs (default: 2) run in react+learn mode only (no comments) so thread patterns are learned before comment unlock
 - **Feed warmup controls** — configurable warmup enable/disable, required run count (0-10), live progress indicator, and reset action in popup
+- **Comment signal-aware thread gate** — “never first comment” now uses detected post comment counts (EN/PT labels + compact numbers) instead of only currently visible expanded comments
+- **Thread context hydration** — before commenting, feed can open/load comment thread context (up to 2 batches) to reduce false low-context skips
 - **Goal mode selector** — choose between `Networking & Visibility` (passive) and `Actively Looking` (more direct) to control hiring-post comment tone across Connect and Feed Engage
-- **Never first-comment safeguard** — comment automation skips posts with zero existing comments to avoid starting threads
+- **Never first-comment safeguard** — comment automation skips posts with zero detected comment signal to avoid starting threads
 - **13 post categories** — hiring, achievement, technical, question, tips, story, news, humor, critique, motivation, project, jobseeking, newjob — each with dedicated comment templates
 - **Smart comment generation** — category-aware follow-ups, post-length awareness (short posts get short comments), `{keyPhrase}` templates only when extractable, `{topic}` auto-detected from post content
 - **Thread-style AI comments** — analyzes existing comments (sentiment, brevity, energy, common openers, emoji/question/exclamation style), extracts thread keywords/phrases, and mirrors the conversation vibe with original wording
@@ -64,6 +66,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Hard comment pattern learning (v3)** — deterministic thread pattern analysis (top 15 comments with recency weighting) extracts opener/length/rhythm/intent/n-gram signals and constrains generation to match thread naturality
 - **Persistent local pattern memory** — stores learned style buckets per `lang|category` in `chrome.storage.local` (`commentPatternMemoryV1`) with bounded EMA/decay maps for openers, n-grams, and intent
 - **Pattern-fit gating + low-signal skip** — comments are skipped when thread pattern signal is weak or generated text breaks dominant thread style constraints
+- **Balanced low-signal recovery** — after warmup, posts with real comment signal can still attempt safe AI/fallback comments even when visible-thread pattern confidence is low
 - **Comment skip telemetry** — feed comment decisions now log `skip-low-confidence`, `skip-safety-guard`, `skip-context-mismatch`, `skip-pattern-low-signal`, and `skip-pattern-fit` for faster prompt/filter calibration
 
 ### Standalone Connector
