@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-03-10
+
+### Added
+- **Open to Work recruiter safeguard**: New Connect toggle to skip recruiter-like profiles when explicit Open to Work signals are detected in card/profile metadata.
+- **Job-seeking signal safeguard**: Optional Connect toggle to skip explicit job-seeking profiles (`actively looking`, `open to opportunities`, `buscando novas oportunidades`, `#opentowork`).
+- **Skip reason breakdown in dashboard**: Dashboard now shows the top skip reasons with counts to calibrate precision filters quickly.
+- **Engineering quality-gate scripts**: Added `npm run lint` and `npm run typecheck` scripts and wired both into CI on Node 20.
+
+### Changed
+- **Connect relevance prioritization**: Connect target ordering now uses a weighted score (recruiter profile fit, mutual network signals, degree, domain cues, and geo context) to process higher-fit targets first.
+
 ## [1.19.1] - 2026-03-09
 
 ### Fixed

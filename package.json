@@ -1,9 +1,11 @@
 {
   "name": "linkedin-engage",
-  "version": "1.19.1",
+  "version": "1.20.0",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "test": "jest --verbose"
   },
   "keywords": [],
@@ -22,7 +24,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "eslint": "^9.39.1",
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0"
+    "jest-environment-jsdom": "^30.2.0",
+    "typescript": "^5.9.3"
   }
 }

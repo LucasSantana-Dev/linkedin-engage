@@ -690,6 +690,10 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         const brazilGeoTarget =
             typeof isBrazilGeoTarget === 'function' &&
             isBrazilGeoTarget(config?.geoUrn);
+        const skipOpenToWorkRecruiters =
+            config?.skipOpenToWorkRecruiters !== false;
+        const skipJobSeekingSignals =
+            config?.skipJobSeekingSignals === true;
         let totalSent = 0;
         let totalSkipped = 0;
         let currentPage = 1;
@@ -858,27 +862,57 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     return { mutual, degree };
                 }
 
-                const networked = [];
-                const unnetworked = [];
-                for (const target of actionTargets) {
-                    const info = getCardInfo(target.button);
-                    if (info.mutual || info.degree <= 2) {
-                        networked.push({ target, ...info });
-                    } else {
-                        unnetworked.push({ target, ...info });
+                function getProfileScore(profile) {
+                    let score = 0;
+                    if (typeof isRecruiterProfile ===
+                        'function' &&
+                        isRecruiterProfile(profile)) {
+                        score += 35;
                     }
+                    const domain = (
+                        `${profile?.headline || ''} ` +
+                        `${profile?.summary || ''}`
+                    ).toLowerCase();
+                    if (/software|engineering|tech|it|data|product|startup|fintech/
+                        .test(domain)) {
+                        score += 8;
+                    }
+                    const location = (
+                        profile?.location || ''
+                    ).toLowerCase();
+                    if (brazilGeoTarget &&
+                        /brazil|brasil|sao paulo|rio de janeiro|curitiba|porto alegre/
+                            .test(location)) {
+                        score += 8;
+                    }
+                    return score;
                 }
 
-                networked.sort((a, b) => {
-                    if (a.mutual && !b.mutual) return -1;
-                    if (!a.mutual && b.mutual) return 1;
-                    return a.degree - b.degree;
+                const ranked = actionTargets.map(target => {
+                    const info = getCardInfo(target.button);
+                    let score = getProfileScore(
+                        target.profile
+                    );
+                    if (target.action === 'connect') score += 3;
+                    if (info.mutual) score += 40;
+                    if (info.degree === 2) score += 20;
+                    else if (info.degree === 3) score += 10;
+                    else if (info.degree < 99) score += 4;
+                    return { target, info, score };
+                }).sort((a, b) => {
+                    if (b.score !== a.score) {
+                        return b.score - a.score;
+                    }
+                    if (a.info.mutual && !b.info.mutual) {
+                        return -1;
+                    }
+                    if (!a.info.mutual && b.info.mutual) {
+                        return 1;
+                    }
+                    return a.info.degree - b.info.degree;
                 });
 
-                const sorted = [
-                    ...networked.map(x => x.target),
-                    ...unnetworked.map(x => x.target)
-                ];
+                const sorted = ranked.map(x => x.target);
 
                 const totalFound = actionTargets.length;
                 actionTargets.length = 0;
@@ -936,6 +970,51 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         const profile = targetProfile.name
                             ? targetProfile
                             : extractProfileInfo(button);
+                        const card = button.closest(
+                            '.entity-result, li, ' +
+                            '[data-chameleon-result-urn]'
+                        );
+                        const recruiterLike =
+                            typeof isRecruiterProfile ===
+                            'function' &&
+                            isRecruiterProfile(profile);
+                        if (skipOpenToWorkRecruiters &&
+                            recruiterLike &&
+                            typeof isOpenToWorkCard ===
+                            'function' &&
+                            isOpenToWorkCard(card, profile)) {
+                            totalSkipped++;
+                            connectionLog.push({
+                                ...profile,
+                                status:
+                                    'skipped-open-to-work',
+                                time: new Date().toISOString()
+                            });
+                            reportProgress(
+                                totalSent, limit,
+                                currentPage, totalSkipped
+                            );
+                            continue;
+                        }
+                        if (skipJobSeekingSignals &&
+                            typeof isJobSeekingProfile ===
+                            'function' &&
+                            isJobSeekingProfile(
+                                profile, card
+                            )) {
+                            totalSkipped++;
+                            connectionLog.push({
+                                ...profile,
+                                status:
+                                    'skipped-job-seeking',
+                                time: new Date().toISOString()
+                            });
+                            reportProgress(
+                                totalSent, limit,
+                                currentPage, totalSkipped
+                            );
+                            continue;
+                        }
                         if (typeof isSameCompany ===
                             'function' &&
                             isSameCompany(

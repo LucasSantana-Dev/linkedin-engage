@@ -22,6 +22,12 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run lint
+        if: matrix.node-version == 20
+
+      - run: npm run typecheck
+        if: matrix.node-version == 20
+
       - run: npm test -- --coverage --coverageReporters=text-summary
         if: matrix.node-version == 20
 

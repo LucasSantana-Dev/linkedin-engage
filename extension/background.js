@@ -152,6 +152,14 @@ function launchAutomation(config) {
                                     config.goalMode || 'passive',
                                 myCompany:
                                     config.myCompany || '',
+                                skipOpenToWorkRecruiters:
+                                    config
+                                        .skipOpenToWorkRecruiters
+                                    !== false,
+                                skipJobSeekingSignals:
+                                    config
+                                        .skipJobSeekingSignals
+                                    === true,
                                 sentUrls:
                                     config.sentUrls || [],
                                 engagementOnly:
@@ -1225,6 +1233,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     ),
                     goalMode: state.goalMode || 'passive',
                     myCompany: state.myCompany || '',
+                    skipOpenToWorkRecruiters:
+                        state.skipOpenToWorkRecruiters
+                        !== false,
+                    skipJobSeekingSignals:
+                        state.skipJobSeekingSignals === true,
                     sendNote: state.sendNote !== false,
                     noteTemplate:
                         state.activeTemplate === 'custom'
@@ -1476,6 +1489,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 limit: parseInt(state.limit) || 50,
                 goalMode: state.goalMode || 'passive',
                 myCompany: state.myCompany || '',
+                skipOpenToWorkRecruiters:
+                    state.skipOpenToWorkRecruiters
+                    !== false,
+                skipJobSeekingSignals:
+                    state.skipJobSeekingSignals === true,
                 sendNote: state.sendNote !== false,
                 noteTemplate: state.activeTemplate === 'custom'
                     ? state.customNote

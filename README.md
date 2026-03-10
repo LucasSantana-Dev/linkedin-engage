@@ -53,6 +53,10 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **PT-BR detection kept in More-menu connect** — when Connect is triggered from the card’s `More` menu, profile context is preserved so Brazilian contacts still receive Portuguese notes
 - **Brazil search language lock** — when Recruiter Location/search geo targets Brazil, Connect enforces PT-BR invitation notes even for English-profile cards
 - **Same-company recruiter skip** — optional `My Company` filter skips Connect attempts when a profile headline matches your current company
+- **Open-to-Work recruiter skip** — optional Connect safeguard skips recruiter-like profiles when explicit `Open to Work` signals are present on the card/profile
+- **Job-seeking signal skip** — optional Connect filter skips profiles with explicit job-seeking signals (`actively looking`, `#opentowork`, `buscando oportunidades`, etc.)
+- **Connect relevance scoring** — target ordering now prioritizes recruiter-like profiles, mutual connections, degree proximity, domain fit, and geo context for more precise outreach
+- **Skip reason insights** — dashboard shows top skip reasons with counts (`open-to-work`, `same-company`, `duplicate`, etc.) for faster filter tuning
 
 ### Standalone Connector
 - **Playwright-based** — runs a full Chromium browser with persistent login session
@@ -188,6 +192,8 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
 | Role Terms Limit | 6 | Maximum number of role tags included in the `OR` role query (1-10) to keep results precise |
+| Skip Open to Work Recruiters | On | Skips recruiter-like profiles when explicit Open to Work signals are detected |
+| Skip Job-seeking Signals | Off | Skips explicit job-seeking profiles/signals to reduce low-fit outreach |
 | Goal Mode | Networking & Visibility | `passive` avoids job-seeking signals; `active` allows stronger hiring-post positioning |
 | Comment Templates | Empty | One template per line; `{topic}` and `{excerpt}` are auto-replaced |
 | Skip Keywords | Empty | Skip posts containing these words (one per line) |

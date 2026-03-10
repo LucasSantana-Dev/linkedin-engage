@@ -46,9 +46,15 @@ function loadDashboard() {
             let quotaCount = 0;
             let engagedCount = 0;
             let followedCount = 0;
+            const skipReasons = {};
             for (const r of history) {
                 if (r.status?.startsWith('skipped')) {
                     skippedCount++;
+                    const reason = r.status
+                        .replace('skipped-', '') ||
+                        'unknown';
+                    skipReasons[reason] =
+                        (skipReasons[reason] || 0) + 1;
                 }
                 if (r.status === 'stopped-quota') {
                     quotaCount++;
@@ -83,6 +89,15 @@ function loadDashboard() {
 
             document.getElementById('totalSkipped')
                 .textContent = skippedCount;
+            const topSkipReasons = Object.entries(
+                skipReasons
+            ).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            document.getElementById('skipBreakdown')
+                .textContent = topSkipReasons.length > 0
+                ? topSkipReasons.map(([reason, count]) =>
+                    `${reason}: ${count}`
+                ).join(' · ')
+                : 'duplicate, email, unverified';
             document.getElementById('totalQuota')
                 .textContent = quotaCount;
             document.getElementById('totalEngaged')

@@ -192,6 +192,107 @@ function isSameCompany(headline, myCompany) {
     return normalizedHeadline.includes(normalizedCompany);
 }
 
+function isRecruiterProfile(profile) {
+    const headline = normalizeLocaleText(
+        profile?.headline || ''
+    );
+    const summary = normalizeLocaleText(
+        profile?.summary || ''
+    );
+    const all = [headline, summary].join(' ');
+    const markers = [
+        'recruiter',
+        'talent acquisition',
+        'sourcer',
+        'head of talent',
+        'tech recruiter',
+        'technical recruiter',
+        'recrutador',
+        'recrutadora',
+        'aquisicao de talentos',
+        'captacao de talentos',
+        'headhunter'
+    ];
+    return markers.some(marker =>
+        all.includes(marker)
+    );
+}
+
+function isOpenToWorkCard(card, profile) {
+    const cardText = normalizeLocaleText(
+        card?.innerText || ''
+    );
+    let ariaText = '';
+    if (card && typeof card.querySelectorAll === 'function') {
+        const withAria = card.querySelectorAll(
+            '[aria-label]'
+        );
+        ariaText = Array.from(withAria).map(el =>
+            el.getAttribute('aria-label') || ''
+        ).join(' ');
+    }
+    ariaText = normalizeLocaleText(ariaText);
+    const profileText = normalizeLocaleText(
+        [profile?.headline || '', profile?.summary || '']
+            .join(' ')
+    );
+    const corpus = [
+        cardText,
+        ariaText,
+        profileText
+    ].join(' ');
+    const signals = [
+        'open to work',
+        '#opentowork',
+        'opentowork',
+        'open to opportunities',
+        'open for opportunities',
+        'open for roles',
+        'aberto para trabalho',
+        'aberto a oportunidades',
+        'aberta a oportunidades',
+        'aberto para oportunidades',
+        'aberta para oportunidades'
+    ];
+    return signals.some(signal =>
+        corpus.includes(signal)
+    );
+}
+
+function isJobSeekingProfile(profile, card) {
+    const profileText = normalizeLocaleText(
+        [profile?.headline || '', profile?.summary || '']
+            .join(' ')
+    );
+    const cardText = normalizeLocaleText(
+        card?.innerText || ''
+    );
+    const corpus = [profileText, cardText].join(' ');
+    const jobSeekingSignals = [
+        'actively looking',
+        'looking for opportunities',
+        'seeking opportunities',
+        'open to opportunities',
+        'open for roles',
+        'open to new roles',
+        'open to new opportunities',
+        'available for work',
+        'looking for a new role',
+        'buscando novas oportunidades',
+        'em busca de oportunidades',
+        'a procura de oportunidades',
+        'aberto a oportunidades',
+        'aberta a oportunidades',
+        'disponivel para trabalho',
+        'procuro oportunidade',
+        '#opentowork',
+        'opentowork'
+    ];
+    return jobSeekingSignals.some(signal =>
+        corpus.includes(signal)
+    );
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         isButtonClickable,
@@ -211,6 +312,9 @@ if (typeof module !== 'undefined' && module.exports) {
         isFollowingButtonText,
         isBrazilianProfile,
         isBrazilGeoTarget,
-        isSameCompany
+        isSameCompany,
+        isRecruiterProfile,
+        isOpenToWorkCard,
+        isJobSeekingProfile
     };
 }

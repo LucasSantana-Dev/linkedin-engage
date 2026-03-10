@@ -223,6 +223,14 @@ function saveState() {
         myCompany: document.getElementById(
             'myCompanyInput'
         ).value.trim(),
+        skipOpenToWorkRecruiters:
+            document.getElementById(
+                'skipOpenToWorkRecruitersCheckbox'
+            ).checked,
+        skipJobSeekingSignals:
+            document.getElementById(
+                'skipJobSeekingSignalsCheckbox'
+            ).checked,
         limit: document.getElementById('limitInput').value,
         region: document.getElementById('regionSelect').value,
         activelyHiring: document.getElementById('activelyHiringCheckbox').checked,
@@ -330,6 +338,18 @@ function loadState() {
         if (popupState.myCompany) {
             document.getElementById('myCompanyInput').value =
                 popupState.myCompany;
+        }
+        if (popupState.skipOpenToWorkRecruiters !==
+            undefined) {
+            document.getElementById(
+                'skipOpenToWorkRecruitersCheckbox'
+            ).checked = popupState.skipOpenToWorkRecruiters;
+        }
+        if (popupState.skipJobSeekingSignals !==
+            undefined) {
+            document.getElementById(
+                'skipJobSeekingSignalsCheckbox'
+            ).checked = popupState.skipJobSeekingSignals;
         }
         if (popupState.region) {
             document.getElementById('regionSelect').value = popupState.region;
@@ -571,6 +591,12 @@ document.getElementById(
 document.getElementById('myCompanyInput').addEventListener(
     'input', saveState
 );
+document.getElementById(
+    'skipOpenToWorkRecruitersCheckbox'
+).addEventListener('change', saveState);
+document.getElementById(
+    'skipJobSeekingSignalsCheckbox'
+).addEventListener('change', saveState);
 
 document.getElementById('scheduleCheckbox').addEventListener(
     'change', (e) => {
@@ -729,6 +755,14 @@ async function startConnect() {
     const myCompany = document.getElementById(
         'myCompanyInput'
     ).value.trim();
+    const skipOpenToWorkRecruiters =
+        document.getElementById(
+            'skipOpenToWorkRecruitersCheckbox'
+        ).checked;
+    const skipJobSeekingSignals =
+        document.getElementById(
+            'skipJobSeekingSignalsCheckbox'
+        ).checked;
 
     const networkTypes = [];
     if (document.getElementById('degree2nd').checked) {
@@ -764,6 +798,8 @@ async function startConnect() {
         geoUrn,
         goalMode,
         myCompany,
+        skipOpenToWorkRecruiters,
+        skipJobSeekingSignals,
         activelyHiring,
         networkFilter,
         sentUrls,

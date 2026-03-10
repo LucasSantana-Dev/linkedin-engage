@@ -19,7 +19,10 @@ const {
     isFollowingButtonText,
     isBrazilianProfile,
     isBrazilGeoTarget,
-    isSameCompany
+    isSameCompany,
+    isRecruiterProfile,
+    isOpenToWorkCard,
+    isJobSeekingProfile
 } = require('../extension/lib/invite-utils');
 
 describe('isButtonClickable', () => {
@@ -532,5 +535,83 @@ describe('isSameCompany', () => {
         expect(isSameCompany('Recruiter', '')).toBe(false);
         expect(isSameCompany(null, 'Acme')).toBe(false);
         expect(isSameCompany('Recruiter', null)).toBe(false);
+    });
+});
+
+describe('isRecruiterProfile', () => {
+    it('returns true for EN recruiter headline', () => {
+        expect(isRecruiterProfile({
+            headline: 'Senior Technical Recruiter at Acme',
+            summary: 'Hiring software engineers globally'
+        })).toBe(true);
+    });
+
+    it('returns true for PT recruiter headline', () => {
+        expect(isRecruiterProfile({
+            headline: 'Recrutador de Tecnologia',
+            summary: 'Aquisição de talentos para engenharia'
+        })).toBe(true);
+    });
+
+    it('returns false for non recruiter profile', () => {
+        expect(isRecruiterProfile({
+            headline: 'Senior Backend Engineer',
+            summary: 'Building distributed systems'
+        })).toBe(false);
+    });
+});
+
+describe('isOpenToWorkCard', () => {
+    it('returns true when card text has open to work badge', () => {
+        const card = document.createElement('div');
+        card.innerText = 'Open to work • Technical Recruiter';
+        expect(isOpenToWorkCard(card, null)).toBe(true);
+    });
+
+    it('returns true when aria label has open to opportunities', () => {
+        const card = document.createElement('div');
+        const badge = document.createElement('span');
+        badge.setAttribute('aria-label', 'Open to opportunities');
+        card.appendChild(badge);
+        expect(isOpenToWorkCard(card, null)).toBe(true);
+    });
+
+    it('returns true when profile has #opentowork', () => {
+        expect(isOpenToWorkCard(null, {
+            headline: 'Talent Acquisition',
+            summary: 'Helping teams grow #OpenToWork'
+        })).toBe(true);
+    });
+
+    it('returns false for non explicit wording', () => {
+        const card = document.createElement('div');
+        card.innerText = 'I am open to collaboration on OSS';
+        expect(isOpenToWorkCard(card, {
+            headline: 'Recruiter',
+            summary: ''
+        })).toBe(false);
+    });
+});
+
+describe('isJobSeekingProfile', () => {
+    it('returns true for actively looking signal', () => {
+        expect(isJobSeekingProfile({
+            headline: 'Software Engineer',
+            summary: 'Actively looking for new opportunities'
+        }, null)).toBe(true);
+    });
+
+    it('returns true for PT signal', () => {
+        expect(isJobSeekingProfile({
+            headline: 'Engenheiro de Software',
+            summary: 'Buscando novas oportunidades'
+        }, null)).toBe(true);
+    });
+
+    it('returns false when profile has no job seeking signal', () => {
+        expect(isJobSeekingProfile({
+            headline: 'Tech Recruiter',
+            summary: 'Hiring backend engineers'
+        }, null)).toBe(false);
     });
 });
