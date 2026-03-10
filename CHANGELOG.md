@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Feed warmup state machine (`feedWarmupStateV1`)**: Added global feed warmup persistence with `completedRuns`, `requiredRuns`, `enabled`, `lastRunAt`, `totalLearnedPosts`, and `totalLearnedThreads`.
+- **Feed warmup popup controls**: New Feed settings for `Enable Warmup Learning`, configurable `Warmup Runs Required` (0-10), `Reset Learning Progress`, and live `Learning progress X/N` UI.
+- **Warmup observability statuses**: Feed logs now emit `warmup-learning` and `warmup-reacted` statuses during learn-only runs.
+- **Learn-only pattern ingestion path**: Added `LINKEDIN_BOT_PATTERN_LEARN` bridge relay and background `ingestPatternProfile` action so pattern memory is updated even when commenting is disabled.
+- **Warmup analytics counters**: `computeStats` now returns `warmupRuns`, `warmupPostsLearned`, and `warmupThreadsLearned` totals.
+
+### Changed
+- **Warmup-first feed behavior (runs 1-2 by default)**: Warmup-active feed runs force reactions on, force comments off, and unlock comments from run 3+ (or configured threshold).
+- **Feed run completion contract**: Feed results now include `warmupActive`, `processedPosts`, `warmupPostsLearned`, and `warmupThreadsLearned` so background can deterministically advance warmup state.
+- **Feed rate counting refinement**: `warmup-learning` entries no longer count toward per-mode action increments, while `warmup-reacted` still does.
+
 ## [1.21.0] - 2026-03-10
 
 ### Added

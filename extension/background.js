@@ -16,6 +16,7 @@ importScripts('lib/rate-limiter.js');
 importScripts('lib/nurture.js');
 importScripts('lib/analytics.js');
 importScripts('lib/smart-schedule.js');
+importScripts('lib/feed-warmup.js');
 importScripts('lib/pattern-memory.js');
 
 async function checkRateLimit(mode) {
@@ -497,6 +498,63 @@ function localStorageSet(payload) {
             resolve();
         });
     });
+}
+
+async function loadFeedWarmupState() {
+    var data = await localStorageGet([
+        FEED_WARMUP_STATE_KEY
+    ]);
+    return sanitizeFeedWarmupState(
+        data[FEED_WARMUP_STATE_KEY]
+    );
+}
+
+async function saveFeedWarmupState(state) {
+    await localStorageSet({
+        [FEED_WARMUP_STATE_KEY]:
+            sanitizeFeedWarmupState(state)
+    });
+}
+
+function buildFeedWarmupProgress(state, overrides) {
+    var runtime = resolveFeedWarmupRuntime(
+        state,
+        overrides || {}
+    );
+    return {
+        ...runtime.state,
+        warmupActive: runtime.warmupActive,
+        currentRunNumber: runtime.currentRunNumber,
+        unlockRunNumber: runtime.requiredRuns + 1,
+        commentsEnabled: runtime.commentsEnabled,
+        reactionsForced: runtime.reactionsForced
+    };
+}
+
+async function resolveFeedWarmupConfig(config) {
+    var current = await loadFeedWarmupState();
+    var runtime = resolveFeedWarmupRuntime(
+        current,
+        config || {}
+    );
+    await saveFeedWarmupState(runtime.state);
+    return {
+        ...(config || {}),
+        feedWarmupEnabled: runtime.enabled,
+        feedWarmupRunsRequired: runtime.requiredRuns,
+        warmupActive: runtime.warmupActive,
+        currentRunNumber: runtime.currentRunNumber
+    };
+}
+
+async function persistFeedWarmupAfterRun(result) {
+    if (!result || result.mode !== 'feed') return;
+    var current = await loadFeedWarmupState();
+    var next = applyFeedWarmupRunResult(
+        current,
+        result
+    );
+    await saveFeedWarmupState(next);
 }
 
 async function loadPatternMemoryState() {
@@ -1347,7 +1405,7 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'startFeedEngage') {
-            checkRateLimit('feedEngage').then(status => {
+            checkRateLimit('feedEngage').then(async status => {
                 if (!status.allowed) {
                     sendResponse({
                         status: 'blocked',
@@ -1355,9 +1413,72 @@ chrome.runtime.onMessage.addListener(
                     });
                     return;
                 }
-                request.rateRemaining = status.remaining;
-                launchFeedEngage(request);
-                sendResponse({ status: 'started' });
+                var feedConfig = await resolveFeedWarmupConfig(
+                    request
+                );
+                feedConfig.rateRemaining = status.remaining;
+                launchFeedEngage(feedConfig);
+                sendResponse({
+                    status: 'started',
+                    warmupActive: feedConfig.warmupActive,
+                    currentRunNumber:
+                        feedConfig.currentRunNumber,
+                    requiredRuns:
+                        feedConfig.feedWarmupRunsRequired
+                });
+            }).catch(() => {
+                sendResponse({
+                    status: 'blocked',
+                    reason: 'unknown'
+                });
+            });
+            return true;
+        }
+
+        if (request.action === 'getFeedWarmupProgress') {
+            loadFeedWarmupState().then((state) => {
+                sendResponse(
+                    buildFeedWarmupProgress(
+                        state,
+                        request || {}
+                    )
+                );
+            }).catch(() => {
+                sendResponse(
+                    buildFeedWarmupProgress(
+                        getDefaultFeedWarmupState(),
+                        request || {}
+                    )
+                );
+            });
+            return true;
+        }
+
+        if (request.action === 'resetFeedWarmupProgress') {
+            var resetState = resetFeedWarmupState(request);
+            saveFeedWarmupState(resetState).then(() => {
+                sendResponse({
+                    status: 'ok',
+                    ...buildFeedWarmupProgress(
+                        resetState,
+                        request || {}
+                    )
+                });
+            }).catch(() => {
+                sendResponse({ status: 'error' });
+            });
+            return true;
+        }
+
+        if (request.action === 'ingestPatternProfile') {
+            updatePatternMemory(
+                request.lang || 'en',
+                request.category || 'generic',
+                request.patternProfile
+            ).then(() => {
+                sendResponse({ status: 'ok' });
+            }).catch(() => {
+                sendResponse({ status: 'error' });
             });
             return true;
         }
@@ -1432,7 +1553,17 @@ chrome.runtime.onMessage.addListener(
             activeTabId = null;
             const r = request.result;
             const logCount = (r?.log || []).filter(
-                e => !e.status?.startsWith('skipped')
+                e => {
+                    if (e.status?.startsWith('skipped') ||
+                        e.status?.startsWith('skip-')) {
+                        return false;
+                    }
+                    if (r?.mode === 'feed' &&
+                        e.status === 'warmup-learning') {
+                        return false;
+                    }
+                    return true;
+                }
             ).length;
             if (logCount > 0 && r?.mode) {
                 const rateMode = r.mode === 'company'
@@ -1469,6 +1600,20 @@ chrome.runtime.onMessage.addListener(
                             [key]: merged
                         });
                     });
+                }
+            }
+            if (r?.mode === 'feed') {
+                persistFeedWarmupAfterRun(r).catch(() => {});
+                if (r.warmupActive) {
+                    recordEngagement({
+                        mode: 'feed',
+                        status: 'warmup-run',
+                        warmupRun: true,
+                        warmupPostsLearned:
+                            Number(r.warmupPostsLearned) || 0,
+                        warmupThreadsLearned:
+                            Number(r.warmupThreadsLearned) || 0
+                    }, chrome.storage.local);
                 }
             }
         }
@@ -1801,24 +1946,34 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                         .filter(Boolean)
                     : [];
 
-                launchFeedEngage({
+                resolveFeedWarmupConfig({
                     limit,
                     react,
                     comment,
                     goalMode: state.goalMode || 'passive',
                     commentTemplates,
-                    skipKeywords
-                });
-
-                chrome.notifications.create({
-                    type: 'basic',
-                    iconUrl: 'icons/icon128.png',
-                    title: 'LinkedIn Engage',
-                    message:
-                        `Scheduled feed engagement: ` +
-                        `${limit} posts` +
-                        (comment ? ' (react+comment)'
-                            : ' (react only)')
+                    skipKeywords,
+                    feedWarmupEnabled:
+                        state.feedWarmupEnabled !== false,
+                    feedWarmupRunsRequired:
+                        parseInt(
+                            state.feedWarmupRunsRequired,
+                            10
+                        )
+                }).then((feedConfig) => {
+                    launchFeedEngage(feedConfig);
+                    chrome.notifications.create({
+                        type: 'basic',
+                        iconUrl: 'icons/icon128.png',
+                        title: 'LinkedIn Engage',
+                        message: feedConfig.warmupActive
+                            ? `Scheduled feed warmup run ${feedConfig.currentRunNumber}/${feedConfig.feedWarmupRunsRequired}: react + learn only`
+                            : `Scheduled feed engagement: ` +
+                                `${limit} posts` +
+                                (comment
+                                    ? ' (react+comment)'
+                                    : ' (react only)')
+                    });
                 });
             }
         );

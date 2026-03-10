@@ -23,6 +23,9 @@ function computeStats(log) {
             bySkipReason: {},
             byHour: {},
             byDayOfWeek: {},
+            warmupRuns: 0,
+            warmupPostsLearned: 0,
+            warmupThreadsLearned: 0,
             commentRate: 0,
             avgPerDay: 0,
             activeDays: 0,
@@ -46,6 +49,9 @@ function computeStats(log) {
     ];
     let commentCount = 0;
     let engagedCount = 0;
+    let warmupRuns = 0;
+    let warmupPostsLearned = 0;
+    let warmupThreadsLearned = 0;
     const days = new Set();
 
     for (const e of log) {
@@ -88,6 +94,18 @@ function computeStats(log) {
             !e.status?.startsWith('skip-')) {
             engagedCount++;
         }
+        if (e.warmupRun === true ||
+            e.status === 'warmup-run') {
+            warmupRuns++;
+        }
+        warmupPostsLearned += Math.max(
+            0,
+            Number(e.warmupPostsLearned) || 0
+        );
+        warmupThreadsLearned += Math.max(
+            0,
+            Number(e.warmupThreadsLearned) || 0
+        );
     }
 
     const topCategory = topKey(byCategory);
@@ -108,6 +126,9 @@ function computeStats(log) {
         bySkipReason,
         byHour,
         byDayOfWeek,
+        warmupRuns,
+        warmupPostsLearned,
+        warmupThreadsLearned,
         commentRate: engagedCount > 0
             ? Math.round(
                 (commentCount / engagedCount) * 100

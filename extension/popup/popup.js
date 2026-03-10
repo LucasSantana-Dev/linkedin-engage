@@ -10,6 +10,7 @@ const TEMPLATES = {
 const MAX_CHARS = 300;
 const WEEKLY_LIMIT = 150;
 const DEFAULT_ROLE_TERMS_LIMIT = 6;
+const DEFAULT_FEED_WARMUP_RUNS = 2;
 let useCustomQuery = false;
 
 const DEFAULT_LATAM_COMPANIES = [
@@ -94,6 +95,53 @@ function getRoleTermsLimit() {
         return DEFAULT_ROLE_TERMS_LIMIT;
     }
     return Math.max(1, Math.min(10, parsed));
+}
+
+function getFeedWarmupRunsRequired() {
+    const input = document.getElementById(
+        'feedWarmupRunsRequiredInput'
+    );
+    const parsed = parseInt(input?.value, 10);
+    if (!Number.isFinite(parsed)) {
+        return DEFAULT_FEED_WARMUP_RUNS;
+    }
+    return Math.max(0, Math.min(10, parsed));
+}
+
+function renderFeedWarmupProgress(progress) {
+    const text = document.getElementById(
+        'feedWarmupProgressText'
+    );
+    if (!text) return;
+    const enabled = progress?.enabled !== false;
+    const completed = Number(progress?.completedRuns) || 0;
+    const required = Number(progress?.requiredRuns);
+    const safeRequired = Number.isFinite(required)
+        ? required
+        : getFeedWarmupRunsRequired();
+    const unlock = Number(progress?.unlockRunNumber) ||
+        (safeRequired + 1);
+    if (!enabled) {
+        text.textContent =
+            'Learning warmup disabled. Comments are unlocked.';
+        return;
+    }
+    text.textContent =
+        `Learning progress: ${completed} / ${safeRequired} runs · ` +
+        `Comments unlock on run #${unlock}`;
+}
+
+function refreshFeedWarmupProgress() {
+    chrome.runtime.sendMessage({
+        action: 'getFeedWarmupProgress',
+        feedWarmupEnabled: document.getElementById(
+            'feedWarmupEnabledCheckbox'
+        ).checked,
+        feedWarmupRunsRequired: getFeedWarmupRunsRequired()
+    }, (response) => {
+        if (chrome.runtime.lastError || !response) return;
+        renderFeedWarmupProgress(response);
+    });
 }
 
 function getSafeRoleTerms(roles) {
@@ -258,6 +306,10 @@ function saveState() {
             'feedReactCheckbox').checked,
         feedComment: document.getElementById(
             'feedCommentCheckbox').checked,
+        feedWarmupEnabled: document.getElementById(
+            'feedWarmupEnabledCheckbox'
+        ).checked,
+        feedWarmupRunsRequired: getFeedWarmupRunsRequired(),
         aiApiKey: document.getElementById(
             'aiApiKeyInput').value,
         commentTemplates: document.getElementById(
@@ -308,6 +360,7 @@ function loadState() {
             setActiveTemplate('senior');
             updateQueryPreview();
             updateCharCounter();
+            refreshFeedWarmupProgress();
             return;
         }
 
@@ -429,6 +482,27 @@ function loadState() {
             document.getElementById('commentSection')
                 .style.display = 'block';
         }
+        if (popupState.feedWarmupEnabled !== undefined) {
+            document.getElementById(
+                'feedWarmupEnabledCheckbox'
+            ).checked = popupState.feedWarmupEnabled;
+        }
+        if (popupState.feedWarmupRunsRequired !== undefined) {
+            document.getElementById(
+                'feedWarmupRunsRequiredInput'
+            ).value = String(
+                Math.max(
+                    0,
+                    Math.min(
+                        10,
+                        parseInt(
+                            popupState.feedWarmupRunsRequired,
+                            10
+                        ) || 0
+                    )
+                )
+            );
+        }
         if (popupState.aiApiKey &&
             !document.getElementById('aiApiKeyInput')
                 .value) {
@@ -503,6 +577,7 @@ function loadState() {
         if (popupState.currentMode) {
             setMode(popupState.currentMode);
         }
+        refreshFeedWarmupProgress();
     });
 }
 
@@ -853,35 +928,11 @@ function startFeedEngage() {
     const comment = document.getElementById(
         'feedCommentCheckbox'
     ).checked;
-
-    if (!react && !comment) {
-        setStatusMessage(
-            'Enable at least one: react or comment.',
-            'warning'
-        );
-        return;
-    }
-
-    const rawTemplates = document.getElementById(
-        'commentTemplatesInput'
-    ).value.trim();
-    const commentTemplates = rawTemplates
-        ? rawTemplates.split('\n').map(s => s.trim())
-            .filter(Boolean)
-        : [];
-    const rawSkip = document.getElementById(
-        'skipKeywordsInput'
-    ).value.trim();
-    const skipKeywords = rawSkip
-        ? rawSkip.split('\n').map(s => s.trim())
-            .filter(Boolean)
-        : [];
-
-    lastReportedSent = 0;
-    showProgressUI('Engaged', limit,
-        'Navigating to feed...'
-    );
-
+    const feedWarmupEnabled = document.getElementById(
+        'feedWarmupEnabledCheckbox'
+    ).checked;
+    const feedWarmupRunsRequired =
+        getFeedWarmupRunsRequired();
     const aiApiKey = document.getElementById(
         'aiApiKeyInput'
     ).value.trim();
@@ -889,15 +940,55 @@ function startFeedEngage() {
         document.getElementById('goalMode').value || 'passive';
 
     chrome.runtime.sendMessage({
-        action: 'startFeedEngage',
-        limit,
-        react,
-        comment,
-        goalMode,
-        commentTemplates,
-        skipKeywords,
-        aiApiKey
-    }, handleLaunchResponse);
+        action: 'getFeedWarmupProgress',
+        feedWarmupEnabled,
+        feedWarmupRunsRequired
+    }, (warmupProgress) => {
+        const warmupActive =
+            warmupProgress?.warmupActive === true;
+        if (!react && !comment && !warmupActive) {
+            setStatusMessage(
+                'Enable at least one: react or comment.',
+                'warning'
+            );
+            return;
+        }
+
+        const rawTemplates = document.getElementById(
+            'commentTemplatesInput'
+        ).value.trim();
+        const commentTemplates = rawTemplates
+            ? rawTemplates.split('\n').map(s => s.trim())
+                .filter(Boolean)
+            : [];
+        const rawSkip = document.getElementById(
+            'skipKeywordsInput'
+        ).value.trim();
+        const skipKeywords = rawSkip
+            ? rawSkip.split('\n').map(s => s.trim())
+                .filter(Boolean)
+            : [];
+
+        lastReportedSent = 0;
+        showProgressUI('Engaged', limit,
+            warmupActive
+                ? 'Warmup mode: reacting + learning...'
+                : 'Navigating to feed...'
+        );
+
+        chrome.runtime.sendMessage({
+            action: 'startFeedEngage',
+            limit,
+            react,
+            comment,
+            goalMode,
+            commentTemplates,
+            skipKeywords,
+            aiApiKey,
+            feedWarmupEnabled,
+            feedWarmupRunsRequired
+        }, handleLaunchResponse);
+    });
 }
 
 function showProgressUI(verb, limit, statusMsg) {
@@ -948,6 +1039,18 @@ function handleLaunchResponse(response) {
             'Rate limit reached. Try again later.',
             'error'
         );
+        return;
+    }
+    if (response?.status === 'started' &&
+        response.warmupActive) {
+        setStatusMessage(
+            `Warmup run ${response.currentRunNumber}/` +
+            `${response.requiredRuns}: reactions + learning, no comments.`,
+            'info'
+        );
+    }
+    if (response?.status === 'started') {
+        refreshFeedWarmupProgress();
     }
 }
 
@@ -1075,6 +1178,9 @@ chrome.runtime.onMessage.addListener((request) => {
             );
             startBtn.disabled = false;
             startBtn.textContent = 'Try Again';
+        }
+        if (response?.mode === 'feed') {
+            refreshFeedWarmupProgress();
         }
     }
 });
@@ -1233,6 +1339,9 @@ function setMode(mode) {
     startBtn.disabled = false;
 
     saveState();
+    if (mode === 'feed') {
+        refreshFeedWarmupProgress();
+    }
     if (typeof loadRateLimitStatus === 'function') {
         loadRateLimitStatus();
     }
@@ -1254,6 +1363,46 @@ document.getElementById('feedCommentCheckbox')
 
 document.getElementById('feedReactCheckbox')
     .addEventListener('change', saveState);
+document.getElementById('feedWarmupEnabledCheckbox')
+    .addEventListener('change', () => {
+        saveState();
+        refreshFeedWarmupProgress();
+    });
+document.getElementById('feedWarmupRunsRequiredInput')
+    .addEventListener('change', () => {
+        const input = document.getElementById(
+            'feedWarmupRunsRequiredInput'
+        );
+        input.value = String(getFeedWarmupRunsRequired());
+        saveState();
+        refreshFeedWarmupProgress();
+    });
+document.getElementById('resetFeedWarmupProgressBtn')
+    .addEventListener('click', () => {
+        chrome.runtime.sendMessage({
+            action: 'resetFeedWarmupProgress',
+            feedWarmupEnabled: document.getElementById(
+                'feedWarmupEnabledCheckbox'
+            ).checked,
+            feedWarmupRunsRequired:
+                getFeedWarmupRunsRequired()
+        }, (response) => {
+            if (chrome.runtime.lastError ||
+                response?.status !== 'ok') {
+                setStatusMessage(
+                    'Failed to reset warmup progress.',
+                    'error'
+                );
+                return;
+            }
+            renderFeedWarmupProgress(response);
+            setStatusMessage(
+                'Warmup learning progress reset.',
+                'success'
+            );
+            saveState();
+        });
+    });
 document.getElementById('aiApiKeyInput')
     .addEventListener('change', () => {
         const key = document.getElementById(

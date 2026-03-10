@@ -160,6 +160,15 @@ window.addEventListener('message', (event) => {
             }, '*');
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_PATTERN_LEARN') {
+        chrome.runtime.sendMessage({
+            action: 'ingestPatternProfile',
+            lang: event.data.lang,
+            category: event.data.category,
+            patternProfile: event.data.patternProfile,
+            runMeta: event.data.runMeta || null
+        }, () => {});
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({
             action: 'progress',

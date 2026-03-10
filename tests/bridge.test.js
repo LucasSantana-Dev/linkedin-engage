@@ -82,4 +82,39 @@ describe('bridge AI relay', () => {
         );
         postSpy.mockRestore();
     });
+
+    it('forwards learn-only pattern profile ingestion', () => {
+        window.dispatchEvent(new MessageEvent('message', {
+            source: window,
+            data: {
+                type: 'LINKEDIN_BOT_PATTERN_LEARN',
+                lang: 'pt',
+                category: 'hiring',
+                patternProfile: {
+                    analyzedCount: 6,
+                    patternConfidence: 74
+                },
+                runMeta: {
+                    warmupActive: true,
+                    runNumber: 1
+                }
+            }
+        }));
+
+        expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                action: 'ingestPatternProfile',
+                lang: 'pt',
+                category: 'hiring',
+                patternProfile: expect.objectContaining({
+                    analyzedCount: 6
+                }),
+                runMeta: expect.objectContaining({
+                    warmupActive: true,
+                    runNumber: 1
+                })
+            }),
+            expect.any(Function)
+        );
+    });
 });

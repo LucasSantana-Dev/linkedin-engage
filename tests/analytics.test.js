@@ -179,6 +179,9 @@ describe('computeStats', () => {
         const s = computeStats([]);
         expect(s.total).toBe(0);
         expect(s.topCategory).toBe(null);
+        expect(s.warmupRuns).toBe(0);
+        expect(s.warmupPostsLearned).toBe(0);
+        expect(s.warmupThreadsLearned).toBe(0);
     });
 
     test('handles null log', () => {
@@ -208,6 +211,30 @@ describe('computeStats', () => {
         expect(s.bySkipReason['skip-pattern-fit']).toBe(1);
         expect(s.bySkipReason['skipped-keyword']).toBe(1);
         expect(s.commentRate).toBe(0);
+    });
+
+    test('tracks warmup counters from feed warmup runs', () => {
+        const s = computeStats([
+            {
+                mode: 'feed',
+                status: 'warmup-run',
+                warmupRun: true,
+                warmupPostsLearned: 12,
+                warmupThreadsLearned: 7,
+                timestamp: '2026-03-10T10:00:00Z'
+            },
+            {
+                mode: 'feed',
+                status: 'warmup-run',
+                warmupRun: true,
+                warmupPostsLearned: 8,
+                warmupThreadsLearned: 4,
+                timestamp: '2026-03-11T10:00:00Z'
+            }
+        ]);
+        expect(s.warmupRuns).toBe(2);
+        expect(s.warmupPostsLearned).toBe(20);
+        expect(s.warmupThreadsLearned).toBe(11);
     });
 });
 

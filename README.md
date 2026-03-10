@@ -22,6 +22,8 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
 - **Company follow mode** — searches each target company by name individually for high hit rate; 60 curated mid-size (150-500 employee) LATAM-hiring companies as defaults; scheduled recurring runs with batch rotation
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching; scheduled recurring runs
+- **Warmup-first feed learning** — first feed runs (default: 2) run in react+learn mode only (no comments) so thread patterns are learned before comment unlock
+- **Feed warmup controls** — configurable warmup enable/disable, required run count (0-10), live progress indicator, and reset action in popup
 - **Goal mode selector** — choose between `Networking & Visibility` (passive) and `Actively Looking` (more direct) to control hiring-post comment tone across Connect and Feed Engage
 - **Never first-comment safeguard** — comment automation skips posts with zero existing comments to avoid starting threads
 - **13 post categories** — hiring, achievement, technical, question, tips, story, news, humor, critique, motivation, project, jobseeking, newjob — each with dedicated comment templates
@@ -149,6 +151,7 @@ extension/
     invite-utils.js  <- Shared invite/connect utility functions
     feed-utils.js    <- Shared feed engagement utility functions
     pattern-memory.js <- Shared pattern-memory bucket merge/guidance helpers
+    feed-warmup.js   <- Shared feed warmup runtime/state helpers
     company-utils.js <- Shared company follow utility functions
   popup/            <- Settings UI (search builder, templates, filters, schedule)
   options.html      <- Dashboard page (stats, connection history)
@@ -198,6 +201,8 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Target Companies | Empty | Only follow companies matching these names (one per line) |
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
+| Enable Warmup Learning | On | For feed mode, force first N runs to react+learn only (no comments) |
+| Warmup Runs Required | 2 | Number of learn-only feed runs before comments unlock (0-10) |
 | Role Terms Limit | 6 | Maximum number of role tags included in the `OR` role query (1-10) to keep results precise |
 | Skip Open to Work Recruiters | On | Skips recruiter-like profiles when explicit Open to Work signals are detected |
 | Skip Job-seeking Signals | Off | Skips explicit job-seeking profiles/signals to reduce low-fit outreach |

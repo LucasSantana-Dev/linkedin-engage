@@ -661,6 +661,42 @@
                     <label for="feedCommentCheckbox">Comment on posts</label>
                     <input type="checkbox" id="feedCommentCheckbox" />
                 </div>
+                <div class="checkbox-group">
+                    <label for="feedWarmupEnabledCheckbox">
+                        Enable Warmup Learning
+                    </label>
+                    <input type="checkbox"
+                        id="feedWarmupEnabledCheckbox"
+                        checked />
+                </div>
+                <div class="input-group" style="margin-top:8px;">
+                    <label for="feedWarmupRunsRequiredInput">
+                        Warmup Runs Required
+                    </label>
+                    <input type="number"
+                        id="feedWarmupRunsRequiredInput"
+                        min="0" max="10" value="2" />
+                </div>
+                <div style="margin-top:8px;">
+                    <button id="resetFeedWarmupProgressBtn"
+                        type="button"
+                        style="font-size:10px;
+                        padding:4px 10px;
+                        border:1px solid var(--border);
+                        border-radius:var(--radius-sm);
+                        background:var(--input-bg);
+                        color:var(--text-main);
+                        cursor:pointer;">
+                        Reset Learning Progress
+                    </button>
+                </div>
+                <div id="feedWarmupProgressText"
+                    style="font-size:10px;
+                    color:var(--text-muted);
+                    margin-top:6px;">
+                    Learning progress: 0 / 2 runs ·
+                    Comments unlock on run #3
+                </div>
                 <div id="commentSection" style="display:none;">
                     <div class="input-group">
                         <label for="aiApiKeyInput">
