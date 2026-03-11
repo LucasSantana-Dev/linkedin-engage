@@ -20,7 +20,7 @@ jobs:
       ASSET_NAME: linkedin-engage-${{ github.ref_name }}.zip
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Create extension zip
         run: |

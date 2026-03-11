@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - **AI copy-risk retry flow**: Background AI comment generation now retries once with stricter originality guidance and slightly higher creativity when the first candidate is flagged as copy-risk.
 - **Career-milestone tone policy hardened**: For `newjob`, `career`, and `achievement`, AI prompt instructions now enforce professional-neutral wording (brief congrats + neutral wish) and explicitly forbid close-friend phrasing.
 - **Release workflow hardening**: Tag releases now use `gh` CLI create/upload/verify flow with idempotent asset upload (`--clobber`), controlled retry, and tag-scoped workflow concurrency.
+- **GitHub Actions runtime compatibility**: CI and Release workflows now use `actions/checkout@v6` and `actions/setup-node@v6` to align with GitHub’s Node 24 migration timeline.
 
 ### Fixed
 - **Companies tab hang on multi-query runs**: Fixed the “starts then hangs” failure where company-follow context could be lost during internal page navigation.

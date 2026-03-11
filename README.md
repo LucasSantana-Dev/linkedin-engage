@@ -232,6 +232,8 @@ If a previous tag release appears without assets, re-upload with:
 gh release upload <tag> linkedin-engage-<tag>.zip --clobber
 ```
 
+Workflows currently use `actions/checkout@v6` and `actions/setup-node@v6` for Node 24-ready GitHub Actions runtime compatibility.
+
 ## Disclaimer
 
 This tool is for personal networking purposes. Use responsibly and in accordance with LinkedIn's Terms of Service. Excessive automation may result in account restrictions. Recommended limits:
