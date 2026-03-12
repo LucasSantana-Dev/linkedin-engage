@@ -1021,17 +1021,20 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             );
                             continue;
                         }
-                        if (typeof isSameCompany ===
-                            'function' &&
-                            isSameCompany(
+                        const excludedMatch = typeof
+                            matchExcludedCompany ===
+                            'function'
+                            ? matchExcludedCompany(
                                 profile.headline,
-                                config?.myCompany
-                            )) {
+                                config?.excludedCompanies || []
+                            )
+                            : '';
+                        if (excludedMatch) {
                             totalSkipped++;
                             connectionLog.push({
                                 ...profile,
-                                status: 'skipped-same-company',
-                                company: config.myCompany,
+                                status: 'skipped-company-excluded',
+                                company: excludedMatch,
                                 time: new Date().toISOString()
                             });
                             reportProgress(

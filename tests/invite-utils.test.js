@@ -20,6 +20,7 @@ const {
     isBrazilianProfile,
     isBrazilGeoTarget,
     isSameCompany,
+    matchExcludedCompany,
     isRecruiterProfile,
     isOpenToWorkCard,
     isJobSeekingProfile
@@ -535,6 +536,35 @@ describe('isSameCompany', () => {
         expect(isSameCompany('Recruiter', '')).toBe(false);
         expect(isSameCompany(null, 'Acme')).toBe(false);
         expect(isSameCompany('Recruiter', null)).toBe(false);
+    });
+});
+
+describe('matchExcludedCompany', () => {
+    it('matches any company from exclusion list', () => {
+        expect(matchExcludedCompany(
+            'Tech Recruiter at Beta Labs',
+            ['Acme', 'Beta Labs']
+        )).toBe('Beta Labs');
+    });
+
+    it('is case and accent insensitive', () => {
+        expect(matchExcludedCompany(
+            'People Partner at Servicos Financeiros Global',
+            ['Serviços Financeiros']
+        )).toBe('Serviços Financeiros');
+    });
+
+    it('returns empty when no company matches', () => {
+        expect(matchExcludedCompany(
+            'Recruiter at Gamma',
+            ['Acme', 'Beta']
+        )).toBe('');
+    });
+
+    it('returns empty for missing inputs', () => {
+        expect(matchExcludedCompany('', ['Acme'])).toBe('');
+        expect(matchExcludedCompany('Recruiter', [])).toBe('');
+        expect(matchExcludedCompany(null, ['Acme'])).toBe('');
     });
 });
 

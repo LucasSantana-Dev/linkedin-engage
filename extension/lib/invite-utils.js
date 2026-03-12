@@ -184,12 +184,27 @@ function isBrazilGeoTarget(geoUrn) {
 
 function isSameCompany(headline, myCompany) {
     if (!headline || !myCompany) return false;
-    var normalizedHeadline = String(headline)
-        .toLowerCase();
-    var normalizedCompany = String(myCompany)
-        .toLowerCase().trim();
-    if (!normalizedCompany) return false;
-    return normalizedHeadline.includes(normalizedCompany);
+    return !!matchExcludedCompany(headline, [myCompany]);
+}
+
+function matchExcludedCompany(headline, excludedCompanies) {
+    if (!headline || !Array.isArray(excludedCompanies)) {
+        return '';
+    }
+    var normalizedHeadline = normalizeLocaleText(
+        String(headline || '')
+    );
+    if (!normalizedHeadline) return '';
+    for (var i = 0; i < excludedCompanies.length; i++) {
+        var raw = String(excludedCompanies[i] || '').trim();
+        if (!raw) continue;
+        var normalized = normalizeLocaleText(raw);
+        if (!normalized) continue;
+        if (normalizedHeadline.includes(normalized)) {
+            return raw;
+        }
+    }
+    return '';
 }
 
 function isRecruiterProfile(profile) {
@@ -313,6 +328,7 @@ if (typeof module !== 'undefined' && module.exports) {
         isBrazilianProfile,
         isBrazilGeoTarget,
         isSameCompany,
+        matchExcludedCompany,
         isRecruiterProfile,
         isOpenToWorkCard,
         isJobSeekingProfile

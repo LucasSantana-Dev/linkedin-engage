@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Changed
+- **Connect supports multi-area targeting beyond tech**: Search Builder now includes 11 professional area presets (`tech`, `finance`, `real-estate`, `headhunting`, `legal-judicial-media`, `environmental-engineering`, `sanitary-engineering`, `healthcare`, `education`, `marketing`, `sales`) that apply role + industry tags in one action.
+- **Neutral Connect defaults on first load**: Role, Industry, and Market tags are no longer preselected by default, avoiding implicit tech/LATAM bias for new users.
+- **Connect templates are now area-aware and role-neutral**: Built-in Senior/Mid/Junior/Lead/Networking templates adapt wording to the selected area preset and no longer assume software-engineering identity by default.
 - **Company mode runtime orchestration moved to background queue**: Multi-company runs are now coordinated by `background.js` instead of in-page navigation loops, so query-to-query navigation no longer tears down the active execution context.
 - **Company run completion semantics**: Company mode now reports a single final completion after the full search queue (or stop/error), with aggregate logs and rate counting applied once per run.
 - **Injection start race hardening**: `injectAndStart(...)` now checks current tab status immediately via `chrome.tabs.get` in addition to `tabs.onUpdated`, preventing missed injections on fast page loads.
@@ -18,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - **GitHub Actions runtime compatibility**: CI and Release workflows now use `actions/checkout@v6` and `actions/setup-node@v6` to align with GitHub’s Node 24 migration timeline.
 
 ### Fixed
+- **Single-company skip limitation in Connect**: Replaced legacy single `My Company` behavior with multi-company exclusion list support (`Excluded Companies`), including migration of legacy state to the new field.
 - **Companies tab hang on multi-query runs**: Fixed the “starts then hangs” failure where company-follow context could be lost during internal page navigation.
 - **Company follow button detection resilience**: `isCompanyFollowText` now accepts label variants like `Follow <Company>` / `Seguir <Empresa>` while still rejecting `Following` / `Seguindo`.
 - **False `0 company cards` on visible result pages**: Company mode now distinguishes explicit no-results pages from DOM-detection timeout failures and fails clearly when cards do not appear despite result signals.
@@ -26,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - **Release asset publication reliability**: Added explicit post-upload asset verification to prevent “published release without assets” when GitHub API finalization is flaky.
 
 ### Added
+- **Connect config migration + schema hardening**: Popup state migration now upgrades legacy `myCompany` to `excludedCompanies`, normalizes `areaPreset`, and bumps tag-state version for multi-area behavior consistency.
+- **Connect runtime regression coverage**: Added tests for area preset/query composition, excluded-company matching (case/accent-insensitive), and background forwarding of `areaPreset + excludedCompanies` on direct and scheduled runs.
 - **Company orchestration regression coverage**: New `tests/company-orchestration.test.js` validates multi-query queue execution, stop behavior, step-error finalization, and scheduled company-flow reuse of the same orchestrator.
 - **Company page-state diagnostics**: Company step payload now includes `stepCode` (`ok`, `no-results`, `cards-timeout`, `challenge`) and `diagnostics` metadata for debugging.
 - **Copy-risk telemetry contract**: `LINKEDIN_BOT_AI_COMMENT_RESULT` now carries optional `diagnostics` and retry `attempts`; feed logs/analytics include explicit `skip-copy-risk` diagnostics fields.

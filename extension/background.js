@@ -27,6 +27,35 @@ importScripts('lib/analytics.js');
 importScripts('lib/smart-schedule.js');
 importScripts('lib/feed-warmup.js');
 importScripts('lib/pattern-memory.js');
+importScripts('lib/connect-config.js');
+
+function parseExcludedCompanyList(raw) {
+    if (typeof parseExcludedCompanies === 'function') {
+        return parseExcludedCompanies(raw);
+    }
+    if (Array.isArray(raw)) {
+        return raw.map(s => String(s || '').trim())
+            .filter(Boolean);
+    }
+    return String(raw || '')
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+}
+
+function migratePopupStateForConnect(state) {
+    if (typeof migrateConnectPopupState !== 'function') {
+        return { state: state || {}, changed: false };
+    }
+    return migrateConnectPopupState(state);
+}
+
+function normalizeRuntimeAreaPreset(value) {
+    if (typeof normalizeAreaPreset === 'function') {
+        return normalizeAreaPreset(value);
+    }
+    return value || 'custom';
+}
 
 async function checkRateLimit(mode) {
     return new Promise(resolve => {
@@ -365,8 +394,14 @@ function launchAutomation(config) {
                                 geoUrn: config.geoUrn,
                                 goalMode:
                                     config.goalMode || 'passive',
-                                myCompany:
-                                    config.myCompany || '',
+                                areaPreset:
+                                    normalizeRuntimeAreaPreset(
+                                        config.areaPreset
+                                    ),
+                                excludedCompanies:
+                                    parseExcludedCompanyList(
+                                        config.excludedCompanies
+                                    ),
                                 skipOpenToWorkRecruiters:
                                     config
                                         .skipOpenToWorkRecruiters
@@ -2404,7 +2439,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         chrome.storage.local.get(
             ['popupState', 'sentProfileUrls'],
             (data) => {
-                const state = data.popupState;
+                const migration = migratePopupStateForConnect(
+                    data.popupState
+                );
+                const state = migration.state;
+                if (migration.changed) {
+                    chrome.storage.local.set({
+                        popupState: state
+                    });
+                }
                 if (!state) return;
 
                 const savedQueries =
@@ -2445,7 +2488,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                         parseInt(state.limit) || 50, 10
                     ),
                     goalMode: state.goalMode || 'passive',
-                    myCompany: state.myCompany || '',
+                    areaPreset: normalizeRuntimeAreaPreset(
+                        state.areaPreset
+                    ),
+                    excludedCompanies: parseExcludedCompanyList(
+                        state.excludedCompanies
+                    ),
                     skipOpenToWorkRecruiters:
                         state.skipOpenToWorkRecruiters
                         !== false,
@@ -2457,7 +2505,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                             ? state.customNote
                             : getTemplate(
                                 state.activeTemplate,
-                                state.lang || 'en'
+                                state.lang || 'en',
+                                normalizeRuntimeAreaPreset(
+                                    state.areaPreset
+                                )
                             ),
                     geoUrn,
                     activelyHiring:
@@ -2647,7 +2698,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
             'analyticsLog', 'acceptedUrls'
         ],
         (data) => {
-            const state = data.popupState;
+            const migration = migratePopupStateForConnect(
+                data.popupState
+            );
+            const state = migration.state;
+            if (migration.changed) {
+                chrome.storage.local.set({
+                    popupState: state
+                });
+            }
             const schedule = data.schedule;
             if (!schedule?.enabled || !state) return;
 
@@ -2711,7 +2770,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 query,
                 limit: parseInt(state.limit) || 50,
                 goalMode: state.goalMode || 'passive',
-                myCompany: state.myCompany || '',
+                areaPreset: normalizeRuntimeAreaPreset(
+                    state.areaPreset
+                ),
+                excludedCompanies: parseExcludedCompanyList(
+                    state.excludedCompanies
+                ),
                 skipOpenToWorkRecruiters:
                     state.skipOpenToWorkRecruiters
                     !== false,
@@ -2722,7 +2786,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     ? state.customNote
                     : getTemplate(
                         state.activeTemplate,
-                        state.lang || 'en'
+                        state.lang || 'en',
+                        normalizeRuntimeAreaPreset(
+                            state.areaPreset
+                        )
                     ),
                 geoUrn,
                 activelyHiring: state.activelyHiring || false,
@@ -2738,109 +2805,40 @@ function buildQueryFromTags(state) {
         return state.customQuery;
     }
     const tags = state.tags || {};
-    const parts = [];
-    const roles = tags.role || [];
     const maxRoleTerms = Math.max(
         1,
-        Math.min(
-            10,
-            parseInt(state.roleTermsLimit, 10) || 6
-        )
+        Math.min(10, parseInt(state.roleTermsLimit, 10) || 6)
     );
-    let safeRoles = roles;
-    if (roles.length > maxRoleTerms) {
-        const priority = [
-            'recruiter',
-            '"talent acquisition"',
-            '"hiring manager"',
-            '"head of talent"',
-            'developer',
-            '"software engineer"',
-            '"product manager"',
-            'qa',
-            '"tech lead"',
-            '"engineering manager"',
-            'sourcer',
-            '"staffing agency"'
-        ];
-        const normalized = roles.map(r =>
-            String(r).toLowerCase()
-        );
-        safeRoles = priority
-            .filter(p => normalized.includes(p))
-            .map(p => roles[normalized.indexOf(p)]);
-        for (const role of roles) {
-            if (!safeRoles.includes(role)) {
-                safeRoles.push(role);
-            }
-        }
-        safeRoles = safeRoles.slice(0, maxRoleTerms);
+    if (typeof buildConnectQueryFromTags === 'function') {
+        return buildConnectQueryFromTags(tags, maxRoleTerms);
     }
-    if (safeRoles.length === 1) {
-        parts.push(safeRoles[0]);
-    } else if (safeRoles.length > 1) {
-        parts.push(safeRoles.join(' OR '));
+    const roles = Array.isArray(tags.role) ? tags.role : [];
+    const parts = [];
+    if (roles.length === 1) parts.push(roles[0]);
+    if (roles.length > 1) {
+        parts.push(roles.slice(0, maxRoleTerms).join(' OR '));
     }
-    for (const g of ['industry', 'market', 'level']) {
-        for (const term of (tags[g] || [])) {
-            parts.push(term);
-        }
-    }
+    ['industry', 'market', 'level'].forEach(group => {
+        const values = Array.isArray(tags[group]) ? tags[group] : [];
+        values.forEach(term => parts.push(term));
+    });
     return parts.join(' ');
 }
 
-function getTemplate(key, lang) {
-    const en = {
-        senior: "Hi {name}, I'm a senior software engineer " +
-            "with experience in scalable full-stack systems " +
-            "and cloud infrastructure. Always looking to " +
-            "connect with great people in the industry. " +
-            "Let's stay in touch!",
-        mid: "Hi {name}, I'm a software engineer with a " +
-            "few years of experience building web " +
-            "applications and APIs. I'm always open to " +
-            "learning about new opportunities. " +
-            "Would love to connect!",
-        junior: "Hi {name}, I'm a software developer early " +
-            "in my career, eager to grow and learn from " +
-            "experienced professionals. I'd love to " +
-            "connect and stay in touch!",
-        lead: "Hi {name}, I'm an engineering lead with " +
-            "experience driving technical strategy and " +
-            "mentoring teams. I enjoy connecting with " +
-            "people shaping the tech hiring landscape. " +
-            "Happy to connect!",
+function getTemplate(key, lang, areaPreset) {
+    if (typeof getConnectTemplates === 'function') {
+        const templates = getConnectTemplates(
+            normalizeRuntimeAreaPreset(areaPreset),
+            lang
+        );
+        return templates[key] || templates.networking;
+    }
+    const fallback = {
         networking: "Hi {name}, I came across your profile " +
-            "and thought it'd be great to connect. " +
-            "I'm always looking to expand my professional " +
-            "network. Looking forward to staying in touch!"
+            "and would like to connect. I value exchanging " +
+            "practical insights and staying in touch."
     };
-    const pt = {
-        senior: "Olá {name}, sou engenheiro de software " +
-            "sênior com experiência em sistemas " +
-            "full-stack escaláveis e infraestrutura " +
-            "cloud. Sempre bom conectar com " +
-            "profissionais da área. Vamos manter contato!",
-        mid: "Olá {name}, sou engenheiro de software com " +
-            "alguns anos de experiência em aplicações " +
-            "web e APIs. Estou sempre aberto a novas " +
-            "oportunidades. Vamos conectar!",
-        junior: "Olá {name}, sou desenvolvedor no início " +
-            "de carreira, com muita vontade de crescer " +
-            "e aprender com profissionais experientes. " +
-            "Adoraria conectar e manter contato!",
-        lead: "Olá {name}, sou tech lead com experiência " +
-            "em estratégia técnica e mentoria de times. " +
-            "Gosto de conectar com pessoas que fazem a " +
-            "diferença no mercado de tecnologia. " +
-            "Vamos conectar!",
-        networking: "Olá {name}, vi seu perfil e achei que " +
-            "seria ótimo conectar. Estou sempre buscando " +
-            "expandir minha rede profissional. " +
-            "Vamos manter contato!"
-    };
-    const templates = lang === 'pt' ? pt : en;
-    return templates[key] || templates.networking;
+    return fallback[key] || fallback.networking;
 }
 
 chrome.runtime.onInstalled.addListener(() => {

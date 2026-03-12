@@ -6,13 +6,15 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 
 ### Chrome Extension
 - **Tag-based search builder** — compose LinkedIn search queries by selecting Role, Industry, Market Focus, and Level tags
-- **6 note templates** — Senior, Mid-Level, Junior, Tech Lead, General Networking, and Custom
+- **Area presets for non-tech networking** — one-click presets for Tech, Finance, Real Estate, Headhunting, Legal/Judicial Media, Environmental, Sanitary, Healthcare, Education, Marketing, and Sales
+- **Area-aware note templates** — Senior, Mid-Level, Junior, Lead, General Networking, and Custom with role-neutral wording adapted to the selected area
 - **300-char validation** — enforces LinkedIn's invitation note character limit
 - **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
 - **Follow-to-Connect** — handles profiles showing "Follow" instead of "Connect" by opening the "More" menu to find the hidden Connect option
 - **Connect mode follow fallback** — if a profile has only `Follow` and no `Connect` option, Connect mode follows the person instead of skipping
 - **Already-connected suppression** — Connect mode ignores cards marked as `1st`/`1º grau`, preventing attempts on people who are already in your network
 - **Email modal detection** — auto-skips profiles that require email verification (3rd+ degree with no mutuals)
+- **Neutral search defaults** — first load starts without preselected role/industry/market tags so users can choose their own area scope
 - **LATAM recruiter targeting** — Market Focus tags (LATAM, Brazil, Nearshore, Remote) + configurable recruiter region selector
 - **"Actively Hiring" filter** — leverages LinkedIn's undocumented `activelyHiring=true` URL parameter
 - **Weekly limit guard** — tracks invites per week (150 max), blocks/adjusts when approaching limit
@@ -56,7 +58,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Brazilian connect notes in PT-BR** — when profile cues indicate a Brazilian contact, Connect automatically switches the default invite note to Portuguese
 - **PT-BR detection kept in More-menu connect** — when Connect is triggered from the card’s `More` menu, profile context is preserved so Brazilian contacts still receive Portuguese notes
 - **Brazil search language lock** — when Recruiter Location/search geo targets Brazil, Connect enforces PT-BR invitation notes even for English-profile cards
-- **Same-company recruiter skip** — optional `My Company` filter skips Connect attempts when a profile headline matches your current company
+- **Multi-company exclusion skip** — optional `Excluded Companies` filter skips Connect attempts when a profile headline matches any listed company (one per line)
 - **Open-to-Work recruiter skip** — optional Connect safeguard skips recruiter-like profiles when explicit `Open to Work` signals are present on the card/profile
 - **Job-seeking signal skip** — optional Connect filter skips profiles with explicit job-seeking signals (`actively looking`, `#opentowork`, `buscando oportunidades`, etc.)
 - **Connect relevance scoring** — target ordering now prioritizes recruiter-like profiles, mutual connections, degree proximity, domain fit, and geo context for more precise outreach
@@ -114,7 +116,7 @@ Click the puzzle icon in Chrome's toolbar and pin **LinkedIn Engage** for easy a
 #### 6. Configure and launch
 
 1. Click the extension icon
-2. Select your search tags (Role, Industry, Market Focus, Level)
+2. Select an Area Preset (optional) and adjust search tags (Role, Industry, Market Focus, Level)
 3. Choose a note template or write a custom message
 4. Set your connection limit and recruiter region
 5. Click **Launch Automation**
@@ -198,10 +200,11 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Actively Hiring | Off | Only show profiles with hiring badge |
 | Engagement Only | Off | Visit profiles + follow instead of connecting |
 | Send Note | On | Include personalized message |
-| Template | Senior Engineer | Pre-written note template |
+| Template | General Networking | Pre-written note template (area-aware) |
 | Weekly Limit | 150 | Max invites per week (auto-enforced) |
 | Schedule | Off | Recurring runs every N hours (Chrome must be open) |
 | Query Rotation | Empty | Multiple queries (one per line) cycled on each scheduled run |
+| Area Preset | Custom | One-click role/industry targeting for 11 supported professional areas |
 | Company Query | Empty | Search term for company follow mode |
 | Target Companies | Empty | Only follow companies matching these names (one per line) |
 | Feed React | On | React to feed posts (smart reaction based on content) |
@@ -214,7 +217,7 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Goal Mode | Networking & Visibility | `passive` avoids job-seeking signals; `active` allows stronger hiring-post positioning |
 | Comment Templates | Empty | One template per line; `{topic}` and `{excerpt}` are auto-replaced |
 | Skip Keywords | Empty | Skip posts containing these words (one per line) |
-| My Company | Empty | If set, skips connecting with profiles whose headline contains your company name |
+| Excluded Companies | Empty | If set, skips connecting with profiles whose headline contains any listed company name |
 
 ## Releasing
 

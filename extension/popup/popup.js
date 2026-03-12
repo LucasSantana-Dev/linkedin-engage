@@ -1,16 +1,20 @@
-const TEMPLATES = {
-    senior: `Hi {name}, I'm a senior software engineer with experience in scalable full-stack systems and cloud infrastructure. Always looking to connect with great people in the industry. Let's stay in touch!`,
-    mid: `Hi {name}, I'm a software engineer with a few years of experience building web applications and APIs. I'm always open to learning about new opportunities. Would love to connect!`,
-    junior: `Hi {name}, I'm a software developer early in my career, eager to grow and learn from experienced professionals. I'd love to connect and stay in touch!`,
-    lead: `Hi {name}, I'm an engineering lead with experience driving technical strategy and mentoring teams. I enjoy connecting with people shaping the tech hiring landscape. Happy to connect!`,
-    networking: `Hi {name}, I came across your profile and thought it'd be great to connect. I'm always looking to expand my professional network. Looking forward to staying in touch!`,
+const FALLBACK_TEMPLATES = {
+    senior: `Hi {name}, I work on strategic projects in your field and value practical exchanges with professionals in this space. Happy to connect.`,
+    mid: `Hi {name}, I collaborate with teams in your field and enjoy sharing practical market insights. I would like to connect.`,
+    junior: `Hi {name}, I am growing my career and would love to connect with professionals in this space.`,
+    lead: `Hi {name}, I lead initiatives and value focused conversations about execution and outcomes. Happy to connect.`,
+    networking: `Hi {name}, I came across your profile and would like to connect. I value exchanging practical insights and staying in touch.`,
     custom: ''
 };
+
+const TEMPLATES = { ...FALLBACK_TEMPLATES };
 
 const MAX_CHARS = 300;
 const WEEKLY_LIMIT = 150;
 const DEFAULT_ROLE_TERMS_LIMIT = 6;
 const DEFAULT_FEED_WARMUP_RUNS = 2;
+const DEFAULT_TEMPLATE_KEY = 'networking';
+const DEFAULT_AREA_PRESET = 'custom';
 let useCustomQuery = false;
 
 const DEFAULT_LATAM_COMPANIES = [
@@ -36,6 +40,78 @@ const DEFAULT_LATAM_COMPANIES = [
     'Arctouch', 'FCamara', 'Raro Labs',
     'Codeminer42', 'Sambatech', 'SoftExpert'
 ].join('\n');
+
+function getSelectedAreaPreset() {
+    const select = document.getElementById('areaPresetSelect');
+    const value = select?.value || DEFAULT_AREA_PRESET;
+    if (typeof normalizeAreaPreset === 'function') {
+        return normalizeAreaPreset(value);
+    }
+    return value || DEFAULT_AREA_PRESET;
+}
+
+function setAreaPresetSelectValue(value) {
+    const select = document.getElementById('areaPresetSelect');
+    if (!select) return;
+    const normalized = typeof normalizeAreaPreset === 'function'
+        ? normalizeAreaPreset(value)
+        : (value || DEFAULT_AREA_PRESET);
+    select.value = normalized || DEFAULT_AREA_PRESET;
+}
+
+function refreshTemplatesForArea() {
+    const areaPreset = getSelectedAreaPreset();
+    const generated = typeof getConnectTemplates === 'function'
+        ? getConnectTemplates(areaPreset, 'en')
+        : {};
+    ['senior', 'mid', 'junior', 'lead', 'networking']
+        .forEach(key => {
+            TEMPLATES[key] = generated[key] ||
+                FALLBACK_TEMPLATES[key];
+        });
+}
+
+function setTagsForGroup(group, values) {
+    const set = new Set(Array.isArray(values) ? values : []);
+    document.querySelectorAll(`.tag[data-group="${group}"]`)
+        .forEach(tag => {
+            tag.classList.toggle('active', set.has(tag.dataset.value));
+        });
+}
+
+function hasActiveTags(group) {
+    return document.querySelectorAll(
+        `.tag[data-group="${group}"].active`
+    ).length > 0;
+}
+
+function applyAreaPreset(preset, shouldSave) {
+    const normalized = typeof normalizeAreaPreset === 'function'
+        ? normalizeAreaPreset(preset)
+        : (preset || DEFAULT_AREA_PRESET);
+    setAreaPresetSelectValue(normalized);
+    if (normalized !== 'custom' &&
+        typeof applyAreaPresetToTags === 'function') {
+        const currentTags = {
+            role: getSelectedTags('role'),
+            industry: getSelectedTags('industry'),
+            market: getSelectedTags('market'),
+            level: getSelectedTags('level')
+        };
+        const next = applyAreaPresetToTags(currentTags, normalized);
+        setTagsForGroup('role', next.role);
+        setTagsForGroup('industry', next.industry);
+    }
+    refreshTemplatesForArea();
+    const activeTemplate = document.querySelector(
+        '.template-card.active'
+    )?.dataset.template || DEFAULT_TEMPLATE_KEY;
+    if (activeTemplate !== 'custom') {
+        setActiveTemplate(activeTemplate);
+    }
+    updateQueryPreview();
+    if (shouldSave) saveState();
+}
 
 function getWeekKey() {
     const now = new Date();
@@ -145,38 +221,16 @@ function refreshFeedWarmupProgress() {
 }
 
 function getSafeRoleTerms(roles) {
-    const limit = getRoleTermsLimit();
-    if (!Array.isArray(roles) || roles.length <= limit) {
-        return Array.isArray(roles) ? roles : [];
+    if (typeof buildConnectQueryFromTags === 'function') {
+        const query = buildConnectQueryFromTags(
+            { role: Array.isArray(roles) ? roles : [] },
+            getRoleTermsLimit()
+        );
+        if (!query) return [];
+        if (!query.includes(' OR ')) return [query];
+        return query.split(' OR ').map(s => s.trim()).filter(Boolean);
     }
-    var priority = [
-        'recruiter',
-        '"talent acquisition"',
-        '"hiring manager"',
-        '"head of talent"',
-        'developer',
-        '"software engineer"',
-        '"product manager"',
-        'qa',
-        '"tech lead"',
-        '"engineering manager"',
-        'sourcer',
-        '"staffing agency"'
-    ];
-    var normalized = roles.map(function(r) {
-        return String(r).toLowerCase();
-    });
-    var ordered = priority
-        .filter(function(p) {
-            return normalized.includes(p);
-        })
-        .map(function(p) {
-            return roles[normalized.indexOf(p)];
-        });
-    for (const role of roles) {
-        if (!ordered.includes(role)) ordered.push(role);
-    }
-    return ordered.slice(0, limit);
+    return Array.isArray(roles) ? roles : [];
 }
 
 function buildQuery() {
@@ -184,24 +238,22 @@ function buildQuery() {
         return document.getElementById('customQueryInput').value.trim();
     }
 
-    const roles = getSelectedTags('role');
-    const industry = getSelectedTags('industry');
-    const market = getSelectedTags('market');
-    const level = getSelectedTags('level');
-
-    const parts = [];
-
-    const safeRoles = getSafeRoleTerms(roles);
-    if (safeRoles.length === 1) {
-        parts.push(safeRoles[0]);
-    } else if (safeRoles.length > 1) {
-        parts.push(safeRoles.join(' OR '));
+    const tags = {
+        role: getSelectedTags('role'),
+        industry: getSelectedTags('industry'),
+        market: getSelectedTags('market'),
+        level: getSelectedTags('level')
+    };
+    if (typeof buildConnectQueryFromTags === 'function') {
+        return buildConnectQueryFromTags(tags, getRoleTermsLimit());
     }
-
-    for (const term of industry) parts.push(term);
-    for (const term of market) parts.push(term);
-    for (const term of level) parts.push(term);
-
+    const safeRoles = getSafeRoleTerms(tags.role);
+    const parts = [];
+    if (safeRoles.length === 1) parts.push(safeRoles[0]);
+    if (safeRoles.length > 1) parts.push(safeRoles.join(' OR '));
+    tags.industry.forEach(term => parts.push(term));
+    tags.market.forEach(term => parts.push(term));
+    tags.level.forEach(term => parts.push(term));
     return parts.join(' ');
 }
 
@@ -267,9 +319,10 @@ function saveState() {
         tags: {},
         currentMode,
         goalMode: document.getElementById('goalMode').value,
+        areaPreset: getSelectedAreaPreset(),
         roleTermsLimit: getRoleTermsLimit(),
-        myCompany: document.getElementById(
-            'myCompanyInput'
+        excludedCompanies: document.getElementById(
+            'excludedCompaniesInput'
         ).value.trim(),
         skipOpenToWorkRecruiters:
             document.getElementById(
@@ -288,7 +341,7 @@ function saveState() {
         sendNote: document.getElementById('sendNoteCheckbox').checked,
         activeTemplate: document.querySelector(
             '.template-card.active'
-        )?.dataset.template || 'senior',
+        )?.dataset.template || DEFAULT_TEMPLATE_KEY,
         customNote: TEMPLATES.custom,
         customQuery: document.getElementById('customQueryInput').value,
         useCustomQuery,
@@ -336,7 +389,9 @@ function saveState() {
             'nurturePostLimit').value
     };
 
-    state.tagVersion = 4;
+    state.tagVersion = typeof STATE_TAG_VERSION === 'number'
+        ? STATE_TAG_VERSION
+        : 5;
     document.querySelectorAll('.tag').forEach(tag => {
         const group = tag.dataset.group;
         if (!state.tags[group]) state.tags[group] = [];
@@ -357,14 +412,28 @@ function loadState() {
     });
     chrome.storage.local.get('popupState', ({ popupState }) => {
         if (!popupState) {
-            setActiveTemplate('senior');
+            setAreaPresetSelectValue(DEFAULT_AREA_PRESET);
+            refreshTemplatesForArea();
+            setActiveTemplate(DEFAULT_TEMPLATE_KEY);
             updateQueryPreview();
             updateCharCounter();
             refreshFeedWarmupProgress();
             return;
         }
 
-        const TAG_VERSION = 4;
+        let migratedState = popupState;
+        if (typeof migrateConnectPopupState === 'function') {
+            const migration = migrateConnectPopupState(popupState);
+            migratedState = migration.state;
+            if (migration.changed) {
+                chrome.storage.local.set({ popupState: migratedState });
+            }
+        }
+        popupState = migratedState;
+
+        const TAG_VERSION = typeof STATE_TAG_VERSION === 'number'
+            ? STATE_TAG_VERSION
+            : 5;
         if (popupState.tags &&
             popupState.tagVersion === TAG_VERSION) {
             document.querySelectorAll('.tag').forEach(tag => {
@@ -374,6 +443,14 @@ function loadState() {
                     'active', vals.includes(tag.dataset.value)
                 );
             });
+        }
+
+        setAreaPresetSelectValue(popupState.areaPreset || 'custom');
+        refreshTemplatesForArea();
+        if (getSelectedAreaPreset() !== 'custom' &&
+            !hasActiveTags('role') &&
+            !hasActiveTags('industry')) {
+            applyAreaPreset(getSelectedAreaPreset(), false);
         }
 
         if (popupState.limit) {
@@ -388,9 +465,10 @@ function loadState() {
                 'roleTermsLimitInput'
             ).value = popupState.roleTermsLimit;
         }
-        if (popupState.myCompany) {
-            document.getElementById('myCompanyInput').value =
-                popupState.myCompany;
+        if (popupState.excludedCompanies) {
+            document.getElementById(
+                'excludedCompaniesInput'
+            ).value = popupState.excludedCompanies;
         }
         if (popupState.skipOpenToWorkRecruiters !==
             undefined) {
@@ -462,6 +540,8 @@ function loadState() {
             document.querySelectorAll('.tag-group').forEach(
                 g => g.style.opacity = '0.4'
             );
+            document.getElementById('areaPresetSelect').disabled = true;
+            document.getElementById('areaPresetSelect').style.opacity = '0.4';
         }
 
         if (popupState.companyQuery) {
@@ -570,7 +650,7 @@ function loadState() {
             ).value = popupState.nurturePostLimit;
         }
 
-        setActiveTemplate(popupState.activeTemplate || 'senior');
+        setActiveTemplate(popupState.activeTemplate || DEFAULT_TEMPLATE_KEY);
         updateQueryPreview();
         updateCharCounter();
 
@@ -587,10 +667,31 @@ document.querySelectorAll('.tag').forEach(tag => {
     tag.addEventListener('click', () => {
         if (useCustomQuery) return;
         tag.classList.toggle('active');
+        const group = tag.dataset.group;
+        const shouldResetPreset = typeof
+            shouldResetAreaPresetOnManualTag === 'function'
+            ? shouldResetAreaPresetOnManualTag(group)
+            : (group === 'role' || group === 'industry');
+        if (shouldResetPreset &&
+            getSelectedAreaPreset() !== 'custom') {
+            setAreaPresetSelectValue('custom');
+            refreshTemplatesForArea();
+            const activeTemplate = document.querySelector(
+                '.template-card.active'
+            )?.dataset.template || DEFAULT_TEMPLATE_KEY;
+            if (activeTemplate !== 'custom') {
+                setActiveTemplate(activeTemplate);
+            }
+        }
         updateQueryPreview();
         saveState();
     });
 });
+
+document.getElementById('areaPresetSelect').addEventListener(
+    'change',
+    (e) => applyAreaPreset(e.target.value, true)
+);
 
 document.getElementById('toggleCustomQuery').addEventListener('click', () => {
     useCustomQuery = !useCustomQuery;
@@ -604,12 +705,16 @@ document.getElementById('toggleCustomQuery').addEventListener('click', () => {
         document.querySelectorAll('.tag-group').forEach(
             g => g.style.opacity = '0.4'
         );
+        document.getElementById('areaPresetSelect').disabled = true;
+        document.getElementById('areaPresetSelect').style.opacity = '0.4';
     } else {
         input.style.display = 'none';
         toggle.textContent = 'Edit query manually';
         document.querySelectorAll('.tag-group').forEach(
             g => g.style.opacity = '1'
         );
+        document.getElementById('areaPresetSelect').disabled = false;
+        document.getElementById('areaPresetSelect').style.opacity = '1';
     }
 
     updateQueryPreview();
@@ -663,7 +768,7 @@ document.getElementById(
     updateQueryPreview();
     saveState();
 });
-document.getElementById('myCompanyInput').addEventListener(
+document.getElementById('excludedCompaniesInput').addEventListener(
     'input', saveState
 );
 document.getElementById(
@@ -827,9 +932,16 @@ async function startConnect() {
         document.getElementById('activelyHiringCheckbox').checked;
     const goalMode =
         document.getElementById('goalMode').value || 'passive';
-    const myCompany = document.getElementById(
-        'myCompanyInput'
-    ).value.trim();
+    const areaPreset = getSelectedAreaPreset();
+    const excludedCompaniesRaw = document.getElementById(
+        'excludedCompaniesInput'
+    ).value;
+    const excludedCompanies =
+        typeof parseExcludedCompanies === 'function'
+            ? parseExcludedCompanies(excludedCompaniesRaw)
+            : excludedCompaniesRaw.split('\n')
+                .map(s => s.trim())
+                .filter(Boolean);
     const skipOpenToWorkRecruiters =
         document.getElementById(
             'skipOpenToWorkRecruitersCheckbox'
@@ -872,7 +984,8 @@ async function startConnect() {
         noteTemplate: noteText,
         geoUrn,
         goalMode,
-        myCompany,
+        areaPreset,
+        excludedCompanies,
         skipOpenToWorkRecruiters,
         skipJobSeekingSignals,
         activelyHiring,
