@@ -202,7 +202,7 @@ describe('jobs orchestration in background', () => {
                 done(undefined);
                 return;
             }
-            setTimeout(() => done(undefined), 20);
+            setTimeout(() => done(undefined), 250);
         });
     }
 
