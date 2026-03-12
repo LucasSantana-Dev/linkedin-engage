@@ -6,7 +6,13 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 
 ### Chrome Extension
 - **Tag-based search builder** — compose LinkedIn search queries by selecting Role, Industry, Market Focus, and Level tags
+- **Boolean-optimized search templates (v1)** — deterministic template engine
+  for Connect/Companies/Jobs with per-mode goals, expected-result buckets
+  (`precise`, `balanced`, `broad`), and controlled operator budgets
 - **Area presets for non-tech networking** — one-click presets for Tech, Finance, Real Estate, Headhunting, Legal/Judicial Media, Environmental, Sanitary, Healthcare, Education, Marketing, Sales, Graphic Design, Art Direction, Branding, UI/UX, Motion Design, Video Editing, and Videomaker
+- **Auto + manual template override** — each search mode supports
+  `Usage Goal`, `Expected Results`, `Template`, and `Auto-select template`
+  controls; scheduled runs reuse the same template resolution logic
 - **Area-aware note templates** — Senior, Mid-Level, Junior, Lead, General Networking, and Custom with role-neutral wording adapted to the selected area
 - **300-char validation** — enforces LinkedIn's invitation note character limit
 - **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
@@ -164,6 +170,7 @@ extension/
   lib/
     invite-utils.js  <- Shared invite/connect utility functions
     feed-utils.js    <- Shared feed engagement utility functions
+    search-templates.js <- Shared search template schema/compiler/resolver
     jobs-cache.js    <- Shared encrypted jobs profile cache helpers
     jobs-utils.js    <- Shared jobs ranking and skip-rule helpers
     pattern-memory.js <- Shared pattern-memory bucket merge/guidance helpers
@@ -196,6 +203,8 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 ## Search Tips
 
 - LinkedIn basic search supports **one OR group max** — keep queries flat
+- Keep operators explicit and uppercase (`AND`, `OR`, `NOT`) and quote
+  multi-word terms
 - Use the tag builder for most cases; switch to manual for advanced queries
 - Set **Recruiter Location** to where the recruiter IS (US/EU), not where they hire from
 - Add LATAM/Remote/Nearshore market tags to find recruiters who hire from Latin America
@@ -215,10 +224,19 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Schedule | Off | Recurring runs every N hours (Chrome must be open) |
 | Query Rotation | Empty | Multiple queries (one per line) cycled on each scheduled run |
 | Area Preset | Custom | One-click role/industry targeting for 18 supported professional areas |
+| Connect Usage Goal | recruiter_outreach | Template goal for Connect (`recruiter_outreach`, `peer_networking`, `decision_makers`, `brazil_focus`) |
+| Connect Expected Results | balanced | Connect query strictness bucket (`precise`, `balanced`, `broad`) |
+| Connect Auto-select Template | On | Uses exact/family/default template fallback for Connect unless manual template is forced |
 | Company Area Preset | Custom | Company-mode preset (`custom` + 7 creative presets) with default company search query and curated target-company defaults |
+| Company Usage Goal | talent_watchlist | Template goal for Companies (`talent_watchlist`, `brand_watchlist`, `competitor_watch`) |
+| Company Expected Results | balanced | Company query strictness bucket (`precise`, `balanced`, `broad`) |
+| Company Auto-select Template | On | Uses exact/family/default template fallback for Companies unless manual template is forced |
 | Company Query | Empty | Search term for company follow mode |
 | Target Companies | Empty | Only follow companies matching these names (one per line); `Load defaults` is preset-aware and custom keeps LATAM defaults |
 | Jobs Area Preset | Custom | Optional jobs ranking context preset (reuses area taxonomy from Connect) |
+| Jobs Usage Goal | high_fit_easy_apply | Template goal for Jobs (`high_fit_easy_apply`, `market_scan`, `target_company_roles`) |
+| Jobs Expected Results | balanced | Jobs query strictness bucket (`precise`, `balanced`, `broad`) |
+| Jobs Auto-select Template | On | Uses exact/family/default template fallback for Jobs unless manual template is forced |
 | Jobs Query | Empty | LinkedIn Jobs keywords query; if empty, inferred from role terms/preset |
 | Jobs Easy Apply Only | On | Restricts assistant to LinkedIn Easy Apply opportunities |
 | Jobs Excluded Companies | Empty | Skips job cards whose company matches any excluded entry (one per line) |

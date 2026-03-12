@@ -4,16 +4,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.26.0] - 2026-03-12
+
 ### Added
 - **Jobs tab (LinkedIn Easy Apply assistant)**: New `jobs` mode in popup/background with best-fit ranking (title, seniority, location, recency, company) and deterministic skip rules for non-Easy-Apply, already-applied, and excluded-company jobs.
 - **Encrypted jobs profile cache**: Added local structured profile cache with `PBKDF2-SHA256` key derivation and `AES-GCM` encryption, plus runtime actions `saveJobsProfileCache`, `getJobsProfileCacheStatus`, and `clearJobsProfileCache`.
 - **Jobs runtime scripts**: Added `extension/jobs-assist.js`, `extension/lib/jobs-utils.js`, and `extension/lib/jobs-cache.js` for jobs orchestration, ranking helpers, and encrypted profile storage.
 - **Jobs mode tests**: Added `tests/jobs-cache.test.js`, `tests/jobs-utils.test.js`, and `tests/jobs-orchestration.test.js`, plus analytics/rate-limit coverage extensions for jobs mode.
+- **Search Templates v1 engine**: Added deterministic
+  `extension/lib/search-templates.js` with per-mode template schema (`connect`,
+  `companies`, `jobs`), goal catalogs, expected-results buckets, area-family
+  fallback, and boolean query compiler/operator budgeting.
+- **Template resolution and compiler tests**: Added
+  `tests/search-templates.test.js` covering exact match, family fallback,
+  auto/manual precedence, and boolean compiler budget behavior.
 
 ### Changed
 - **Rate limiting now includes jobs mode**: Added `jobsAssist` hourly/daily limits and popup rate-limit visibility for Jobs mode.
 - **Popup mode system expanded**: Added `Jobs` mode UI with refine/profile accordions and encrypted-cache controls while keeping existing connect/company/feed contracts unchanged.
 - **History persistence for jobs runs**: Background run finalization now stores jobs logs in `jobsAssistHistory`.
+- **Search builders now template-driven**: Connect, Companies, and Jobs now
+  support per-mode `Usage Goal`, `Expected Results`, template selector, and
+  `Auto-select template` with persisted popup state.
+- **Scheduled/manual parity for template logic**: Scheduled Connect and
+  Companies runs now resolve template query/filter metadata from stored state
+  with the same fallback precedence as manual starts.
+- **Template diagnostics in runtime logs**: Connect/Companies/Jobs run payloads
+  now carry `templateMeta` (`templateId`, `usageGoal`,
+  `expectedResultsBucket`, `operatorCount`, `compiledQueryLength`) for history
+  and analytics.
 
 ## [1.25.0] - 2026-03-12
 
