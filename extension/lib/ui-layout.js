@@ -23,6 +23,10 @@
                 companies: {
                     automation: false
                 },
+                jobs: {
+                    refine: false,
+                    profile: false
+                },
                 feed: {
                     commentSettings: false,
                     automation: false
@@ -34,6 +38,7 @@
             lastOpenSubpanel: {
                 connect: null,
                 companies: null,
+                jobs: null,
                 feed: null
             },
             tagSearch: ''
@@ -64,6 +69,12 @@
                         automation: !!state?.accordions
                             ?.companies?.automation
                     },
+                    jobs: {
+                        refine: !!state?.accordions
+                            ?.jobs?.refine,
+                        profile: !!state?.accordions
+                            ?.jobs?.profile
+                    },
                     feed: {
                         commentSettings: !!state?.accordions
                             ?.feed?.commentSettings,
@@ -80,6 +91,8 @@
                         ?.connect || null,
                     companies: state?.lastOpenSubpanel
                         ?.companies || null,
+                    jobs: state?.lastOpenSubpanel
+                        ?.jobs || null,
                     feed: state?.lastOpenSubpanel
                         ?.feed || null
                 },

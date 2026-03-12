@@ -1,13 +1,15 @@
 const DAILY_LIMITS = {
     connect: 40,
     companyFollow: 30,
-    feedEngage: 50
+    feedEngage: 50,
+    jobsAssist: 20
 };
 
 const HOURLY_LIMITS = {
     connect: 12,
     companyFollow: 10,
-    feedEngage: 15
+    feedEngage: 15,
+    jobsAssist: 8
 };
 
 const WEEKLY_LIMIT = 150;

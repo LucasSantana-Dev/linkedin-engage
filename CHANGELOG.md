@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Jobs tab (LinkedIn Easy Apply assistant)**: New `jobs` mode in popup/background with best-fit ranking (title, seniority, location, recency, company) and deterministic skip rules for non-Easy-Apply, already-applied, and excluded-company jobs.
+- **Encrypted jobs profile cache**: Added local structured profile cache with `PBKDF2-SHA256` key derivation and `AES-GCM` encryption, plus runtime actions `saveJobsProfileCache`, `getJobsProfileCacheStatus`, and `clearJobsProfileCache`.
+- **Jobs runtime scripts**: Added `extension/jobs-assist.js`, `extension/lib/jobs-utils.js`, and `extension/lib/jobs-cache.js` for jobs orchestration, ranking helpers, and encrypted profile storage.
+- **Jobs mode tests**: Added `tests/jobs-cache.test.js`, `tests/jobs-utils.test.js`, and `tests/jobs-orchestration.test.js`, plus analytics/rate-limit coverage extensions for jobs mode.
+
+### Changed
+- **Rate limiting now includes jobs mode**: Added `jobsAssist` hourly/daily limits and popup rate-limit visibility for Jobs mode.
+- **Popup mode system expanded**: Added `Jobs` mode UI with refine/profile accordions and encrypted-cache controls while keeping existing connect/company/feed contracts unchanged.
+- **History persistence for jobs runs**: Background run finalization now stores jobs logs in `jobsAssistHistory`.
+
 ## [1.25.0] - 2026-03-12
 
 ### Changed

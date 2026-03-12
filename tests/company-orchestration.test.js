@@ -276,6 +276,16 @@ describe('company orchestration in background', () => {
         delete global.buildConnectQueryFromTags;
         delete global.getConnectTemplates;
         delete global.migrateConnectPopupState;
+        delete global.CACHE_VERSION;
+        delete global.PROFILE_FIELDS;
+        delete global.normalizeStructuredProfile;
+        delete global.encryptJobsProfileCache;
+        delete global.decryptJobsProfileCache;
+        delete global.getJobsProfileCacheStatus;
+        delete global.matchesExcludedJobCompany;
+        delete global.evaluateJobCandidate;
+        delete global.rankJobsForApply;
+        delete global.buildLinkedInJobsSearchUrl;
     });
 
     it('executes multi-company queue and emits one final done', async () => {

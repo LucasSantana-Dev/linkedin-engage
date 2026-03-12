@@ -1,5 +1,6 @@
 let activeTabId = null;
 let companyRunState = null;
+const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/templates.js',
@@ -7,6 +8,11 @@ const COMPANY_FOLLOW_SCRIPTS = [
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
+];
+
+const JOBS_ASSIST_SCRIPTS = [
+    'lib/jobs-utils.js',
+    'jobs-assist.js'
 ];
 
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
@@ -28,11 +34,24 @@ importScripts('lib/smart-schedule.js');
 importScripts('lib/feed-warmup.js');
 importScripts('lib/pattern-memory.js');
 importScripts('lib/connect-config.js');
+importScripts('lib/jobs-cache.js');
+importScripts('lib/jobs-utils.js');
 
 function parseExcludedCompanyList(raw) {
     if (typeof parseExcludedCompanies === 'function') {
         return parseExcludedCompanies(raw);
     }
+    if (Array.isArray(raw)) {
+        return raw.map(s => String(s || '').trim())
+            .filter(Boolean);
+    }
+    return String(raw || '')
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+}
+
+function parseTextList(raw) {
     if (Array.isArray(raw)) {
         return raw.map(s => String(s || '').trim())
             .filter(Boolean);
@@ -93,6 +112,15 @@ function buildCompanySearchUrl(query) {
         '&origin=FACETED_SEARCH';
 }
 
+function buildJobsSearchUrl(query, options) {
+    if (typeof buildLinkedInJobsSearchUrl === 'function') {
+        return buildLinkedInJobsSearchUrl(query, options);
+    }
+    return 'https://www.linkedin.com/jobs/search/' +
+        `?keywords=${encodeURIComponent(query)}` +
+        '&f_AL=true';
+}
+
 function resolveCompanySearches(
     query,
     targetCompanies,
@@ -144,9 +172,13 @@ function applyRunResult(result) {
             ? 'companyFollow'
             : r.mode === 'feed'
                 ? 'feedEngage' : 'connect';
+        const normalizedRateMode = r.mode === 'jobs'
+            ? 'jobsAssist'
+            : rateMode;
         for (let i = 0; i < logCount; i++) {
             incrementCount(
-                rateMode, chrome.storage.local
+                normalizedRateMode,
+                chrome.storage.local
             );
         }
     }
@@ -164,6 +196,8 @@ function applyRunResult(result) {
             ? 'companyFollowHistory'
             : r.mode === 'feed'
                 ? 'feedEngageHistory'
+                : r.mode === 'jobs'
+                    ? 'jobsAssistHistory'
                 : null;
         if (key) {
             chrome.storage.local.get(key, (data) => {
@@ -567,6 +601,36 @@ function launchFeedEngage(config) {
                     'lib/human-behavior.js',
                     'feed-engage.js'],
                 'LINKEDIN_FEED_ENGAGE_START',
+                config
+            );
+        }
+    );
+}
+
+function launchJobsAssist(config) {
+    const query = String(config?.query || '').trim();
+    if (!query) {
+        notifyError('No jobs query provided.');
+        return;
+    }
+    const searchUrl = buildJobsSearchUrl(query, config);
+
+    chrome.tabs.create(
+        { url: searchUrl, active: true },
+        (tab) => {
+            if (chrome.runtime.lastError || !tab) {
+                notifyError(
+                    'Failed to open jobs search: ' +
+                    (chrome.runtime.lastError?.message
+                        || 'unknown error')
+                );
+                return;
+            }
+            activeTabId = tab.id;
+            injectAndStart(
+                tab.id,
+                JOBS_ASSIST_SCRIPTS,
+                'LINKEDIN_JOBS_ASSIST_START',
                 config
             );
         }
@@ -2039,6 +2103,71 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
+        if (request.action === 'saveJobsProfileCache') {
+            if (typeof encryptJobsProfileCache !== 'function') {
+                sendResponse({
+                    status: 'error',
+                    error: 'Jobs cache encryption unavailable.'
+                });
+                return true;
+            }
+            encryptJobsProfileCache(
+                request.profile || {},
+                request.profilePassphrase
+            ).then((envelope) => {
+                chrome.storage.local.set({
+                    [JOBS_PROFILE_CACHE_KEY]: envelope
+                }, () => {
+                    sendResponse({
+                        status: 'saved',
+                        updatedAt: envelope.updatedAt,
+                        version: envelope.version
+                    });
+                });
+            }).catch((error) => {
+                sendResponse({
+                    status: 'error',
+                    error: error?.message || 'Failed to save cache.'
+                });
+            });
+            return true;
+        }
+
+        if (request.action === 'getJobsProfileCacheStatus') {
+            chrome.storage.local.get(
+                JOBS_PROFILE_CACHE_KEY,
+                (data) => {
+                    if (typeof getJobsProfileCacheStatus !== 'function') {
+                        sendResponse({
+                            exists: !!data[JOBS_PROFILE_CACHE_KEY],
+                            locked: !!data[JOBS_PROFILE_CACHE_KEY],
+                            version: data[JOBS_PROFILE_CACHE_KEY]
+                                ?.version || null,
+                            updatedAt: data[JOBS_PROFILE_CACHE_KEY]
+                                ?.updatedAt || null
+                        });
+                        return;
+                    }
+                    sendResponse(
+                        getJobsProfileCacheStatus(
+                            data[JOBS_PROFILE_CACHE_KEY]
+                        )
+                    );
+                }
+            );
+            return true;
+        }
+
+        if (request.action === 'clearJobsProfileCache') {
+            chrome.storage.local.remove(
+                JOBS_PROFILE_CACHE_KEY,
+                () => {
+                    sendResponse({ status: 'cleared' });
+                }
+            );
+            return true;
+        }
+
         if (request.action === 'startCompanyFollow') {
             checkRateLimit('companyFollow').then(status => {
                 if (!status.allowed) {
@@ -2059,6 +2188,102 @@ chrome.runtime.onMessage.addListener(
                             'custom');
                 launchCompanyFollow(request);
                 sendResponse({ status: 'started' });
+            });
+            return true;
+        }
+
+        if (request.action === 'startJobsAssist') {
+            checkRateLimit('jobsAssist').then((status) => {
+                if (!status.allowed) {
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
+                    return;
+                }
+                chrome.storage.local.get(
+                    JOBS_PROFILE_CACHE_KEY,
+                    async (data) => {
+                        const envelope = data[JOBS_PROFILE_CACHE_KEY];
+                        let profile = {};
+                        if (envelope) {
+                            if (!request.profilePassphrase) {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            if (typeof decryptJobsProfileCache !==
+                                'function') {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            try {
+                                profile = await decryptJobsProfileCache(
+                                    envelope,
+                                    request.profilePassphrase
+                                );
+                            } catch (err) {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                        }
+                        const runtimeConfig = {
+                            source: 'linkedin',
+                            query: String(request.query || '').trim(),
+                            limit: Math.max(
+                                1,
+                                parseInt(request.limit, 10) || 10
+                            ),
+                            easyApplyOnly: true,
+                            roleTerms: parseTextList(
+                                request.roleTerms
+                            ),
+                            locationTerms: parseTextList(
+                                request.locationTerms
+                            ),
+                            desiredLevels: parseTextList(
+                                request.desiredLevels
+                            ),
+                            preferredCompanies: parseTextList(
+                                request.preferredCompanies
+                            ),
+                            excludedCompanies: parseExcludedCompanyList(
+                                request.excludedCompanies
+                            ),
+                            appliedJobIds: parseTextList(
+                                request.appliedJobIds
+                            ),
+                            experienceLevel: String(
+                                request.experienceLevel || ''
+                            ).trim(),
+                            workType: String(
+                                request.workType || ''
+                            ).trim(),
+                            location: String(
+                                request.location || ''
+                            ).trim(),
+                            areaPreset: normalizeRuntimeAreaPreset(
+                                request.areaPreset
+                            ),
+                            profile
+                        };
+                        launchJobsAssist(runtimeConfig);
+                        sendResponse({ status: 'started' });
+                    }
+                );
+            }).catch(() => {
+                sendResponse({
+                    status: 'blocked',
+                    reason: 'unknown'
+                });
             });
             return true;
         }
