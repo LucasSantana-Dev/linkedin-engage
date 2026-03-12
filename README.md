@@ -43,7 +43,10 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Duplicate detection** — skips profiles already sent in previous runs via persistent URL tracking
 - **Desktop notifications** — Chrome notification when automation completes or stops
 - **Acceptance tracker** — check which sent invitations were accepted (cross-references connections page)
+- **Connect-first progressive popup UX** — core run controls stay visible while `Refine Filters`, `Message`, `Automation`, and `Tools` panels are collapsed by default to reduce setup noise
+- **Targeted bilingual hints** — critical popup controls use EN labels with short PT-BR helper text for faster onboarding
 - **Dashboard page** — stats overview with weekly/total/accepted counts and connection history log
+- **Tabbed dashboard IA** — dashboard is split into `Overview`, `Activity`, `Feed`, `Nurture`, and `Logs` with persisted active tab state
 - **Multi-query rotation** — scheduled runs cycle through multiple saved queries automatically
 - **Recent profiles** — last 5 connection profiles shown inline in popup with avatar, name, headline, and status badge
 - **Error resilience** — tab load timeout, script injection error handling, tab close detection with notifications
@@ -52,6 +55,7 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Activity chart** — 14-day bar chart on dashboard showing daily send volume
 - **Feed analytics** — comment success rate, reaction breakdown chart, top reaction type, skip counts on dashboard
 - **State persistence** — all settings saved via `chrome.storage.local`, survives popup close/reopen
+- **UI layout persistence** — popup accordion states/tag search and dashboard active tab are restored between sessions
 - **Custom query mode** — toggle between tag builder and manual query input
 - **Auto-pagination** — navigates through search result pages automatically
 - **Personalized notes** — extracts first name from invite modal and injects it via `{name}` template variable
@@ -160,6 +164,7 @@ extension/
     pattern-memory.js <- Shared pattern-memory bucket merge/guidance helpers
     feed-warmup.js   <- Shared feed warmup runtime/state helpers
     company-utils.js <- Shared company follow utility functions
+    ui-layout.js     <- Shared popup/dashboard UI layout state helpers
   popup/            <- Settings UI (search builder, templates, filters, schedule)
   options.html      <- Dashboard page (stats, connection history)
   options.js        <- Dashboard logic

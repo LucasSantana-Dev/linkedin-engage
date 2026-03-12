@@ -16,7 +16,30 @@ const DEFAULT_FEED_WARMUP_RUNS = 2;
 const DEFAULT_TEMPLATE_KEY = 'networking';
 const DEFAULT_AREA_PRESET = 'custom';
 const DEFAULT_COMPANY_AREA_PRESET = 'custom';
+const DEFAULT_LOCAL_UI_STATE = {
+    accordions: {
+        connect: {
+            refine: false,
+            filters: false,
+            message: false,
+            automation: false
+        },
+        companies: { automation: false },
+        feed: {
+            commentSettings: false,
+            automation: false
+        },
+        tools: { extras: false }
+    },
+    lastOpenSubpanel: {
+        connect: null,
+        companies: null,
+        feed: null
+    },
+    tagSearch: ''
+};
 let useCustomQuery = false;
+let popupUiState = DEFAULT_LOCAL_UI_STATE;
 
 const DEFAULT_LATAM_COMPANIES = [
     'Hotjar', 'Doist', 'Toggl', 'Pipefy', 'VTEX',
@@ -102,6 +125,148 @@ function getCompanyPresetDefaultTargets(companyAreaPreset) {
     return [];
 }
 
+function normalizePopupUi(ui) {
+    if (typeof normalizePopupUiState === 'function') {
+        return normalizePopupUiState(ui);
+    }
+    return {
+        ...DEFAULT_LOCAL_UI_STATE,
+        ...(ui || {})
+    };
+}
+
+function setPopupAccordionState(mode, panel, isOpen) {
+    if (typeof setPopupAccordionOpen === 'function') {
+        popupUiState = setPopupAccordionOpen(
+            popupUiState,
+            mode,
+            panel,
+            isOpen
+        );
+        return;
+    }
+    popupUiState = normalizePopupUi(popupUiState);
+    if (!popupUiState.accordions?.[mode] ||
+        typeof popupUiState.accordions[mode][panel] !==
+            'boolean') {
+        return;
+    }
+    popupUiState.accordions[mode][panel] = !!isOpen;
+    if (isOpen && popupUiState.lastOpenSubpanel?.[mode] !==
+        undefined) {
+        popupUiState.lastOpenSubpanel[mode] = panel;
+    }
+}
+
+function getPopupAccordionState(mode, panel) {
+    popupUiState = normalizePopupUi(popupUiState);
+    return !!popupUiState?.accordions?.[mode]?.[panel];
+}
+
+function renderAccordions() {
+    popupUiState = normalizePopupUi(popupUiState);
+    document.querySelectorAll('[data-accordion-toggle]')
+        .forEach(btn => {
+            const token = btn.dataset.accordionToggle || '';
+            const [mode, panel] = token.split(':');
+            if (!mode || !panel) return;
+            const root = btn.closest('.accordion');
+            if (!root) return;
+            const isOpen = getPopupAccordionState(
+                mode,
+                panel
+            );
+            root.classList.toggle('open', isOpen);
+            btn.setAttribute(
+                'aria-expanded',
+                isOpen ? 'true' : 'false'
+            );
+        });
+}
+
+function updateRefineSelectedCount() {
+    const counter = document.getElementById(
+        'refineSelectedCount'
+    );
+    if (!counter) return;
+    const count = document.querySelectorAll(
+        '#connectSection .tag.active'
+    ).length;
+    counter.textContent = `${count} selected`;
+}
+
+function applyTagSearchFilter() {
+    const input = document.getElementById('tagSearchInput');
+    if (!input) return;
+    const query = input.value || '';
+    popupUiState = normalizePopupUi(popupUiState);
+    popupUiState.tagSearch = query;
+    document.querySelectorAll(
+        '#connectSection .tag[data-group]'
+    ).forEach(tag => {
+        const match = typeof filterTagMatchesSearch ===
+            'function'
+            ? filterTagMatchesSearch(
+                tag.textContent || '',
+                tag.dataset.value || '',
+                query
+            )
+            : String(tag.textContent || '')
+                .toLowerCase()
+                .includes(String(query).toLowerCase());
+        tag.style.display = match ? '' : 'none';
+    });
+}
+
+function syncFeedCommentSettingsVisibility() {
+    const enabled = document.getElementById(
+        'feedCommentCheckbox'
+    )?.checked === true;
+    const accordion = document.getElementById(
+        'commentSettingsAccordion'
+    );
+    const commentSection = document.getElementById(
+        'commentSection'
+    );
+    if (!accordion || !commentSection) return;
+    const visible = typeof isCommentSettingsVisible ===
+        'function'
+        ? isCommentSettingsVisible(enabled)
+        : enabled;
+    accordion.style.display = visible ? 'block' : 'none';
+    commentSection.style.display = visible ? 'block' : 'none';
+    if (!visible) {
+        setPopupAccordionState(
+            'feed',
+            'commentSettings',
+            false
+        );
+    }
+}
+
+function initializeAccordionInteractions() {
+    document.querySelectorAll('[data-accordion-toggle]')
+        .forEach(btn => {
+            btn.addEventListener('click', () => {
+                const token = btn.dataset
+                    .accordionToggle || '';
+                const [mode, panel] = token.split(':');
+                if (!mode || !panel) return;
+                const next = !getPopupAccordionState(
+                    mode,
+                    panel
+                );
+                setPopupAccordionState(
+                    mode,
+                    panel,
+                    next
+                );
+                renderAccordions();
+                saveState();
+            });
+        });
+}
+
 function refreshTemplatesForArea() {
     const areaPreset = getSelectedAreaPreset();
     const generated = typeof getConnectTemplates === 'function'
@@ -153,6 +318,7 @@ function applyAreaPreset(preset, shouldSave) {
         setActiveTemplate(activeTemplate);
     }
     updateQueryPreview();
+    updateRefineSelectedCount();
     if (shouldSave) saveState();
 }
 
@@ -433,6 +599,12 @@ function saveState() {
             'nurturePostLimit').value
     };
 
+    popupUiState = normalizePopupUi(popupUiState);
+    popupUiState.tagSearch = document.getElementById(
+        'tagSearchInput'
+    )?.value || '';
+    state.ui = popupUiState;
+
     state.tagVersion = typeof STATE_TAG_VERSION === 'number'
         ? STATE_TAG_VERSION
         : 5;
@@ -456,6 +628,7 @@ function loadState() {
     });
     chrome.storage.local.get('popupState', ({ popupState }) => {
         if (!popupState) {
+            popupUiState = normalizePopupUi();
             setAreaPresetSelectValue(DEFAULT_AREA_PRESET);
             setCompanyAreaPresetSelectValue(
                 DEFAULT_COMPANY_AREA_PRESET
@@ -464,6 +637,10 @@ function loadState() {
             setActiveTemplate(DEFAULT_TEMPLATE_KEY);
             updateQueryPreview();
             updateCharCounter();
+            renderAccordions();
+            applyTagSearchFilter();
+            updateRefineSelectedCount();
+            syncFeedCommentSettingsVisibility();
             refreshFeedWarmupProgress();
             return;
         }
@@ -477,6 +654,7 @@ function loadState() {
             }
         }
         popupState = migratedState;
+        popupUiState = normalizePopupUi(popupState.ui);
 
         const TAG_VERSION = typeof STATE_TAG_VERSION === 'number'
             ? STATE_TAG_VERSION
@@ -591,6 +769,12 @@ function loadState() {
             document.getElementById('areaPresetSelect').style.opacity = '0.4';
         }
 
+        document.getElementById('tagSearchInput').value =
+            popupUiState.tagSearch || '';
+        applyTagSearchFilter();
+        renderAccordions();
+        updateRefineSelectedCount();
+
         if (popupState.companyQuery) {
             document.getElementById('companyQueryInput').value =
                 popupState.companyQuery;
@@ -609,9 +793,8 @@ function loadState() {
         if (popupState.feedComment) {
             document.getElementById('feedCommentCheckbox').checked =
                 true;
-            document.getElementById('commentSection')
-                .style.display = 'block';
         }
+        syncFeedCommentSettingsVisibility();
         if (popupState.feedWarmupEnabled !== undefined) {
             document.getElementById(
                 'feedWarmupEnabledCheckbox'
@@ -734,6 +917,7 @@ document.querySelectorAll('.tag').forEach(tag => {
             }
         }
         updateQueryPreview();
+        updateRefineSelectedCount();
         saveState();
     });
 });
@@ -775,6 +959,14 @@ document.getElementById('customQueryInput').addEventListener('input', () => {
     updateQueryPreview();
     saveState();
 });
+
+document.getElementById('tagSearchInput').addEventListener(
+    'input',
+    () => {
+        applyTagSearchFilter();
+        saveState();
+    }
+);
 
 document.querySelectorAll('.template-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -1532,9 +1724,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 
 document.getElementById('feedCommentCheckbox')
     .addEventListener('change', (e) => {
-        document.getElementById('commentSection')
-            .style.display =
-                e.target.checked ? 'block' : 'none';
+        syncFeedCommentSettingsVisibility();
         saveState();
     });
 
@@ -1890,6 +2080,7 @@ function loadRateLimitStatus() {
     });
 }
 
+initializeAccordionInteractions();
 loadState();
 updateWeeklyDisplay();
 loadRecentProfiles();

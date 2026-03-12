@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Connect-first popup IA with progressive disclosure**: Popup now prioritizes core controls per mode and moves lower-frequency controls into collapsed accordions (`Refine Filters`, `Audience Filters`, `Message`, `Automation`, `Tools`) with targeted EN/PT helper hints.
+- **Dashboard cognitive load reduction**: Options dashboard now uses tabbed navigation (`Overview`, `Activity`, `Feed`, `Nurture`, `Logs`) instead of a single long scroll, while preserving existing metrics/cards/tables and automation behavior.
+
+### Added
+- **UI-only popup persistence (`popupState.ui`)**: Added optional persistence for accordion open/closed state, last-open subpanel, and connect tag-search text without changing automation contracts/state keys.
+- **UI-only dashboard persistence (`dashboardState.activeTab`)**: Added persisted dashboard tab restore via `chrome.storage.local` with safe tab normalization.
+
 ## [1.24.0] - 2026-03-12
 
 ### Changed

@@ -114,6 +114,14 @@
 
         .section { margin-bottom: 16px; }
 
+        .hint {
+            display: inline-block;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
         .section-label {
             font-size: 11px;
             font-weight: 700;
@@ -162,6 +170,71 @@
             border-color: var(--primary);
             background: var(--primary);
             color: white;
+        }
+
+        .accordion {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+
+        .accordion-toggle {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: left;
+            color: var(--text-main);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .accordion-toggle:hover {
+            background: var(--primary-light);
+        }
+
+        .accordion-chevron {
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .accordion.open .accordion-chevron {
+            transform: rotate(180deg);
+        }
+
+        .accordion-meta {
+            margin-left: 8px;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .accordion-body {
+            display: none;
+            border-top: 1px solid var(--border);
+            padding: 10px 12px;
+            background: var(--bg-color);
+        }
+
+        .accordion.open .accordion-body {
+            display: block;
+        }
+
+        .compact-input {
+            width: 100%;
+            padding: 7px 9px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 11px;
         }
 
         .query-preview {
@@ -570,6 +643,7 @@
                 <div class="input-group">
                     <label for="companyAreaPresetSelect">
                         Company Area Preset
+                        <span class="hint">/ Área da empresa</span>
                     </label>
                     <select id="companyAreaPresetSelect">
                         <option value="custom">Custom</option>
@@ -583,7 +657,10 @@
                     </select>
                 </div>
                 <div class="input-group">
-                    <label for="companyQueryInput">Search query</label>
+                    <label for="companyQueryInput">
+                        Search query
+                        <span class="hint">/ Busca</span>
+                    </label>
                     <input type="text" class="custom-query-input"
                         id="companyQueryInput"
                         style="display:block;"
@@ -592,6 +669,7 @@
                 <div class="input-group">
                     <label for="targetCompanies">
                         Target companies (optional, one per line)
+                        <span class="hint">/ Empresas alvo</span>
                     </label>
                     <textarea id="targetCompanies"
                         class="note-area" rows="3"
@@ -624,7 +702,17 @@
 
             <hr class="divider">
 
-            <div class="section">
+            <div class="accordion"
+                id="companyAutomationAccordion"
+                data-mode="companies"
+                data-panel="automation">
+                <button class="accordion-toggle" type="button"
+                    data-accordion-toggle="companies:automation">
+                    <span>Automation / Automação</span>
+                    <span class="accordion-chevron">▼</span>
+                </button>
+                <div class="accordion-body">
+            <div class="section" style="margin-bottom:0;">
                 <div class="checkbox-group">
                     <label for="companyScheduleCheckbox">
                         Schedule recurring company follows
@@ -660,6 +748,8 @@
                         Rotates through your company list in
                         batches. Chrome must be running.
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
         </div>
@@ -712,6 +802,17 @@
                     Learning progress: 0 / 2 runs ·
                     Comments unlock on run #3
                 </div>
+                <div class="accordion"
+                    id="commentSettingsAccordion"
+                    data-mode="feed"
+                    data-panel="commentSettings">
+                    <button class="accordion-toggle"
+                        type="button"
+                        data-accordion-toggle="feed:commentSettings">
+                        <span>Comment Settings / Comentários</span>
+                        <span class="accordion-chevron">▼</span>
+                    </button>
+                    <div class="accordion-body">
                 <div id="commentSection" style="display:none;">
                     <div class="input-group">
                         <label for="aiApiKeyInput">
@@ -745,6 +846,8 @@
                         Used when AI key is not set.
                     </div>
                 </div>
+                    </div>
+                </div>
                 <div class="input-group" style="margin-top:8px;">
                     <label for="skipKeywordsInput">
                         Skip posts with keywords (one per line)
@@ -757,6 +860,17 @@
 
             <hr class="divider">
 
+            <div class="accordion"
+                id="feedAutomationAccordion"
+                data-mode="feed"
+                data-panel="automation">
+                <button class="accordion-toggle"
+                    type="button"
+                    data-accordion-toggle="feed:automation">
+                    <span>Automation / Automação</span>
+                    <span class="accordion-chevron">▼</span>
+                </button>
+                <div class="accordion-body">
             <div class="section">
                 <div class="checkbox-group">
                     <label for="feedScheduleCheckbox">
@@ -836,6 +950,8 @@
                     </div>
                 </div>
             </div>
+                </div>
+            </div>
         </div>
 
         <!-- CONNECT SECTION (existing) -->
@@ -845,7 +961,10 @@
             <div class="section-label">Search Builder</div>
 
             <div class="input-group" style="margin-bottom:8px;">
-                <label for="goalMode">Goal</label>
+                <label for="goalMode">
+                    Goal
+                    <span class="hint">/ Objetivo</span>
+                </label>
                 <select id="goalMode">
                     <option value="passive">
                         Networking & Visibility
@@ -865,7 +984,10 @@
             </div>
 
             <div class="input-group" style="margin-bottom:8px;">
-                <label for="areaPresetSelect">Area Preset</label>
+                <label for="areaPresetSelect">
+                    Area Preset
+                    <span class="hint">/ Área</span>
+                </label>
                 <select id="areaPresetSelect">
                     <option value="custom">Custom</option>
                     <option value="tech">Tech</option>
@@ -888,6 +1010,34 @@
                     <option value="videomaker">Videomaker</option>
                 </select>
             </div>
+
+            <div class="accordion"
+                id="connectRefineAccordion"
+                data-mode="connect"
+                data-panel="refine">
+                <button class="accordion-toggle" type="button"
+                    data-accordion-toggle="connect:refine">
+                    <span>
+                        Refine Filters / Refinar filtros
+                        <span class="accordion-meta"
+                            id="refineSelectedCount">
+                            0 selected
+                        </span>
+                    </span>
+                    <span class="accordion-chevron">▼</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="input-group"
+                        style="margin-bottom:8px;">
+                        <label for="tagSearchInput">
+                            Filter tags
+                            <span class="hint">/ Filtrar tags</span>
+                        </label>
+                        <input id="tagSearchInput"
+                            class="compact-input"
+                            type="text"
+                            placeholder="e.g. design, recruiter, marketing" />
+                    </div>
 
             <div class="tag-group">
                 <div class="tag-group-label">Role</div>
@@ -1119,9 +1269,8 @@
                 <span class="tag" data-group="level" data-value="staff">Staff</span>
             </div>
 
-            <div class="query-preview" id="queryPreview"></div>
-            <span class="toggle-custom" id="toggleCustomQuery">Edit query manually</span>
-            <input type="text" class="custom-query-input" id="customQueryInput" placeholder="Type your search query..." />
+                </div>
+            </div>
         </div>
 
         <hr class="divider">
@@ -1129,11 +1278,17 @@
         <!-- FILTERS & SETTINGS -->
         <div class="row">
             <div class="input-group">
-                <label for="limitInput">Limit</label>
+                <label for="limitInput">
+                    Limit
+                    <span class="hint">/ Limite</span>
+                </label>
                 <input type="number" id="limitInput" value="50" min="1" max="1000" />
             </div>
             <div class="input-group">
-                <label for="regionSelect">Recruiter Location</label>
+                <label for="regionSelect">
+                    Recruiter Location
+                    <span class="hint">/ Região</span>
+                </label>
                 <select id="regionSelect">
                     <option value="103644278,101121807,101165590,101282230,102890719">Global (US/CA/UK/DE/NL)</option>
                     <option value="103644278">United States</option>
@@ -1151,6 +1306,24 @@
             </div>
         </div>
 
+        <div class="query-preview" id="queryPreview"></div>
+        <span class="toggle-custom" id="toggleCustomQuery">
+            Edit query manually
+        </span>
+        <input type="text" class="custom-query-input"
+            id="customQueryInput"
+            placeholder="Type your search query..." />
+
+        <div class="accordion"
+            id="connectAudienceAccordion"
+            data-mode="connect"
+            data-panel="filters">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:filters">
+                <span>Audience Filters / Filtros</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
         <div class="checkbox-group">
             <label for="activelyHiringCheckbox">Only "Actively Hiring" profiles</label>
             <input type="checkbox" id="activelyHiringCheckbox" />
@@ -1198,11 +1371,23 @@
                 </label>
             </div>
         </div>
+            </div>
+        </div>
 
         <hr class="divider">
 
         <!-- NOTE TEMPLATES -->
-        <div class="section">
+        <div class="accordion"
+            id="connectMessageAccordion"
+            data-mode="connect"
+            data-panel="message">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:message">
+                <span>Message / Mensagem</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
+        <div class="section" style="margin-bottom:0;">
             <div class="checkbox-group">
                 <label for="sendNoteCheckbox">Send personalized note</label>
                 <input type="checkbox" id="sendNoteCheckbox" checked />
@@ -1250,10 +1435,22 @@
                 </div>
             </div>
         </div>
+            </div>
+        </div>
 
         <hr class="divider">
 
-        <div class="section">
+        <div class="accordion"
+            id="connectAutomationAccordion"
+            data-mode="connect"
+            data-panel="automation">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:automation">
+                <span>Automation / Automação</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
+        <div class="section" style="margin-bottom:0;">
             <div class="checkbox-group">
                 <label for="scheduleCheckbox">Schedule recurring runs</label>
                 <input type="checkbox" id="scheduleCheckbox" />
@@ -1304,6 +1501,8 @@
                 </div>
             </div>
         </div>
+            </div>
+        </div>
 
         <div id="weeklyCounter" style="
             font-size:11px; text-align:center;
@@ -1341,6 +1540,17 @@
             Ready to start.
         </div>
 
+        <div class="accordion"
+            id="toolsAccordion"
+            data-mode="tools"
+            data-panel="extras">
+            <button class="accordion-toggle"
+                type="button"
+                data-accordion-toggle="tools:extras">
+                <span>Tools / Ferramentas</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
         <button id="checkAcceptedBtn" style="
             display:block; width:100%; padding:8px;
             margin-top:8px; background:transparent;
@@ -1369,6 +1579,8 @@
                 display:flex; flex-direction:column; gap:6px;
             "></div>
         </div>
+            </div>
+        </div>
 
         <div class="footer">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
@@ -1377,6 +1589,7 @@
     </div>
 
     <script src="../lib/connect-config.js"></script>
+    <script src="../lib/ui-layout.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>

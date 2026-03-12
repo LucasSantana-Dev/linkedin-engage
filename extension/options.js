@@ -1,4 +1,105 @@
 const WEEKLY_LIMIT = 150;
+const DEFAULT_DASHBOARD_STATE = {
+    activeTab: 'overview'
+};
+let dashboardState = { ...DEFAULT_DASHBOARD_STATE };
+
+function normalizeDashboardUiState(state) {
+    if (typeof normalizeDashboardState === 'function') {
+        return normalizeDashboardState(state);
+    }
+    const allowed = ['overview', 'activity', 'feed', 'nurture', 'logs'];
+    const activeTab = String(state?.activeTab || 'overview');
+    return {
+        activeTab: allowed.includes(activeTab)
+            ? activeTab
+            : 'overview'
+    };
+}
+
+function getDashboardVisibility(activeTab) {
+    if (typeof getDashboardSectionVisibility === 'function') {
+        return getDashboardSectionVisibility(activeTab);
+    }
+    const normalized = normalizeDashboardUiState({
+        activeTab
+    }).activeTab;
+    return {
+        overview: normalized === 'overview',
+        activity: normalized === 'activity',
+        feed: normalized === 'feed',
+        nurture: normalized === 'nurture',
+        logs: normalized === 'logs'
+    };
+}
+
+function saveDashboardState() {
+    chrome.storage.local.set({
+        dashboardState
+    });
+}
+
+function renderDashboardTabs() {
+    const visibility = getDashboardVisibility(
+        dashboardState.activeTab
+    );
+    document.querySelectorAll('[data-dashboard-tab]')
+        .forEach(btn => {
+            const tab = btn.dataset.dashboardTab;
+            const isActive = tab === dashboardState.activeTab;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute(
+                'aria-selected',
+                isActive ? 'true' : 'false'
+            );
+        });
+
+    document.querySelectorAll('[data-tab-section]')
+        .forEach(section => {
+            const key = section.dataset.tabSection;
+            const isVisible = visibility[key] === true;
+            if (isVisible) {
+                section.removeAttribute('data-tab-hidden');
+            } else {
+                section.setAttribute('data-tab-hidden', 'true');
+            }
+        });
+}
+
+function setDashboardTab(tab, shouldSave) {
+    dashboardState = normalizeDashboardUiState({
+        activeTab: tab
+    });
+    renderDashboardTabs();
+    if (shouldSave) saveDashboardState();
+}
+
+function initializeDashboardTabs() {
+    document.querySelectorAll('[data-dashboard-tab]')
+        .forEach(btn => {
+            btn.addEventListener('click', () => {
+                setDashboardTab(
+                    btn.dataset.dashboardTab,
+                    true
+                );
+            });
+        });
+
+    dashboardState = normalizeDashboardUiState(
+        dashboardState
+    );
+    renderDashboardTabs();
+
+    chrome.storage.local.get(
+        'dashboardState',
+        ({ dashboardState: stored }) => {
+            dashboardState = normalizeDashboardUiState(
+                stored
+            );
+            renderDashboardTabs();
+        }
+    );
+}
 
 function getWeekKey() {
     const now = new Date();
@@ -789,6 +890,7 @@ function removeNurtureEntry(profileUrl) {
     });
 }
 
+initializeDashboardTabs();
 loadDashboard();
 renderAnalytics();
 renderNurtureList();

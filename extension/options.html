@@ -257,6 +257,34 @@
             font-weight: 600;
             color: var(--text);
         }
+
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--muted);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        [data-tab-hidden="true"] {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -274,7 +302,30 @@
         LinkedIn Engage Dashboard
     </h1>
 
-    <div class="grid">
+    <div class="tab-nav" id="dashboardTabNav">
+        <button type="button" class="tab-btn active"
+            data-dashboard-tab="overview">
+            Overview
+        </button>
+        <button type="button" class="tab-btn"
+            data-dashboard-tab="activity">
+            Activity
+        </button>
+        <button type="button" class="tab-btn"
+            data-dashboard-tab="feed">
+            Feed
+        </button>
+        <button type="button" class="tab-btn"
+            data-dashboard-tab="nurture">
+            Nurture
+        </button>
+        <button type="button" class="tab-btn"
+            data-dashboard-tab="logs">
+            Logs
+        </button>
+    </div>
+
+    <div class="grid" data-tab-section="overview">
         <div class="card">
             <div class="card-label">This Week</div>
             <div class="card-value" id="weekSent">0</div>
@@ -294,7 +345,7 @@
                 id="acceptRate">connections made</div>
         </div>
     </div>
-    <div class="grid">
+    <div class="grid" data-tab-section="overview">
         <div class="card">
             <div class="card-label">Skipped</div>
             <div class="card-value" id="totalSkipped"
@@ -321,6 +372,7 @@
         </div>
     </div>
     <div class="grid"
+        data-tab-section="overview"
         style="grid-template-columns:repeat(4,1fr);">
         <div class="card">
             <div class="card-label">Engaged</div>
@@ -357,6 +409,7 @@
     </div>
 
     <div class="grid"
+        data-tab-section="feed"
         id="feedMetricsGrid" style="display:none;
         grid-template-columns:repeat(4,1fr);">
         <div class="card">
@@ -395,6 +448,7 @@
     </div>
 
     <div class="section" id="reactionBreakdown"
+        data-tab-section="feed"
         style="display:none;">
         <h2>Reaction Breakdown</h2>
         <div id="reactionBars" style="
@@ -404,6 +458,7 @@
     </div>
 
     <div class="section" id="analyticsSection"
+        data-tab-section="activity"
         style="display:none;">
         <h2>Analytics Insights</h2>
         <div class="grid"
@@ -461,7 +516,7 @@
         </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-tab-section="activity">
         <h2 id="activityTitle">Activity (last 14 days)</h2>
         <div id="chart" style="
             display:flex; align-items:flex-end;
@@ -472,12 +527,12 @@
         ">No activity data yet.</div>
     </div>
 
-    <div class="section">
+    <div class="section" data-tab-section="overview">
         <h2>Schedule</h2>
         <p id="scheduleStatus">Loading...</p>
     </div>
 
-    <div class="section">
+    <div class="section" data-tab-section="logs">
         <h2>Recent Connection Log</h2>
         <table id="logTable" style="display:none;">
             <thead>
@@ -496,7 +551,8 @@
         </div>
     </div>
 
-    <div class="section" id="nurtureSection">
+    <div class="section" id="nurtureSection"
+        data-tab-section="nurture">
         <h2 style="font-size:16px; margin-bottom:12px;">
             Connection Nurture List
         </h2>
@@ -510,7 +566,8 @@
         <div id="nurtureList"></div>
     </div>
 
-    <div style="text-align:right; margin-bottom:20px;">
+    <div data-tab-section="logs"
+        style="text-align:right; margin-bottom:20px;">
         <button id="exportBtn" style="
             background:var(--primary); color:#fff;
             border:none; border-radius:8px;
@@ -519,6 +576,7 @@
         ">Export CSV</button>
     </div>
 
+    <script src="lib/ui-layout.js"></script>
     <script src="options.js"></script>
 </body>
 </html>
