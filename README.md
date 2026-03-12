@@ -6,7 +6,13 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 
 ### Chrome Extension
 - **Tag-based search builder** — compose LinkedIn search queries by selecting Role, Industry, Market Focus, and Level tags
+- **Boolean-optimized search templates (v1)** — deterministic template engine
+  for Connect/Companies/Jobs with per-mode goals, expected-result buckets
+  (`precise`, `balanced`, `broad`), and controlled operator budgets
 - **Area presets for non-tech networking** — one-click presets for Tech, Finance, Real Estate, Headhunting, Legal/Judicial Media, Environmental, Sanitary, Healthcare, Education, Marketing, Sales, Graphic Design, Art Direction, Branding, UI/UX, Motion Design, Video Editing, and Videomaker
+- **Auto + manual template override** — each search mode supports
+  `Usage Goal`, `Expected Results`, `Template`, and `Auto-select template`
+  controls; scheduled runs reuse the same template resolution logic
 - **Area-aware note templates** — Senior, Mid-Level, Junior, Lead, General Networking, and Custom with role-neutral wording adapted to the selected area
 - **300-char validation** — enforces LinkedIn's invitation note character limit
 - **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
@@ -23,6 +29,8 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Scheduled runs** — recurring automation via Chrome Alarms API (configurable interval)
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
 - **Company follow mode** — background-managed queue runs one target-company search at a time with resilient re-injection across navigation; each step polls for DOM readiness (up to 20s), differentiates explicit `no results` pages from card-detection timeouts, and emits a single final completion when the full queue finishes; supports creative company-area presets (Graphic Design, Art Direction, Branding, UI/UX, Motion Design, Video Editing, Videomaker) with default query + curated global/Brazil company lists; custom preset keeps LATAM defaults; scheduled recurring runs keep batch rotation when target companies are set and fall back to single-query preset runs when target companies are empty
+- **Jobs assist mode (LinkedIn Easy Apply)** — ranks visible jobs by best-fit signals (title/seniority/location/recency/company), skips non-easy-apply/already-applied/excluded-company listings, and prepares applications in semi-auto mode without submitting
+- **Encrypted jobs profile cache** — structured applicant fields are stored locally with PBKDF2 + AES-GCM encryption; unlock with a session passphrase only (never persisted)
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching; scheduled recurring runs
 - **Warmup-first feed learning** — first feed runs (default: 2) run in react+learn mode only (no comments) so thread patterns are learned before comment unlock
 - **Feed warmup controls** — configurable warmup enable/disable, required run count (0-10), live progress indicator, and reset action in popup
@@ -155,12 +163,16 @@ Import `n8n-linkedin-workflow.json` into your n8n instance to schedule automated
 extension/
   content.js        <- MAIN world automation (connect + engagement)
   company-follow.js <- MAIN world company follow automation
+  jobs-assist.js    <- MAIN world jobs apply assistant (easy-apply prep, manual submit stop)
   feed-engage.js    <- MAIN world feed reaction/comment automation
   bridge.js         <- ISOLATED world messaging bridge (chrome.runtime <-> postMessage)
   background.js     <- Service worker (tab management, alarms, notifications)
   lib/
     invite-utils.js  <- Shared invite/connect utility functions
     feed-utils.js    <- Shared feed engagement utility functions
+    search-templates.js <- Shared search template schema/compiler/resolver
+    jobs-cache.js    <- Shared encrypted jobs profile cache helpers
+    jobs-utils.js    <- Shared jobs ranking and skip-rule helpers
     pattern-memory.js <- Shared pattern-memory bucket merge/guidance helpers
     feed-warmup.js   <- Shared feed warmup runtime/state helpers
     company-utils.js <- Shared company follow utility functions
@@ -191,6 +203,8 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 ## Search Tips
 
 - LinkedIn basic search supports **one OR group max** — keep queries flat
+- Keep operators explicit and uppercase (`AND`, `OR`, `NOT`) and quote
+  multi-word terms
 - Use the tag builder for most cases; switch to manual for advanced queries
 - Set **Recruiter Location** to where the recruiter IS (US/EU), not where they hire from
 - Add LATAM/Remote/Nearshore market tags to find recruiters who hire from Latin America
@@ -210,9 +224,23 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Schedule | Off | Recurring runs every N hours (Chrome must be open) |
 | Query Rotation | Empty | Multiple queries (one per line) cycled on each scheduled run |
 | Area Preset | Custom | One-click role/industry targeting for 18 supported professional areas |
+| Connect Usage Goal | recruiter_outreach | Template goal for Connect (`recruiter_outreach`, `peer_networking`, `decision_makers`, `brazil_focus`) |
+| Connect Expected Results | balanced | Connect query strictness bucket (`precise`, `balanced`, `broad`) |
+| Connect Auto-select Template | On | Uses exact/family/default template fallback for Connect unless manual template is forced |
 | Company Area Preset | Custom | Company-mode preset (`custom` + 7 creative presets) with default company search query and curated target-company defaults |
+| Company Usage Goal | talent_watchlist | Template goal for Companies (`talent_watchlist`, `brand_watchlist`, `competitor_watch`) |
+| Company Expected Results | balanced | Company query strictness bucket (`precise`, `balanced`, `broad`) |
+| Company Auto-select Template | On | Uses exact/family/default template fallback for Companies unless manual template is forced |
 | Company Query | Empty | Search term for company follow mode |
 | Target Companies | Empty | Only follow companies matching these names (one per line); `Load defaults` is preset-aware and custom keeps LATAM defaults |
+| Jobs Area Preset | Custom | Optional jobs ranking context preset (reuses area taxonomy from Connect) |
+| Jobs Usage Goal | high_fit_easy_apply | Template goal for Jobs (`high_fit_easy_apply`, `market_scan`, `target_company_roles`) |
+| Jobs Expected Results | balanced | Jobs query strictness bucket (`precise`, `balanced`, `broad`) |
+| Jobs Auto-select Template | On | Uses exact/family/default template fallback for Jobs unless manual template is forced |
+| Jobs Query | Empty | LinkedIn Jobs keywords query; if empty, inferred from role terms/preset |
+| Jobs Easy Apply Only | On | Restricts assistant to LinkedIn Easy Apply opportunities |
+| Jobs Excluded Companies | Empty | Skips job cards whose company matches any excluded entry (one per line) |
+| Jobs Profile Cache | Off | Optional encrypted local cache of structured applicant fields; unlocked via session passphrase |
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
 | Enable Warmup Learning | On | For feed mode, force first N runs to react+learn only (no comments) |
@@ -253,6 +281,7 @@ This tool is for personal networking purposes. Use responsibly and in accordance
 - **Random delays** between actions (built-in)
 - **Auto-backoff** on rate limits (429) — pauses 30-60s after 3 consecutive failures
 - **Don't run 24/7** — simulate human behavior
+- **Jobs mode requires manual final submit** — review each Easy Apply before submitting
 
 ## License
 

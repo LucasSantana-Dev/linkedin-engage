@@ -627,6 +627,13 @@
                     Companies
                 </button>
                 <button class="mode-btn"
+                    data-mode="jobs"
+                    style="flex:1; padding:8px; border:1.5px solid var(--border);
+                    border-radius:var(--radius-md); background:var(--bg-color);
+                    color:var(--text-main); font-size:11px; font-weight:600; cursor:pointer;">
+                    Jobs
+                </button>
+                <button class="mode-btn"
                     data-mode="feed"
                     style="flex:1; padding:8px; border:1.5px solid var(--border);
                     border-radius:var(--radius-md); background:var(--bg-color);
@@ -665,6 +672,40 @@
                         id="companyQueryInput"
                         style="display:block;"
                         placeholder="e.g. motion design studios, video producer..." />
+                </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label for="companyUsageGoalSelect">
+                            Usage Goal
+                        </label>
+                        <select id="companyUsageGoalSelect">
+                            <option value="talent_watchlist">Talent Watchlist</option>
+                            <option value="brand_watchlist">Brand Watchlist</option>
+                            <option value="competitor_watch">Competitor Watch</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="companyExpectedResultsSelect">
+                            Expected Results
+                        </label>
+                        <select id="companyExpectedResultsSelect">
+                            <option value="precise">Precise (50-300)</option>
+                            <option value="balanced" selected>Balanced (300-1200)</option>
+                            <option value="broad">Broad (1200+)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkbox-group" style="margin-bottom:0;">
+                    <label for="companyTemplateAutoCheckbox">
+                        Auto-select template
+                    </label>
+                    <input type="checkbox"
+                        id="companyTemplateAutoCheckbox"
+                        checked />
+                </div>
+                <div class="input-group">
+                    <label for="companyTemplateSelect">Template</label>
+                    <select id="companyTemplateSelect"></select>
                 </div>
                 <div class="input-group">
                     <label for="targetCompanies">
@@ -751,6 +792,273 @@
                 </div>
             </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- JOBS ASSIST SECTION -->
+        <div id="jobsSection" style="display:none;">
+            <div class="section">
+                <div class="section-label">Jobs Assist</div>
+                <div class="input-group">
+                    <label for="jobsAreaPresetSelect">
+                        Jobs Area Preset
+                        <span class="hint">/ Área alvo</span>
+                    </label>
+                    <select id="jobsAreaPresetSelect">
+                        <option value="custom">Custom</option>
+                        <option value="tech">Tech</option>
+                        <option value="finance">Finance</option>
+                        <option value="real-estate">Real Estate</option>
+                        <option value="headhunting">Headhunting</option>
+                        <option value="legal-judicial-media">Legal/Judicial Media</option>
+                        <option value="environmental-engineering">Environmental Engineering</option>
+                        <option value="sanitary-engineering">Sanitary Engineering</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="sales">Sales</option>
+                        <option value="graphic-design">Graphic Design</option>
+                        <option value="art-direction">Art Direction</option>
+                        <option value="branding">Branding</option>
+                        <option value="ui-ux">UI/UX</option>
+                        <option value="motion-design">Motion Design</option>
+                        <option value="video-editing">Video Editing</option>
+                        <option value="videomaker">Videomaker</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="jobsQueryInput">
+                        Jobs query
+                        <span class="hint">/ Busca</span>
+                    </label>
+                    <input type="text" class="custom-query-input"
+                        id="jobsQueryInput"
+                        style="display:block;"
+                        placeholder="e.g. product designer remote brazil" />
+                </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label for="jobsUsageGoalSelect">
+                            Usage Goal
+                        </label>
+                        <select id="jobsUsageGoalSelect">
+                            <option value="high_fit_easy_apply">High Fit Easy Apply</option>
+                            <option value="market_scan">Market Scan</option>
+                            <option value="target_company_roles">Target Company Roles</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsExpectedResultsSelect">
+                            Expected Results
+                        </label>
+                        <select id="jobsExpectedResultsSelect">
+                            <option value="precise">Precise (50-300)</option>
+                            <option value="balanced" selected>Balanced (300-1200)</option>
+                            <option value="broad">Broad (1200+)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkbox-group" style="margin-bottom:0;">
+                    <label for="jobsTemplateAutoCheckbox">
+                        Auto-select template
+                    </label>
+                    <input type="checkbox"
+                        id="jobsTemplateAutoCheckbox"
+                        checked />
+                </div>
+                <div class="input-group">
+                    <label for="jobsTemplateSelect">Template</label>
+                    <select id="jobsTemplateSelect"></select>
+                </div>
+                <div class="checkbox-group" style="margin-bottom:0;">
+                    <label for="jobsEasyApplyOnlyCheckbox">
+                        Easy Apply only (LinkedIn)
+                    </label>
+                    <input type="checkbox"
+                        id="jobsEasyApplyOnlyCheckbox"
+                        checked
+                        disabled />
+                </div>
+                <div style="font-size:10px; color:var(--text-muted);">
+                    Semi-auto mode: prepares the application and stops before final submit.
+                </div>
+            </div>
+
+            <div class="accordion"
+                id="jobsRefineAccordion"
+                data-mode="jobs"
+                data-panel="refine">
+                <button class="accordion-toggle" type="button"
+                    data-accordion-toggle="jobs:refine">
+                    <span>Refine / Refinar</span>
+                    <span class="accordion-chevron">▼</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="input-group">
+                        <label for="jobsRoleTermsInput">Role terms (one per line)</label>
+                        <textarea id="jobsRoleTermsInput"
+                            class="note-area"
+                            rows="3"
+                            placeholder="product designer&#10;ux designer"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsLocationTermsInput">Location terms (one per line)</label>
+                        <textarea id="jobsLocationTermsInput"
+                            class="note-area"
+                            rows="2"
+                            placeholder="brazil&#10;remote"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsPreferredCompaniesInput">Preferred companies (one per line)</label>
+                        <textarea id="jobsPreferredCompaniesInput"
+                            class="note-area"
+                            rows="2"
+                            placeholder="Nubank&#10;Mercado Livre"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsExcludedCompaniesInput">Excluded companies (one per line)</label>
+                        <textarea id="jobsExcludedCompaniesInput"
+                            class="note-area"
+                            rows="2"
+                            placeholder="Company A&#10;Company B"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="jobsExperienceLevelSelect">Experience level</label>
+                            <select id="jobsExperienceLevelSelect">
+                                <option value="">Any</option>
+                                <option value="1">Internship</option>
+                                <option value="2">Entry level</option>
+                                <option value="3">Associate</option>
+                                <option value="4">Mid-senior</option>
+                                <option value="5">Director</option>
+                                <option value="6">Executive</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="jobsWorkTypeSelect">Work type</label>
+                            <select id="jobsWorkTypeSelect">
+                                <option value="">Any</option>
+                                <option value="1">On-site</option>
+                                <option value="2">Remote</option>
+                                <option value="3">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="jobsLocationInput">LinkedIn location filter</label>
+                        <input id="jobsLocationInput"
+                            class="compact-input"
+                            type="text"
+                            placeholder="e.g. Brazil, United States" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion"
+                id="jobsProfileAccordion"
+                data-mode="jobs"
+                data-panel="profile">
+                <button class="accordion-toggle" type="button"
+                    data-accordion-toggle="jobs:profile">
+                    <span>Encrypted Profile Cache</span>
+                    <span class="accordion-chevron">▼</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="input-group">
+                        <label for="jobsProfilePassphraseInput">Session passphrase (unlock)</label>
+                        <input id="jobsProfilePassphraseInput"
+                            class="compact-input"
+                            type="password"
+                            placeholder="Required to save/unlock profile cache" />
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsProfileFullNameInput">Full name</label>
+                        <input id="jobsProfileFullNameInput"
+                            class="compact-input"
+                            type="text"
+                            placeholder="Your full name" />
+                    </div>
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="jobsProfileEmailInput">Email</label>
+                            <input id="jobsProfileEmailInput"
+                                class="compact-input"
+                                type="text"
+                                placeholder="you@example.com" />
+                        </div>
+                        <div class="input-group">
+                            <label for="jobsProfilePhoneInput">Phone</label>
+                            <input id="jobsProfilePhoneInput"
+                                class="compact-input"
+                                type="text"
+                                placeholder="+1 555 123 456" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="jobsProfileCityInput">City</label>
+                            <input id="jobsProfileCityInput"
+                                class="compact-input"
+                                type="text"
+                                placeholder="Sao Paulo" />
+                        </div>
+                        <div class="input-group">
+                            <label for="jobsProfileHeadlineInput">Current title</label>
+                            <input id="jobsProfileHeadlineInput"
+                                class="compact-input"
+                                type="text"
+                                placeholder="Product Designer" />
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsProfilePortfolioInput">Portfolio / Website</label>
+                        <input id="jobsProfilePortfolioInput"
+                            class="compact-input"
+                            type="text"
+                            placeholder="https://portfolio.example.com" />
+                    </div>
+                    <div class="input-group">
+                        <label for="jobsProfileSummaryInput">Resume summary</label>
+                        <textarea id="jobsProfileSummaryInput"
+                            class="note-area"
+                            rows="2"
+                            placeholder="Short professional summary used in application fields"></textarea>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <button id="saveJobsProfileCacheBtn"
+                            type="button"
+                            style="flex:1; padding:8px;
+                            border:1px solid var(--primary);
+                            border-radius:var(--radius-sm);
+                            background:var(--primary-light);
+                            color:var(--primary);
+                            font-size:11px; font-weight:600; cursor:pointer;">
+                            Save Encrypted Cache
+                        </button>
+                        <button id="clearJobsProfileCacheBtn"
+                            type="button"
+                            style="flex:1; padding:8px;
+                            border:1px solid var(--warning);
+                            border-radius:var(--radius-sm);
+                            background:transparent;
+                            color:var(--warning);
+                            font-size:11px; font-weight:600; cursor:pointer;">
+                            Clear Cache
+                        </button>
+                    </div>
+                    <div id="jobsCacheStatus" style="
+                        margin-top:8px;
+                        font-size:10px;
+                        color:var(--text-muted);
+                    ">
+                        Encrypted cache: not configured.
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size:10px; color:var(--text-muted); margin-top:8px;">
+                Jobs mode is on-demand only in v1 (no recurring scheduler).
             </div>
         </div>
 
@@ -1009,6 +1317,44 @@
                     <option value="video-editing">Video Editing</option>
                     <option value="videomaker">Videomaker</option>
                 </select>
+            </div>
+
+            <div class="row">
+                <div class="input-group">
+                    <label for="connectUsageGoalSelect">
+                        Usage Goal
+                    </label>
+                    <select id="connectUsageGoalSelect">
+                        <option value="recruiter_outreach">Recruiter Outreach</option>
+                        <option value="peer_networking">Peer Networking</option>
+                        <option value="decision_makers">Decision Makers</option>
+                        <option value="brazil_focus">Brazil Focus</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="connectExpectedResultsSelect">
+                        Expected Results
+                    </label>
+                    <select id="connectExpectedResultsSelect">
+                        <option value="precise">Precise (50-300)</option>
+                        <option value="balanced" selected>Balanced (300-1200)</option>
+                        <option value="broad">Broad (1200+)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="checkbox-group" style="margin-top:4px;">
+                <label for="connectTemplateAutoCheckbox">
+                    Auto-select template
+                </label>
+                <input type="checkbox"
+                    id="connectTemplateAutoCheckbox"
+                    checked />
+            </div>
+
+            <div class="input-group" style="margin-bottom:8px;">
+                <label for="connectTemplateSelect">Template</label>
+                <select id="connectTemplateSelect"></select>
             </div>
 
             <div class="accordion"
@@ -1588,6 +1934,7 @@
         </div>
     </div>
 
+    <script src="../lib/search-templates.js"></script>
     <script src="../lib/connect-config.js"></script>
     <script src="../lib/ui-layout.js"></script>
     <script src="popup.js"></script>

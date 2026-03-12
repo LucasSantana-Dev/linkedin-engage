@@ -16,12 +16,14 @@ describe('constants', () => {
         expect(DAILY_LIMITS.connect).toBe(40);
         expect(DAILY_LIMITS.companyFollow).toBe(30);
         expect(DAILY_LIMITS.feedEngage).toBe(50);
+        expect(DAILY_LIMITS.jobsAssist).toBe(20);
     });
 
     test('hourly limits defined for all modes', () => {
         expect(HOURLY_LIMITS.connect).toBe(12);
         expect(HOURLY_LIMITS.companyFollow).toBe(10);
         expect(HOURLY_LIMITS.feedEngage).toBe(15);
+        expect(HOURLY_LIMITS.jobsAssist).toBe(8);
     });
 
     test('weekly limit is 150', () => {
@@ -127,6 +129,18 @@ describe('checkLimits', () => {
         );
         expect(result.allowed).toBe(false);
         expect(result.reason).toBe('hourly');
+    });
+
+    test('jobsAssist uses its own limits', () => {
+        const ok = checkLimits(
+            7, 19, 0, 'jobsAssist'
+        );
+        expect(ok.allowed).toBe(true);
+        const blocked = checkLimits(
+            8, 0, 0, 'jobsAssist'
+        );
+        expect(blocked.allowed).toBe(false);
+        expect(blocked.reason).toBe('hourly');
     });
 });
 

@@ -383,9 +383,22 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             'LINKEDIN_COMPANY_FOLLOW_START') {
             runCompanyFollow(event.data.config)
                 .then(result => {
+                    const runtimeResult = result &&
+                        typeof result === 'object'
+                        ? { ...result }
+                        : result;
+                    const templateMeta =
+                        event.data.config?.templateMeta;
+                    if (runtimeResult &&
+                        typeof runtimeResult === 'object' &&
+                        templateMeta &&
+                        !runtimeResult.templateMeta) {
+                        runtimeResult.templateMeta =
+                            templateMeta;
+                    }
                     window.postMessage({
                         type: 'LINKEDIN_BOT_COMPANY_STEP_DONE',
-                        result
+                        result: runtimeResult
                     }, '*');
                 });
         }

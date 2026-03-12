@@ -1,10 +1,14 @@
-describe('background connect runtime config', () => {
+const {
+    encryptJobsProfileCache
+} = require('../extension/lib/jobs-cache');
+
+describe('jobs orchestration in background', () => {
     let runtimeListener;
-    let alarmListener;
     let tabUpdatedListeners;
     let storageData;
     let runtimeMessages;
     let sentToContent;
+    let createdTabs;
 
     function tick() {
         return new Promise(resolve => setTimeout(resolve, 0));
@@ -21,6 +25,7 @@ describe('background connect runtime config', () => {
         storageData = {};
         runtimeMessages = [];
         sentToContent = [];
+        createdTabs = [];
 
         global.importScripts = jest.fn();
         global.getHourKey = jest.fn(mode => `hour_${mode}`);
@@ -52,10 +57,20 @@ describe('background connect runtime config', () => {
         global.recordNurtureEngagement = jest.fn();
         global.cleanExpiredNurtures = jest.fn();
 
-        const connectConfig = require('../extension/lib/connect-config');
+        const connectConfig = require(
+            '../extension/lib/connect-config'
+        );
         Object.assign(global, connectConfig);
+        const jobsCache = require(
+            '../extension/lib/jobs-cache'
+        );
+        Object.assign(global, jobsCache);
+        const jobsUtils = require(
+            '../extension/lib/jobs-utils'
+        );
+        Object.assign(global, jobsUtils);
 
-        let tabIdCounter = 300;
+        let tabIdCounter = 600;
         const tabMap = new Map();
 
         global.chrome = {
@@ -80,6 +95,7 @@ describe('background connect runtime config', () => {
                         url: opts.url,
                         status: 'complete'
                     };
+                    createdTabs.push(opts);
                     tabMap.set(tab.id, tab);
                     cb(tab);
                     setTimeout(() => emitTabUpdated(tab.id, tab), 0);
@@ -110,8 +126,12 @@ describe('background connect runtime config', () => {
                         runtimeListener = listener;
                     })
                 },
-                onInstalled: { addListener: jest.fn() },
-                onStartup: { addListener: jest.fn() },
+                onInstalled: {
+                    addListener: jest.fn()
+                },
+                onStartup: {
+                    addListener: jest.fn()
+                },
                 sendMessage: jest.fn((payload, cb) => {
                     runtimeMessages.push(payload);
                     if (typeof cb === 'function') cb({});
@@ -121,9 +141,7 @@ describe('background connect runtime config', () => {
                 create: jest.fn(),
                 clear: jest.fn(),
                 onAlarm: {
-                    addListener: jest.fn(listener => {
-                        alarmListener = listener;
-                    })
+                    addListener: jest.fn()
                 }
             },
             notifications: {
@@ -184,7 +202,7 @@ describe('background connect runtime config', () => {
                 done(undefined);
                 return;
             }
-            setTimeout(() => done(undefined), 20);
+            setTimeout(() => done(undefined), 250);
         });
     }
 
@@ -223,14 +241,14 @@ describe('background connect runtime config', () => {
         delete global.STATE_TAG_VERSION;
         delete global.AREA_PRESETS;
         delete global.AREA_PRESET_VALUES;
+        delete global.COMPANY_AREA_PRESET_VALUES;
         delete global.isValidAreaPreset;
         delete global.normalizeAreaPreset;
-        delete global.shouldResetAreaPresetOnManualTag;
-        delete global.COMPANY_AREA_PRESET_VALUES;
         delete global.isValidCompanyAreaPreset;
         delete global.normalizeCompanyAreaPreset;
         delete global.getCompanyAreaPresetDefaultQuery;
         delete global.getCompanyAreaPresetDefaultTargetCompanies;
+        delete global.shouldResetAreaPresetOnManualTag;
         delete global.parseExcludedCompanies;
         delete global.applyAreaPresetToTags;
         delete global.buildConnectQueryFromTags;
@@ -248,83 +266,96 @@ describe('background connect runtime config', () => {
         delete global.buildLinkedInJobsSearchUrl;
     });
 
-    it('forwards areaPreset and excludedCompanies to content on start', async () => {
+    it('starts jobs assist with decrypted profile and forwards config to page runtime', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana',
+                email: 'lucas@example.com'
+            },
+            'passphrase'
+        );
+
         const response = await sendRequest({
-            action: 'start',
-            query: 'recruiter finance',
+            action: 'startJobsAssist',
+            query: 'product designer',
             limit: 5,
-            areaPreset: 'finance',
-            excludedCompanies: ['Acme', 'Beta'],
-            connectUsageGoal: 'decision_makers',
-            connectExpectedResults: 'balanced',
-            connectTemplateAuto: true,
-            connectTemplateId:
-                'connect.business.decision_makers.balanced',
-            sendNote: false
+            excludedCompanies: ['Acme'],
+            profilePassphrase: 'passphrase'
         });
 
         expect(response).toEqual({ status: 'started' });
         await tick();
-
+        expect(createdTabs).toHaveLength(1);
+        expect(createdTabs[0].url).toContain('/jobs/search');
         expect(sentToContent.length).toBeGreaterThan(0);
         const payload = sentToContent[0].payload;
-        expect(payload.areaPreset).toBe('finance');
-        expect(payload.excludedCompanies).toEqual(['Acme', 'Beta']);
-        expect(payload.templateMeta).toMatchObject({
-            usageGoal: 'decision_makers',
-            expectedResultsBucket: 'balanced'
-        });
+        expect(payload.action).toBe('runCustom');
+        expect(payload.msgType).toBe('LINKEDIN_JOBS_ASSIST_START');
+        expect(payload.config.profile.fullName).toBe('Lucas Santana');
+        expect(payload.config.profilePassphrase).toBeUndefined();
     });
 
-    it('scheduled connect run reuses areaPreset and excludedCompanies', async () => {
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['finance'] },
-            tagVersion: 5,
-            areaPreset: 'finance',
-            excludedCompanies: 'Acme\nBeta',
-            connectUsageGoal: 'decision_makers',
-            connectExpectedResults: 'balanced',
-            connectTemplateAuto: true,
-            limit: '10',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false
-        };
-        storageData.schedule = { enabled: true };
+    it('blocks jobs run when encrypted profile exists and passphrase is missing', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana'
+            },
+            'passphrase'
+        );
 
-        alarmListener({ name: 'linkedinSchedule' });
-        await tick();
-
-        expect(sentToContent.length).toBeGreaterThan(0);
-        const payload = sentToContent[0].payload;
-        expect(payload.areaPreset).toBe('finance');
-        expect(payload.excludedCompanies).toEqual(['Acme', 'Beta']);
-        expect(payload.templateMeta).toMatchObject({
-            usageGoal: 'decision_makers',
-            expectedResultsBucket: 'balanced'
+        const response = await sendRequest({
+            action: 'startJobsAssist',
+            query: 'product designer',
+            limit: 5
         });
+
+        expect(response).toEqual({
+            status: 'blocked',
+            reason: 'profile-cache-locked'
+        });
+        expect(createdTabs).toHaveLength(0);
     });
 
-    it('migrates legacy myCompany into excludedCompanies for schedule', async () => {
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['software'] },
-            tagVersion: 4,
-            myCompany: 'Legacy Corp',
-            areaPreset: 'tech',
-            limit: '10',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false
-        };
-        storageData.schedule = { enabled: true };
+    it('stop request interrupts active jobs runtime', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana'
+            },
+            'passphrase'
+        );
 
-        alarmListener({ name: 'linkedinSchedule' });
+        await sendRequest({
+            action: 'startJobsAssist',
+            query: 'product designer',
+            limit: 5,
+            profilePassphrase: 'passphrase'
+        });
+        await new Promise(resolve => setTimeout(resolve, 60));
+
+        const response = await sendRequest({ action: 'stop' });
+        expect(response).toEqual({ status: 'stopping' });
+        expect(createdTabs.length).toBeGreaterThan(0);
+    });
+
+    it('records jobs history on completion and preserves manual review status', async () => {
+        runtimeListener({
+            action: 'done',
+            result: {
+                mode: 'jobs',
+                success: true,
+                message: 'Processed jobs',
+                log: [{
+                    status: 'ready-manual-review',
+                    title: 'Senior Product Designer',
+                    company: 'Acme'
+                }]
+            }
+        }, {}, () => {});
         await tick();
 
-        expect(storageData.popupState.excludedCompanies)
-            .toBe('Legacy Corp');
-        expect(sentToContent.length).toBeGreaterThan(0);
-        expect(sentToContent[0].payload.excludedCompanies)
-            .toEqual(['Legacy Corp']);
+        expect(storageData.jobsAssistHistory).toHaveLength(1);
+        expect(storageData.jobsAssistHistory[0].status).toBe(
+            'ready-manual-review'
+        );
     });
 });

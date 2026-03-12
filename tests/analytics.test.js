@@ -242,6 +242,23 @@ describe('computeStats', () => {
         expect(s.warmupPostsLearned).toBe(20);
         expect(s.warmupThreadsLearned).toBe(11);
     });
+
+    test('tracks jobs mode entries and skip reasons', () => {
+        const s = computeStats([
+            {
+                mode: 'jobs',
+                status: 'ready-manual-review',
+                timestamp: '2026-03-10T10:00:00Z'
+            },
+            {
+                mode: 'jobs',
+                status: 'skipped-excluded-company',
+                timestamp: '2026-03-10T11:00:00Z'
+            }
+        ]);
+        expect(s.byMode.jobs).toBe(2);
+        expect(s.bySkipReason['skipped-excluded-company']).toBe(1);
+    });
 });
 
 describe('computeAcceptanceByTemplate', () => {

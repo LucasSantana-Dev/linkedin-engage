@@ -1,5 +1,6 @@
 let activeTabId = null;
 let companyRunState = null;
+const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/templates.js',
@@ -7,6 +8,11 @@ const COMPANY_FOLLOW_SCRIPTS = [
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
+];
+
+const JOBS_ASSIST_SCRIPTS = [
+    'lib/jobs-utils.js',
+    'jobs-assist.js'
 ];
 
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
@@ -28,11 +34,25 @@ importScripts('lib/smart-schedule.js');
 importScripts('lib/feed-warmup.js');
 importScripts('lib/pattern-memory.js');
 importScripts('lib/connect-config.js');
+importScripts('lib/search-templates.js');
+importScripts('lib/jobs-cache.js');
+importScripts('lib/jobs-utils.js');
 
 function parseExcludedCompanyList(raw) {
     if (typeof parseExcludedCompanies === 'function') {
         return parseExcludedCompanies(raw);
     }
+    if (Array.isArray(raw)) {
+        return raw.map(s => String(s || '').trim())
+            .filter(Boolean);
+    }
+    return String(raw || '')
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
+}
+
+function parseTextList(raw) {
     if (Array.isArray(raw)) {
         return raw.map(s => String(s || '').trim())
             .filter(Boolean);
@@ -55,6 +75,213 @@ function normalizeRuntimeAreaPreset(value) {
         return normalizeAreaPreset(value);
     }
     return value || 'custom';
+}
+
+function normalizeTemplateMeta(meta, mode) {
+    const source = meta && typeof meta === 'object'
+        ? meta : {};
+    const normalizedMode = String(mode || source.mode || '')
+        .trim() || 'connect';
+    return {
+        templateId: String(source.templateId || ''),
+        usageGoal: String(source.usageGoal || ''),
+        expectedResultsBucket: String(
+            source.expectedResultsBucket || ''
+        ),
+        operatorCount: Math.max(
+            0,
+            Number(source.operatorCount) || 0
+        ),
+        compiledQueryLength: Math.max(
+            0,
+            Number(source.compiledQueryLength) || 0
+        ),
+        mode: normalizedMode
+    };
+}
+
+function countBooleanOperatorsSafe(query) {
+    if (typeof countBooleanOperators === 'function') {
+        return countBooleanOperators(query || '');
+    }
+    return String(query || '')
+        .split(/\s+/)
+        .filter(token => /^(AND|OR|NOT)$/i.test(token))
+        .length;
+}
+
+function mergeLogWithTemplateMeta(log, templateMeta) {
+    const meta = normalizeTemplateMeta(
+        templateMeta,
+        templateMeta?.mode
+    );
+    if (!Array.isArray(log) || log.length === 0) {
+        return [];
+    }
+    return log.map(entry => ({
+        ...entry,
+        templateId: entry?.templateId || meta.templateId,
+        usageGoal: entry?.usageGoal || meta.usageGoal,
+        expectedResultsBucket:
+            entry?.expectedResultsBucket ||
+            meta.expectedResultsBucket,
+        operatorCount: Number.isFinite(entry?.operatorCount)
+            ? entry.operatorCount
+            : meta.operatorCount,
+        compiledQueryLength:
+            Number.isFinite(entry?.compiledQueryLength)
+                ? entry.compiledQueryLength
+                : meta.compiledQueryLength
+    }));
+}
+
+function buildConnectSearchRuntimeFromState(state, forcedQuery) {
+    const safeState = state && typeof state === 'object'
+        ? state
+        : {};
+    const areaPreset = normalizeRuntimeAreaPreset(
+        safeState.areaPreset
+    );
+    const usageGoal = String(
+        safeState.connectUsageGoal || ''
+    ).trim();
+    const expectedResultsBucket = String(
+        safeState.connectExpectedResults || ''
+    ).trim();
+    const auto = safeState.connectTemplateAuto !== false;
+    const templateId = String(
+        safeState.connectTemplateId || ''
+    ).trim();
+    const roleTermsLimit = Math.max(
+        1,
+        Math.min(
+            10,
+            parseInt(safeState.roleTermsLimit, 10) || 6
+        )
+    );
+
+    const selectedTags = safeState.tags || {};
+    const useCustomQuery = !!safeState.useCustomQuery;
+    const customQuery = String(
+        safeState.customQuery || ''
+    ).trim();
+    const preferredQuery = String(forcedQuery || '').trim();
+
+    let plan = null;
+    if (typeof buildSearchTemplatePlan === 'function') {
+        plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset,
+            usageGoal,
+            expectedResultsBucket,
+            auto,
+            templateId,
+            selectedTags,
+            roleTermsLimit
+        });
+    }
+
+    const fallbackQuery = buildQueryFromTags(safeState);
+    const templateQuery = String(plan?.query || '').trim();
+    let query = preferredQuery || templateQuery || fallbackQuery;
+    if (useCustomQuery && customQuery) {
+        query = customQuery;
+    }
+    query = String(query || '').trim();
+
+    const fallbackMeta = {
+        templateId,
+        usageGoal,
+        expectedResultsBucket,
+        operatorCount: countBooleanOperatorsSafe(query),
+        compiledQueryLength: query.length,
+        mode: 'connect'
+    };
+    return {
+        areaPreset,
+        query,
+        filterSpec: plan?.filterSpec || {},
+        templateMeta: normalizeTemplateMeta(
+            plan?.meta || fallbackMeta,
+            'connect'
+        )
+    };
+}
+
+function buildCompanySearchRuntimeFromState(state) {
+    const safeState = state && typeof state === 'object'
+        ? state
+        : {};
+    const companyAreaPreset =
+        typeof normalizeCompanyAreaPreset === 'function'
+            ? normalizeCompanyAreaPreset(
+                safeState.companyAreaPreset
+            )
+            : (safeState.companyAreaPreset || 'custom');
+    const usageGoal = String(
+        safeState.companyUsageGoal || ''
+    ).trim();
+    const expectedResultsBucket = String(
+        safeState.companyExpectedResults || ''
+    ).trim();
+    const auto = safeState.companyTemplateAuto !== false;
+    const templateId = String(
+        safeState.companyTemplateId || ''
+    ).trim();
+    const manualQuery = String(
+        safeState.companyQuery || ''
+    ).trim();
+
+    let plan = null;
+    if (typeof buildSearchTemplatePlan === 'function') {
+        plan = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: companyAreaPreset,
+            usageGoal,
+            expectedResultsBucket,
+            auto,
+            templateId,
+            manualQuery
+        });
+    }
+
+    const rawTargets = parseTextList(
+        safeState.targetCompanies
+    );
+    const templateTargets = parseTextList(
+        plan?.defaults?.targetCompanies
+    );
+    const targetCompanies = rawTargets.length > 0
+        ? rawTargets
+        : templateTargets;
+
+    let query = String(plan?.query || '').trim() || manualQuery;
+    if (!query &&
+        typeof getCompanyAreaPresetDefaultQuery === 'function') {
+        query = getCompanyAreaPresetDefaultQuery(
+            companyAreaPreset
+        );
+    }
+    query = String(query || '').trim();
+
+    const fallbackMeta = {
+        templateId,
+        usageGoal,
+        expectedResultsBucket,
+        operatorCount: countBooleanOperatorsSafe(query),
+        compiledQueryLength: query.length,
+        mode: 'companies'
+    };
+    return {
+        companyAreaPreset,
+        query,
+        targetCompanies,
+        filterSpec: plan?.filterSpec || {},
+        templateMeta: normalizeTemplateMeta(
+            plan?.meta || fallbackMeta,
+            'companies'
+        )
+    };
 }
 
 async function checkRateLimit(mode) {
@@ -93,6 +320,15 @@ function buildCompanySearchUrl(query) {
         '&origin=FACETED_SEARCH';
 }
 
+function buildJobsSearchUrl(query, options) {
+    if (typeof buildLinkedInJobsSearchUrl === 'function') {
+        return buildLinkedInJobsSearchUrl(query, options);
+    }
+    return 'https://www.linkedin.com/jobs/search/' +
+        `?keywords=${encodeURIComponent(query)}` +
+        '&f_AL=true';
+}
+
 function resolveCompanySearches(
     query,
     targetCompanies,
@@ -121,7 +357,21 @@ function countFollowedEntries(log) {
 
 function applyRunResult(result) {
     activeTabId = null;
-    const r = result;
+    const r = result && typeof result === 'object'
+        ? { ...result }
+        : result;
+    if (r?.templateMeta) {
+        r.templateMeta = normalizeTemplateMeta(
+            r.templateMeta,
+            r.mode || r.templateMeta.mode
+        );
+        if (Array.isArray(r.log)) {
+            r.log = mergeLogWithTemplateMeta(
+                r.log,
+                r.templateMeta
+            );
+        }
+    }
     const entries = r?.log || [];
     const logCount = r?.mode === 'company'
         ? entries.filter(e => e.status === 'followed')
@@ -144,9 +394,13 @@ function applyRunResult(result) {
             ? 'companyFollow'
             : r.mode === 'feed'
                 ? 'feedEngage' : 'connect';
+        const normalizedRateMode = r.mode === 'jobs'
+            ? 'jobsAssist'
+            : rateMode;
         for (let i = 0; i < logCount; i++) {
             incrementCount(
-                rateMode, chrome.storage.local
+                normalizedRateMode,
+                chrome.storage.local
             );
         }
     }
@@ -164,6 +418,8 @@ function applyRunResult(result) {
             ? 'companyFollowHistory'
             : r.mode === 'feed'
                 ? 'feedEngageHistory'
+                : r.mode === 'jobs'
+                    ? 'jobsAssistHistory'
                 : null;
         if (key) {
             chrome.storage.local.get(key, (data) => {
@@ -190,17 +446,57 @@ function applyRunResult(result) {
             }, chrome.storage.local);
         }
     }
+    if (r?.templateMeta?.templateId) {
+        const skippedCount = entries.filter(
+            entry => entry?.status?.startsWith('skipped') ||
+                entry?.status?.startsWith('skip-')
+        ).length;
+        const emptyOutcomes = entries.filter(entry =>
+            /no-results|no-cards|thread-context-unavailable/i
+                .test(String(entry?.status || ''))
+        ).length;
+        recordEngagement({
+            mode: r.mode || r.templateMeta.mode || 'connect',
+            status: r.success ? 'run-template' : 'run-template-error',
+            templateId: r.templateMeta.templateId,
+            usageGoal: r.templateMeta.usageGoal,
+            expectedResultsBucket:
+                r.templateMeta.expectedResultsBucket,
+            operatorCount: r.templateMeta.operatorCount,
+            compiledQueryLength:
+                r.templateMeta.compiledQueryLength,
+            skipped: skippedCount,
+            emptyOutcomes
+        }, chrome.storage.local);
+    }
 }
 
 function finalizeCompanyRun(result, broadcastToPopup) {
     if (!companyRunState?.active) return;
-    companyRunState.active = false;
+    const state = companyRunState;
+    state.active = false;
     companyRunState = null;
-    applyRunResult(result);
+    const enrichedResult = result &&
+        typeof result === 'object'
+        ? { ...result }
+        : {
+            success: false,
+            mode: 'company',
+            error: 'Unknown company follow result.',
+            log: []
+        };
+    if (!enrichedResult.templateMeta &&
+        state?.config?.templateMeta) {
+        enrichedResult.templateMeta = normalizeTemplateMeta(
+            state.config.templateMeta,
+            'companies'
+        );
+    }
+    applyRunResult(enrichedResult);
     if (broadcastToPopup) {
         chrome.runtime.sendMessage({
             action: 'done',
-            result
+            result: enrichedResult
         });
     }
 }
@@ -422,6 +718,11 @@ function launchAutomation(config) {
                                     === true,
                                 sentUrls:
                                     config.sentUrls || [],
+                                templateMeta:
+                                    normalizeTemplateMeta(
+                                        config.templateMeta,
+                                        'connect'
+                                    ),
                                 engagementOnly:
                                     config.engagementOnly
                                     || false
@@ -488,6 +789,10 @@ function launchCompanyFollow(config) {
 
     const nextConfig = {
         ...config,
+        templateMeta: normalizeTemplateMeta(
+            config.templateMeta,
+            'companies'
+        ),
         companyAreaPreset:
             typeof normalizeCompanyAreaPreset === 'function'
                 ? normalizeCompanyAreaPreset(
@@ -567,6 +872,36 @@ function launchFeedEngage(config) {
                     'lib/human-behavior.js',
                     'feed-engage.js'],
                 'LINKEDIN_FEED_ENGAGE_START',
+                config
+            );
+        }
+    );
+}
+
+function launchJobsAssist(config) {
+    const query = String(config?.query || '').trim();
+    if (!query) {
+        notifyError('No jobs query provided.');
+        return;
+    }
+    const searchUrl = buildJobsSearchUrl(query, config);
+
+    chrome.tabs.create(
+        { url: searchUrl, active: true },
+        (tab) => {
+            if (chrome.runtime.lastError || !tab) {
+                notifyError(
+                    'Failed to open jobs search: ' +
+                    (chrome.runtime.lastError?.message
+                        || 'unknown error')
+                );
+                return;
+            }
+            activeTabId = tab.id;
+            injectAndStart(
+                tab.id,
+                JOBS_ASSIST_SCRIPTS,
+                'LINKEDIN_JOBS_ASSIST_START',
                 config
             );
         }
@@ -2033,9 +2368,92 @@ chrome.runtime.onMessage.addListener(
                     return;
                 }
                 request.rateRemaining = status.remaining;
+                request.templateMeta = normalizeTemplateMeta(
+                    request.templateMeta || {
+                        usageGoal:
+                            request.connectUsageGoal || '',
+                        expectedResultsBucket:
+                            request.connectExpectedResults || '',
+                        operatorCount:
+                            countBooleanOperatorsSafe(
+                                request.query || ''
+                            ),
+                        compiledQueryLength:
+                            String(request.query || '').length,
+                        templateId:
+                            request.connectTemplateId || '',
+                        mode: 'connect'
+                    },
+                    'connect'
+                );
                 launchAutomation(request);
                 sendResponse({ status: 'started' });
             });
+            return true;
+        }
+
+        if (request.action === 'saveJobsProfileCache') {
+            if (typeof encryptJobsProfileCache !== 'function') {
+                sendResponse({
+                    status: 'error',
+                    error: 'Jobs cache encryption unavailable.'
+                });
+                return true;
+            }
+            encryptJobsProfileCache(
+                request.profile || {},
+                request.profilePassphrase
+            ).then((envelope) => {
+                chrome.storage.local.set({
+                    [JOBS_PROFILE_CACHE_KEY]: envelope
+                }, () => {
+                    sendResponse({
+                        status: 'saved',
+                        updatedAt: envelope.updatedAt,
+                        version: envelope.version
+                    });
+                });
+            }).catch((error) => {
+                sendResponse({
+                    status: 'error',
+                    error: error?.message || 'Failed to save cache.'
+                });
+            });
+            return true;
+        }
+
+        if (request.action === 'getJobsProfileCacheStatus') {
+            chrome.storage.local.get(
+                JOBS_PROFILE_CACHE_KEY,
+                (data) => {
+                    if (typeof getJobsProfileCacheStatus !== 'function') {
+                        sendResponse({
+                            exists: !!data[JOBS_PROFILE_CACHE_KEY],
+                            locked: !!data[JOBS_PROFILE_CACHE_KEY],
+                            version: data[JOBS_PROFILE_CACHE_KEY]
+                                ?.version || null,
+                            updatedAt: data[JOBS_PROFILE_CACHE_KEY]
+                                ?.updatedAt || null
+                        });
+                        return;
+                    }
+                    sendResponse(
+                        getJobsProfileCacheStatus(
+                            data[JOBS_PROFILE_CACHE_KEY]
+                        )
+                    );
+                }
+            );
+            return true;
+        }
+
+        if (request.action === 'clearJobsProfileCache') {
+            chrome.storage.local.remove(
+                JOBS_PROFILE_CACHE_KEY,
+                () => {
+                    sendResponse({ status: 'cleared' });
+                }
+            );
             return true;
         }
 
@@ -2057,8 +2475,126 @@ chrome.runtime.onMessage.addListener(
                         )
                         : (request.companyAreaPreset ||
                             'custom');
+                request.templateMeta = normalizeTemplateMeta(
+                    request.templateMeta || {
+                        usageGoal:
+                            request.companyUsageGoal || '',
+                        expectedResultsBucket:
+                            request.companyExpectedResults || '',
+                        templateId:
+                            request.companyTemplateId || '',
+                        operatorCount:
+                            countBooleanOperatorsSafe(
+                                request.query || ''
+                            ),
+                        compiledQueryLength:
+                            String(request.query || '').length,
+                        mode: 'companies'
+                    },
+                    'companies'
+                );
                 launchCompanyFollow(request);
                 sendResponse({ status: 'started' });
+            });
+            return true;
+        }
+
+        if (request.action === 'startJobsAssist') {
+            checkRateLimit('jobsAssist').then((status) => {
+                if (!status.allowed) {
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
+                    return;
+                }
+                chrome.storage.local.get(
+                    JOBS_PROFILE_CACHE_KEY,
+                    async (data) => {
+                        const envelope = data[JOBS_PROFILE_CACHE_KEY];
+                        let profile = {};
+                        if (envelope) {
+                            if (!request.profilePassphrase) {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            if (typeof decryptJobsProfileCache !==
+                                'function') {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            try {
+                                profile = await decryptJobsProfileCache(
+                                    envelope,
+                                    request.profilePassphrase
+                                );
+                            } catch (err) {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                        }
+                        const runtimeConfig = {
+                            source: 'linkedin',
+                            query: String(request.query || '').trim(),
+                            limit: Math.max(
+                                1,
+                                parseInt(request.limit, 10) || 10
+                            ),
+                            easyApplyOnly: true,
+                            roleTerms: parseTextList(
+                                request.roleTerms
+                            ),
+                            locationTerms: parseTextList(
+                                request.locationTerms
+                            ),
+                            desiredLevels: parseTextList(
+                                request.desiredLevels
+                            ),
+                            preferredCompanies: parseTextList(
+                                request.preferredCompanies
+                            ),
+                            excludedCompanies: parseExcludedCompanyList(
+                                request.excludedCompanies
+                            ),
+                            appliedJobIds: parseTextList(
+                                request.appliedJobIds
+                            ),
+                            experienceLevel: String(
+                                request.experienceLevel || ''
+                            ).trim(),
+                            workType: String(
+                                request.workType || ''
+                            ).trim(),
+                            location: String(
+                                request.location || ''
+                            ).trim(),
+                            areaPreset: normalizeRuntimeAreaPreset(
+                                request.areaPreset
+                            ),
+                            templateMeta: normalizeTemplateMeta(
+                                request.templateMeta,
+                                'jobs'
+                            ),
+                            profile
+                        };
+                        launchJobsAssist(runtimeConfig);
+                        sendResponse({ status: 'started' });
+                    }
+                );
+            }).catch(() => {
+                sendResponse({
+                    status: 'blocked',
+                    reason: 'unknown'
+                });
             });
             return true;
         }
@@ -2480,16 +3016,32 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                         .split('\n')
                         .map(q => q.trim())
                         .filter(Boolean);
-                const query = savedQueries.length > 0
+                const forcedQuery = savedQueries.length > 0
                     ? savedQueries[0]
-                    : buildQueryFromTags(state);
+                    : '';
+                const connectRuntime =
+                    buildConnectSearchRuntimeFromState(
+                        state,
+                        forcedQuery
+                    );
+                const query = connectRuntime.query;
                 if (!query) return;
 
                 const networkTypes = [];
-                if (state.degree2nd !== false) {
+                const degree2nd = typeof
+                    connectRuntime.filterSpec.degree2nd
+                        === 'boolean'
+                    ? connectRuntime.filterSpec.degree2nd
+                    : state.degree2nd !== false;
+                const degree3rd = typeof
+                    connectRuntime.filterSpec.degree3rd
+                        === 'boolean'
+                    ? connectRuntime.filterSpec.degree3rd
+                    : state.degree3rd !== false;
+                if (degree2nd) {
                     networkTypes.push('"S"');
                 }
-                if (state.degree3rd !== false) {
+                if (degree3rd) {
                     networkTypes.push('"O"');
                 }
                 const networkFilter =
@@ -2513,9 +3065,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                         parseInt(state.limit) || 50, 10
                     ),
                     goalMode: state.goalMode || 'passive',
-                    areaPreset: normalizeRuntimeAreaPreset(
-                        state.areaPreset
-                    ),
+                    areaPreset: connectRuntime.areaPreset,
                     excludedCompanies: parseExcludedCompanyList(
                         state.excludedCompanies
                     ),
@@ -2536,9 +3086,15 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                                 )
                             ),
                     geoUrn,
-                    activelyHiring:
-                        state.activelyHiring || false,
+                    activelyHiring: typeof
+                        connectRuntime.filterSpec.activelyHiring
+                            === 'boolean'
+                        ? connectRuntime.filterSpec
+                            .activelyHiring
+                        : !!state.activelyHiring,
                     networkFilter,
+                    templateMeta:
+                        connectRuntime.templateMeta,
                     sentUrls:
                         data.sentProfileUrls || []
                 });
@@ -2628,26 +3184,35 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 const schedule = data.companySchedule;
                 if (!schedule?.enabled || !state) return;
 
-                const raw = state.targetCompanies || '';
-                const allCompanies = raw
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(Boolean);
+                const companyRuntime =
+                    buildCompanySearchRuntimeFromState(
+                        state
+                    );
+                const allCompanies =
+                    companyRuntime.targetCompanies;
                 const limit = parseInt(
                     state.limit
                 ) || 50;
                 const companyAreaPreset =
-                    typeof normalizeCompanyAreaPreset ===
-                        'function'
-                        ? normalizeCompanyAreaPreset(
-                            state.companyAreaPreset
-                        )
-                        : (state.companyAreaPreset ||
-                            'custom');
+                    companyRuntime.companyAreaPreset;
+                const templateMeta =
+                    companyRuntime.templateMeta;
 
                 if (allCompanies.length > 0) {
-                    const batchSize =
-                        schedule.batchSize || 10;
+                    const templateBatchSize = Math.max(
+                        1,
+                        parseInt(
+                            companyRuntime.filterSpec
+                                ?.batchSize,
+                            10
+                        ) || 0
+                    );
+                    const batchSize = Math.max(
+                        1,
+                        parseInt(schedule.batchSize, 10) ||
+                            templateBatchSize ||
+                            10
+                    );
                     const startIdx =
                         (data.companyRotationIndex || 0)
                         % allCompanies.length;
@@ -2662,11 +3227,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     });
 
                     launchCompanyFollow({
-                        query: state.companyQuery
-                            || 'software technology',
+                        query: companyRuntime.query ||
+                            'software technology',
                         limit,
                         companyAreaPreset,
-                        targetCompanies: batch
+                        targetCompanies: batch,
+                        templateMeta
                     });
 
                     chrome.notifications.create({
@@ -2681,24 +3247,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     return;
                 }
 
-                let fallbackQuery = String(
-                    state.companyQuery || ''
+                const fallbackQuery = String(
+                    companyRuntime.query || ''
                 ).trim();
-                if (!fallbackQuery &&
-                    typeof getCompanyAreaPresetDefaultQuery
-                        === 'function') {
-                    fallbackQuery =
-                        getCompanyAreaPresetDefaultQuery(
-                            companyAreaPreset
-                        );
-                }
                 if (!fallbackQuery) return;
 
                 launchCompanyFollow({
                     query: fallbackQuery,
                     limit,
                     companyAreaPreset,
-                    targetCompanies: []
+                    targetCompanies: [],
+                    templateMeta
                 });
 
                 chrome.notifications.create({
@@ -2797,24 +3356,40 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 .map(q => q.trim())
                 .filter(Boolean);
 
-            let query;
+            let forcedQuery = '';
             if (savedQueries.length > 1) {
                 const idx = (data.queryRotationIndex || 0)
                     % savedQueries.length;
-                query = savedQueries[idx];
+                forcedQuery = savedQueries[idx];
                 chrome.storage.local.set({
                     queryRotationIndex: idx + 1
                 });
             } else {
-                query = buildQueryFromTags(state);
+                forcedQuery = savedQueries[0] || '';
             }
+            const connectRuntime =
+                buildConnectSearchRuntimeFromState(
+                    state,
+                    forcedQuery
+                );
+            const query = connectRuntime.query;
             if (!query) return;
 
             const networkTypes = [];
-            if (state.degree2nd !== false) {
+            const degree2nd = typeof
+                connectRuntime.filterSpec.degree2nd
+                    === 'boolean'
+                ? connectRuntime.filterSpec.degree2nd
+                : state.degree2nd !== false;
+            const degree3rd = typeof
+                connectRuntime.filterSpec.degree3rd
+                    === 'boolean'
+                ? connectRuntime.filterSpec.degree3rd
+                : state.degree3rd !== false;
+            if (degree2nd) {
                 networkTypes.push('"S"');
             }
-            if (state.degree3rd !== false) {
+            if (degree3rd) {
                 networkTypes.push('"O"');
             }
             const networkFilter = networkTypes.length > 0
@@ -2834,9 +3409,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 query,
                 limit: parseInt(state.limit) || 50,
                 goalMode: state.goalMode || 'passive',
-                areaPreset: normalizeRuntimeAreaPreset(
-                    state.areaPreset
-                ),
+                areaPreset: connectRuntime.areaPreset,
                 excludedCompanies: parseExcludedCompanyList(
                     state.excludedCompanies
                 ),
@@ -2851,13 +3424,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                     : getTemplate(
                         state.activeTemplate,
                         state.lang || 'en',
-                        normalizeRuntimeAreaPreset(
-                            state.areaPreset
-                        )
+                        connectRuntime.areaPreset
                     ),
                 geoUrn,
-                activelyHiring: state.activelyHiring || false,
+                activelyHiring: typeof
+                    connectRuntime.filterSpec.activelyHiring
+                        === 'boolean'
+                    ? connectRuntime.filterSpec.activelyHiring
+                    : !!state.activelyHiring,
                 networkFilter,
+                templateMeta: connectRuntime.templateMeta,
                 sentUrls: data.sentProfileUrls || []
             });
         }

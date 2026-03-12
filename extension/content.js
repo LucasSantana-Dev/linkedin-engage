@@ -1462,9 +1462,21 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         if (event.source !== window) return;
         if (event.data?.type === 'LINKEDIN_BOT_START') {
             runAutomation(event.data.config).then(result => {
+                const runtimeResult = result &&
+                    typeof result === 'object'
+                    ? { ...result }
+                    : result;
+                const templateMeta =
+                    event.data.config?.templateMeta;
+                if (runtimeResult &&
+                    typeof runtimeResult === 'object' &&
+                    templateMeta &&
+                    !runtimeResult.templateMeta) {
+                    runtimeResult.templateMeta = templateMeta;
+                }
                 window.postMessage({
                     type: 'LINKEDIN_BOT_DONE',
-                    result
+                    result: runtimeResult
                 }, '*');
             });
         }

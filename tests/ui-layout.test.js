@@ -20,6 +20,8 @@ describe('ui-layout', () => {
                 .toBe(false);
             expect(ui.accordions.companies.automation)
                 .toBe(false);
+            expect(ui.accordions.jobs.refine).toBe(false);
+            expect(ui.accordions.jobs.profile).toBe(false);
             expect(ui.accordions.feed.commentSettings)
                 .toBe(false);
             expect(ui.accordions.feed.automation).toBe(false);
@@ -37,6 +39,7 @@ describe('ui-layout', () => {
                 lastOpenSubpanel: {
                     connect: null,
                     companies: null,
+                    jobs: null,
                     feed: null
                 },
                 tagSearch: 'ux'

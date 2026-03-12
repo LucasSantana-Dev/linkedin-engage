@@ -16,6 +16,11 @@ const DEFAULT_FEED_WARMUP_RUNS = 2;
 const DEFAULT_TEMPLATE_KEY = 'networking';
 const DEFAULT_AREA_PRESET = 'custom';
 const DEFAULT_COMPANY_AREA_PRESET = 'custom';
+const DEFAULT_JOBS_AREA_PRESET = 'custom';
+const DEFAULT_CONNECT_USAGE_GOAL = 'recruiter_outreach';
+const DEFAULT_COMPANY_USAGE_GOAL = 'talent_watchlist';
+const DEFAULT_JOBS_USAGE_GOAL = 'high_fit_easy_apply';
+const DEFAULT_EXPECTED_RESULTS = 'balanced';
 const DEFAULT_LOCAL_UI_STATE = {
     accordions: {
         connect: {
@@ -25,6 +30,10 @@ const DEFAULT_LOCAL_UI_STATE = {
             automation: false
         },
         companies: { automation: false },
+        jobs: {
+            refine: false,
+            profile: false
+        },
         feed: {
             commentSettings: false,
             automation: false
@@ -34,6 +43,7 @@ const DEFAULT_LOCAL_UI_STATE = {
     lastOpenSubpanel: {
         connect: null,
         companies: null,
+        jobs: null,
         feed: null
     },
     tagSearch: ''
@@ -94,6 +104,49 @@ function getSelectedCompanyAreaPreset() {
     return value || DEFAULT_COMPANY_AREA_PRESET;
 }
 
+function getSelectedJobsAreaPreset() {
+    const select = document.getElementById(
+        'jobsAreaPresetSelect'
+    );
+    const value = select?.value || DEFAULT_JOBS_AREA_PRESET;
+    if (typeof normalizeAreaPreset === 'function') {
+        return normalizeAreaPreset(value);
+    }
+    return value || DEFAULT_JOBS_AREA_PRESET;
+}
+
+function setJobsAreaPresetSelectValue(value) {
+    const select = document.getElementById(
+        'jobsAreaPresetSelect'
+    );
+    if (!select) return;
+    const normalized = typeof normalizeAreaPreset === 'function'
+        ? normalizeAreaPreset(value)
+        : (value || DEFAULT_JOBS_AREA_PRESET);
+    select.value = normalized || DEFAULT_JOBS_AREA_PRESET;
+}
+
+function parseMultilineList(raw) {
+    return String(raw || '')
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean);
+}
+
+function getJobsPresetTerms(preset) {
+    if (!preset || preset === 'custom') {
+        return { role: [], industry: [] };
+    }
+    if (typeof AREA_PRESETS !== 'undefined' &&
+        AREA_PRESETS[preset]) {
+        return {
+            role: (AREA_PRESETS[preset].role || []).slice(),
+            industry: (AREA_PRESETS[preset].industry || []).slice()
+        };
+    }
+    return { role: [], industry: [] };
+}
+
 function setCompanyAreaPresetSelectValue(value) {
     const select = document.getElementById(
         'companyAreaPresetSelect'
@@ -123,6 +176,202 @@ function getCompanyPresetDefaultTargets(companyAreaPreset) {
         );
     }
     return [];
+}
+
+function getValueOrDefault(id, fallback) {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    return String(el.value || '').trim() || fallback;
+}
+
+function setSelectValue(id, value, fallback) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(value || fallback || '');
+}
+
+function getConnectUsageGoal() {
+    return getValueOrDefault(
+        'connectUsageGoalSelect',
+        DEFAULT_CONNECT_USAGE_GOAL
+    );
+}
+
+function getConnectExpectedResults() {
+    return getValueOrDefault(
+        'connectExpectedResultsSelect',
+        DEFAULT_EXPECTED_RESULTS
+    );
+}
+
+function isConnectTemplateAuto() {
+    return document.getElementById(
+        'connectTemplateAutoCheckbox'
+    )?.checked !== false;
+}
+
+function getConnectTemplateId() {
+    return getValueOrDefault('connectTemplateSelect', '');
+}
+
+function getCompanyUsageGoal() {
+    return getValueOrDefault(
+        'companyUsageGoalSelect',
+        DEFAULT_COMPANY_USAGE_GOAL
+    );
+}
+
+function getCompanyExpectedResults() {
+    return getValueOrDefault(
+        'companyExpectedResultsSelect',
+        DEFAULT_EXPECTED_RESULTS
+    );
+}
+
+function isCompanyTemplateAuto() {
+    return document.getElementById(
+        'companyTemplateAutoCheckbox'
+    )?.checked !== false;
+}
+
+function getCompanyTemplateId() {
+    return getValueOrDefault('companyTemplateSelect', '');
+}
+
+function getJobsUsageGoal() {
+    return getValueOrDefault(
+        'jobsUsageGoalSelect',
+        DEFAULT_JOBS_USAGE_GOAL
+    );
+}
+
+function getJobsExpectedResults() {
+    return getValueOrDefault(
+        'jobsExpectedResultsSelect',
+        DEFAULT_EXPECTED_RESULTS
+    );
+}
+
+function isJobsTemplateAuto() {
+    return document.getElementById(
+        'jobsTemplateAutoCheckbox'
+    )?.checked !== false;
+}
+
+function getJobsTemplateId() {
+    return getValueOrDefault('jobsTemplateSelect', '');
+}
+
+function getTemplateState(mode) {
+    if (mode === 'connect') {
+        return {
+            usageGoal: getConnectUsageGoal(),
+            expectedResultsBucket: getConnectExpectedResults(),
+            auto: isConnectTemplateAuto(),
+            templateId: getConnectTemplateId(),
+            areaPreset: getSelectedAreaPreset()
+        };
+    }
+    if (mode === 'companies') {
+        return {
+            usageGoal: getCompanyUsageGoal(),
+            expectedResultsBucket: getCompanyExpectedResults(),
+            auto: isCompanyTemplateAuto(),
+            templateId: getCompanyTemplateId(),
+            areaPreset: getSelectedCompanyAreaPreset()
+        };
+    }
+    return {
+        usageGoal: getJobsUsageGoal(),
+        expectedResultsBucket: getJobsExpectedResults(),
+        auto: isJobsTemplateAuto(),
+        templateId: getJobsTemplateId(),
+        areaPreset: getSelectedJobsAreaPreset()
+    };
+}
+
+function populateTemplateSelect(mode) {
+    if (typeof listSearchTemplates !== 'function') return;
+    const state = getTemplateState(mode);
+    const selectId = mode === 'connect'
+        ? 'connectTemplateSelect'
+        : mode === 'companies'
+            ? 'companyTemplateSelect'
+            : 'jobsTemplateSelect';
+    const autoId = mode === 'connect'
+        ? 'connectTemplateAutoCheckbox'
+        : mode === 'companies'
+            ? 'companyTemplateAutoCheckbox'
+            : 'jobsTemplateAutoCheckbox';
+    const select = document.getElementById(selectId);
+    const autoBox = document.getElementById(autoId);
+    if (!select) return;
+
+    const options = listSearchTemplates({
+        mode,
+        areaPreset: state.areaPreset,
+        usageGoal: state.usageGoal,
+        expectedResultsBucket: state.expectedResultsBucket
+    });
+    const previous = select.value;
+    select.textContent = '';
+    options.forEach(template => {
+        const option = document.createElement('option');
+        option.value = template.id;
+        option.textContent = template.id;
+        select.appendChild(option);
+    });
+    if (previous &&
+        Array.from(select.options).some(
+            opt => opt.value === previous
+        )) {
+        select.value = previous;
+    }
+    if (!select.value && options[0]) {
+        select.value = options[0].id;
+    }
+    if (autoBox) {
+        select.disabled = autoBox.checked;
+    }
+}
+
+function refreshTemplateControls() {
+    populateTemplateSelect('connect');
+    populateTemplateSelect('companies');
+    populateTemplateSelect('jobs');
+}
+
+function normalizeTemplateMeta(meta, mode) {
+    const source = meta && typeof meta === 'object'
+        ? meta : {};
+    return {
+        templateId: String(source.templateId || ''),
+        usageGoal: String(
+            source.usageGoal ||
+            (mode === 'connect'
+                ? getConnectUsageGoal()
+                : mode === 'companies'
+                    ? getCompanyUsageGoal()
+                    : getJobsUsageGoal())
+        ),
+        expectedResultsBucket: String(
+            source.expectedResultsBucket ||
+            (mode === 'connect'
+                ? getConnectExpectedResults()
+                : mode === 'companies'
+                    ? getCompanyExpectedResults()
+                    : getJobsExpectedResults())
+        ),
+        operatorCount: Math.max(
+            0,
+            Number(source.operatorCount) || 0
+        ),
+        compiledQueryLength: Math.max(
+            0,
+            Number(source.compiledQueryLength) || 0
+        ),
+        mode
+    };
 }
 
 function normalizePopupUi(ui) {
@@ -311,6 +560,7 @@ function applyAreaPreset(preset, shouldSave) {
         setTagsForGroup('industry', next.industry);
     }
     refreshTemplatesForArea();
+    refreshTemplateControls();
     const activeTemplate = document.querySelector(
         '.template-card.active'
     )?.dataset.template || DEFAULT_TEMPLATE_KEY;
@@ -442,19 +692,44 @@ function getSafeRoleTerms(roles) {
     return Array.isArray(roles) ? roles : [];
 }
 
-function buildQuery() {
-    if (useCustomQuery) {
-        return document.getElementById('customQueryInput').value.trim();
+function buildConnectSearchPlan(selectedTags) {
+    const tags = selectedTags && typeof selectedTags === 'object'
+        ? selectedTags
+        : {
+            role: getSelectedTags('role'),
+            industry: getSelectedTags('industry'),
+            market: getSelectedTags('market'),
+            level: getSelectedTags('level')
+        };
+
+    const templateState = getTemplateState('connect');
+    if (typeof buildSearchTemplatePlan === 'function') {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: getSelectedAreaPreset(),
+            usageGoal: templateState.usageGoal,
+            expectedResultsBucket:
+                templateState.expectedResultsBucket,
+            auto: templateState.auto,
+            templateId: templateState.templateId,
+            selectedTags: tags,
+            roleTermsLimit: getRoleTermsLimit()
+        });
+        if (plan?.query) return plan;
     }
 
-    const tags = {
-        role: getSelectedTags('role'),
-        industry: getSelectedTags('industry'),
-        market: getSelectedTags('market'),
-        level: getSelectedTags('level')
-    };
     if (typeof buildConnectQueryFromTags === 'function') {
-        return buildConnectQueryFromTags(tags, getRoleTermsLimit());
+        const query = buildConnectQueryFromTags(
+            tags,
+            getRoleTermsLimit()
+        );
+        return {
+            query,
+            filterSpec: {},
+            defaults: {},
+            meta: normalizeTemplateMeta({}, 'connect'),
+            diagnostics: {}
+        };
     }
     const safeRoles = getSafeRoleTerms(tags.role);
     const parts = [];
@@ -463,7 +738,186 @@ function buildQuery() {
     tags.industry.forEach(term => parts.push(term));
     tags.market.forEach(term => parts.push(term));
     tags.level.forEach(term => parts.push(term));
-    return parts.join(' ');
+    const query = parts.join(' ');
+    return {
+        query,
+        filterSpec: {},
+        defaults: {},
+        meta: normalizeTemplateMeta({}, 'connect'),
+        diagnostics: {}
+    };
+}
+
+function buildQuery() {
+    if (useCustomQuery) {
+        return document.getElementById('customQueryInput').value.trim();
+    }
+    return buildConnectSearchPlan().query;
+}
+
+function buildCompanySearchPlan() {
+    const templateState = getTemplateState('companies');
+    const manualQuery = document.getElementById(
+        'companyQueryInput'
+    )?.value.trim() || '';
+    const targetCompanies = parseMultilineList(
+        document.getElementById('targetCompanies')?.value || ''
+    );
+    if (typeof buildSearchTemplatePlan === 'function') {
+        const plan = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: getSelectedCompanyAreaPreset(),
+            usageGoal: templateState.usageGoal,
+            expectedResultsBucket:
+                templateState.expectedResultsBucket,
+            auto: templateState.auto,
+            templateId: templateState.templateId,
+            manualQuery
+        });
+        if (plan?.query || targetCompanies.length > 0) {
+            return plan;
+        }
+    }
+    return {
+        query: manualQuery,
+        filterSpec: {},
+        defaults: {},
+        meta: normalizeTemplateMeta({}, 'companies'),
+        diagnostics: {}
+    };
+}
+
+function getEffectiveJobsRoleTerms(directRoleTerms) {
+    const roleTerms = Array.isArray(directRoleTerms)
+        ? directRoleTerms
+        : parseMultilineList(
+            document.getElementById('jobsRoleTermsInput')?.value
+        );
+    if (roleTerms.length > 0) return roleTerms;
+    return getJobsPresetTerms(
+        getSelectedJobsAreaPreset()
+    ).role.slice(0, 4);
+}
+
+function buildJobsSearchPlan() {
+    const templateState = getTemplateState('jobs');
+    const manualQuery = document.getElementById(
+        'jobsQueryInput'
+    )?.value.trim() || '';
+    const roleTerms = getEffectiveJobsRoleTerms();
+    const locationTerms = parseMultilineList(
+        document.getElementById('jobsLocationTermsInput')?.value
+    );
+    if (typeof buildSearchTemplatePlan === 'function') {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: getSelectedJobsAreaPreset(),
+            usageGoal: templateState.usageGoal,
+            expectedResultsBucket:
+                templateState.expectedResultsBucket,
+            auto: templateState.auto,
+            templateId: templateState.templateId,
+            manualQuery,
+            roleTerms,
+            locationTerms
+        });
+        if (plan?.query) return plan;
+    }
+    const parts = [];
+    if (roleTerms.length === 1) {
+        parts.push(roleTerms[0]);
+    } else if (roleTerms.length > 1) {
+        parts.push(roleTerms.join(' OR '));
+    }
+    const location = document.getElementById(
+        'jobsLocationInput'
+    )?.value.trim();
+    if (location) parts.push(location);
+    return {
+        query: parts.join(' ').trim(),
+        filterSpec: {},
+        defaults: {},
+        meta: normalizeTemplateMeta({}, 'jobs'),
+        diagnostics: {}
+    };
+}
+
+function buildJobsQuery() {
+    return buildJobsSearchPlan().query;
+}
+
+function buildJobsProfilePayload() {
+    return {
+        fullName: document.getElementById(
+            'jobsProfileFullNameInput'
+        )?.value.trim(),
+        email: document.getElementById(
+            'jobsProfileEmailInput'
+        )?.value.trim(),
+        phone: document.getElementById(
+            'jobsProfilePhoneInput'
+        )?.value.trim(),
+        city: document.getElementById(
+            'jobsProfileCityInput'
+        )?.value.trim(),
+        currentTitle: document.getElementById(
+            'jobsProfileHeadlineInput'
+        )?.value.trim(),
+        portfolioUrl: document.getElementById(
+            'jobsProfilePortfolioInput'
+        )?.value.trim(),
+        resumeSummary: document.getElementById(
+            'jobsProfileSummaryInput'
+        )?.value.trim()
+    };
+}
+
+function fillJobsProfileFields(profile) {
+    if (!profile || typeof profile !== 'object') return;
+    const mapping = {
+        jobsProfileFullNameInput: profile.fullName,
+        jobsProfileEmailInput: profile.email,
+        jobsProfilePhoneInput: profile.phone,
+        jobsProfileCityInput: profile.city || profile.location,
+        jobsProfileHeadlineInput:
+            profile.currentTitle || profile.headline,
+        jobsProfilePortfolioInput:
+            profile.portfolioUrl || profile.website,
+        jobsProfileSummaryInput: profile.resumeSummary
+    };
+    for (const [id, value] of Object.entries(mapping)) {
+        const input = document.getElementById(id);
+        if (!input || !value) continue;
+        input.value = String(value);
+    }
+}
+
+function refreshJobsCacheStatus() {
+    const statusEl = document.getElementById(
+        'jobsCacheStatus'
+    );
+    if (!statusEl) return;
+    chrome.runtime.sendMessage(
+        { action: 'getJobsProfileCacheStatus' },
+        (response) => {
+            if (chrome.runtime.lastError || !response) {
+                statusEl.textContent =
+                    'Encrypted cache status unavailable.';
+                return;
+            }
+            if (!response.exists) {
+                statusEl.textContent =
+                    'Encrypted cache: not configured.';
+                return;
+            }
+            const updated = response.updatedAt
+                ? new Date(response.updatedAt).toLocaleString()
+                : 'unknown date';
+            statusEl.textContent =
+                `Encrypted cache: locked (v${response.version || 1}) · ` +
+                `updated ${updated}`;
+        }
+    );
 }
 
 function updateQueryPreview() {
@@ -529,6 +983,10 @@ function saveState() {
         currentMode,
         goalMode: document.getElementById('goalMode').value,
         areaPreset: getSelectedAreaPreset(),
+        connectUsageGoal: getConnectUsageGoal(),
+        connectExpectedResults: getConnectExpectedResults(),
+        connectTemplateAuto: isConnectTemplateAuto(),
+        connectTemplateId: getConnectTemplateId(),
         roleTermsLimit: getRoleTermsLimit(),
         excludedCompanies: document.getElementById(
             'excludedCompaniesInput'
@@ -561,10 +1019,37 @@ function saveState() {
         savedQueries: document.getElementById(
             'savedQueries').value,
         companyAreaPreset: getSelectedCompanyAreaPreset(),
+        companyUsageGoal: getCompanyUsageGoal(),
+        companyExpectedResults: getCompanyExpectedResults(),
+        companyTemplateAuto: isCompanyTemplateAuto(),
+        companyTemplateId: getCompanyTemplateId(),
         companyQuery: document.getElementById(
             'companyQueryInput').value,
         targetCompanies: document.getElementById(
             'targetCompanies').value,
+        jobsAreaPreset: getSelectedJobsAreaPreset(),
+        jobsUsageGoal: getJobsUsageGoal(),
+        jobsExpectedResults: getJobsExpectedResults(),
+        jobsTemplateAuto: isJobsTemplateAuto(),
+        jobsTemplateId: getJobsTemplateId(),
+        jobsQuery: document.getElementById(
+            'jobsQueryInput').value,
+        jobsRoleTerms: document.getElementById(
+            'jobsRoleTermsInput').value,
+        jobsLocationTerms: document.getElementById(
+            'jobsLocationTermsInput').value,
+        jobsPreferredCompanies: document.getElementById(
+            'jobsPreferredCompaniesInput').value,
+        jobsExcludedCompanies: document.getElementById(
+            'jobsExcludedCompaniesInput').value,
+        jobsExperienceLevel: document.getElementById(
+            'jobsExperienceLevelSelect').value,
+        jobsWorkType: document.getElementById(
+            'jobsWorkTypeSelect').value,
+        jobsLocation: document.getElementById(
+            'jobsLocationInput').value,
+        jobsEasyApplyOnly: document.getElementById(
+            'jobsEasyApplyOnlyCheckbox').checked,
         feedReact: document.getElementById(
             'feedReactCheckbox').checked,
         feedComment: document.getElementById(
@@ -633,7 +1118,41 @@ function loadState() {
             setCompanyAreaPresetSelectValue(
                 DEFAULT_COMPANY_AREA_PRESET
             );
+            setJobsAreaPresetSelectValue(
+                DEFAULT_JOBS_AREA_PRESET
+            );
+            setSelectValue(
+                'connectUsageGoalSelect',
+                DEFAULT_CONNECT_USAGE_GOAL,
+                DEFAULT_CONNECT_USAGE_GOAL
+            );
+            setSelectValue(
+                'connectExpectedResultsSelect',
+                DEFAULT_EXPECTED_RESULTS,
+                DEFAULT_EXPECTED_RESULTS
+            );
+            setSelectValue(
+                'companyUsageGoalSelect',
+                DEFAULT_COMPANY_USAGE_GOAL,
+                DEFAULT_COMPANY_USAGE_GOAL
+            );
+            setSelectValue(
+                'companyExpectedResultsSelect',
+                DEFAULT_EXPECTED_RESULTS,
+                DEFAULT_EXPECTED_RESULTS
+            );
+            setSelectValue(
+                'jobsUsageGoalSelect',
+                DEFAULT_JOBS_USAGE_GOAL,
+                DEFAULT_JOBS_USAGE_GOAL
+            );
+            setSelectValue(
+                'jobsExpectedResultsSelect',
+                DEFAULT_EXPECTED_RESULTS,
+                DEFAULT_EXPECTED_RESULTS
+            );
             refreshTemplatesForArea();
+            refreshTemplateControls();
             setActiveTemplate(DEFAULT_TEMPLATE_KEY);
             updateQueryPreview();
             updateCharCounter();
@@ -642,6 +1161,7 @@ function loadState() {
             updateRefineSelectedCount();
             syncFeedCommentSettingsVisibility();
             refreshFeedWarmupProgress();
+            refreshJobsCacheStatus();
             return;
         }
 
@@ -671,7 +1191,29 @@ function loadState() {
         }
 
         setAreaPresetSelectValue(popupState.areaPreset || 'custom');
+        setSelectValue(
+            'connectUsageGoalSelect',
+            popupState.connectUsageGoal ||
+                DEFAULT_CONNECT_USAGE_GOAL,
+            DEFAULT_CONNECT_USAGE_GOAL
+        );
+        setSelectValue(
+            'connectExpectedResultsSelect',
+            popupState.connectExpectedResults ||
+                DEFAULT_EXPECTED_RESULTS,
+            DEFAULT_EXPECTED_RESULTS
+        );
+        document.getElementById('connectTemplateAutoCheckbox')
+            .checked = popupState.connectTemplateAuto !== false;
         refreshTemplatesForArea();
+        refreshTemplateControls();
+        if (popupState.connectTemplateId) {
+            setSelectValue(
+                'connectTemplateSelect',
+                popupState.connectTemplateId,
+                ''
+            );
+        }
         if (getSelectedAreaPreset() !== 'custom' &&
             !hasActiveTags('role') &&
             !hasActiveTags('industry')) {
@@ -782,9 +1324,98 @@ function loadState() {
         setCompanyAreaPresetSelectValue(
             popupState.companyAreaPreset || 'custom'
         );
+        setSelectValue(
+            'companyUsageGoalSelect',
+            popupState.companyUsageGoal ||
+                DEFAULT_COMPANY_USAGE_GOAL,
+            DEFAULT_COMPANY_USAGE_GOAL
+        );
+        setSelectValue(
+            'companyExpectedResultsSelect',
+            popupState.companyExpectedResults ||
+                DEFAULT_EXPECTED_RESULTS,
+            DEFAULT_EXPECTED_RESULTS
+        );
+        document.getElementById('companyTemplateAutoCheckbox')
+            .checked = popupState.companyTemplateAuto !== false;
+        refreshTemplateControls();
+        if (popupState.companyTemplateId) {
+            setSelectValue(
+                'companyTemplateSelect',
+                popupState.companyTemplateId,
+                ''
+            );
+        }
         if (popupState.targetCompanies) {
             document.getElementById('targetCompanies').value =
                 popupState.targetCompanies;
+        }
+        setJobsAreaPresetSelectValue(
+            popupState.jobsAreaPreset || DEFAULT_JOBS_AREA_PRESET
+        );
+        setSelectValue(
+            'jobsUsageGoalSelect',
+            popupState.jobsUsageGoal ||
+                DEFAULT_JOBS_USAGE_GOAL,
+            DEFAULT_JOBS_USAGE_GOAL
+        );
+        setSelectValue(
+            'jobsExpectedResultsSelect',
+            popupState.jobsExpectedResults ||
+                DEFAULT_EXPECTED_RESULTS,
+            DEFAULT_EXPECTED_RESULTS
+        );
+        document.getElementById('jobsTemplateAutoCheckbox')
+            .checked = popupState.jobsTemplateAuto !== false;
+        refreshTemplateControls();
+        if (popupState.jobsTemplateId) {
+            setSelectValue(
+                'jobsTemplateSelect',
+                popupState.jobsTemplateId,
+                ''
+            );
+        }
+        if (popupState.jobsQuery) {
+            document.getElementById('jobsQueryInput').value =
+                popupState.jobsQuery;
+        }
+        if (popupState.jobsRoleTerms) {
+            document.getElementById('jobsRoleTermsInput').value =
+                popupState.jobsRoleTerms;
+        }
+        if (popupState.jobsLocationTerms) {
+            document.getElementById('jobsLocationTermsInput').value =
+                popupState.jobsLocationTerms;
+        }
+        if (popupState.jobsPreferredCompanies) {
+            document.getElementById(
+                'jobsPreferredCompaniesInput'
+            ).value = popupState.jobsPreferredCompanies;
+        }
+        if (popupState.jobsExcludedCompanies) {
+            document.getElementById(
+                'jobsExcludedCompaniesInput'
+            ).value = popupState.jobsExcludedCompanies;
+        }
+        if (popupState.jobsExperienceLevel) {
+            document.getElementById(
+                'jobsExperienceLevelSelect'
+            ).value = popupState.jobsExperienceLevel;
+        }
+        if (popupState.jobsWorkType) {
+            document.getElementById(
+                'jobsWorkTypeSelect'
+            ).value = popupState.jobsWorkType;
+        }
+        if (popupState.jobsLocation) {
+            document.getElementById(
+                'jobsLocationInput'
+            ).value = popupState.jobsLocation;
+        }
+        if (popupState.jobsEasyApplyOnly !== undefined) {
+            document.getElementById(
+                'jobsEasyApplyOnlyCheckbox'
+            ).checked = popupState.jobsEasyApplyOnly !== false;
         }
         if (popupState.feedReact !== undefined) {
             document.getElementById('feedReactCheckbox').checked =
@@ -891,6 +1522,7 @@ function loadState() {
             setMode(popupState.currentMode);
         }
         refreshFeedWarmupProgress();
+        refreshJobsCacheStatus();
     });
 }
 
@@ -1002,6 +1634,37 @@ document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
 document.getElementById('goalMode').addEventListener('change', saveState);
+document.getElementById('connectUsageGoalSelect').addEventListener(
+    'change',
+    () => {
+        refreshTemplateControls();
+        updateQueryPreview();
+        saveState();
+    }
+);
+document.getElementById('connectExpectedResultsSelect').addEventListener(
+    'change',
+    () => {
+        refreshTemplateControls();
+        updateQueryPreview();
+        saveState();
+    }
+);
+document.getElementById('connectTemplateAutoCheckbox').addEventListener(
+    'change',
+    () => {
+        refreshTemplateControls();
+        updateQueryPreview();
+        saveState();
+    }
+);
+document.getElementById('connectTemplateSelect').addEventListener(
+    'change',
+    () => {
+        updateQueryPreview();
+        saveState();
+    }
+);
 document.getElementById(
     'roleTermsLimitInput'
 ).addEventListener('change', () => {
@@ -1119,6 +1782,9 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     if (currentMode === 'companies') {
         return startCompanyFollow();
     }
+    if (currentMode === 'jobs') {
+        return startJobsAssist();
+    }
     if (currentMode === 'feed') {
         return startFeedEngage();
     }
@@ -1126,7 +1792,8 @@ document.getElementById('startBtn').addEventListener('click', async () => {
 });
 
 async function startConnect() {
-    const query = buildQuery();
+    const plan = buildConnectSearchPlan();
+    const query = plan.query;
     if (!query) {
         setStatusMessage(
             'No query built. Select tags or write a custom query.',
@@ -1134,6 +1801,10 @@ async function startConnect() {
         );
         return;
     }
+    const templateMeta = normalizeTemplateMeta(
+        plan.meta,
+        'connect'
+    );
 
     const noteText = document.getElementById('noteTemplate').value;
     const sendNote = document.getElementById('sendNoteCheckbox').checked;
@@ -1170,8 +1841,12 @@ async function startConnect() {
         document.getElementById('limitInput').value = remaining;
     }
     const geoUrn = getSelectedRegionGeoUrn();
-    const activelyHiring =
-        document.getElementById('activelyHiringCheckbox').checked;
+    const activelyHiring = plan.filterSpec &&
+        typeof plan.filterSpec.activelyHiring === 'boolean'
+        ? plan.filterSpec.activelyHiring
+        : document.getElementById(
+            'activelyHiringCheckbox'
+        ).checked;
     const goalMode =
         document.getElementById('goalMode').value || 'passive';
     const areaPreset = getSelectedAreaPreset();
@@ -1194,10 +1869,18 @@ async function startConnect() {
         ).checked;
 
     const networkTypes = [];
-    if (document.getElementById('degree2nd').checked) {
+    const degree2nd = plan.filterSpec &&
+        typeof plan.filterSpec.degree2nd === 'boolean'
+        ? plan.filterSpec.degree2nd
+        : document.getElementById('degree2nd').checked;
+    const degree3rd = plan.filterSpec &&
+        typeof plan.filterSpec.degree3rd === 'boolean'
+        ? plan.filterSpec.degree3rd
+        : document.getElementById('degree3rd').checked;
+    if (degree2nd) {
         networkTypes.push('"S"');
     }
-    if (document.getElementById('degree3rd').checked) {
+    if (degree3rd) {
         networkTypes.push('"O"');
     }
     const networkFilter = networkTypes.length > 0
@@ -1232,6 +1915,7 @@ async function startConnect() {
         skipJobSeekingSignals,
         activelyHiring,
         networkFilter,
+        templateMeta,
         sentUrls,
         engagementOnly
     }, handleLaunchResponse);
@@ -1241,24 +1925,23 @@ function startCompanyFollow() {
     const queryInput = document.getElementById(
         'companyQueryInput'
     );
-    const query = queryInput.value.trim();
-    const raw = document.getElementById(
-        'targetCompanies'
-    ).value.trim();
+    const plan = buildCompanySearchPlan();
     const companyAreaPreset = getSelectedCompanyAreaPreset();
-    const targetCompanies = raw
-        ? raw.split('\n').map(s => s.trim()).filter(Boolean)
+    const rawTargets = parseMultilineList(
+        document.getElementById('targetCompanies').value
+    );
+    const templateTargets = Array.isArray(
+        plan.defaults?.targetCompanies
+    )
+        ? plan.defaults.targetCompanies
         : [];
-    let resolvedQuery = query;
-
-    if (!resolvedQuery && targetCompanies.length === 0) {
-        resolvedQuery = getCompanyPresetDefaultQuery(
-            companyAreaPreset
-        );
-        if (resolvedQuery) {
-            queryInput.value = resolvedQuery;
-            saveState();
-        }
+    const targetCompanies = rawTargets.length > 0
+        ? rawTargets
+        : templateTargets;
+    const resolvedQuery = String(plan.query || '').trim() ||
+        getCompanyPresetDefaultQuery(companyAreaPreset);
+    if (!queryInput.value.trim() && resolvedQuery) {
+        queryInput.value = resolvedQuery;
     }
 
     if (!resolvedQuery && targetCompanies.length === 0) {
@@ -1283,7 +1966,118 @@ function startCompanyFollow() {
         query: resolvedQuery,
         limit,
         companyAreaPreset,
-        targetCompanies
+        targetCompanies,
+        companyUsageGoal: getCompanyUsageGoal(),
+        companyExpectedResults: getCompanyExpectedResults(),
+        companyTemplateAuto: isCompanyTemplateAuto(),
+        companyTemplateId: getCompanyTemplateId(),
+        templateMeta: normalizeTemplateMeta(
+            plan.meta,
+            'companies'
+        )
+    }, handleLaunchResponse);
+}
+
+function startJobsAssist() {
+    const plan = buildJobsSearchPlan();
+    const query = plan.query;
+    if (!query) {
+        setStatusMessage(
+            'Enter a jobs query or select a preset with role terms.',
+            'warning'
+        );
+        return;
+    }
+
+    const limit = parseInt(
+        document.getElementById('limitInput').value
+    ) || 10;
+    const profilePassphrase = document.getElementById(
+        'jobsProfilePassphraseInput'
+    ).value;
+    const jobsAreaPreset = getSelectedJobsAreaPreset();
+    let roleTerms = getEffectiveJobsRoleTerms(parseMultilineList(
+        document.getElementById('jobsRoleTermsInput').value
+    ));
+
+    const locationTerms = parseMultilineList(
+        document.getElementById('jobsLocationTermsInput').value
+    );
+    const preferredCompaniesInput = parseMultilineList(
+        document.getElementById('jobsPreferredCompaniesInput').value
+    );
+    const excludedCompaniesInput = parseMultilineList(
+        document.getElementById('jobsExcludedCompaniesInput').value
+    );
+    const preferredCompanies = preferredCompaniesInput.length > 0
+        ? preferredCompaniesInput
+        : Array.isArray(plan.defaults?.preferredCompanies)
+            ? plan.defaults.preferredCompanies
+            : [];
+    const excludedCompanies = excludedCompaniesInput.length > 0
+        ? excludedCompaniesInput
+        : Array.isArray(plan.defaults?.excludedCompanies)
+            ? plan.defaults.excludedCompanies
+            : [];
+    const experienceLevelInput = document.getElementById(
+        'jobsExperienceLevelSelect'
+    ).value;
+    const experienceLevel = plan.filterSpec &&
+        typeof plan.filterSpec.experienceLevel === 'string'
+        ? plan.filterSpec.experienceLevel
+        : experienceLevelInput;
+    const desiredLevels = [];
+    if (experienceLevel === '1') desiredLevels.push('intern');
+    if (experienceLevel === '2') desiredLevels.push('junior');
+    if (experienceLevel === '3') desiredLevels.push('mid');
+    if (experienceLevel === '4') desiredLevels.push('senior');
+    if (experienceLevel === '5' || experienceLevel === '6') {
+        desiredLevels.push('lead');
+    }
+
+    const location = document.getElementById(
+        'jobsLocationInput'
+    ).value.trim();
+    const workTypeInput = document.getElementById(
+        'jobsWorkTypeSelect'
+    ).value;
+    const workType = plan.filterSpec &&
+        typeof plan.filterSpec.workType === 'string'
+        ? plan.filterSpec.workType
+        : workTypeInput;
+    const easyApplyOnlyInput = document.getElementById(
+        'jobsEasyApplyOnlyCheckbox'
+    ).checked;
+    const easyApplyOnly = plan.filterSpec &&
+        typeof plan.filterSpec.easyApplyOnly === 'boolean'
+        ? plan.filterSpec.easyApplyOnly
+        : easyApplyOnlyInput;
+
+    lastReportedSent = 0;
+    showProgressUI('Prepared', limit, 'Opening LinkedIn Jobs...');
+    chrome.runtime.sendMessage({
+        action: 'startJobsAssist',
+        query,
+        limit,
+        areaPreset: jobsAreaPreset,
+        roleTerms,
+        locationTerms,
+        preferredCompanies,
+        excludedCompanies,
+        desiredLevels,
+        experienceLevel,
+        location,
+        workType,
+        easyApplyOnly,
+        profilePassphrase,
+        jobsUsageGoal: getJobsUsageGoal(),
+        jobsExpectedResults: getJobsExpectedResults(),
+        jobsTemplateAuto: isJobsTemplateAuto(),
+        jobsTemplateId: getJobsTemplateId(),
+        templateMeta: normalizeTemplateMeta(
+            plan.meta,
+            'jobs'
+        )
     }, handleLaunchResponse);
 }
 
@@ -1401,7 +2195,9 @@ function handleLaunchResponse(response) {
         const reasons = {
             hourly: 'Hourly rate limit reached. Try again in ~1 hour.',
             daily: 'Daily rate limit reached. Try again tomorrow.',
-            weekly: 'Weekly limit reached (150). Try next week.'
+            weekly: 'Weekly limit reached (150). Try next week.',
+            'profile-cache-locked':
+                'Encrypted profile cache is locked. Enter the passphrase for this session.'
         };
         setStatusMessage(
             reasons[response.reason] ||
@@ -1418,7 +2214,8 @@ function handleLaunchResponse(response) {
             'info'
         );
     }
-    if (response?.status === 'started') {
+    if (response?.status === 'started' &&
+        currentMode === 'feed') {
         refreshFeedWarmupProgress();
     }
 }
@@ -1471,6 +2268,7 @@ chrome.runtime.onMessage.addListener((request) => {
         const verbMap = {
             connect: engMode ? 'Engaged' : 'Sent',
             companies: 'Followed',
+            jobs: 'Prepared',
             feed: 'Engaged'
         };
         const verb = verbMap[currentMode] || 'Done';
@@ -1495,7 +2293,7 @@ chrome.runtime.onMessage.addListener((request) => {
 
         updateWeeklyDisplay();
 
-        if (response?.log?.length) {
+        if (response?.log?.length && response?.mode !== 'jobs') {
             lastConnectionLog = response.log;
             document.getElementById('exportBtn')
                 .style.display = 'block';
@@ -1550,6 +2348,9 @@ chrome.runtime.onMessage.addListener((request) => {
         }
         if (response?.mode === 'feed') {
             refreshFeedWarmupProgress();
+        }
+        if (response?.mode === 'jobs') {
+            refreshJobsCacheStatus();
         }
     }
 });
@@ -1664,6 +2465,8 @@ function setMode(mode) {
         .style.display = mode === 'connect' ? 'block' : 'none';
     document.getElementById('companySection')
         .style.display = mode === 'companies' ? 'block' : 'none';
+    document.getElementById('jobsSection')
+        .style.display = mode === 'jobs' ? 'block' : 'none';
     document.getElementById('feedSection')
         .style.display = mode === 'feed' ? 'block' : 'none';
     document.getElementById('weeklyCounter')
@@ -1683,6 +2486,7 @@ function setMode(mode) {
     const labels = {
         connect: 'Launch Automation',
         companies: 'Follow Companies',
+        jobs: 'Assist Job Apply',
         feed: 'Engage Feed'
     };
     const startBtn = document.getElementById('startBtn');
@@ -1710,6 +2514,9 @@ function setMode(mode) {
     saveState();
     if (mode === 'feed') {
         refreshFeedWarmupProgress();
+    }
+    if (mode === 'jobs') {
+        refreshJobsCacheStatus();
     }
     if (typeof loadRateLimitStatus === 'function') {
         loadRateLimitStatus();
@@ -1791,7 +2598,150 @@ document.getElementById('companyAreaPresetSelect')
                 queryInput.value = defaultQuery;
             }
         }
+        refreshTemplateControls();
         saveState();
+    });
+document.getElementById('companyUsageGoalSelect')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('companyExpectedResultsSelect')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('companyTemplateAutoCheckbox')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('companyTemplateSelect')
+    .addEventListener('change', saveState);
+document.getElementById('jobsAreaPresetSelect')
+    .addEventListener('change', () => {
+        const preset = getSelectedJobsAreaPreset();
+        const queryInput = document.getElementById(
+            'jobsQueryInput'
+        );
+        const roleTermsInput = document.getElementById(
+            'jobsRoleTermsInput'
+        );
+        if (!roleTermsInput.value.trim()) {
+            const defaults = getJobsPresetTerms(preset).role;
+            if (defaults.length > 0) {
+                roleTermsInput.value = defaults.join('\n');
+            }
+        }
+        if (!queryInput.value.trim()) {
+            queryInput.value = buildJobsQuery();
+        }
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('jobsUsageGoalSelect')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('jobsExpectedResultsSelect')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('jobsTemplateAutoCheckbox')
+    .addEventListener('change', () => {
+        refreshTemplateControls();
+        saveState();
+    });
+document.getElementById('jobsTemplateSelect')
+    .addEventListener('change', saveState);
+document.getElementById('jobsQueryInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsRoleTermsInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsLocationTermsInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsPreferredCompaniesInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsExcludedCompaniesInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsExperienceLevelSelect')
+    .addEventListener('change', saveState);
+document.getElementById('jobsWorkTypeSelect')
+    .addEventListener('change', saveState);
+document.getElementById('jobsLocationInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsEasyApplyOnlyCheckbox')
+    .addEventListener('change', saveState);
+document.getElementById('jobsProfileFullNameInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfileEmailInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfilePhoneInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfileCityInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfileHeadlineInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfilePortfolioInput')
+    .addEventListener('input', saveState);
+document.getElementById('jobsProfileSummaryInput')
+    .addEventListener('input', saveState);
+document.getElementById('saveJobsProfileCacheBtn')
+    .addEventListener('click', () => {
+        const passphrase = document.getElementById(
+            'jobsProfilePassphraseInput'
+        ).value;
+        if (!passphrase || passphrase.trim().length < 4) {
+            setStatusMessage(
+                'Enter a session passphrase with at least 4 characters.',
+                'warning'
+            );
+            return;
+        }
+        const profile = buildJobsProfilePayload();
+        chrome.runtime.sendMessage({
+            action: 'saveJobsProfileCache',
+            profile,
+            profilePassphrase: passphrase
+        }, (response) => {
+            if (chrome.runtime.lastError ||
+                response?.status !== 'saved') {
+                setStatusMessage(
+                    response?.error ||
+                        'Failed to save encrypted jobs cache.',
+                    'error'
+                );
+                return;
+            }
+            setStatusMessage(
+                'Encrypted jobs profile cache saved.',
+                'success'
+            );
+            refreshJobsCacheStatus();
+            saveState();
+        });
+    });
+document.getElementById('clearJobsProfileCacheBtn')
+    .addEventListener('click', () => {
+        chrome.runtime.sendMessage({
+            action: 'clearJobsProfileCache'
+        }, (response) => {
+            if (chrome.runtime.lastError ||
+                response?.status !== 'cleared') {
+                setStatusMessage(
+                    'Failed to clear jobs profile cache.',
+                    'error'
+                );
+                return;
+            }
+            setStatusMessage(
+                'Encrypted jobs profile cache cleared.',
+                'success'
+            );
+            refreshJobsCacheStatus();
+        });
     });
 document.getElementById('companyQueryInput')
     .addEventListener('input', saveState);
@@ -2043,15 +2993,19 @@ function loadRateLimitStatus() {
         ? 'companyFollow'
         : currentMode === 'feed'
             ? 'feedEngage' : 'connect';
-    const hKey = `rate_${mode}_${d}_${h}`;
-    const dKey = `rate_${mode}_${d}`;
+    const normalizedMode = currentMode === 'jobs'
+        ? 'jobsAssist'
+        : mode;
+    const hKey = `rate_${normalizedMode}_${d}_${h}`;
+    const dKey = `rate_${normalizedMode}_${d}`;
 
     const limits = {
         connect: { hourly: 12, daily: 40 },
         companyFollow: { hourly: 10, daily: 30 },
-        feedEngage: { hourly: 15, daily: 50 }
+        feedEngage: { hourly: 15, daily: 50 },
+        jobsAssist: { hourly: 8, daily: 20 }
     };
-    const lim = limits[mode] || { hourly: 12, daily: 40 };
+    const lim = limits[normalizedMode] || { hourly: 12, daily: 40 };
 
     chrome.storage.local.get([hKey, dKey], (data) => {
         const hourCount = data[hKey] || 0;
@@ -2081,6 +3035,7 @@ function loadRateLimitStatus() {
 }
 
 initializeAccordionInteractions();
+refreshTemplateControls();
 loadState();
 updateWeeklyDisplay();
 loadRecentProfiles();
