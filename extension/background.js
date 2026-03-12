@@ -2339,8 +2339,18 @@ async function generateAIComment(data) {
     }
 }
 
+function respondOnce(sendResponse) {
+    let sent = false;
+    return (payload) => {
+        if (sent) return;
+        sent = true;
+        sendResponse(payload);
+    };
+}
+
 chrome.runtime.onMessage.addListener(
     (request, sender, sendResponse) => {
+        sendResponse = respondOnce(sendResponse);
         if (request.action === 'generateAIComment') {
             generateAIComment(request).then(
                 result => sendResponse({
@@ -2388,6 +2398,11 @@ chrome.runtime.onMessage.addListener(
                 );
                 launchAutomation(request);
                 sendResponse({ status: 'started' });
+            }).catch(() => {
+                sendResponse({
+                    status: 'blocked',
+                    reason: 'unknown'
+                });
             });
             return true;
         }
@@ -2495,6 +2510,11 @@ chrome.runtime.onMessage.addListener(
                 );
                 launchCompanyFollow(request);
                 sendResponse({ status: 'started' });
+            }).catch(() => {
+                sendResponse({
+                    status: 'blocked',
+                    reason: 'unknown'
+                });
             });
             return true;
         }
@@ -2511,83 +2531,98 @@ chrome.runtime.onMessage.addListener(
                 chrome.storage.local.get(
                     JOBS_PROFILE_CACHE_KEY,
                     async (data) => {
-                        const envelope = data[JOBS_PROFILE_CACHE_KEY];
-                        let profile = {};
-                        if (envelope) {
-                            if (!request.profilePassphrase) {
-                                sendResponse({
-                                    status: 'blocked',
-                                    reason: 'profile-cache-locked'
-                                });
-                                return;
-                            }
-                            if (typeof decryptJobsProfileCache !==
-                                'function') {
-                                sendResponse({
-                                    status: 'blocked',
-                                    reason: 'profile-cache-locked'
-                                });
-                                return;
-                            }
-                            try {
-                                profile = await decryptJobsProfileCache(
-                                    envelope,
-                                    request.profilePassphrase
-                                );
-                            } catch (err) {
-                                sendResponse({
-                                    status: 'blocked',
-                                    reason: 'profile-cache-locked'
-                                });
-                                return;
-                            }
+                        if (chrome.runtime.lastError) {
+                            sendResponse({
+                                status: 'blocked',
+                                reason: 'unknown'
+                            });
+                            return;
                         }
-                        const runtimeConfig = {
-                            source: 'linkedin',
-                            query: String(request.query || '').trim(),
-                            limit: Math.max(
-                                1,
-                                parseInt(request.limit, 10) || 10
-                            ),
-                            easyApplyOnly: true,
-                            roleTerms: parseTextList(
-                                request.roleTerms
-                            ),
-                            locationTerms: parseTextList(
-                                request.locationTerms
-                            ),
-                            desiredLevels: parseTextList(
-                                request.desiredLevels
-                            ),
-                            preferredCompanies: parseTextList(
-                                request.preferredCompanies
-                            ),
-                            excludedCompanies: parseExcludedCompanyList(
-                                request.excludedCompanies
-                            ),
-                            appliedJobIds: parseTextList(
-                                request.appliedJobIds
-                            ),
-                            experienceLevel: String(
-                                request.experienceLevel || ''
-                            ).trim(),
-                            workType: String(
-                                request.workType || ''
-                            ).trim(),
-                            location: String(
-                                request.location || ''
-                            ).trim(),
-                            areaPreset: normalizeRuntimeAreaPreset(
-                                request.areaPreset
-                            ),
-                            templateMeta: normalizeTemplateMeta(
-                                request.templateMeta,
-                                'jobs'
-                            ),
-                            profile
-                        };
-                        launchJobsAssist(runtimeConfig);
-                        sendResponse({ status: 'started' });
+                        try {
+                            const envelope = data[JOBS_PROFILE_CACHE_KEY];
+                            let profile = {};
+                            if (envelope) {
+                                if (!request.profilePassphrase) {
+                                    sendResponse({
+                                        status: 'blocked',
+                                        reason: 'profile-cache-locked'
+                                    });
+                                    return;
+                                }
+                                if (typeof decryptJobsProfileCache !==
+                                    'function') {
+                                    sendResponse({
+                                        status: 'blocked',
+                                        reason: 'profile-cache-locked'
+                                    });
+                                    return;
+                                }
+                                try {
+                                    profile = await decryptJobsProfileCache(
+                                        envelope,
+                                        request.profilePassphrase
+                                    );
+                                } catch (err) {
+                                    sendResponse({
+                                        status: 'blocked',
+                                        reason: 'profile-cache-locked'
+                                    });
+                                    return;
+                                }
+                            }
+                            const runtimeConfig = {
+                                source: 'linkedin',
+                                query: String(request.query || '').trim(),
+                                limit: Math.max(
+                                    1,
+                                    parseInt(request.limit, 10) || 10
+                                ),
+                                easyApplyOnly: true,
+                                roleTerms: parseTextList(
+                                    request.roleTerms
+                                ),
+                                locationTerms: parseTextList(
+                                    request.locationTerms
+                                ),
+                                desiredLevels: parseTextList(
+                                    request.desiredLevels
+                                ),
+                                preferredCompanies: parseTextList(
+                                    request.preferredCompanies
+                                ),
+                                excludedCompanies:
+                                    parseExcludedCompanyList(
+                                        request.excludedCompanies
+                                    ),
+                                appliedJobIds: parseTextList(
+                                    request.appliedJobIds
+                                ),
+                                experienceLevel: String(
+                                    request.experienceLevel || ''
+                                ).trim(),
+                                workType: String(
+                                    request.workType || ''
+                                ).trim(),
+                                location: String(
+                                    request.location || ''
+                                ).trim(),
+                                areaPreset: normalizeRuntimeAreaPreset(
+                                    request.areaPreset
+                                ),
+                                templateMeta: normalizeTemplateMeta(
+                                    request.templateMeta,
+                                    'jobs'
+                                ),
+                                profile
+                            };
+                            launchJobsAssist(runtimeConfig);
+                            sendResponse({ status: 'started' });
+                        } catch (error) {
+                            sendResponse({
+                                status: 'blocked',
+                                reason: 'unknown'
+                            });
+                        }
                     }
                 );
             }).catch(() => {
@@ -2778,6 +2813,38 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'checkAccepted') {
+            var checkAcceptedTabId = null;
+            var checkAcceptedSettled = false;
+            var checkAcceptedLoadTimeout = null;
+            var checkAcceptedScriptDelay = null;
+            var checkAcceptedListener = null;
+            var settleCheckAccepted = (payload) => {
+                if (checkAcceptedSettled) return;
+                checkAcceptedSettled = true;
+                if (checkAcceptedLoadTimeout) {
+                    clearTimeout(checkAcceptedLoadTimeout);
+                }
+                if (checkAcceptedScriptDelay) {
+                    clearTimeout(checkAcceptedScriptDelay);
+                }
+                if (checkAcceptedListener) {
+                    chrome.tabs.onUpdated.removeListener(
+                        checkAcceptedListener
+                    );
+                }
+                if (checkAcceptedTabId) {
+                    chrome.tabs.remove(
+                        checkAcceptedTabId,
+                        () => {}
+                    );
+                }
+                sendResponse(payload);
+            };
+            checkAcceptedLoadTimeout = setTimeout(() => {
+                settleCheckAccepted({
+                    error: 'Failed to check connections'
+                });
+            }, 20000);
             chrome.tabs.create(
                 {
                     url: 'https://www.linkedin.com/' +
@@ -2786,101 +2853,87 @@ chrome.runtime.onMessage.addListener(
                     active: false
                 },
                 (tab) => {
-                    chrome.tabs.onUpdated.addListener(
-                        function listener(tabId, info) {
-                            if (tabId !== tab.id ||
-                                info.status !== 'complete') {
-                                return;
-                            }
-                            chrome.tabs.onUpdated
-                                .removeListener(listener);
-
-                            setTimeout(() => {
-                                chrome.scripting
-                                    .executeScript({
-                                        target: {
-                                            tabId: tab.id
-                                        },
-                                        func: () => {
-                                            const links =
-                                                document
-                                                    .querySelectorAll(
-                                                        'a[href*="/in/"]'
-                                                    );
-                                            const urls = [];
-                                            for (const l
-                                                of links) {
-                                                const url =
-                                                    l.href
-                                                        .split(
-                                                            '?'
-                                                        )[0];
-                                                if (!urls
-                                                    .includes(
-                                                        url
-                                                    )) {
-                                                    urls.push(
-                                                        url
-                                                    );
-                                                }
-                                            }
-                                            return urls;
-                                        }
-                                    })
-                                    .then((results) => {
-                                        const connUrls =
-                                            results?.[0]
-                                                ?.result || [];
-                                        chrome.tabs.remove(
-                                            tab.id
-                                        );
-                                        chrome.storage.local
-                                            .get(
-                                                'sentProfileUrls',
-                                                (data) => {
-                                                    const sent =
-                                                        new Set(
-                                                            data
-                                                                .sentProfileUrls ||
-                                                                []
-                                                        );
-                                                    const accepted =
-                                                        connUrls
-                                                            .filter(
-                                                                (u) =>
-                                                                    sent
-                                                                        .has(
-                                                                            u
-                                                                        )
-                                                            );
-                                                    if (accepted
-                                                        .length) {
-                                                        chrome
-                                                            .storage
-                                                            .local
-                                                            .set({
-                                                                acceptedUrls:
-                                                                    accepted
-                                                            });
-                                                    }
-                                                    sendResponse({
-                                                        accepted
-                                                    });
-                                                }
-                                            );
-                                    })
-                                    .catch(() => {
-                                        chrome.tabs.remove(
-                                            tab.id
-                                        );
-                                        sendResponse({
-                                            error:
-                                                'Failed to ' +
-                                                'check connections'
-                                        });
-                                    });
-                            }, 3000);
+                    if (chrome.runtime.lastError || !tab?.id) {
+                        settleCheckAccepted({
+                            error: 'Failed to check connections'
+                        });
+                        return;
+                    }
+                    checkAcceptedTabId = tab.id;
+                    checkAcceptedListener = function listener(
+                        tabId,
+                        info
+                    ) {
+                        if (tabId !== tab.id ||
+                            info.status !== 'complete') {
+                            return;
                         }
+                        chrome.tabs.onUpdated
+                            .removeListener(listener);
+
+                        checkAcceptedScriptDelay = setTimeout(() => {
+                            chrome.scripting
+                                .executeScript({
+                                    target: {
+                                        tabId: tab.id
+                                    },
+                                    func: () => {
+                                        const links =
+                                            document
+                                                .querySelectorAll(
+                                                    'a[href*="/in/"]'
+                                                );
+                                        const urls = [];
+                                        for (const l of links) {
+                                            const url = l.href
+                                                .split('?')[0];
+                                            if (!urls.includes(url)) {
+                                                urls.push(url);
+                                            }
+                                        }
+                                        return urls;
+                                    }
+                                })
+                                .then((results) => {
+                                    const connUrls =
+                                        results?.[0]?.result || [];
+                                    chrome.storage.local.get(
+                                        'sentProfileUrls',
+                                        (data) => {
+                                            if (chrome.runtime.lastError) {
+                                                settleCheckAccepted({
+                                                    error:
+                                                        'Failed to ' +
+                                                        'check connections'
+                                                });
+                                                return;
+                                            }
+                                            const sent = new Set(
+                                                data.sentProfileUrls || []
+                                            );
+                                            const accepted = connUrls
+                                                .filter((u) => sent.has(u));
+                                            if (accepted.length) {
+                                                chrome.storage.local.set({
+                                                    acceptedUrls: accepted
+                                                });
+                                            }
+                                            settleCheckAccepted({
+                                                accepted
+                                            });
+                                        }
+                                    );
+                                })
+                                .catch(() => {
+                                    settleCheckAccepted({
+                                        error:
+                                            'Failed to check connections'
+                                    });
+                                });
+                        }, 3000);
+                    };
+                    chrome.tabs.onUpdated.addListener(
+                        checkAcceptedListener
                     );
                 }
             );

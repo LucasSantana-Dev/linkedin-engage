@@ -253,6 +253,16 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Skip Keywords | Empty | Skip posts containing these words (one per line) |
 | Excluded Companies | Empty | If set, skips connecting with profiles whose headline contains any listed company name |
 
+## Troubleshooting Console Noise
+
+- This extension now returns deterministic fallbacks for bridge/runtime callback failures (`bridge-runtime-error`) instead of leaving async channels open.
+- Some console errors are external and not owned by this extension:
+  - `net::ERR_BLOCKED_BY_CLIENT` from ad blockers/privacy extensions
+  - `installHook.js` / vendor framework errors from third-party page scripts
+  - Trusted Types/CSP warnings from page bundles
+  - repeated `chrome-extension://invalid/...` fetch failures from other extensions
+- Non-HTTP(S) fetches are bypassed by invite-status tracking instrumentation, so this extension does not instrument `chrome-extension://` resource checks.
+
 ## Releasing
 
 Push a version tag to trigger the release workflow:

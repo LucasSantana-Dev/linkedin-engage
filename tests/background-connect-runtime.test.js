@@ -327,4 +327,41 @@ describe('background connect runtime config', () => {
         expect(sentToContent[0].payload.excludedCompanies)
             .toEqual(['Legacy Corp']);
     });
+
+    it('returns blocked unknown when connect rate-limit check fails', async () => {
+        const originalGet = chrome.storage.local.get;
+        chrome.storage.local.get = jest.fn(() => {
+            throw new Error('storage failure');
+        });
+
+        const response = await sendRequest({
+            action: 'start',
+            query: 'recruiter',
+            limit: 5
+        });
+
+        expect(response).toEqual({
+            status: 'blocked',
+            reason: 'unknown'
+        });
+        chrome.storage.local.get = originalGet;
+    });
+
+    it('returns deterministic error when checkAccepted tab creation fails', async () => {
+        chrome.tabs.create.mockImplementation((opts, cb) => {
+            chrome.runtime.lastError = {
+                message: 'Tab creation failed'
+            };
+            cb(undefined);
+            chrome.runtime.lastError = null;
+        });
+
+        const response = await sendRequest({
+            action: 'checkAccepted'
+        });
+
+        expect(response).toEqual({
+            error: 'Failed to check connections'
+        });
+    });
 });

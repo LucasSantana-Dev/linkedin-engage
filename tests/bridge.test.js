@@ -7,6 +7,7 @@ describe('bridge AI relay', () => {
         jest.resetModules();
         global.chrome = {
             runtime: {
+                lastError: null,
                 onMessage: {
                     addListener: jest.fn()
                 },
@@ -94,6 +95,58 @@ describe('bridge AI relay', () => {
         postSpy.mockRestore();
     });
 
+    it('posts bridge-runtime-error fallback when runtime callback fails', () => {
+        chrome.runtime.sendMessage = jest.fn((payload, cb) => {
+            if (payload.action === 'generateAIComment') {
+                chrome.runtime.lastError = {
+                    message: 'The message port closed.'
+                };
+                cb(undefined);
+                chrome.runtime.lastError = null;
+                return;
+            }
+            if (typeof cb === 'function') cb({});
+        });
+        const postSpy = jest.spyOn(window, 'postMessage');
+
+        window.dispatchEvent(new MessageEvent('message', {
+            source: window,
+            data: {
+                type: 'LINKEDIN_BOT_AI_COMMENT',
+                requestId: 99,
+                postText: 'post',
+                existingComments: [],
+                author: 'A',
+                category: 'technical',
+                apiKey: 'k'
+            }
+        }));
+
+        expect(postSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'LINKEDIN_BOT_AI_COMMENT_RESULT',
+                comment: null,
+                reason: 'bridge-runtime-error',
+                diagnostics: expect.objectContaining({
+                    source: 'bridge'
+                }),
+                attempts: 0,
+                requestId: 99
+            }),
+            '*'
+        );
+        expect(postSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'LINKEDIN_BOT_ANALYTICS',
+                entry: expect.objectContaining({
+                    status: 'bridge-runtime-error'
+                })
+            }),
+            '*'
+        );
+        postSpy.mockRestore();
+    });
+
     it('relays distance-risk diagnostics from background', () => {
         chrome.runtime.sendMessage = jest.fn((payload, cb) => {
             if (payload.action === 'generateAIComment') {
@@ -173,8 +226,7 @@ describe('bridge AI relay', () => {
                     warmupActive: true,
                     runNumber: 1
                 })
-            }),
-            expect.any(Function)
+            })
         );
     });
 });

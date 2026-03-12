@@ -12,13 +12,13 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         const reqUrl = typeof args[0] === 'string'
             ? args[0]
             : args[0]?.url || '';
-        if (reqUrl.startsWith('chrome-extension://')) {
+        const normalizedUrl = String(reqUrl || '');
+        if (!/^https?:\/\//i.test(normalizedUrl)) {
             return origFetch.apply(this, args);
         }
         const res = await origFetch.apply(this, args);
         try {
-            const url = reqUrl;
-            if (isInviteUrl(url)) {
+            if (isInviteUrl(normalizedUrl)) {
                 lastInviteStatus = res.status;
                 if (res.status === 429) {
                     fuseLimitHit = true;

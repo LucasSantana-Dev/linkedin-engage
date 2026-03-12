@@ -142,34 +142,66 @@ window.addEventListener('message', (event) => {
         });
     }
     if (event.data?.type === 'LINKEDIN_BOT_AI_COMMENT') {
-        chrome.runtime.sendMessage({
-            action: 'generateAIComment',
-            postText: event.data.postText,
-            existingComments: event.data.existingComments,
-            author: event.data.author,
-            authorTitle: event.data.authorTitle,
-            lang: event.data.lang,
-            category: event.data.category,
-            reactions: event.data.reactions,
-            reactionSummary: event.data.reactionSummary,
-            commentThreadSummary:
-                event.data.commentThreadSummary,
-            imageSignals: event.data.imageSignals,
-            patternProfile: event.data.patternProfile,
-            allowLowSignalRecovery:
-                event.data.allowLowSignalRecovery === true,
-            apiKey: event.data.apiKey,
-            goalMode: event.data.goalMode
-        }, (response) => {
+        const requestId = event.data.requestId;
+        const postBridgeFallback = (message) => {
             window.postMessage({
                 type: 'LINKEDIN_BOT_AI_COMMENT_RESULT',
-                comment: response?.comment || null,
-                reason: response?.reason || null,
-                diagnostics: response?.diagnostics || null,
-                attempts: Number(response?.attempts) || 0,
-                requestId: event.data.requestId
+                comment: null,
+                reason: 'bridge-runtime-error',
+                diagnostics: {
+                    source: 'bridge',
+                    message: message || 'runtime message failed'
+                },
+                attempts: 0,
+                requestId
             }, '*');
-        });
+            window.postMessage({
+                type: 'LINKEDIN_BOT_ANALYTICS',
+                entry: {
+                    action: 'comment',
+                    status: 'bridge-runtime-error',
+                    reason: 'bridge-runtime-error'
+                }
+            }, '*');
+        };
+        try {
+            chrome.runtime.sendMessage({
+                action: 'generateAIComment',
+                postText: event.data.postText,
+                existingComments: event.data.existingComments,
+                author: event.data.author,
+                authorTitle: event.data.authorTitle,
+                lang: event.data.lang,
+                category: event.data.category,
+                reactions: event.data.reactions,
+                reactionSummary: event.data.reactionSummary,
+                commentThreadSummary:
+                    event.data.commentThreadSummary,
+                imageSignals: event.data.imageSignals,
+                patternProfile: event.data.patternProfile,
+                allowLowSignalRecovery:
+                    event.data.allowLowSignalRecovery === true,
+                apiKey: event.data.apiKey,
+                goalMode: event.data.goalMode
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    postBridgeFallback(
+                        chrome.runtime.lastError.message
+                    );
+                    return;
+                }
+                window.postMessage({
+                    type: 'LINKEDIN_BOT_AI_COMMENT_RESULT',
+                    comment: response?.comment || null,
+                    reason: response?.reason || null,
+                    diagnostics: response?.diagnostics || null,
+                    attempts: Number(response?.attempts) || 0,
+                    requestId
+                }, '*');
+            });
+        } catch (error) {
+            postBridgeFallback(error?.message || '');
+        }
     }
     if (event.data?.type === 'LINKEDIN_BOT_PATTERN_LEARN') {
         chrome.runtime.sendMessage({
@@ -178,7 +210,7 @@ window.addEventListener('message', (event) => {
             category: event.data.category,
             patternProfile: event.data.patternProfile,
             runMeta: event.data.runMeta || null
-        }, () => {});
+        });
     }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         chrome.runtime.sendMessage({

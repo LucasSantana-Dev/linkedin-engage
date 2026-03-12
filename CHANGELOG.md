@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.26.1] - 2026-03-12
+
+### Fixed
+- **Bridge callback runtime hardening**: `LINKEDIN_BOT_AI_COMMENT` relay now handles `chrome.runtime.lastError` deterministically and returns `reason: bridge-runtime-error` with safe diagnostics instead of uncaught callback noise.
+- **Pattern learn channel warning reduction**: `LINKEDIN_BOT_PATTERN_LEARN` relay is now fire-and-forget (no callback channel), preventing async response warning spam.
+- **Background single-response guard**: Added response hardening for async runtime actions so `sendResponse` resolves once even on failures, with explicit fallback handling in connect/company/jobs start branches.
+- **checkAccepted failure safety**: Added deterministic error response and timeout/cleanup handling for tab creation, script execution, and storage read failures in accepted-connections checks.
+- **Fetch instrumentation containment**: Invite tracking now bypasses all non-HTTP(S) URLs and keeps tracking logic isolated from extension-resource fetch noise.
+
+### Added
+- **Console troubleshooting guidance**: README now documents external DevTools noise categories (`ERR_BLOCKED_BY_CLIENT`, third-party vendor/CSP warnings, `chrome-extension://invalid`) vs extension-owned failures.
+- **Regression tests for runtime hardening**: Added bridge and background tests for `bridge-runtime-error`, fire-and-forget pattern learning relay, and deterministic fallback responses on async failures.
+
 ## [1.26.0] - 2026-03-12
 
 ### Added
