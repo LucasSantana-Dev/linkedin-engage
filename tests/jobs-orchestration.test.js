@@ -469,4 +469,28 @@ describe('jobs orchestration in background', () => {
             'ready-manual-review'
         );
     });
+
+    it('records terminal manual-input-required jobs outcomes once', async () => {
+        runtimeListener({
+            action: 'done',
+            result: {
+                mode: 'jobs',
+                success: false,
+                runStatus: 'failed',
+                reason: 'manual-input-required',
+                message: 'Manual input required on current application.',
+                log: [{
+                    status: 'needs-manual-input',
+                    title: 'Senior Frontend Developer',
+                    company: 'CI&T'
+                }]
+            }
+        }, {}, () => {});
+        await tick();
+
+        expect(storageData.jobsAssistHistory).toHaveLength(1);
+        expect(storageData.jobsAssistHistory[0].status).toBe(
+            'needs-manual-input'
+        );
+    });
 });

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Companies follow confirmation hardening**: Company follow attempts now use bounded in-card confirmation polling with retries (initial click + 2 retries), re-querying buttons between attempts to survive LinkedIn DOM re-renders.
+- **Companies diagnostics expanded**: Company runtime diagnostics now include `followAttempts`, `unconfirmedFollowCount`, and `confirmSignalsSeen` summaries to make false-negative follow outcomes actionable.
+- **Jobs Easy Apply step progression**: Jobs runtime now advances deterministic multi-step Easy Apply flows (`Next/Continue` and `Review/Revisar`) until the manual review stage without submitting the application.
+- **Jobs manual-required stop semantics**: `needs-manual-input` is now terminal for the current run with explicit `reason: manual-input-required`, keeping the active application open for user completion.
+
+### Fixed
+- **Companies false 0-follow outcomes**: Added deterministic `follow-not-confirmed` failure mapping when follow clicks are attempted but no followed-state signal is confirmed after retries.
+- **Companies per-card failure status precision**: Unconfirmed follow attempts now log `skipped-follow-not-confirmed` instead of generic failed skips.
+- **Popup company failure messaging**: Popup now maps company failure reasons (`follow-not-confirmed`, `no-target-matches`, `already-following-only`) to actionable user-facing error text.
+- **Jobs required-field detection**: Required Easy Apply fields now validate from runtime field values/validity (input/textarea/select) instead of brittle `[value]` attribute checks.
+- **Jobs popup completion feedback**: Manual-required jobs outcomes now show actionable warning text instead of generic error messaging.
+
 ## [1.26.4] - 2026-03-13
 
 ### Changed

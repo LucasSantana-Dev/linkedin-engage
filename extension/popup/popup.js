@@ -2260,6 +2260,23 @@ function deriveDoneRunStatus(response) {
     return source.success === false ? 'failed' : 'success';
 }
 
+function getDoneFailureMessage(response) {
+    const reason = String(response?.reason || '')
+        .trim().toLowerCase();
+    const reasonMessages = {
+        'follow-not-confirmed':
+            'Follow click attempted but could not be confirmed on LinkedIn UI.',
+        'no-target-matches':
+            'No company matched the target filter for this run.',
+        'already-following-only':
+            'All matched companies were already followed.'
+    };
+    return reasonMessages[reason] ||
+        response?.error ||
+        response?.message ||
+        'No items processed.';
+}
+
 document.getElementById('exportBtn').addEventListener('click', () => {
     if (!lastConnectionLog.length) return;
     const escape = (s) =>
@@ -2362,7 +2379,17 @@ chrome.runtime.onMessage.addListener((request) => {
         }
 
         const runStatus = deriveDoneRunStatus(response);
-        if (runStatus === 'success') {
+        const isJobsManualRequired = response?.mode === 'jobs' &&
+            response?.reason === 'manual-input-required';
+        if (isJobsManualRequired) {
+            setStatusMessage(
+                response?.message ||
+                    'Manual input required. Complete the application manually.',
+                'warning'
+            );
+            startBtn.disabled = false;
+            startBtn.textContent = 'Continue Manually';
+        } else if (runStatus === 'success') {
             setStatusMessage(
                 'Success! ' + (response.message || ''),
                 'success'
@@ -2377,10 +2404,7 @@ chrome.runtime.onMessage.addListener((request) => {
             startBtn.textContent = 'Start Again';
         } else {
             setStatusMessage(
-                'Error: ' +
-                (response?.error ||
-                    response?.message ||
-                    'No items processed.'),
+                'Error: ' + getDoneFailureMessage(response),
                 'error'
             );
             startBtn.disabled = false;

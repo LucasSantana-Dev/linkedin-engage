@@ -4,6 +4,9 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     const delay = ms => new Promise(r => setTimeout(r, ms));
     const CARD_POLL_MS = 500;
     const CARD_TIMEOUT_MS = 20000;
+    const FOLLOW_CONFIRM_RETRIES = 2;
+    const FOLLOW_CONFIRM_POLL_MS = 220;
+    const FOLLOW_CONFIRM_TIMEOUT_MS = 1600;
     let stopRequested = false;
     const followLog = [];
     let consecutiveFails = 0;
@@ -95,6 +98,120 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         return null;
     }
 
+    function getFollowConfirmation(card) {
+        if (typeof isCompanyFollowConfirmed === 'function') {
+            return isCompanyFollowConfirmed(card, document);
+        }
+        const btns = card?.querySelectorAll
+            ? card.querySelectorAll('button')
+            : [];
+        for (const btn of btns) {
+            const text = (
+                btn.innerText || btn.textContent || ''
+            ).trim();
+            if (isFollowingText(text) || btn.disabled) {
+                return {
+                    confirmed: true,
+                    signals: ['button-state-fallback']
+                };
+            }
+        }
+        return { confirmed: false, signals: [] };
+    }
+
+    function trackConfirmSignals(stats, signals) {
+        if (!stats.confirmSignalsSeen) {
+            stats.confirmSignalsSeen = {};
+        }
+        for (const signal of signals || []) {
+            if (!signal) continue;
+            stats.confirmSignalsSeen[signal] =
+                (stats.confirmSignalsSeen[signal] || 0) + 1;
+        }
+    }
+
+    async function waitForFollowConfirmation(card) {
+        const startedAt = Date.now();
+        let latestSignals = [];
+        while (Date.now() - startedAt < FOLLOW_CONFIRM_TIMEOUT_MS) {
+            const check = getFollowConfirmation(card);
+            latestSignals = check.signals || [];
+            if (check.confirmed) {
+                return {
+                    confirmed: true,
+                    signals: latestSignals
+                };
+            }
+            await delay(FOLLOW_CONFIRM_POLL_MS);
+        }
+        const finalCheck = getFollowConfirmation(card);
+        return {
+            confirmed: finalCheck.confirmed,
+            signals: finalCheck.signals?.length
+                ? finalCheck.signals
+                : latestSignals
+        };
+    }
+
+    async function attemptFollowWithConfirmation(
+        card, profile, stats
+    ) {
+        let attempts = 0;
+        let latestSignals = [];
+        for (let retry = 0;
+            retry <= FOLLOW_CONFIRM_RETRIES;
+            retry++) {
+            const followBtn = findFollowBtnInCard(card);
+            if (!followBtn) {
+                const check = getFollowConfirmation(card);
+                trackConfirmSignals(stats, check.signals);
+                if (check.confirmed) {
+                    return {
+                        confirmed: true,
+                        attempts,
+                        signals: check.signals || []
+                    };
+                }
+                break;
+            }
+
+            followBtn.scrollIntoView({
+                behavior: typeof scrollBehavior
+                    === 'function'
+                    ? scrollBehavior() : 'smooth',
+                block: 'center'
+            });
+            await delay(
+                typeof actionDelay === 'function'
+                    ? actionDelay(profile)
+                    : 800 + Math.random() * 1200
+            );
+            followBtn.click();
+            attempts++;
+            const confirmation = await waitForFollowConfirmation(
+                card
+            );
+            latestSignals = confirmation.signals || [];
+            trackConfirmSignals(stats, latestSignals);
+            if (confirmation.confirmed) {
+                return {
+                    confirmed: true,
+                    attempts,
+                    signals: latestSignals
+                };
+            }
+            if (retry < FOLLOW_CONFIRM_RETRIES) {
+                await delay(280);
+            }
+        }
+
+        return {
+            confirmed: false,
+            attempts,
+            signals: latestSignals
+        };
+    }
+
     function findNextPageButton() {
         const btns = document.querySelectorAll(
             'button[aria-label="Next"], ' +
@@ -121,6 +238,9 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             targetMatched: 0,
             followed: 0,
             alreadyFollowing: 0,
+            followAttempts: 0,
+            unconfirmedFollowCount: 0,
+            confirmSignalsSeen: {},
             targetFilterActive: companies.length > 0
         };
         console.log(
@@ -164,6 +284,13 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     findFollowBtnInCard(card);
                 if (!followBtn) {
                     stats.alreadyFollowing++;
+                    const currentConfirm = getFollowConfirmation(
+                        card
+                    );
+                    trackConfirmSignals(
+                        stats,
+                        currentConfirm.signals
+                    );
                     followLog.push({
                         ...info,
                         status: 'skipped-already-following',
@@ -172,30 +299,24 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     continue;
                 }
 
-                followBtn.scrollIntoView({
-                    behavior: typeof scrollBehavior
-                        === 'function'
-                        ? scrollBehavior() : 'smooth',
-                    block: 'center'
-                });
-                await delay(
-                    typeof actionDelay === 'function'
-                        ? actionDelay(profile)
-                        : 800 + Math.random() * 1200
+                const attemptResult =
+                    await attemptFollowWithConfirmation(
+                        card,
+                        profile,
+                        stats
+                    );
+                stats.followAttempts +=
+                    attemptResult.attempts || 0;
+                const success = attemptResult.confirmed;
+                console.log(
+                    '[LinkedIn Bot] Company follow confirmation:',
+                    {
+                        company: info.name,
+                        confirmed: success,
+                        attempts: attemptResult.attempts || 0,
+                        signals: attemptResult.signals || []
+                    }
                 );
-                followBtn.click();
-                await delay(
-                    typeof humanDelay === 'function'
-                        ? humanDelay(1000, 400)
-                        : 1000
-                );
-
-                const btnText =
-                    (followBtn.innerText ||
-                        followBtn.textContent || '')
-                        .trim();
-                const success = isFollowingText(btnText) ||
-                    followBtn.disabled;
 
                 if (success) {
                     totalFollowed++;
@@ -205,12 +326,21 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     followLog.push({
                         ...info,
                         status: 'followed',
+                        followAttempts:
+                            attemptResult.attempts || 1,
+                        confirmSignals:
+                            attemptResult.signals || [],
                         time: new Date().toISOString()
                     });
                 } else {
+                    stats.unconfirmedFollowCount++;
                     followLog.push({
                         ...info,
-                        status: 'skipped-failed',
+                        status: 'skipped-follow-not-confirmed',
+                        followAttempts:
+                            attemptResult.attempts || 0,
+                        confirmSignals:
+                            attemptResult.signals || [],
                         time: new Date().toISOString()
                     });
                 }
@@ -368,6 +498,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             diagnostics.targetMatched = stepStats.targetMatched;
             diagnostics.followed = stepStats.followed;
             diagnostics.alreadyFollowing = stepStats.alreadyFollowing;
+            diagnostics.followAttempts = stepStats.followAttempts;
+            diagnostics.unconfirmedFollowCount =
+                stepStats.unconfirmedFollowCount;
+            diagnostics.confirmSignalsSeen =
+                stepStats.confirmSignalsSeen;
             diagnostics.targetFilterActive = stepStats.targetFilterActive;
 
             totalFollowed = pageResult?.totalFollowed ||
@@ -439,6 +574,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     stepStats.alreadyFollowing >= eligibleCount) {
                     reason = 'already-following-only';
                     error = 'All matched companies are already followed.';
+                } else if (stepStats.followAttempts > 0 &&
+                    stepStats.unconfirmedFollowCount > 0) {
+                    reason = 'follow-not-confirmed';
+                    error = 'Follow click attempted but could ' +
+                        'not be confirmed on LinkedIn UI.';
                 }
                 return {
                     success: false,
