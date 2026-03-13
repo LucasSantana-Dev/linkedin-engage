@@ -243,6 +243,7 @@ n8n-linkedin-workflow.json <- n8n workflow for scheduled runs
 | Jobs Profile Cache | Off | Optional encrypted local cache of structured applicant fields; unlocked via session passphrase |
 | Feed React | On | React to feed posts (smart reaction based on content) |
 | Feed Comment | Off | Comment on feed posts using templates |
+| Departure-only Guard | On | If a post only announces leaving a company (no new role in same post), comments stay neutral and non-congratulatory |
 | Enable Warmup Learning | On | For feed mode, force first N runs to react+learn only (no comments) |
 | Warmup Runs Required | 2 | Number of learn-only feed runs before comments unlock (0-10) |
 | Role Terms Limit | 6 | Maximum number of role tags included in the `OR` role query (1-10) to keep results precise |

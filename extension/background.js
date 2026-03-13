@@ -1775,6 +1775,57 @@ function isContextGroundedComment(
     ).grounded;
 }
 
+var CAREER_DEPARTURE_SIGNAL_TERMS = [
+    'last day',
+    'leaving',
+    'moving on',
+    'resigned',
+    'farewell',
+    'saindo',
+    'deixando',
+    'ultimo dia',
+    'me despeco',
+    'encerrando ciclo'
+];
+
+var CAREER_NEW_JOB_SIGNAL_TERMS = [
+    'new role',
+    'joining',
+    'just started',
+    'new position',
+    'novo emprego',
+    'fui contratado',
+    'comecei na',
+    'first day',
+    'day one',
+    'new team'
+];
+
+function detectCareerTransitionSignals(postText) {
+    var normalized = normalizeCopyGuardText(postText);
+    if (!normalized) {
+        return {
+            hasDepartureSignal: false,
+            hasNewJobSignal: false,
+            isDepartureOnly: false
+        };
+    }
+    var hasDepartureSignal = CAREER_DEPARTURE_SIGNAL_TERMS
+        .some(function(term) {
+            return normalized.includes(term);
+        });
+    var hasNewJobSignal = CAREER_NEW_JOB_SIGNAL_TERMS
+        .some(function(term) {
+            return normalized.includes(term);
+        });
+    return {
+        hasDepartureSignal,
+        hasNewJobSignal,
+        isDepartureOnly: hasDepartureSignal &&
+            !hasNewJobSignal
+    };
+}
+
 function isMetricsOrSocialImpactPost(category, postText, imageSignals) {
     var cat = (category || '').toLowerCase();
     if (cat === 'news' || cat === 'motivation') return true;
@@ -1871,6 +1922,13 @@ function validateCommentSafety(comment, context) {
 
     var celebrationRe =
         /\b(congrats|congratulations|parab[eé]ns|well deserved|muito merecido)\b/i;
+    var transitionSignals = detectCareerTransitionSignals(
+        context?.postText
+    );
+    if (transitionSignals.isDepartureOnly &&
+        celebrationRe.test(lower)) {
+        return false;
+    }
     var laughRe =
         /\b(lol|lmao|haha+|hahaha|kkkk+|rsrs+|ri alto|too real|real demais|real one|got me|accurate|certeiro)\b/i;
     if (category === 'humor') {
@@ -1949,8 +2007,18 @@ async function generateAIComment(data) {
     var metricsOrSocial = isMetricsOrSocialImpactPost(
         cat, postText, imageSignals
     );
+    var transitionSignals = detectCareerTransitionSignals(
+        postText
+    );
+    var isDepartureOnly = transitionSignals.isDepartureOnly;
     var toneGuide = '';
-    if (cat === 'humor') {
+    if (isDepartureOnly) {
+        toneGuide =
+            '\nTone: DEPARTURE-ONLY career transition.' +
+            ' Neutral transition acknowledgment only.' +
+            ' Do NOT congratulate leaving a company.' +
+            ' Keep it respectful, brief, and forward-looking.';
+    } else if (cat === 'humor') {
         toneGuide =
             '\nTone: HUMOROUS post.' +
             ' Keep it minimal and natural:' +

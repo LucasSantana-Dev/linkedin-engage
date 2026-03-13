@@ -237,6 +237,12 @@ var CATEGORY_TEMPLATES = {
         'wishing you success in this role!',
         'congrats, good luck!'
     ],
+    departure_transition: [
+        'wishing you a smooth transition',
+        'respect for the journey, all the best ahead',
+        'thanks for sharing this transition',
+        'wishing you a strong next chapter'
+    ],
     generic: []
 };
 
@@ -325,6 +331,12 @@ var CATEGORY_TEMPLATES_PT = {
         'show, boa sorte!',
         'boa, sucesso!',
         'parabéns!'
+    ],
+    departure_transition: [
+        'boa transição nessa nova etapa',
+        'respeito pela trajetória, tudo de bom no próximo ciclo',
+        'obrigado por compartilhar essa transição',
+        'desejo uma ótima sequência nessa nova fase'
     ],
     generic: []
 };
@@ -563,6 +575,11 @@ var COMPOSED_EN = {
         (c) => 'congrats!',
         (c) => 'nice, good luck!',
     ],
+    departure_transition: [
+        () => 'wishing you a smooth transition',
+        () => 'respect for the journey, all the best ahead',
+        () => 'wishing you a strong next chapter',
+    ],
     generic: [
         (c) => 'hadn\'t thought about ' +
             (c[0] || 'it') + ' that way',
@@ -668,6 +685,11 @@ var COMPOSED_PT = {
     newjob: [
         (c) => 'parabéns!',
         (c) => 'show, boa sorte!',
+    ],
+    departure_transition: [
+        () => 'boa transição nessa nova etapa',
+        () => 'respeito pela trajetória, tudo de bom no próximo ciclo',
+        () => 'desejo uma ótima sequência nessa nova fase',
     ],
     generic: [
         (c) => 'não tinha pensado em ' +

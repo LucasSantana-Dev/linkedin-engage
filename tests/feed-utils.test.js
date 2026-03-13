@@ -23,6 +23,7 @@ const {
     assessCommentCopyRisk,
     validateCommentPatternFit,
     validateGeneratedCommentSafety,
+    detectCareerTransitionSignals,
     SENTIMENT_PATTERNS,
     POST_CATEGORIES,
     CATEGORY_TEMPLATES,
@@ -221,6 +222,28 @@ describe('classifyPost', () => {
             'Google! Grateful to announce I\'m ' +
             'joining their cloud team.'
         )).toBe('newjob');
+    });
+});
+
+describe('detectCareerTransitionSignals', () => {
+    it('detects departure-only transition', () => {
+        const signals = detectCareerTransitionSignals(
+            'Happy to share that today is my last day at Acme. ' +
+            'I am leaving after an incredible journey.'
+        );
+        expect(signals.hasDepartureSignal).toBe(true);
+        expect(signals.hasNewJobSignal).toBe(false);
+        expect(signals.isDepartureOnly).toBe(true);
+    });
+
+    it('does not flag departure-only when new role is announced', () => {
+        const signals = detectCareerTransitionSignals(
+            'Last day at Acme. Next week I am joining Beta as a ' +
+            'Senior Engineer in a new role.'
+        );
+        expect(signals.hasDepartureSignal).toBe(true);
+        expect(signals.hasNewJobSignal).toBe(true);
+        expect(signals.isDepartureOnly).toBe(false);
     });
 });
 
@@ -1393,6 +1416,18 @@ describe('validateGeneratedCommentSafety', () => {
             { category: 'achievement' }
         )).toBe(true);
     });
+
+    it('rejects congratulatory wording on departure-only posts', () => {
+        const safe = validateGeneratedCommentSafety(
+            'congrats on this transition',
+            {
+                category: 'achievement',
+                postText: 'Today is my last day at Acme, moving on ' +
+                    'after a great journey.'
+            }
+        );
+        expect(safe).toBe(false);
+    });
 });
 
 describe('buildCommentFromPost with reactions context', () => {
@@ -1410,6 +1445,25 @@ describe('buildCommentFromPost with reactions context', () => {
             /lol|haha|real one|too real|kkkk/.test(text)
         );
         expect(hasHumor).toBe(true);
+    });
+});
+
+describe('buildCommentFromPost departure-only behavior', () => {
+    it('never emits congratulatory wording for departure-only posts', () => {
+        const post = 'Happy to share that this is my last day at Acme. ' +
+            'I am leaving and moving on after an amazing cycle.';
+        const outputs = new Set();
+        for (let i = 0; i < 40; i++) {
+            const c = buildCommentFromPost(post, null, []);
+            if (c) outputs.add(c.toLowerCase());
+        }
+        expect(outputs.size).toBeGreaterThan(0);
+        for (const out of outputs) {
+            expect(
+                /\b(congrats|congratulations|parab[eé]ns|well deserved|muito merecido)\b/i
+                    .test(out)
+            ).toBe(false);
+        }
     });
 });
 

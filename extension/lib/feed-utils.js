@@ -394,12 +394,67 @@ function finalizeGeneratedComment(
     return fit.ok ? comment : null;
 }
 
+var CAREER_DEPARTURE_SIGNAL_TERMS = [
+    'last day',
+    'leaving',
+    'moving on',
+    'resigned',
+    'farewell',
+    'saindo',
+    'deixando',
+    'ultimo dia',
+    'me despeco',
+    'encerrando ciclo'
+];
+
+var CAREER_NEW_JOB_SIGNAL_TERMS = [
+    'new role',
+    'joining',
+    'just started',
+    'new position',
+    'novo emprego',
+    'fui contratado',
+    'comecei na',
+    'first day',
+    'day one',
+    'new team'
+];
+
+function detectCareerTransitionSignals(postText) {
+    var normalized = normalizeCopyGuardText(postText);
+    if (!normalized) {
+        return {
+            hasDepartureSignal: false,
+            hasNewJobSignal: false,
+            isDepartureOnly: false
+        };
+    }
+    var hasDepartureSignal = CAREER_DEPARTURE_SIGNAL_TERMS
+        .some(function(term) {
+            return normalized.includes(term);
+        });
+    var hasNewJobSignal = CAREER_NEW_JOB_SIGNAL_TERMS
+        .some(function(term) {
+            return normalized.includes(term);
+        });
+    return {
+        hasDepartureSignal,
+        hasNewJobSignal,
+        isDepartureOnly: hasDepartureSignal &&
+            !hasNewJobSignal
+    };
+}
+
 function buildCommentFromPost(
     postText, userTemplates, existingComments,
     goalMode, reactions, safetyContext,
     patternProfile, generationOptions
 ) {
     const category = classifyPost(postText, reactions);
+    var transitionSignals = detectCareerTransitionSignals(
+        postText
+    );
+    var isDepartureOnly = transitionSignals.isDepartureOnly;
     const lang = detectLanguage(postText);
     const mode = goalMode === 'active'
         ? 'active' : 'passive';
@@ -451,7 +506,9 @@ function buildCommentFromPost(
         const composed = finalLang === 'pt'
             ? COMPOSED_PT : COMPOSED_EN;
         var preferredCat = category;
-        if (category === 'hiring' &&
+        if (isDepartureOnly) {
+            preferredCat = 'departure_transition';
+        } else if (category === 'hiring' &&
             mode === 'active') {
             preferredCat = 'hiring_active';
         }
@@ -486,10 +543,11 @@ function buildCommentFromPost(
 
     const templates = finalLang === 'pt'
         ? CATEGORY_TEMPLATES_PT : CATEGORY_TEMPLATES;
-    const templateCategory = category === 'hiring' &&
-        mode === 'active'
-        ? 'hiring_active'
-        : category;
+    const templateCategory = isDepartureOnly
+        ? 'departure_transition'
+        : (category === 'hiring' && mode === 'active'
+            ? 'hiring_active'
+            : category);
     const templatePool =
         templates[templateCategory] ||
         templates[category] ||
@@ -774,6 +832,13 @@ function validateGeneratedCommentSafety(comment, context) {
 
     var celebrationRe =
         /\b(congrats|congratulations|parab[eé]ns|well deserved|muito merecido)\b/i;
+    var transitionSignals = detectCareerTransitionSignals(
+        context?.postText
+    );
+    if (transitionSignals.isDepartureOnly &&
+        celebrationRe.test(lower)) {
+        return false;
+    }
     var laughRe =
         /\b(lol|lmao|haha+|hahaha|kkkk+|rsrs+|ri alto|too real|real demais|real one|got me|accurate|certeiro)\b/i;
     if (category === 'humor') {
@@ -2270,6 +2335,7 @@ if (typeof module !== 'undefined' && module.exports) {
         getPostUrn,
         isLowQualityComment,
         validateGeneratedCommentSafety,
+        detectCareerTransitionSignals,
         isLikeButton,
         isCommentButton,
         getExistingComments,
