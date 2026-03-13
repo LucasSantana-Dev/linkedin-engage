@@ -116,6 +116,13 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     async function processCurrentPage(
         cards, companies, limit, totalFollowed
     ) {
+        const stats = {
+            cardsScanned: 0,
+            targetMatched: 0,
+            followed: 0,
+            alreadyFollowing: 0,
+            targetFilterActive: companies.length > 0
+        };
         console.log(
             `[LinkedIn Bot] ${cards.length} company ` +
             `cards on page`
@@ -125,98 +132,111 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             if (totalFollowed >= limit ||
                 stopRequested) break;
 
+            stats.cardsScanned++;
             if (detectChallenge()) {
                 console.log(
                     '[LinkedIn Bot] CAPTCHA detected'
                 );
-                return -1;
+                return {
+                    totalFollowed,
+                    challengeDetected: true,
+                    stats
+                };
             }
 
             try {
-            const info = extractCompanyInfo(card);
+                const info = extractCompanyInfo(card);
 
-            if (companies.length > 0 &&
-                !matchesTargetCompanies(
-                    info.name, companies
-                )) {
-                continue;
-            }
+                if (companies.length > 0 &&
+                    !matchesTargetCompanies(
+                        info.name, companies
+                    )) {
+                    followLog.push({
+                        ...info,
+                        status: 'skipped-target-filter',
+                        time: new Date().toISOString()
+                    });
+                    continue;
+                }
+                stats.targetMatched++;
 
-            const followBtn =
-                findFollowBtnInCard(card);
-            if (!followBtn) {
-                followLog.push({
-                    ...info,
-                    status: 'skipped-already-following',
-                    time: new Date().toISOString()
+                const followBtn =
+                    findFollowBtnInCard(card);
+                if (!followBtn) {
+                    stats.alreadyFollowing++;
+                    followLog.push({
+                        ...info,
+                        status: 'skipped-already-following',
+                        time: new Date().toISOString()
+                    });
+                    continue;
+                }
+
+                followBtn.scrollIntoView({
+                    behavior: typeof scrollBehavior
+                        === 'function'
+                        ? scrollBehavior() : 'smooth',
+                    block: 'center'
                 });
-                continue;
-            }
-
-            followBtn.scrollIntoView({
-                behavior: typeof scrollBehavior
-                    === 'function'
-                    ? scrollBehavior() : 'smooth',
-                block: 'center'
-            });
-            await delay(
-                typeof actionDelay === 'function'
-                    ? actionDelay(profile)
-                    : 800 + Math.random() * 1200
-            );
-            followBtn.click();
-            await delay(
-                typeof humanDelay === 'function'
-                    ? humanDelay(1000, 400)
-                    : 1000
-            );
-
-            const btnText =
-                (followBtn.innerText ||
-                    followBtn.textContent || '')
-                    .trim();
-            const success = isFollowingText(btnText) ||
-                followBtn.disabled;
-
-            if (success) {
-                totalFollowed++;
-                consecutiveFails = 0;
-                backoffMultiplier = 1;
-                followLog.push({
-                    ...info,
-                    status: 'followed',
-                    time: new Date().toISOString()
-                });
-            } else {
-                followLog.push({
-                    ...info,
-                    status: 'skipped-failed',
-                    time: new Date().toISOString()
-                });
-            }
-
-            reportProgress(
-                totalFollowed, limit, 0
-            );
-            if (typeof shouldTakePause === 'function'
-                && shouldTakePause(
-                    profile, totalFollowed
-                )) {
-                const p = typeof pauseDuration
-                    === 'function'
-                    ? pauseDuration() : 15000;
-                console.log(
-                    '[LinkedIn Bot] Human pause: ' +
-                    Math.round(p / 1000) + 's'
-                );
-                await delay(p);
-            } else {
                 await delay(
                     typeof actionDelay === 'function'
                         ? actionDelay(profile)
-                        : 1500 + Math.random() * 2500
+                        : 800 + Math.random() * 1200
                 );
-            }
+                followBtn.click();
+                await delay(
+                    typeof humanDelay === 'function'
+                        ? humanDelay(1000, 400)
+                        : 1000
+                );
+
+                const btnText =
+                    (followBtn.innerText ||
+                        followBtn.textContent || '')
+                        .trim();
+                const success = isFollowingText(btnText) ||
+                    followBtn.disabled;
+
+                if (success) {
+                    totalFollowed++;
+                    stats.followed++;
+                    consecutiveFails = 0;
+                    backoffMultiplier = 1;
+                    followLog.push({
+                        ...info,
+                        status: 'followed',
+                        time: new Date().toISOString()
+                    });
+                } else {
+                    followLog.push({
+                        ...info,
+                        status: 'skipped-failed',
+                        time: new Date().toISOString()
+                    });
+                }
+
+                reportProgress(
+                    totalFollowed, limit, 0
+                );
+                if (typeof shouldTakePause === 'function'
+                    && shouldTakePause(
+                        profile, totalFollowed
+                    )) {
+                    const p = typeof pauseDuration
+                        === 'function'
+                        ? pauseDuration() : 15000;
+                    console.log(
+                        '[LinkedIn Bot] Human pause: ' +
+                        Math.round(p / 1000) + 's'
+                    );
+                    await delay(p);
+                } else {
+                    await delay(
+                        typeof actionDelay === 'function'
+                            ? actionDelay(profile)
+                            : 1500 + Math.random() * 2500
+                    );
+                }
 
             } catch (cardErr) {
                 console.log(
@@ -244,7 +264,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             }
         }
 
-        return totalFollowed;
+        return {
+            totalFollowed,
+            challengeDetected: false,
+            stats
+        };
     }
 
     async function runCompanyFollow(config) {
@@ -327,13 +351,28 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                 };
             }
 
-            totalFollowed = await processCurrentPage(
+            const pageResult = await processCurrentPage(
                 waitResult.state.cards,
                 companies,
                 limit,
                 totalFollowed
             );
-            if (totalFollowed === -1) {
+            const stepStats = pageResult?.stats || {
+                cardsScanned: 0,
+                targetMatched: 0,
+                followed: 0,
+                alreadyFollowing: 0,
+                targetFilterActive: companies.length > 0
+            };
+            diagnostics.cardsScanned = stepStats.cardsScanned;
+            diagnostics.targetMatched = stepStats.targetMatched;
+            diagnostics.followed = stepStats.followed;
+            diagnostics.alreadyFollowing = stepStats.alreadyFollowing;
+            diagnostics.targetFilterActive = stepStats.targetFilterActive;
+
+            totalFollowed = pageResult?.totalFollowed ||
+                totalFollowed;
+            if (pageResult?.challengeDetected) {
                 return {
                     success: false,
                     mode: 'company',
@@ -385,6 +424,37 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             }
             const followedThisStep =
                 countFollowedEntries(followLog);
+            const eligibleCount = stepStats.targetFilterActive
+                ? stepStats.targetMatched
+                : stepStats.cardsScanned;
+            if (followedThisStep <= 0) {
+                let reason = 'no-companies-followed';
+                let error =
+                    'No companies were followed in this run.';
+                if (stepStats.targetFilterActive &&
+                    stepStats.targetMatched === 0) {
+                    reason = 'no-target-matches';
+                    error = 'No company matched the target filter.';
+                } else if (eligibleCount > 0 &&
+                    stepStats.alreadyFollowing >= eligibleCount) {
+                    reason = 'already-following-only';
+                    error = 'All matched companies are already followed.';
+                }
+                return {
+                    success: false,
+                    mode: 'company',
+                    stepCode: 'zero-follow',
+                    error,
+                    runStatus: 'failed',
+                    reason,
+                    followedThisStep,
+                    processedCount: followLog.length,
+                    actionCount: 0,
+                    skippedCount: Math.max(0, followLog.length),
+                    diagnostics,
+                    log: followLog
+                };
+            }
 
             return {
                 success: true,

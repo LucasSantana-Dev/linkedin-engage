@@ -52,6 +52,22 @@ describe('normalizeRunOutcome', () => {
         expect(result.success).toBe(false);
     });
 
+    test('preserves explicit failed reason when provided', () => {
+        const result = normalizeRunOutcome({
+            mode: 'company',
+            runStatus: 'failed',
+            reason: 'no-target-matches',
+            error: 'No company matched the target filter.',
+            processedCount: 4,
+            actionCount: 0,
+            skippedCount: 4
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_FAILED);
+        expect(result.reason).toBe('no-target-matches');
+        expect(result.success).toBe(false);
+    });
+
     test('returns success when processed >= 1 and no error', () => {
         const result = normalizeRunOutcome({
             mode: 'connect',

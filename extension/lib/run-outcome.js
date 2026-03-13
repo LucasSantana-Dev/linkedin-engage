@@ -72,11 +72,16 @@ function detectChallenge(result) {
 }
 
 function inferReason(runStatus, result) {
+    var explicitReason = String(result?.reason || '')
+        .trim();
     if (runStatus === RUN_STATUS_CANCELED) {
         return 'stopped-by-user';
     }
+    if (explicitReason && explicitReason !== 'unknown') {
+        return explicitReason;
+    }
     if (runStatus === RUN_STATUS_SUCCESS) {
-        return String(result?.reason || 'unknown');
+        return explicitReason || 'unknown';
     }
     if (detectChallenge(result)) {
         return 'challenge';

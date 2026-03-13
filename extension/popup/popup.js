@@ -1927,17 +1927,9 @@ function startCompanyFollow() {
     );
     const plan = buildCompanySearchPlan();
     const companyAreaPreset = getSelectedCompanyAreaPreset();
-    const rawTargets = parseMultilineList(
+    const targetCompanies = parseMultilineList(
         document.getElementById('targetCompanies').value
     );
-    const templateTargets = Array.isArray(
-        plan.defaults?.targetCompanies
-    )
-        ? plan.defaults.targetCompanies
-        : [];
-    const targetCompanies = rawTargets.length > 0
-        ? rawTargets
-        : templateTargets;
     const resolvedQuery = String(plan.query || '').trim() ||
         getCompanyPresetDefaultQuery(companyAreaPreset);
     if (!queryInput.value.trim() && resolvedQuery) {

@@ -1,7 +1,3 @@
-const {
-    getCompanyAreaPresetDefaultQuery
-} = require('../extension/lib/connect-config');
-
 describe('company orchestration in background', () => {
     let runtimeListener;
     let alarmListener;
@@ -69,6 +65,10 @@ describe('company orchestration in background', () => {
             '../extension/lib/run-outcome'
         );
         Object.assign(global, runOutcome);
+        const searchTemplates = require(
+            '../extension/lib/search-templates'
+        );
+        Object.assign(global, searchTemplates);
 
         let tabIdCounter = 100;
         const tabMap = new Map();
@@ -294,6 +294,24 @@ describe('company orchestration in background', () => {
         delete global.RUN_STATUS_FAILED;
         delete global.RUN_STATUS_CANCELED;
         delete global.normalizeRunOutcome;
+        delete global.EXPECTED_RESULTS_BUCKETS;
+        delete global.MODE_USAGE_GOALS;
+        delete global.MODE_DEFAULT_USAGE_GOAL;
+        delete global.CONNECT_ROLE_LIMITS;
+        delete global.AREA_FAMILY_MAP;
+        delete global.SEARCH_TEMPLATES;
+        delete global.normalizeMode;
+        delete global.normalizeExpectedResultsBucket;
+        delete global.normalizeUsageGoal;
+        delete global.normalizeAreaFamily;
+        delete global.compileBooleanQuery;
+        delete global.countBooleanOperators;
+        delete global.selectSearchTemplate;
+        delete global.buildSearchTemplatePlan;
+        delete global.buildConnectTemplatePlan;
+        delete global.buildCompaniesTemplatePlan;
+        delete global.buildJobsTemplatePlan;
+        delete global.normalizeTemplateMeta;
     });
 
     it('executes multi-company queue and emits one final done', async () => {
@@ -494,6 +512,37 @@ describe('company orchestration in background', () => {
         expect(done[0].result.error).toContain('timeout');
     });
 
+    it('preserves explicit failed reason from company step result', async () => {
+        await sendRequest({
+            action: 'startCompanyFollow',
+            query: 'software technology',
+            limit: 10,
+            targetCompanies: ['Acme']
+        });
+
+        runtimeListener({
+            action: 'companyStepDone',
+            result: {
+                success: false,
+                mode: 'company',
+                runStatus: 'failed',
+                reason: 'no-target-matches',
+                error: 'No company matched the target filter.',
+                followedThisStep: 0,
+                log: [{
+                    status: 'skipped-target-filter',
+                    name: 'Other Co'
+                }]
+            }
+        }, {}, () => {});
+        await tick();
+
+        const done = doneMessages();
+        expect(done).toHaveLength(1);
+        expect(done[0].result.success).toBe(false);
+        expect(done[0].result.reason).toBe('no-target-matches');
+    });
+
     it('start uses company preset default query when query and targets are empty', async () => {
         const defaultQuery = getCompanyAreaPresetDefaultQuery('ui-ux');
         const response = await sendRequest({
@@ -563,10 +612,7 @@ describe('company orchestration in background', () => {
         expect(doneMessages()[0].result.mode).toBe('company');
     });
 
-    it('scheduled company run uses preset default query when no target companies are set', async () => {
-        const defaultQuery = getCompanyAreaPresetDefaultQuery(
-            'graphic-design'
-        );
+    it('scheduled company run uses resolved query when no target companies are set', async () => {
         storageData.popupState = {
             targetCompanies: '',
             companyQuery: '',
@@ -585,8 +631,40 @@ describe('company orchestration in background', () => {
 
         expect(createdTabs).toHaveLength(1);
         expect(createdTabs[0].url).toContain(
-            encodeURIComponent(defaultQuery)
+            encodeURIComponent(
+                '("technology companies" OR "hiring teams")'
+            )
         );
         expect(updatedTabs).toHaveLength(0);
+    });
+
+    it('scheduled company run does not auto-apply template default targets', async () => {
+        storageData.popupState = {
+            targetCompanies: '',
+            companyQuery: '',
+            companyAreaPreset: 'ui-ux',
+            companyUsageGoal: 'brand_watchlist',
+            companyExpectedResults: 'balanced',
+            companyTemplateAuto: true,
+            companyTemplateId: '',
+            limit: '10'
+        };
+        storageData.companySchedule = {
+            enabled: true,
+            intervalHours: 24,
+            batchSize: 2
+        };
+        storageData.companyRotationIndex = 0;
+
+        alarmListener({ name: 'companySchedule' });
+        await tick();
+
+        expect(createdTabs).toHaveLength(1);
+        expect(createdTabs[0].url).toContain(
+            encodeURIComponent(
+                '(branding OR "brand strategy" OR "visual identity" OR "creative direction")'
+            )
+        );
+        expect(createdTabs[0].url).not.toContain('keywords=Interbrand');
     });
 });

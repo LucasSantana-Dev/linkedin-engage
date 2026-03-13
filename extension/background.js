@@ -246,15 +246,9 @@ function buildCompanySearchRuntimeFromState(state) {
         });
     }
 
-    const rawTargets = parseTextList(
+    const targetCompanies = parseTextList(
         safeState.targetCompanies
     );
-    const templateTargets = parseTextList(
-        plan?.defaults?.targetCompanies
-    );
-    const targetCompanies = rawTargets.length > 0
-        ? rawTargets
-        : templateTargets;
 
     let query = String(plan?.query || '').trim() || manualQuery;
     if (!query &&
@@ -591,6 +585,12 @@ function handleCompanyStepDone(result) {
                     ? 'No company cards detected ' +
                         'within timeout.'
                     : 'Unknown error'),
+            runStatus: 'failed',
+            reason: stepResult.reason || (
+                stepCode === 'cards-timeout'
+                    ? 'runtime-error'
+                    : 'unknown'
+            ),
             log: state.log
         }, true);
         return;

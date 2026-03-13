@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Companies target-filter semantics**: Empty `Target Companies` now always means “follow all visible company results”; template default target lists are no longer auto-applied implicitly on manual or scheduled runs.
+- **Companies scheduled/manual parity**: Both launch paths now use only explicit user-provided target companies for filtered runs.
+
+### Fixed
+- **Companies hidden over-filtering**: Fixed the “tab opens, 0 follows” behavior caused by implicit template target defaults filtering out all cards.
+- **Deterministic 0-follow outcomes in Companies**: Added explicit failure reasons for zero-follow runs (`no-target-matches`, `already-following-only`, `no-companies-followed`) instead of silent success-like outcomes.
+- **Companies skip diagnostics**: Added `skipped-target-filter` log status and per-step diagnostics (`cardsScanned`, `targetMatched`, `followed`, `alreadyFollowing`) to make filter misses visible in history/runtime payloads.
+
 ## [1.26.2] - 2026-03-12
 
 ### Changed
