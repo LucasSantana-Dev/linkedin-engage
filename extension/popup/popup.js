@@ -51,6 +51,7 @@ const DEFAULT_LOCAL_UI_STATE = {
 let useCustomQuery = false;
 let popupUiState = DEFAULT_LOCAL_UI_STATE;
 let jobsCacheLoadedThisSession = false;
+let jobsManualResumePending = false;
 
 const DEFAULT_LATAM_COMPANIES = [
     'Hotjar', 'Doist', 'Toggl', 'Pipefy', 'VTEX',
@@ -1791,6 +1792,9 @@ document.getElementById('startBtn').addEventListener('click', async () => {
         return startCompanyFollow();
     }
     if (currentMode === 'jobs') {
+        if (jobsManualResumePending) {
+            return resumeJobsManualFlow();
+        }
         return startJobsAssist();
     }
     if (currentMode === 'feed') {
@@ -1798,6 +1802,54 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     }
     return startConnect();
 });
+
+function resumeJobsManualFlow() {
+    chrome.tabs.query({
+        url: [
+            'https://www.linkedin.com/jobs/*',
+            'https://www.linkedin.com/jobs'
+        ]
+    }, (tabs) => {
+        if (chrome.runtime.lastError) {
+            setStatusMessage(
+                'Could not find the Jobs tab. Open LinkedIn Jobs and continue manually.',
+                'warning'
+            );
+            return;
+        }
+        if (!Array.isArray(tabs) || tabs.length === 0) {
+            setStatusMessage(
+                'No open LinkedIn Jobs tab found. Open Jobs and continue manually.',
+                'warning'
+            );
+            return;
+        }
+        const target = tabs[0];
+        chrome.windows.update(target.windowId, { focused: true }, () => {
+            if (chrome.runtime.lastError) {
+                setStatusMessage(
+                    'Could not focus the Jobs window. Open LinkedIn Jobs and continue manually.',
+                    'warning'
+                );
+                return;
+            }
+            chrome.tabs.update(target.id, { active: true }, () => {
+                if (chrome.runtime.lastError) {
+                    setStatusMessage(
+                        'Could not focus the Jobs tab. Open LinkedIn Jobs and continue manually.',
+                        'warning'
+                    );
+                    return;
+                }
+                jobsManualResumePending = false;
+                setStatusMessage(
+                    'Switched to LinkedIn Jobs. Continue the Easy Apply flow manually.',
+                    'info'
+                );
+            });
+        });
+    });
+}
 
 async function startConnect() {
     const plan = buildConnectSearchPlan();
@@ -1979,6 +2031,7 @@ function startCompanyFollow() {
 }
 
 function startJobsAssist() {
+    jobsManualResumePending = false;
     const plan = buildJobsSearchPlan();
     const query = plan.query;
     if (!query) {
@@ -2260,6 +2313,23 @@ function deriveDoneRunStatus(response) {
     return source.success === false ? 'failed' : 'success';
 }
 
+function getDoneFailureMessage(response) {
+    const reason = String(response?.reason || '')
+        .trim().toLowerCase();
+    const reasonMessages = {
+        'follow-not-confirmed':
+            'Follow click attempted but could not be confirmed on LinkedIn UI.',
+        'no-target-matches':
+            'No company matched the target filter for this run.',
+        'already-following-only':
+            'All matched companies were already followed.'
+    };
+    return reasonMessages[reason] ||
+        response?.error ||
+        response?.message ||
+        'No items processed.';
+}
+
 document.getElementById('exportBtn').addEventListener('click', () => {
     if (!lastConnectionLog.length) return;
     const escape = (s) =>
@@ -2362,13 +2432,30 @@ chrome.runtime.onMessage.addListener((request) => {
         }
 
         const runStatus = deriveDoneRunStatus(response);
-        if (runStatus === 'success') {
+        const isJobsManualRequired = response?.mode === 'jobs' &&
+            response?.reason === 'manual-input-required';
+        if (isJobsManualRequired) {
+            jobsManualResumePending = true;
+            setStatusMessage(
+                response?.message ||
+                    'Manual input required. Complete the application manually.',
+                'warning'
+            );
+            startBtn.disabled = false;
+            startBtn.textContent = 'Continue Manually';
+        } else if (runStatus === 'success') {
+            if (response?.mode === 'jobs') {
+                jobsManualResumePending = false;
+            }
             setStatusMessage(
                 'Success! ' + (response.message || ''),
                 'success'
             );
             startBtn.textContent = 'Done!';
         } else if (runStatus === 'canceled') {
+            if (response?.mode === 'jobs') {
+                jobsManualResumePending = false;
+            }
             setStatusMessage(
                 response?.message || 'Run canceled by user.',
                 'warning'
@@ -2376,11 +2463,11 @@ chrome.runtime.onMessage.addListener((request) => {
             startBtn.disabled = false;
             startBtn.textContent = 'Start Again';
         } else {
+            if (response?.mode === 'jobs') {
+                jobsManualResumePending = false;
+            }
             setStatusMessage(
-                'Error: ' +
-                (response?.error ||
-                    response?.message ||
-                    'No items processed.'),
+                'Error: ' + getDoneFailureMessage(response),
                 'error'
             );
             startBtn.disabled = false;

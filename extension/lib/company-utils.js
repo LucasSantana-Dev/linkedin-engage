@@ -95,6 +95,96 @@ function isFollowingText(text) {
     return t === 'Following' || t === 'Seguindo';
 }
 
+function normalizeInlineText(value) {
+    return String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function hasFollowSuccessToast(root) {
+    const el = root || document;
+    if (!el?.querySelectorAll) return false;
+    const toastNodes = el.querySelectorAll(
+        '.artdeco-toast-item__message, ' +
+        '.artdeco-toast-item, ' +
+        '[role="alert"]'
+    );
+    const patterns = [
+        /\byou(?:'re| are)?\s+now\s+following\b/i,
+        /\bnow\s+following\b/i,
+        /\byou(?:'re| are)?\s+following\b/i,
+        /\bagora\s+voc[eê]\s+segue\b/i,
+        /\bvoc[eê]\s+est[aá]\s+seguindo\b/i,
+        /\best[aá]\s+seguindo\b/i
+    ];
+    for (const node of toastNodes) {
+        const text = normalizeInlineText(
+            node.innerText || node.textContent
+        );
+        if (!text) continue;
+        if (patterns.some((re) => re.test(text))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getCompanyFollowConfirmationSignals(card, root) {
+    const signals = [];
+    if (card?.querySelectorAll) {
+        const buttons = card.querySelectorAll('button');
+        for (const btn of buttons) {
+            const text = normalizeInlineText(
+                btn.innerText || btn.textContent
+            );
+            const aria = normalizeInlineText(
+                btn.getAttribute('aria-label')
+            );
+            const title = normalizeInlineText(
+                btn.getAttribute('title')
+            );
+            const ariaPressed = String(
+                btn.getAttribute('aria-pressed') || ''
+            ).toLowerCase();
+            const ariaDisabled = String(
+                btn.getAttribute('aria-disabled') || ''
+            ).toLowerCase();
+            const descriptor = `${aria} ${title}`.trim();
+            const hasFollowingDescriptor =
+                /following|seguindo|unfollow|deixar de seguir/i
+                    .test(descriptor);
+            if (isFollowingText(text)) {
+                signals.push('button-text-following');
+            }
+            if (/unfollow|deixar de seguir/i.test(descriptor)) {
+                signals.push('aria-unfollow-state');
+            }
+            if (ariaPressed === 'true') {
+                signals.push('aria-pressed-true');
+            }
+            if ((btn.disabled || ariaDisabled === 'true') &&
+                (isFollowingText(text) || hasFollowingDescriptor)) {
+                signals.push('non-clickable-following');
+            }
+        }
+    }
+    if (hasFollowSuccessToast(root)) {
+        signals.push('toast-follow-success');
+    }
+    return [...new Set(signals)];
+}
+
+function isCompanyFollowConfirmed(card, root) {
+    const signals = getCompanyFollowConfirmationSignals(
+        card,
+        root
+    );
+    return {
+        confirmed: signals.length > 0,
+        signals
+    };
+}
+
 function isNextPageButton(btn) {
     if (!btn || btn.disabled) return false;
     const label = btn.getAttribute('aria-label') || '';
@@ -274,6 +364,8 @@ if (typeof module !== 'undefined' && module.exports) {
         extractCompanyInfo,
         matchesTargetCompanies,
         isFollowingText,
+        isCompanyFollowConfirmed,
+        getCompanyFollowConfirmationSignals,
         isNextPageButton,
         detectChallenge,
         buildCompanySearchUrl,

@@ -7,6 +7,8 @@ const {
     getCompanySearchPageState,
     matchesTargetCompanies,
     isFollowingText,
+    isCompanyFollowConfirmed,
+    getCompanyFollowConfirmationSignals,
     isNextPageButton,
     isCompanyFollowText
 } = require('../extension/lib/company-utils');
@@ -252,6 +254,125 @@ describe('isCompanyFollowText', () => {
             .toBe(false);
         expect(isCompanyFollowText('Seguindo Empresa XPTO'))
             .toBe(false);
+    });
+});
+
+describe('isCompanyFollowConfirmed', () => {
+    afterEach(() => {
+        document.body.textContent = '';
+    });
+
+    it('confirms when button text changes to Following', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Following';
+        card.appendChild(btn);
+        document.body.appendChild(card);
+
+        const result = isCompanyFollowConfirmed(
+            card,
+            document
+        );
+        expect(result.confirmed).toBe(true);
+        expect(result.signals).toContain(
+            'button-text-following'
+        );
+    });
+
+    it('confirms when aria pressed is true', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        btn.setAttribute('aria-pressed', 'true');
+        card.appendChild(btn);
+        document.body.appendChild(card);
+
+        const result = isCompanyFollowConfirmed(
+            card,
+            document
+        );
+        expect(result.confirmed).toBe(true);
+        expect(result.signals).toContain(
+            'aria-pressed-true'
+        );
+    });
+
+    it('confirms when unfollow state is exposed in aria label', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        btn.setAttribute('aria-label', 'Unfollow Acme');
+        card.appendChild(btn);
+        document.body.appendChild(card);
+
+        const result = isCompanyFollowConfirmed(
+            card,
+            document
+        );
+        expect(result.confirmed).toBe(true);
+        expect(result.signals).toContain(
+            'aria-unfollow-state'
+        );
+    });
+
+    it('confirms when toast reports follow success', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        card.appendChild(btn);
+        document.body.appendChild(card);
+
+        const toast = document.createElement('div');
+        toast.className = 'artdeco-toast-item__message';
+        toast.textContent = "You're now following Acme";
+        document.body.appendChild(toast);
+
+        const result = isCompanyFollowConfirmed(
+            card,
+            document
+        );
+        expect(result.confirmed).toBe(true);
+        expect(result.signals).toContain(
+            'toast-follow-success'
+        );
+    });
+
+    it('returns false when no confirmation signal is present', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        card.appendChild(btn);
+        document.body.appendChild(card);
+
+        const result = isCompanyFollowConfirmed(
+            card,
+            document
+        );
+        expect(result.confirmed).toBe(false);
+        expect(result.signals).toEqual([]);
+    });
+});
+
+describe('getCompanyFollowConfirmationSignals', () => {
+    afterEach(() => {
+        document.body.textContent = '';
+    });
+
+    it('deduplicates repeated confirmation signals', () => {
+        const card = document.createElement('div');
+        const a = document.createElement('button');
+        a.textContent = 'Following';
+        const b = document.createElement('button');
+        b.textContent = 'Following';
+        card.appendChild(a);
+        card.appendChild(b);
+        document.body.appendChild(card);
+
+        const signals = getCompanyFollowConfirmationSignals(
+            card,
+            document
+        );
+        expect(signals).toEqual(['button-text-following']);
     });
 });
 

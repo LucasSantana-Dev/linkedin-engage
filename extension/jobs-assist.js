@@ -5,6 +5,17 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
     let stopRequested = false;
     let running = false;
     const jobsLog = [];
+    const DEFAULT_RUNTIME_OPTIONS = {
+        openCardScrollMs: 300,
+        openCardOpenMs: 900,
+        afterApplyClickMs: 800,
+        afterStepClickMs: 350,
+        modalPollTimeoutMs: 6000,
+        modalPollIntervalMs: 200,
+        stepPollTimeoutMs: 4500,
+        stepPollIntervalMs: 120,
+        maxModalSteps: 8
+    };
 
     function detectChallenge() {
         const url = window.location.href || '';
@@ -171,7 +182,10 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
                 filled++;
                 continue;
             }
-            if (/full name|nome completo|your name|name/.test(hint) &&
+            if (/full name|nome completo|your name|first and last name|nome e sobrenome/
+                .test(hint) &&
+                !/company|school|employer|organization|reference|empresa|escola/
+                    .test(hint) &&
                 setInputValue(field, source.fullName)) {
                 filled++;
                 continue;
@@ -225,7 +239,11 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
             'div[role="dialog"]'
         ));
         return dialogs.find(dialog => {
-            const text = normalized(dialog.innerText || '');
+            const text = normalized(
+                dialog.innerText ||
+                dialog.textContent ||
+                ''
+            );
             return /apply|candidatura|application|review|enviar/.test(text);
         }) || null;
     }
@@ -243,7 +261,352 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
         return null;
     }
 
-    async function openCard(job) {
+    function toNonNegativeInt(value, fallback) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            return fallback;
+        }
+        return Math.floor(parsed);
+    }
+
+    function resolveRuntimeOptions(options) {
+        const source = options && typeof options === 'object'
+            ? options
+            : {};
+        return {
+            openCardScrollMs: toNonNegativeInt(
+                source.openCardScrollMs,
+                DEFAULT_RUNTIME_OPTIONS.openCardScrollMs
+            ),
+            openCardOpenMs: toNonNegativeInt(
+                source.openCardOpenMs,
+                DEFAULT_RUNTIME_OPTIONS.openCardOpenMs
+            ),
+            afterApplyClickMs: toNonNegativeInt(
+                source.afterApplyClickMs,
+                DEFAULT_RUNTIME_OPTIONS.afterApplyClickMs
+            ),
+            afterStepClickMs: toNonNegativeInt(
+                source.afterStepClickMs,
+                DEFAULT_RUNTIME_OPTIONS.afterStepClickMs
+            ),
+            modalPollTimeoutMs: toNonNegativeInt(
+                source.modalPollTimeoutMs,
+                DEFAULT_RUNTIME_OPTIONS.modalPollTimeoutMs
+            ),
+            modalPollIntervalMs: Math.max(1, toNonNegativeInt(
+                source.modalPollIntervalMs,
+                DEFAULT_RUNTIME_OPTIONS.modalPollIntervalMs
+            )),
+            stepPollTimeoutMs: toNonNegativeInt(
+                source.stepPollTimeoutMs,
+                DEFAULT_RUNTIME_OPTIONS.stepPollTimeoutMs
+            ),
+            stepPollIntervalMs: Math.max(1, toNonNegativeInt(
+                source.stepPollIntervalMs,
+                DEFAULT_RUNTIME_OPTIONS.stepPollIntervalMs
+            )),
+            maxModalSteps: Math.max(1, toNonNegativeInt(
+                source.maxModalSteps,
+                DEFAULT_RUNTIME_OPTIONS.maxModalSteps
+            ))
+        };
+    }
+
+    function isRequiredField(field) {
+        return field.required ||
+            normalized(field.getAttribute('aria-required')) === 'true';
+    }
+
+    function fieldHint(field, fallbackIndex) {
+        const parts = [
+            field.getAttribute('aria-label') || '',
+            field.getAttribute('name') || '',
+            field.getAttribute('id') || '',
+            field.getAttribute('placeholder') || ''
+        ].map(normalized).filter(Boolean);
+        return parts[0] || `field-${fallbackIndex + 1}`;
+    }
+
+    function isFieldEmpty(field) {
+        const tag = normalized(field.tagName || '');
+        if (tag === 'input') {
+            const type = normalized(field.type || 'text');
+            if (type === 'checkbox' || type === 'radio') {
+                return !field.checked;
+            }
+            return String(field.value || '').trim() === '';
+        }
+        if (tag === 'textarea' || tag === 'select') {
+            return String(field.value || '').trim() === '';
+        }
+        return String(field.value || '').trim() === '';
+    }
+
+    function countRequiredMissingFields(modal) {
+        const fields = Array.from(modal.querySelectorAll(
+            'input:not([type="hidden"]):not([disabled]), ' +
+            'textarea:not([disabled]), ' +
+            'select:not([disabled])'
+        ));
+        let missingCount = 0;
+        const missingHints = [];
+        fields.forEach((field, idx) => {
+            if (!isRequiredField(field)) return;
+            const missingByValidity = field.validity?.valueMissing === true;
+            if (!missingByValidity && !isFieldEmpty(field)) return;
+            missingCount++;
+            if (missingHints.length < 6) {
+                missingHints.push(fieldHint(field, idx));
+            }
+        });
+        return {
+            count: missingCount,
+            missingHints
+        };
+    }
+
+    function getModalSignature(modal) {
+        const enabledButtons = Array.from(modal.querySelectorAll(
+            'button:not([disabled])'
+        )).map(btn => normalized(
+            btn.innerText ||
+            btn.textContent ||
+            btn.getAttribute('aria-label') ||
+            ''
+        )).filter(Boolean);
+        const required = countRequiredMissingFields(modal).count;
+        const headline = normalized(
+            modal.querySelector('h1, h2, h3, .artdeco-modal__header')?.innerText ||
+            modal.innerText
+        ).slice(0, 120);
+        return `${enabledButtons.join('|')}::${required}::${headline}`;
+    }
+
+    async function waitForModalDialog(options) {
+        const startedAt = Date.now();
+        while (Date.now() - startedAt <= options.modalPollTimeoutMs) {
+            const modal = findModalDialog();
+            if (modal) {
+                return {
+                    modal,
+                    waitedMs: Date.now() - startedAt
+                };
+            }
+            await delay(options.modalPollIntervalMs);
+        }
+        return {
+            modal: null,
+            waitedMs: Date.now() - startedAt
+        };
+    }
+
+    async function waitForModalStepChange(previousModal, previousSignature, options) {
+        const startedAt = Date.now();
+        while (Date.now() - startedAt <= options.stepPollTimeoutMs) {
+            const modal = findModalDialog();
+            if (!modal) {
+                return {
+                    changed: true,
+                    modal: null,
+                    waitedMs: Date.now() - startedAt
+                };
+            }
+            const signature = getModalSignature(modal);
+            if (modal !== previousModal || signature !== previousSignature) {
+                return {
+                    changed: true,
+                    modal,
+                    waitedMs: Date.now() - startedAt
+                };
+            }
+            await delay(options.stepPollIntervalMs);
+        }
+        return {
+            changed: false,
+            modal: findModalDialog() || previousModal,
+            waitedMs: Date.now() - startedAt
+        };
+    }
+
+    async function runModalStepFlow(initialModal, profile, options) {
+        const submitPattern = /submit|enviar candidatura|send application|apply now/;
+        const reviewPattern = /review|revisar/;
+        const nextPattern = /next|continue|proximo|proxima|avancar|seguinte/;
+        let modal = initialModal;
+        let filledFields = 0;
+        let stepCount = 0;
+
+        while (stepCount < options.maxModalSteps) {
+            modal = findModalDialog();
+            if (!modal) {
+                return {
+                    status: 'needs-manual-input',
+                    reason: 'modal-closed',
+                    filledFields,
+                    diagnostics: { stepCount }
+                };
+            }
+
+            filledFields += fillKnownFields(modal, profile);
+            const submitBtn = findModalButton(modal, submitPattern);
+            if (submitBtn) {
+                return {
+                    status: 'ready-manual-review',
+                    reason: 'ready-manual-review',
+                    filledFields,
+                    diagnostics: { stepCount }
+                };
+            }
+
+            const required = countRequiredMissingFields(modal);
+            const reviewBtn = findModalButton(modal, reviewPattern);
+            if (reviewBtn) {
+                const signature = getModalSignature(modal);
+                reviewBtn.click();
+                const moved = await waitForModalStepChange(
+                    modal,
+                    signature,
+                    options
+                );
+                stepCount++;
+                if (!moved.changed) {
+                    if (!modal || !modal.isConnected) {
+                        return {
+                            status: 'needs-manual-input',
+                            reason: 'modal-closed',
+                            filledFields,
+                            diagnostics: {
+                                stepCount,
+                                waitedMs: moved.waitedMs
+                            }
+                        };
+                    }
+                    return {
+                        status: 'needs-manual-input',
+                        reason: 'modal-step-timeout',
+                        filledFields,
+                        diagnostics: {
+                            stepCount,
+                            waitedMs: moved.waitedMs
+                        }
+                    };
+                }
+                if (!moved.modal) {
+                    return {
+                        status: 'needs-manual-input',
+                        reason: 'modal-closed',
+                        filledFields,
+                        diagnostics: {
+                            stepCount,
+                            waitedMs: moved.waitedMs
+                        }
+                    };
+                }
+                await delay(options.afterStepClickMs);
+                modal = moved.modal;
+                continue;
+            }
+
+            const nextBtn = findModalButton(modal, nextPattern);
+            if (nextBtn) {
+                if (required.count > 0) {
+                    return {
+                        status: 'needs-manual-input',
+                        reason: 'required-fields-missing',
+                        filledFields,
+                        diagnostics: {
+                            stepCount,
+                            requiredCount: required.count,
+                            missingHints: required.missingHints
+                        }
+                    };
+                }
+                const signature = getModalSignature(modal);
+                nextBtn.click();
+                const moved = await waitForModalStepChange(
+                    modal,
+                    signature,
+                    options
+                );
+                stepCount++;
+                if (!moved.changed) {
+                    if (!modal || !modal.isConnected) {
+                        return {
+                            status: 'needs-manual-input',
+                            reason: 'modal-closed',
+                            filledFields,
+                            diagnostics: {
+                                stepCount,
+                                waitedMs: moved.waitedMs
+                            }
+                        };
+                    }
+                    const missing = countRequiredMissingFields(moved.modal || modal);
+                    return {
+                        status: 'needs-manual-input',
+                        reason: missing.count > 0
+                            ? 'required-fields-missing'
+                            : 'modal-step-timeout',
+                        filledFields,
+                        diagnostics: {
+                            stepCount,
+                            waitedMs: moved.waitedMs,
+                            requiredCount: missing.count,
+                            missingHints: missing.missingHints
+                        }
+                    };
+                }
+                if (!moved.modal) {
+                    return {
+                        status: 'needs-manual-input',
+                        reason: 'modal-closed',
+                        filledFields,
+                        diagnostics: {
+                            stepCount,
+                            waitedMs: moved.waitedMs
+                        }
+                    };
+                }
+                await delay(options.afterStepClickMs);
+                modal = moved.modal;
+                continue;
+            }
+
+            if (required.count > 0) {
+                return {
+                    status: 'needs-manual-input',
+                    reason: 'required-fields-missing',
+                    filledFields,
+                    diagnostics: {
+                        stepCount,
+                        requiredCount: required.count,
+                        missingHints: required.missingHints
+                    }
+                };
+            }
+
+            return {
+                status: 'needs-manual-input',
+                reason: 'unknown-step',
+                filledFields,
+                diagnostics: { stepCount }
+            };
+        }
+
+        return {
+            status: 'needs-manual-input',
+            reason: 'max-steps-reached',
+            filledFields,
+            diagnostics: {
+                stepCount,
+                maxModalSteps: options.maxModalSteps
+            }
+        };
+    }
+
+    async function openCard(job, runtimeOptions) {
+        const options = resolveRuntimeOptions(runtimeOptions);
         const selectors = [
             `a[href*="/jobs/view/${job.id}"]`,
             `a[href="${job.jobUrl}"]`
@@ -252,18 +615,27 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
             if (!selector) continue;
             const link = document.querySelector(selector);
             if (!link) continue;
-            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            await delay(300);
+            if (typeof link.scrollIntoView === 'function') {
+                link.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+            await delay(options.openCardScrollMs);
             link.click();
-            await delay(900);
+            await delay(options.openCardOpenMs);
             return true;
         }
         return false;
     }
 
-    async function prepareJobForManualReview(job, profile) {
-        if (!(await openCard(job))) {
-            return { status: 'needs-manual-input', reason: 'open-card-failed' };
+    async function prepareJobForManualReview(job, profile, runtimeOptions) {
+        const options = resolveRuntimeOptions(runtimeOptions);
+        if (!(await openCard(job, options))) {
+            return {
+                status: 'needs-manual-input',
+                reason: 'open-card-failed'
+            };
         }
 
         const applyBtn = findEasyApplyButton();
@@ -272,52 +644,45 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
         }
 
         applyBtn.click();
-        await delay(800);
+        await delay(options.afterApplyClickMs);
 
-        const modal = findModalDialog();
-        if (!modal) {
-            return { status: 'needs-manual-input', reason: 'modal-not-found' };
-        }
-
-        const filledFields = fillKnownFields(modal, profile);
-        const reviewBtn = findModalButton(modal, /review|revisar/);
-        if (reviewBtn) {
-            reviewBtn.click();
-            await delay(600);
-        }
-
-        const submitBtn = findModalButton(
-            modal,
-            /submit|enviar candidatura|send application|apply now/
-        );
-        if (submitBtn) {
-            return {
-                status: 'ready-manual-review',
-                filledFields
-            };
-        }
-
-        const requiredEmpty = modal.querySelectorAll(
-            'input[required]:not([value]), textarea[required]:empty'
-        ).length;
-        if (requiredEmpty > 0) {
+        const ready = await waitForModalDialog(options);
+        if (!ready.modal) {
             return {
                 status: 'needs-manual-input',
-                filledFields
+                reason: 'modal-timeout',
+                diagnostics: {
+                    waitedMs: ready.waitedMs
+                }
             };
         }
 
-        return {
-            status: 'ready-manual-review',
-            filledFields
-        };
+        const result = await runModalStepFlow(
+            ready.modal,
+            profile,
+            options
+        );
+        if (result &&
+            typeof result === 'object' &&
+            (!result.diagnostics ||
+                typeof result.diagnostics !== 'object')) {
+            result.diagnostics = {};
+        }
+        if (result &&
+            typeof result === 'object' &&
+            result.diagnostics &&
+            typeof result.diagnostics.waitedMs === 'undefined') {
+            result.diagnostics.waitedMs = ready.waitedMs;
+        }
+        return result;
     }
 
-    async function runJobsAssist(config) {
+    async function runJobsAssist(config, runtimeOptions) {
         jobsLog.length = 0;
         stopRequested = false;
         const limit = Math.max(1, parseInt(config?.limit, 10) || 10);
         const rankedLimit = Math.min(200, limit);
+        const options = resolveRuntimeOptions(runtimeOptions);
 
         if (detectChallenge()) {
             return {
@@ -394,7 +759,8 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
 
             const prepared = await prepareJobForManualReview(
                 job,
-                config?.profile || {}
+                config?.profile || {},
+                options
             );
             jobsLog.push({
                 id: job.id,
@@ -403,7 +769,9 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
                 jobUrl: job.jobUrl,
                 score: job.score,
                 status: prepared.status,
+                reason: prepared.reason || '',
                 filledFields: prepared.filledFields || 0,
+                diagnostics: prepared.diagnostics || null,
                 time: new Date().toISOString()
             });
             processed++;
@@ -420,6 +788,22 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
                     message: 'Job application prepared. Review and submit manually.',
                     runStatus: 'success',
                     reason: 'unknown',
+                    processedCount: processed,
+                    actionCount: Math.max(0, processed - skipped),
+                    skippedCount: skipped,
+                    log: jobsLog
+                };
+            }
+
+            if (prepared.status === 'needs-manual-input') {
+                return {
+                    success: false,
+                    mode: 'jobs',
+                    message:
+                        'Manual input required on current application. ' +
+                        'Complete it and restart Jobs Assist.',
+                    runStatus: 'failed',
+                    reason: 'manual-input-required',
                     processedCount: processed,
                     actionCount: Math.max(0, processed - skipped),
                     skippedCount: skipped,
@@ -517,4 +901,26 @@ if (typeof window.linkedInJobsAssistInjected === 'undefined') {
             running = false;
         }
     });
+
+    const jobsAssistTestApi = {
+        detectChallenge,
+        extractJobFromCard,
+        findJobCards,
+        fillKnownFields,
+        findEasyApplyButton,
+        findModalDialog,
+        findModalButton,
+        resolveRuntimeOptions,
+        countRequiredMissingFields,
+        runModalStepFlow,
+        prepareJobForManualReview,
+        runJobsAssist
+    };
+
+    if (typeof window !== 'undefined') {
+        window.__LINKEDIN_JOBS_ASSIST_TEST_API__ = jobsAssistTestApi;
+    }
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = jobsAssistTestApi;
+    }
 }

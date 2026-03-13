@@ -31,7 +31,8 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Consistent stop behavior** — clicking `Stop` now finalizes runs as `canceled` (not success/failure), with stable popup messaging and history diagnostics
 - **Engagement mode** — visit profiles + follow as alternative when connect invites are exhausted; toggle in popup or auto-fallback on quota hit
 - **Company follow mode** — background-managed queue runs one target-company search at a time with resilient re-injection across navigation; each step polls for DOM readiness (up to 20s), differentiates explicit `no results` pages from card-detection timeouts, and emits a single final completion when the full queue finishes; supports creative company-area presets (Graphic Design, Art Direction, Branding, UI/UX, Motion Design, Video Editing, Videomaker) with default query + curated global/Brazil company lists; custom preset keeps LATAM defaults; scheduled recurring runs keep batch rotation only when explicit target companies are set and otherwise run by query; empty target list means follow all results
-- **Jobs assist mode (LinkedIn Easy Apply)** — ranks visible jobs by best-fit signals (title/seniority/location/recency/company), honors the `Jobs Easy Apply Only` toggle, skips already-applied/excluded-company listings, and prepares applications in semi-auto mode without submitting
+- **Companies follow confirmation retries** — each follow click is verified in-card with bounded retries and signal polling (`Following`/`Seguindo`, aria followed state, follow-success toast); `already-following` is only counted on confirmed followed state, while unconfirmed attempts are logged as `skipped-follow-not-confirmed` and zero-follow runs can fail with `follow-not-confirmed`
+- **Jobs assist mode (LinkedIn Easy Apply)** — ranks visible jobs by best-fit signals (title/seniority/location/recency/company), honors the `Jobs Easy Apply Only` toggle, skips already-applied/excluded-company listings, progresses multi-step Easy Apply (`Next/Continue` + `Review`) automatically, and stops before final submit
 - **Encrypted jobs profile cache** — structured applicant fields are stored locally with PBKDF2 + AES-GCM encryption; use `Unlock Cache` with a session passphrase to load cached fields (passphrase is never persisted)
 - **Feed engagement mode** — auto-react and comment on LinkedIn feed posts based on content; smart reaction selection (Celebrate, Support, Insightful, Funny, Love) via keyword matching; scheduled recurring runs
 - **Warmup-first feed learning** — first feed runs (default: 2) run in react+learn mode only (no comments) so thread patterns are learned before comment unlock
@@ -295,6 +296,7 @@ This tool is for personal networking purposes. Use responsibly and in accordance
 - **Auto-backoff** on rate limits (429) — pauses 30-60s after 3 consecutive failures
 - **Don't run 24/7** — simulate human behavior
 - **Jobs mode requires manual final submit** — review each Easy Apply before submitting
+- **Jobs mode may stop with `manual-input-required`** — complete missing required answers in the open Easy Apply modal; `Continue Manually` now focuses the existing Jobs tab instead of starting a new run
 
 ## License
 

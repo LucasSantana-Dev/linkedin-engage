@@ -543,6 +543,41 @@ describe('company orchestration in background', () => {
         expect(done[0].result.reason).toBe('no-target-matches');
     });
 
+    it('preserves follow-not-confirmed reason from company step result', async () => {
+        await sendRequest({
+            action: 'startCompanyFollow',
+            query: 'product companies',
+            limit: 10,
+            targetCompanies: []
+        });
+
+        runtimeListener({
+            action: 'companyStepDone',
+            result: {
+                success: false,
+                mode: 'company',
+                runStatus: 'failed',
+                reason: 'follow-not-confirmed',
+                error: 'Follow click attempted but could not be confirmed on LinkedIn UI.',
+                followedThisStep: 0,
+                diagnostics: {
+                    followAttempts: 2,
+                    unconfirmedFollowCount: 1
+                },
+                log: [{
+                    status: 'skipped-follow-not-confirmed',
+                    name: 'Acme'
+                }]
+            }
+        }, {}, () => {});
+        await tick();
+
+        const done = doneMessages();
+        expect(done).toHaveLength(1);
+        expect(done[0].result.success).toBe(false);
+        expect(done[0].result.reason).toBe('follow-not-confirmed');
+    });
+
     it('start uses company preset default query when query and targets are empty', async () => {
         const defaultQuery = getCompanyAreaPresetDefaultQuery('ui-ux');
         const response = await sendRequest({
