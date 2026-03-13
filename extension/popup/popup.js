@@ -50,6 +50,7 @@ const DEFAULT_LOCAL_UI_STATE = {
 };
 let useCustomQuery = false;
 let popupUiState = DEFAULT_LOCAL_UI_STATE;
+let jobsCacheLoadedThisSession = false;
 
 const DEFAULT_LATAM_COMPANIES = [
     'Hotjar', 'Doist', 'Toggl', 'Pipefy', 'VTEX',
@@ -906,6 +907,7 @@ function refreshJobsCacheStatus() {
                 return;
             }
             if (!response.exists) {
+                jobsCacheLoadedThisSession = false;
                 statusEl.textContent =
                     'Encrypted cache: not configured.';
                 return;
@@ -913,6 +915,12 @@ function refreshJobsCacheStatus() {
             const updated = response.updatedAt
                 ? new Date(response.updatedAt).toLocaleString()
                 : 'unknown date';
+            if (jobsCacheLoadedThisSession) {
+                statusEl.textContent =
+                    `Encrypted cache: loaded in this session (v${response.version || 1}) · ` +
+                    `updated ${updated}`;
+                return;
+            }
             statusEl.textContent =
                 `Encrypted cache: locked (v${response.version || 1}) · ` +
                 `updated ${updated}`;
@@ -2061,6 +2069,7 @@ function startJobsAssist() {
         location,
         workType,
         easyApplyOnly,
+        profileDraft: buildJobsProfilePayload(),
         profilePassphrase,
         jobsUsageGoal: getJobsUsageGoal(),
         jobsExpectedResults: getJobsExpectedResults(),
@@ -2719,6 +2728,56 @@ document.getElementById('jobsProfilePortfolioInput')
     .addEventListener('input', saveState);
 document.getElementById('jobsProfileSummaryInput')
     .addEventListener('input', saveState);
+document.getElementById('unlockJobsProfileCacheBtn')
+    .addEventListener('click', () => {
+        const passphrase = document.getElementById(
+            'jobsProfilePassphraseInput'
+        ).value;
+        if (!passphrase || passphrase.trim().length < 4) {
+            setStatusMessage(
+                'Enter the cache passphrase to unlock profile data.',
+                'warning'
+            );
+            return;
+        }
+        chrome.runtime.sendMessage({
+            action: 'loadJobsProfileCache',
+            profilePassphrase: passphrase
+        }, (response) => {
+            if (chrome.runtime.lastError || !response) {
+                setStatusMessage(
+                    'Failed to unlock encrypted jobs cache.',
+                    'error'
+                );
+                return;
+            }
+            if (response.status === 'missing') {
+                jobsCacheLoadedThisSession = false;
+                setStatusMessage(
+                    'No encrypted jobs profile cache found.',
+                    'warning'
+                );
+                refreshJobsCacheStatus();
+                return;
+            }
+            if (response.status !== 'loaded') {
+                jobsCacheLoadedThisSession = false;
+                setStatusMessage(
+                    'Could not unlock cache. Check your passphrase.',
+                    'error'
+                );
+                refreshJobsCacheStatus();
+                return;
+            }
+            fillJobsProfileFields(response.profile || {});
+            jobsCacheLoadedThisSession = true;
+            setStatusMessage(
+                'Encrypted jobs profile cache unlocked.',
+                'success'
+            );
+            refreshJobsCacheStatus();
+        });
+    });
 document.getElementById('saveJobsProfileCacheBtn')
     .addEventListener('click', () => {
         const passphrase = document.getElementById(
@@ -2750,6 +2809,7 @@ document.getElementById('saveJobsProfileCacheBtn')
                 'Encrypted jobs profile cache saved.',
                 'success'
             );
+            jobsCacheLoadedThisSession = false;
             refreshJobsCacheStatus();
             saveState();
         });
@@ -2771,6 +2831,7 @@ document.getElementById('clearJobsProfileCacheBtn')
                 'Encrypted jobs profile cache cleared.',
                 'success'
             );
+            jobsCacheLoadedThisSession = false;
             refreshJobsCacheStatus();
         });
     });

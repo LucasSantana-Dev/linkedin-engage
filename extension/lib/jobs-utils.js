@@ -171,7 +171,8 @@
                 ? config
                 : {};
 
-            if (current.easyApply !== true) {
+            if (settings.easyApplyOnly !== false &&
+                current.easyApply !== true) {
                 return {
                     skipReason: 'skipped-no-easy-apply',
                     matchedExcludedCompany: null

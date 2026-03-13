@@ -303,6 +303,109 @@ describe('jobs orchestration in background', () => {
         expect(payload.config.profilePassphrase).toBeUndefined();
     });
 
+    it('uses profileDraft when encrypted cache is not configured', async () => {
+        const response = await sendRequest({
+            action: 'startJobsAssist',
+            query: 'product designer',
+            limit: 5,
+            profileDraft: {
+                fullName: 'Draft User',
+                email: 'draft@example.com'
+            }
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+        const payload = sentToContent[0].payload;
+        expect(payload.config.profile).toMatchObject({
+            fullName: 'Draft User',
+            email: 'draft@example.com'
+        });
+    });
+
+    it('merges decrypted cache profile with non-empty profileDraft overrides', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana',
+                email: 'lucas@example.com',
+                city: 'Sao Paulo'
+            },
+            'passphrase'
+        );
+
+        const response = await sendRequest({
+            action: 'startJobsAssist',
+            query: 'product designer',
+            limit: 5,
+            profilePassphrase: 'passphrase',
+            profileDraft: {
+                city: 'Campinas',
+                resumeSummary: '10 years shipping products'
+            }
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+        const payload = sentToContent[0].payload;
+        expect(payload.config.profile).toMatchObject({
+            fullName: 'Lucas Santana',
+            email: 'lucas@example.com',
+            city: 'Campinas',
+            resumeSummary: '10 years shipping products'
+        });
+    });
+
+    it('loads encrypted jobs profile cache with valid passphrase', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana',
+                email: 'lucas@example.com'
+            },
+            'passphrase'
+        );
+
+        const response = await sendRequest({
+            action: 'loadJobsProfileCache',
+            profilePassphrase: 'passphrase'
+        });
+
+        expect(response).toMatchObject({
+            status: 'loaded',
+            profile: {
+                fullName: 'Lucas Santana',
+                email: 'lucas@example.com'
+            }
+        });
+    });
+
+    it('returns missing when trying to load jobs profile cache with no envelope', async () => {
+        const response = await sendRequest({
+            action: 'loadJobsProfileCache',
+            profilePassphrase: 'passphrase'
+        });
+
+        expect(response).toEqual({ status: 'missing' });
+    });
+
+    it('returns profile-cache-locked error when loading jobs cache with invalid passphrase', async () => {
+        storageData.jobsProfileCache = await encryptJobsProfileCache(
+            {
+                fullName: 'Lucas Santana'
+            },
+            'passphrase'
+        );
+
+        const response = await sendRequest({
+            action: 'loadJobsProfileCache',
+            profilePassphrase: 'wrong-passphrase'
+        });
+
+        expect(response).toEqual({
+            status: 'error',
+            reason: 'profile-cache-locked'
+        });
+    });
+
     it('blocks jobs run when encrypted profile exists and passphrase is missing', async () => {
         storageData.jobsProfileCache = await encryptJobsProfileCache(
             {

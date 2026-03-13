@@ -64,6 +64,47 @@ function parseTextList(raw) {
         .filter(Boolean);
 }
 
+function normalizeJobsRuntimeProfile(profile) {
+    if (typeof normalizeStructuredProfile === 'function') {
+        return normalizeStructuredProfile(profile || {});
+    }
+    const source = profile && typeof profile === 'object'
+        ? profile
+        : {};
+    const normalized = {};
+    for (const [key, value] of Object.entries(source)) {
+        if (value == null) continue;
+        if (Array.isArray(value)) {
+            const list = value.map(item => String(item || '').trim())
+                .filter(Boolean);
+            if (list.length > 0) normalized[key] = list;
+            continue;
+        }
+        const text = String(value).trim();
+        if (text) normalized[key] = text;
+    }
+    return normalized;
+}
+
+function mergeJobsRuntimeProfiles(base, overlay) {
+    const merged = { ...(base || {}) };
+    const patch = overlay && typeof overlay === 'object'
+        ? overlay
+        : {};
+    for (const [key, value] of Object.entries(patch)) {
+        if (value == null) continue;
+        if (Array.isArray(value)) {
+            const list = value.map(item => String(item || '').trim())
+                .filter(Boolean);
+            if (list.length > 0) merged[key] = list;
+            continue;
+        }
+        const text = String(value).trim();
+        if (text) merged[key] = text;
+    }
+    return merged;
+}
+
 function migratePopupStateForConnect(state) {
     if (typeof migrateConnectPopupState !== 'function') {
         return { state: state || {}, changed: false };
@@ -2620,6 +2661,52 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
+        if (request.action === 'loadJobsProfileCache') {
+            chrome.storage.local.get(
+                JOBS_PROFILE_CACHE_KEY,
+                async (data) => {
+                    if (chrome.runtime.lastError) {
+                        sendResponse({
+                            status: 'error',
+                            reason: 'profile-cache-locked'
+                        });
+                        return;
+                    }
+                    const envelope = data[JOBS_PROFILE_CACHE_KEY];
+                    if (!envelope) {
+                        sendResponse({ status: 'missing' });
+                        return;
+                    }
+                    if (!request.profilePassphrase ||
+                        typeof decryptJobsProfileCache !==
+                            'function') {
+                        sendResponse({
+                            status: 'error',
+                            reason: 'profile-cache-locked'
+                        });
+                        return;
+                    }
+                    try {
+                        const profile = await decryptJobsProfileCache(
+                            envelope,
+                            request.profilePassphrase
+                        );
+                        sendResponse({
+                            status: 'loaded',
+                            profile:
+                                normalizeJobsRuntimeProfile(profile)
+                        });
+                    } catch (error) {
+                        sendResponse({
+                            status: 'error',
+                            reason: 'profile-cache-locked'
+                        });
+                    }
+                }
+            );
+            return true;
+        }
+
         if (request.action === 'clearJobsProfileCache') {
             chrome.storage.local.remove(
                 JOBS_PROFILE_CACHE_KEY,
@@ -2698,6 +2785,10 @@ chrome.runtime.onMessage.addListener(
                         }
                         try {
                             const envelope = data[JOBS_PROFILE_CACHE_KEY];
+                            const draftProfile =
+                                normalizeJobsRuntimeProfile(
+                                    request.profileDraft || {}
+                                );
                             let profile = {};
                             if (envelope) {
                                 if (!request.profilePassphrase) {
@@ -2728,6 +2819,12 @@ chrome.runtime.onMessage.addListener(
                                     return;
                                 }
                             }
+                            profile = envelope
+                                ? mergeJobsRuntimeProfiles(
+                                    profile,
+                                    draftProfile
+                                )
+                                : draftProfile;
                             const runtimeConfig = {
                                 source: 'linkedin',
                                 query: String(request.query || '').trim(),
@@ -2735,7 +2832,8 @@ chrome.runtime.onMessage.addListener(
                                     1,
                                     parseInt(request.limit, 10) || 10
                                 ),
-                                easyApplyOnly: true,
+                                easyApplyOnly:
+                                    request.easyApplyOnly !== false,
                                 roleTerms: parseTextList(
                                     request.roleTerms
                                 ),

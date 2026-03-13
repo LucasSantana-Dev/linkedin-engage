@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- **Jobs profile runtime merge policy**: Jobs runs now accept ephemeral `profileDraft` form data per run; when encrypted cache is unlocked, non-empty draft fields override decrypted cache values for that run only.
+
+### Fixed
+- **Jobs encrypted cache recovery path**: Added explicit cache unlock/load runtime contract (`loadJobsProfileCache`) so persisted encrypted profile data can be decrypted back into popup form fields.
+- **Jobs start behavior with missing cache**: Jobs runs now use current form profile fields when no encrypted cache is configured instead of silently running with an empty profile.
+- **Jobs easy-apply filter toggle**: `Jobs Easy Apply Only` is now honored end-to-end (background + ranking skip logic) instead of being hard-forced on at runtime.
+
 ## [1.26.3] - 2026-03-12
 
 ### Changed

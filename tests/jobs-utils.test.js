@@ -30,6 +30,25 @@ describe('jobs-utils matching and ranking', () => {
         expect(decision.skipReason).toBe('skipped-no-easy-apply');
     });
 
+    it('allows non-easy-apply jobs when easyApplyOnly is false', () => {
+        const decision = evaluateJobCandidate(
+            {
+                id: 'job-1b',
+                title: 'Product Designer',
+                company: 'Acme',
+                location: 'Sao Paulo',
+                easyApply: false,
+                alreadyApplied: false
+            },
+            {
+                easyApplyOnly: false,
+                excludedCompanies: [],
+                appliedJobIds: []
+            }
+        );
+        expect(decision.skipReason).toBeNull();
+    });
+
     it('skips excluded company and returns matched company', () => {
         const decision = evaluateJobCandidate(
             {
