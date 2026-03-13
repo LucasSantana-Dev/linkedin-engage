@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.26.4] - 2026-03-13
+
 ### Changed
 - **Jobs profile runtime merge policy**: Jobs runs now accept ephemeral `profileDraft` form data per run; when encrypted cache is unlocked, non-empty draft fields override decrypted cache values for that run only.
 
