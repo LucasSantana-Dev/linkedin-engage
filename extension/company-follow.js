@@ -274,6 +274,12 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                 console.log(
                     '[LinkedIn Bot] CAPTCHA detected'
                 );
+                if (typeof showTopNotification === 'function') {
+                    showTopNotification(
+                        'LinkedIn security challenge detected — company follow stopped. Please solve the CAPTCHA and retry.',
+                        'error'
+                    );
+                }
                 return {
                     totalFollowed,
                     challengeDetected: true,

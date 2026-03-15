@@ -25,6 +25,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     window.postMessage({
                         type: 'LINKEDIN_BOT_SET_FUSE_LIMIT'
                     }, '*');
+                    if (typeof showTopNotification === 'function') {
+                        showTopNotification(
+                            'LinkedIn rate limit hit (HTTP 429) — pausing invitations to avoid account restrictions.',
+                            'warning'
+                        );
+                    }
                 }
             }
         } catch (e) {}
@@ -47,6 +53,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     window.postMessage({
                         type: 'LINKEDIN_BOT_SET_FUSE_LIMIT'
                     }, '*');
+                    if (typeof showTopNotification === 'function') {
+                        showTopNotification(
+                            'LinkedIn rate limit hit (HTTP 429) — pausing invitations to avoid account restrictions.',
+                            'warning'
+                        );
+                    }
                 }
             });
         }
@@ -593,6 +605,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             while (totalEngaged < limit) {
                 if (stopRequested) break;
                 if (detectChallenge()) {
+                    if (typeof showTopNotification === 'function') {
+                        showTopNotification(
+                            'LinkedIn security challenge detected — run stopped. Please solve the CAPTCHA and retry.',
+                            'error'
+                        );
+                    }
                     return buildConnectResult({
                         error: 'CAPTCHA detected',
                         runStatus: 'failed',
@@ -1528,6 +1546,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             }, connectionLog);
 
         } catch (error) {
+            if (typeof showTopNotification === 'function') {
+                showTopNotification(
+                    'Connect run failed: ' + (error.message || 'Unknown error'),
+                    'error'
+                );
+            }
             return buildConnectResult({
                 error: error.message,
                 runStatus: 'failed',
