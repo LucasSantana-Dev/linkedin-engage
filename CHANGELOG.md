@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-03-15
+
+### Refactored
+- **Split `feed-utils.js` (2359 lines) into 8 focused modules**: `feed-copy-guard.js`, `feed-nlp-utils.js`, `feed-comment-analysis.js`, `feed-post-classification.js`, `feed-dom-extraction.js`, `feed-comment-patterns.js`, `feed-safety-guards.js`, `feed-comment-generation.js`. `feed-utils.js` remains as a backward-compatible barrel re-export.
+
+### Added
+- **`ui-notify.js`**: Fixed top-bar notification overlay injected into LinkedIn pages for real-time visibility of errors, blockers, and rate-limit hits. 4 notification types (error/warning/info/success), auto-dismiss, close button, max 4 visible, dark theme, backdrop blur, slide-in animation.
+- Integrated into all 4 content scripts at CAPTCHA detection, HTTP 429 rate limits, manual-input-required, and runtime error points.
+- **34 suites, 1052 tests** (32 new). 89% stmts, 76% branches, 93% functions, 91% lines.
+
 ## [1.29.1] - 2026-03-15
 
 ### Added
