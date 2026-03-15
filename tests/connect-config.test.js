@@ -153,7 +153,7 @@ describe('connect-config', () => {
             });
             expect(result.changed).toBe(true);
             expect(result.state.excludedCompanies).toBe('Acme Corp');
-            expect(result.state.tagVersion).toBe(5);
+            expect(result.state.tagVersion).toBe(6);
             expect(result.state.areaPreset).toBe('custom');
         });
 
@@ -256,6 +256,81 @@ describe('connect-config', () => {
                 ? customDefaults
                 : legacyDefaults;
             expect(applied).toEqual(legacyDefaults);
+        });
+    });
+
+    describe('tech sub-presets', () => {
+        const TECH_SUB_PRESETS = [
+            'tech-frontend',
+            'tech-backend',
+            'tech-fullstack',
+            'tech-devops',
+            'tech-data',
+            'tech-cloud',
+            'tech-security',
+            'tech-mobile',
+            'tech-ml-ai'
+        ];
+
+        it('includes all tech sub-presets in AREA_PRESET_VALUES', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                expect(AREA_PRESET_VALUES).toContain(preset);
+            });
+        });
+
+        it('includes all tech sub-presets in COMPANY_AREA_PRESET_VALUES', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                expect(COMPANY_AREA_PRESET_VALUES).toContain(preset);
+            });
+        });
+
+        it('each tech sub-preset has roles and industries defined', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                const p = AREA_PRESETS[preset];
+                expect(p).toBeDefined();
+                expect(p.role.length).toBeGreaterThan(0);
+                expect(p.industry.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('each tech sub-preset has a company defaultQuery', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                const q = getCompanyAreaPresetDefaultQuery(preset);
+                expect(typeof q).toBe('string');
+                expect(q.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('each tech sub-preset has company target companies', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                const companies =
+                    getCompanyAreaPresetDefaultTargetCompanies(preset);
+                expect(Array.isArray(companies)).toBe(true);
+                expect(companies.length).toBeGreaterThan(0);
+            });
+        });
+
+        it('returns tech-focused connect templates for tech-frontend', () => {
+            const enTemplates = getConnectTemplates('tech-frontend', 'en');
+            expect(enTemplates.networking.toLowerCase())
+                .toContain('frontend engineering');
+            const ptTemplates = getConnectTemplates('tech-frontend', 'pt');
+            expect(ptTemplates.networking.toLowerCase())
+                .toContain('engenharia frontend');
+        });
+
+        it('returns tech-focused connect templates for tech-ml-ai', () => {
+            const enTemplates = getConnectTemplates('tech-ml-ai', 'en');
+            expect(enTemplates.networking.toLowerCase())
+                .toContain('ai and machine learning');
+        });
+
+        it('applyAreaPresetToTags loads roles for tech sub-presets', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                const tags = applyAreaPresetToTags({}, preset);
+                expect(tags.role.length).toBeGreaterThan(0);
+                expect(tags.industry.length).toBeGreaterThan(0);
+            });
         });
     });
 });
