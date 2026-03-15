@@ -19,7 +19,7 @@
                 : null);
         const localizeSearchTerms =
             searchLanguageApi?.localizeSearchTerms;
-        const STATE_TAG_VERSION = 5;
+        const STATE_TAG_VERSION = 6;
 
         const AREA_PRESETS = {
             tech: {
@@ -37,6 +37,150 @@
                     'IT',
                     'data',
                     'startup'
+                ]
+            },
+            'tech-frontend': {
+                role: [
+                    '"frontend engineer"',
+                    '"frontend developer"',
+                    '"react developer"',
+                    '"ui engineer"',
+                    '"web developer"'
+                ],
+                industry: [
+                    '"web development"',
+                    'frontend',
+                    'SaaS',
+                    '"design systems"',
+                    '"developer tools"'
+                ]
+            },
+            'tech-backend': {
+                role: [
+                    '"backend engineer"',
+                    '"backend developer"',
+                    '"api engineer"',
+                    '"platform engineer"',
+                    '"server engineer"'
+                ],
+                industry: [
+                    '"backend development"',
+                    'infrastructure',
+                    'SaaS',
+                    '"cloud services"',
+                    'fintech'
+                ]
+            },
+            'tech-fullstack': {
+                role: [
+                    '"full stack engineer"',
+                    '"fullstack developer"',
+                    '"software engineer"',
+                    '"product engineer"',
+                    '"web developer"'
+                ],
+                industry: [
+                    '"software development"',
+                    'SaaS',
+                    'startup',
+                    'fintech',
+                    '"developer tools"'
+                ]
+            },
+            'tech-devops': {
+                role: [
+                    '"devops engineer"',
+                    '"site reliability engineer"',
+                    '"sre"',
+                    '"platform engineer"',
+                    '"infrastructure engineer"'
+                ],
+                industry: [
+                    'devops',
+                    '"cloud computing"',
+                    'infrastructure',
+                    'SaaS',
+                    'observability'
+                ]
+            },
+            'tech-data': {
+                role: [
+                    '"data engineer"',
+                    '"data scientist"',
+                    '"analytics engineer"',
+                    '"data analyst"',
+                    '"machine learning engineer"'
+                ],
+                industry: [
+                    '"data engineering"',
+                    'analytics',
+                    '"artificial intelligence"',
+                    '"big data"',
+                    '"business intelligence"'
+                ]
+            },
+            'tech-cloud': {
+                role: [
+                    '"cloud engineer"',
+                    '"cloud architect"',
+                    '"solutions architect"',
+                    '"infrastructure engineer"',
+                    '"devops engineer"'
+                ],
+                industry: [
+                    '"cloud computing"',
+                    'AWS',
+                    'Azure',
+                    'GCP',
+                    'infrastructure'
+                ]
+            },
+            'tech-security': {
+                role: [
+                    '"security engineer"',
+                    '"cybersecurity analyst"',
+                    '"application security"',
+                    '"security architect"',
+                    '"penetration tester"'
+                ],
+                industry: [
+                    'cybersecurity',
+                    '"information security"',
+                    '"application security"',
+                    '"cloud security"',
+                    '"security operations"'
+                ]
+            },
+            'tech-mobile': {
+                role: [
+                    '"mobile engineer"',
+                    '"ios developer"',
+                    '"android developer"',
+                    '"react native developer"',
+                    '"mobile developer"'
+                ],
+                industry: [
+                    '"mobile development"',
+                    '"mobile apps"',
+                    'fintech',
+                    '"consumer tech"',
+                    'startup'
+                ]
+            },
+            'tech-ml-ai': {
+                role: [
+                    '"machine learning engineer"',
+                    '"ai engineer"',
+                    '"data scientist"',
+                    '"nlp engineer"',
+                    '"ml ops engineer"'
+                ],
+                industry: [
+                    '"artificial intelligence"',
+                    '"machine learning"',
+                    '"deep learning"',
+                    '"natural language processing"',
+                    '"generative ai"'
                 ]
             },
             finance: {
@@ -334,6 +478,15 @@
 
         const AREA_PRESET_VALUES = Object.freeze([
             'tech',
+            'tech-frontend',
+            'tech-backend',
+            'tech-fullstack',
+            'tech-devops',
+            'tech-data',
+            'tech-cloud',
+            'tech-security',
+            'tech-mobile',
+            'tech-ml-ai',
             'finance',
             'real-estate',
             'headhunting',
@@ -533,6 +686,119 @@
                     'Take Blip',
                     'RD Station'
                 ]
+            },
+            'tech-frontend': {
+                defaultQuery:
+                    '"frontend engineering" OR "frontend developer" OR ' +
+                    '"react developer" OR "web development"',
+                defaultTargetCompanies: [
+                    'Vercel', 'Netlify', 'Shopify', 'Canva',
+                    'Figma', 'Airbnb', 'Stripe', 'GitHub',
+                    'Notion', 'Linear', 'Nubank', 'iFood',
+                    'Mercado Livre', 'VTEX', 'QuintoAndar',
+                    'PicPay', 'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-backend': {
+                defaultQuery:
+                    '"backend engineering" OR "backend developer" OR ' +
+                    '"api development" OR "platform engineering"',
+                defaultTargetCompanies: [
+                    'Stripe', 'Datadog', 'Cloudflare', 'Twilio',
+                    'MongoDB', 'Elastic', 'Redis', 'Confluent',
+                    'Nubank', 'PagSeguro', 'Stone', 'C6 Bank',
+                    'iFood', 'Mercado Livre', 'VTEX', 'CI&T',
+                    'Thoughtworks', 'Wildlife Studios'
+                ]
+            },
+            'tech-fullstack': {
+                defaultQuery:
+                    '"full stack" OR "software engineering" OR ' +
+                    '"product engineering" OR "fullstack developer"',
+                defaultTargetCompanies: [
+                    'Vercel', 'Supabase', 'Shopify', 'Stripe',
+                    'GitHub', 'GitLab', 'Notion', 'Linear',
+                    'Nubank', 'iFood', 'Mercado Livre', 'VTEX',
+                    'QuintoAndar', 'Loft', 'Creditas', 'PicPay',
+                    'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-devops': {
+                defaultQuery:
+                    'devops OR "site reliability" OR SRE OR ' +
+                    '"platform engineering" OR infrastructure',
+                defaultTargetCompanies: [
+                    'Datadog', 'HashiCorp', 'Cloudflare',
+                    'Grafana Labs', 'GitLab', 'Docker',
+                    'Elastic', 'PagerDuty', 'Nubank', 'iFood',
+                    'Mercado Livre', 'PagSeguro', 'Stone',
+                    'Itau Unibanco', 'Bradesco', 'Banco Inter',
+                    'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-data': {
+                defaultQuery:
+                    '"data engineering" OR "data science" OR ' +
+                    '"analytics engineering" OR "machine learning"',
+                defaultTargetCompanies: [
+                    'Databricks', 'Snowflake', 'dbt Labs',
+                    'Confluent', 'Datadog', 'MongoDB', 'Elastic',
+                    'Fivetran', 'Nubank', 'iFood',
+                    'Mercado Livre', 'Itau Unibanco', 'Stone',
+                    'PagSeguro', 'Loft', 'QuintoAndar',
+                    'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-cloud': {
+                defaultQuery:
+                    '"cloud engineering" OR "cloud architect" OR ' +
+                    '"solutions architect" OR "cloud infrastructure"',
+                defaultTargetCompanies: [
+                    'Amazon Web Services', 'Google Cloud',
+                    'Microsoft Azure', 'Cloudflare', 'HashiCorp',
+                    'Datadog', 'Akamai', 'Fastly', 'Nubank',
+                    'iFood', 'Mercado Livre', 'Itau Unibanco',
+                    'Bradesco', 'Stone', 'PagSeguro',
+                    'CI&T', 'Thoughtworks', 'Accenture'
+                ]
+            },
+            'tech-security': {
+                defaultQuery:
+                    'cybersecurity OR "information security" OR ' +
+                    '"application security" OR "security engineering"',
+                defaultTargetCompanies: [
+                    'CrowdStrike', 'Palo Alto Networks',
+                    'Cloudflare', 'Snyk', 'Wiz', 'Fortinet',
+                    'Rapid7', 'SentinelOne', 'Nubank', 'iFood',
+                    'Mercado Livre', 'Itau Unibanco', 'Bradesco',
+                    'Stone', 'Tempest Security', 'Axur',
+                    'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-mobile': {
+                defaultQuery:
+                    '"mobile development" OR "ios developer" OR ' +
+                    '"android developer" OR "react native"',
+                defaultTargetCompanies: [
+                    'Apple', 'Google', 'Meta', 'Spotify', 'Uber',
+                    'Airbnb', 'Shopify', 'Block', 'Nubank',
+                    'iFood', 'Mercado Livre', 'PicPay',
+                    'C6 Bank', '99', 'Rappi', 'Wildlife Studios',
+                    'CI&T', 'Thoughtworks'
+                ]
+            },
+            'tech-ml-ai': {
+                defaultQuery:
+                    '"artificial intelligence" OR "machine learning" OR ' +
+                    '"ai engineer" OR "generative ai"',
+                defaultTargetCompanies: [
+                    'OpenAI', 'Anthropic', 'Google DeepMind',
+                    'Meta AI', 'Hugging Face', 'Cohere',
+                    'Stability AI', 'Databricks', 'Nubank',
+                    'iFood', 'Mercado Livre', 'Itau Unibanco',
+                    'Stone', 'Take Blip', 'CI&T', 'Thoughtworks',
+                    'Loft', 'QuintoAndar'
+                ]
             }
         };
 
@@ -544,7 +810,16 @@
             'ui-ux',
             'motion-design',
             'video-editing',
-            'videomaker'
+            'videomaker',
+            'tech-frontend',
+            'tech-backend',
+            'tech-fullstack',
+            'tech-devops',
+            'tech-data',
+            'tech-cloud',
+            'tech-security',
+            'tech-mobile',
+            'tech-ml-ai'
         ]);
 
         const ROLE_PRIORITY = [
@@ -561,6 +836,30 @@
             '"product manager"',
             'qa',
             '"tech lead"',
+            '"frontend engineer"',
+            '"frontend developer"',
+            '"backend engineer"',
+            '"backend developer"',
+            '"full stack engineer"',
+            '"fullstack developer"',
+            '"product engineer"',
+            '"devops engineer"',
+            '"site reliability engineer"',
+            '"platform engineer"',
+            '"infrastructure engineer"',
+            '"cloud engineer"',
+            '"cloud architect"',
+            '"solutions architect"',
+            '"data engineer"',
+            '"data scientist"',
+            '"analytics engineer"',
+            '"machine learning engineer"',
+            '"ai engineer"',
+            '"security engineer"',
+            '"cybersecurity analyst"',
+            '"mobile engineer"',
+            '"ios developer"',
+            '"android developer"',
             '"financial analyst"',
             '"investment analyst"',
             '"risk manager"',
@@ -609,6 +908,42 @@
 
         const AREA_LABELS = {
             tech: { en: 'technology', pt: 'tecnologia' },
+            'tech-frontend': {
+                en: 'frontend engineering',
+                pt: 'engenharia frontend'
+            },
+            'tech-backend': {
+                en: 'backend engineering',
+                pt: 'engenharia backend'
+            },
+            'tech-fullstack': {
+                en: 'full stack engineering',
+                pt: 'engenharia full stack'
+            },
+            'tech-devops': {
+                en: 'devops and infrastructure',
+                pt: 'devops e infraestrutura'
+            },
+            'tech-data': {
+                en: 'data engineering and science',
+                pt: 'engenharia e ciencia de dados'
+            },
+            'tech-cloud': {
+                en: 'cloud engineering',
+                pt: 'engenharia cloud'
+            },
+            'tech-security': {
+                en: 'cybersecurity',
+                pt: 'ciberseguranca'
+            },
+            'tech-mobile': {
+                en: 'mobile development',
+                pt: 'desenvolvimento mobile'
+            },
+            'tech-ml-ai': {
+                en: 'AI and machine learning',
+                pt: 'inteligencia artificial e machine learning'
+            },
             finance: { en: 'finance', pt: 'financas' },
             'real-estate': {
                 en: 'real estate',

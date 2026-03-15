@@ -60,6 +60,15 @@
 
         const AREA_FAMILY_MAP = Object.freeze({
             tech: 'tech',
+            'tech-frontend': 'tech',
+            'tech-backend': 'tech',
+            'tech-fullstack': 'tech',
+            'tech-devops': 'tech',
+            'tech-data': 'tech',
+            'tech-cloud': 'tech',
+            'tech-security': 'tech',
+            'tech-mobile': 'tech',
+            'tech-ml-ai': 'tech',
             finance: 'business',
             'real-estate': 'business',
             marketing: 'business',
@@ -140,6 +149,294 @@
                 defaults: {
                     roleLimit: 6
                 }
+            },
+            {
+                id: 'connect.tech-frontend.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'frontend engineer',
+                        'frontend developer',
+                        'react developer',
+                        'ui engineer',
+                        'web developer',
+                        'tech lead'
+                    ],
+                    industry: ['web development', 'SaaS', 'frontend'],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-frontend.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: [
+                        'recruiter',
+                        'talent acquisition',
+                        'hiring manager',
+                        'sourcer'
+                    ],
+                    industry: ['web development', 'SaaS', 'software'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: false,
+                    activelyHiring: true
+                },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.tech-backend.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-backend',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'backend engineer',
+                        'backend developer',
+                        'api engineer',
+                        'platform engineer',
+                        'software engineer',
+                        'tech lead'
+                    ],
+                    industry: ['backend development', 'SaaS', 'infrastructure'],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-backend.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'tech-backend',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: [
+                        'recruiter',
+                        'talent acquisition',
+                        'hiring manager',
+                        'sourcer'
+                    ],
+                    industry: ['software', 'fintech', 'infrastructure'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: false,
+                    activelyHiring: true
+                },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.tech-fullstack.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-fullstack',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'full stack engineer',
+                        'fullstack developer',
+                        'software engineer',
+                        'product engineer',
+                        'web developer',
+                        'tech lead'
+                    ],
+                    industry: ['software development', 'SaaS', 'startup'],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-devops.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-devops',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'devops engineer',
+                        'site reliability engineer',
+                        'platform engineer',
+                        'infrastructure engineer',
+                        'cloud engineer'
+                    ],
+                    industry: ['devops', 'cloud computing', 'infrastructure'],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-data.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-data',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'data engineer',
+                        'data scientist',
+                        'analytics engineer',
+                        'data analyst',
+                        'machine learning engineer'
+                    ],
+                    industry: [
+                        'data engineering',
+                        'analytics',
+                        'artificial intelligence'
+                    ],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-cloud.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-cloud',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'cloud engineer',
+                        'cloud architect',
+                        'solutions architect',
+                        'infrastructure engineer',
+                        'devops engineer'
+                    ],
+                    industry: ['cloud computing', 'infrastructure', 'SaaS'],
+                    market: ['latam', 'global'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-security.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-security',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'security engineer',
+                        'cybersecurity analyst',
+                        'application security',
+                        'security architect',
+                        'penetration tester'
+                    ],
+                    industry: [
+                        'cybersecurity',
+                        'information security',
+                        'cloud security'
+                    ],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-mobile.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-mobile',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'mobile engineer',
+                        'ios developer',
+                        'android developer',
+                        'react native developer',
+                        'mobile developer'
+                    ],
+                    industry: ['mobile development', 'fintech', 'startup'],
+                    market: ['latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
+            },
+            {
+                id: 'connect.tech-ml-ai.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'tech-ml-ai',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'machine learning engineer',
+                        'ai engineer',
+                        'data scientist',
+                        'nlp engineer',
+                        'ml ops engineer'
+                    ],
+                    industry: [
+                        'artificial intelligence',
+                        'machine learning',
+                        'deep learning'
+                    ],
+                    market: ['latam', 'global'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: {
+                    degree2nd: true,
+                    degree3rd: true,
+                    activelyHiring: false
+                },
+                defaults: { roleLimit: 6 }
             },
             {
                 id: 'connect.business.decision_makers.balanced',
@@ -376,6 +673,200 @@
                 }
             },
             {
+                id: 'companies.tech-frontend.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'frontend engineering',
+                        'web development',
+                        'design systems'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Vercel', 'Netlify', 'Shopify', 'Canva',
+                        'Figma', 'Airbnb', 'Nubank', 'Mercado Livre'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-backend.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-backend',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'backend engineering',
+                        'api development',
+                        'platform engineering'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Stripe', 'Datadog', 'Cloudflare', 'Nubank',
+                        'PagSeguro', 'Stone', 'iFood', 'Mercado Livre'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-fullstack.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-fullstack',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'software engineering',
+                        'full stack development',
+                        'product engineering'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Vercel', 'Supabase', 'Shopify', 'GitLab',
+                        'Nubank', 'iFood', 'Mercado Livre', 'VTEX'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-devops.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-devops',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'devops',
+                        'site reliability',
+                        'platform engineering',
+                        'cloud infrastructure'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Datadog', 'HashiCorp', 'Cloudflare',
+                        'GitLab', 'Nubank', 'iFood', 'Stone', 'CI&T'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-data.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-data',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'data engineering',
+                        'data science',
+                        'analytics',
+                        'machine learning'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Databricks', 'Snowflake', 'Confluent',
+                        'Nubank', 'Itau Unibanco', 'iFood', 'Stone', 'CI&T'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-ml-ai.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-ml-ai',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'artificial intelligence',
+                        'machine learning',
+                        'generative ai',
+                        'ai research'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'OpenAI', 'Anthropic', 'Hugging Face',
+                        'Databricks', 'Nubank', 'iFood', 'Take Blip', 'CI&T'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-security.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-security',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'cybersecurity',
+                        'information security',
+                        'application security'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'CrowdStrike', 'Cloudflare', 'Snyk',
+                        'Nubank', 'Itau Unibanco', 'Tempest Security', 'Axur', 'CI&T'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-mobile.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-mobile',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'mobile development',
+                        'ios',
+                        'android',
+                        'react native'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Shopify', 'Nubank', 'iFood', 'PicPay',
+                        'C6 Bank', 'Wildlife Studios', 'Rappi', 'CI&T'
+                    ]
+                }
+            },
+            {
+                id: 'companies.tech-cloud.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'tech-cloud',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    keywords: [
+                        'cloud computing',
+                        'cloud infrastructure',
+                        'solutions architect'
+                    ]
+                },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Amazon Web Services', 'Google Cloud',
+                        'Cloudflare', 'HashiCorp', 'Nubank',
+                        'Itau Unibanco', 'CI&T', 'Thoughtworks'
+                    ]
+                }
+            },
+            {
                 id: 'companies.custom.talent_watchlist.balanced',
                 mode: 'companies',
                 areaPreset: 'custom',
@@ -414,6 +905,267 @@
                 },
                 defaults: {
                     preferredCompanies: [],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-frontend.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'frontend engineer',
+                        'frontend developer',
+                        'react developer',
+                        'ui engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Vercel', 'Netlify', 'Shopify', 'Nubank',
+                        'iFood', 'Mercado Livre', 'VTEX', 'QuintoAndar'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-backend.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-backend',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'backend engineer',
+                        'backend developer',
+                        'api engineer',
+                        'platform engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Stripe', 'Datadog', 'Cloudflare', 'Nubank',
+                        'PagSeguro', 'Stone', 'iFood', 'Mercado Livre'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-fullstack.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-fullstack',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'full stack engineer',
+                        'fullstack developer',
+                        'software engineer',
+                        'product engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Vercel', 'Supabase', 'Shopify', 'Nubank',
+                        'iFood', 'Mercado Livre', 'QuintoAndar', 'Loft'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-devops.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-devops',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'devops engineer',
+                        'site reliability engineer',
+                        'platform engineer',
+                        'infrastructure engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Datadog', 'HashiCorp', 'Cloudflare', 'GitLab',
+                        'Nubank', 'iFood', 'Stone', 'CI&T'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-data.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-data',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'data engineer',
+                        'data scientist',
+                        'analytics engineer',
+                        'machine learning engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Databricks', 'Snowflake', 'Confluent', 'Nubank',
+                        'Itau Unibanco', 'iFood', 'Stone', 'CI&T'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-cloud.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-cloud',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'cloud engineer',
+                        'cloud architect',
+                        'solutions architect',
+                        'infrastructure engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Amazon Web Services', 'Google Cloud',
+                        'Cloudflare', 'Nubank', 'Itau Unibanco', 'CI&T'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-security.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-security',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'security engineer',
+                        'cybersecurity analyst',
+                        'application security',
+                        'security architect'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'CrowdStrike', 'Cloudflare', 'Snyk',
+                        'Nubank', 'Itau Unibanco', 'Tempest Security', 'Axur'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-mobile.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-mobile',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'mobile engineer',
+                        'ios developer',
+                        'android developer',
+                        'react native developer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'Nubank', 'iFood', 'PicPay', 'C6 Bank',
+                        'Wildlife Studios', 'Rappi', 'Shopify', 'Airbnb'
+                    ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.tech-ml-ai.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'tech-ml-ai',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: [
+                        'machine learning engineer',
+                        'ai engineer',
+                        'data scientist',
+                        'nlp engineer'
+                    ],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: {
+                    easyApplyOnly: true,
+                    workType: '2',
+                    experienceLevel: '4'
+                },
+                defaults: {
+                    preferredCompanies: [
+                        'OpenAI', 'Anthropic', 'Hugging Face', 'Databricks',
+                        'Nubank', 'iFood', 'Take Blip', 'CI&T'
+                    ],
                     excludedCompanies: []
                 }
             },
