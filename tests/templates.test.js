@@ -856,4 +856,133 @@ describe('templates', () => {
             expect(result).toContain('agile');
         });
     });
+
+    describe('COMPOSED_EN uncovered branches', () => {
+        it('hiring fn[1] returns fixed string', () => {
+            expect(COMPOSED_EN.hiring[1]([])).toBe('interesting setup for this team');
+        });
+
+        it('tips fn[1] with concept uses it', () => {
+            const r = COMPOSED_EN.tips[1](['Vim']);
+            expect(r).toContain('Vim');
+        });
+        it('tips fn[1] without concept uses this', () => {
+            const r = COMPOSED_EN.tips[1]([]);
+            expect(r).toContain('this');
+        });
+        it('tips fn[2] returns solid takeaway', () => {
+            expect(COMPOSED_EN.tips[2]([])).toBe('solid takeaway here');
+        });
+
+        it('story fn[1] returns appreciate string', () => {
+            expect(COMPOSED_EN.story[1]([])).toBe('appreciate you sharing this');
+        });
+
+        it('news fn[1] with concept uses it', () => {
+            expect(COMPOSED_EN.news[1](['AI regulation'])).toContain('AI regulation');
+        });
+        it('news fn[1] without concept uses this', () => {
+            expect(COMPOSED_EN.news[1]([])).toContain('this');
+        });
+
+        it('critique fn[1] returns been thinking', () => {
+            expect(COMPOSED_EN.critique[1]([])).toBe('been thinking about this too');
+        });
+        it('critique fn[2] returns conversations lately', () => {
+            expect(COMPOSED_EN.critique[2]([])).toContain('conversations lately');
+        });
+
+        it('motivation fn[0] returns needed to hear', () => {
+            expect(COMPOSED_EN.motivation[0]([])).toBe('needed to hear this today');
+        });
+        it('motivation fn[1] returns good reminder today', () => {
+            expect(COMPOSED_EN.motivation[1]([])).toBe('good reminder today');
+        });
+
+        it('project fn[1] returns worth following', () => {
+            expect(COMPOSED_EN.project[1]([])).toBe('worth following this build');
+        });
+        it('project fn[2] with concept uses it', () => {
+            expect(COMPOSED_EN.project[2](['API'])).toContain('API');
+        });
+        it('project fn[2] without concept uses project', () => {
+            expect(COMPOSED_EN.project[2]([])).toContain('project');
+        });
+
+        it('newjob fn[0] returns congrats', () => {
+            expect(COMPOSED_EN.newjob[0]([])).toBe('congrats!');
+        });
+        it('newjob fn[1] returns nice good luck', () => {
+            expect(COMPOSED_EN.newjob[1]([])).toBe('nice, good luck!');
+        });
+
+        it('generic fn[1] with concept uses it', () => {
+            expect(COMPOSED_EN.generic[1](['burnout'])).toContain('burnout');
+        });
+        it('generic fn[1] without concept uses this', () => {
+            expect(COMPOSED_EN.generic[1]([])).toContain('this');
+        });
+    });
+
+    describe('COMPOSED_PT uncovered branches', () => {
+        it('hiring fn[1] returns fixed string', () => {
+            expect(COMPOSED_PT.hiring[1]([])).toBe('setup interessante para esse time');
+        });
+
+        it('tips fn[1] returns queria ter ouvido', () => {
+            expect(COMPOSED_PT.tips[1]([])).toContain('2 anos');
+        });
+        it('tips fn[2] returns bom ponto aqui', () => {
+            expect(COMPOSED_PT.tips[2]([])).toBe('bom ponto aqui');
+        });
+
+        it('story fn[1] returns valeu por compartilhar', () => {
+            expect(COMPOSED_PT.story[1]([])).toBe('valeu por compartilhar');
+        });
+
+        it('news fn[1] with concept uses it', () => {
+            expect(COMPOSED_PT.news[1](['Web3'])).toContain('Web3');
+        });
+        it('news fn[1] without concept uses isso', () => {
+            expect(COMPOSED_PT.news[1]([])).toContain('isso');
+        });
+
+        it('critique fn[1] returns tô pensando', () => {
+            expect(COMPOSED_PT.critique[1]([])).toContain('pensando');
+        });
+        it('critique fn[2] returns aparecendo bastante', () => {
+            expect(COMPOSED_PT.critique[2]([])).toContain('bastante');
+        });
+
+        it('motivation fn[0] returns precisava ouvir', () => {
+            expect(COMPOSED_PT.motivation[0]([])).toBe('precisava ouvir isso hoje');
+        });
+        it('motivation fn[1] returns bom lembrete hoje', () => {
+            expect(COMPOSED_PT.motivation[1]([])).toBe('bom lembrete hoje');
+        });
+
+        it('project fn[1] returns curti a proposta', () => {
+            expect(COMPOSED_PT.project[1]([])).toBe('curti a proposta');
+        });
+        it('project fn[2] with concept uses it', () => {
+            expect(COMPOSED_PT.project[2](['frontend'])).toContain('frontend');
+        });
+        it('project fn[2] without concept uses projeto', () => {
+            expect(COMPOSED_PT.project[2]([])).toContain('projeto');
+        });
+
+        it('newjob fn[0] returns parabéns', () => {
+            expect(COMPOSED_PT.newjob[0]([])).toBe('parabéns!');
+        });
+        it('newjob fn[1] returns show boa sorte', () => {
+            expect(COMPOSED_PT.newjob[1]([])).toContain('sorte');
+        });
+
+        it('generic fn[1] with concept uses it', () => {
+            expect(COMPOSED_PT.generic[1](['liderança'])).toContain('liderança');
+        });
+        it('generic fn[1] without concept uses isso', () => {
+            expect(COMPOSED_PT.generic[1]([])).toContain('isso');
+        });
+    });
 });

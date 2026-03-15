@@ -18,6 +18,8 @@ beforeEach(() => {
   document.body.innerHTML = "";
 });
 
+// ─── Constants ─────────────────────────────────────────────────────────────
+
 describe("ui-notify constants", () => {
   test("exports expected container ID", () => {
     expect(UI_NOTIFY_CONTAINER_ID).toBe("linkedin-engage-notify-container");
@@ -53,6 +55,8 @@ describe("ui-notify constants", () => {
   });
 });
 
+// ─── getNotifyContainer ────────────────────────────────────────────────────
+
 describe("getNotifyContainer", () => {
   test("creates container on first call", () => {
     const container = getNotifyContainer();
@@ -83,6 +87,8 @@ describe("getNotifyContainer", () => {
     expect(style).toContain("pointer-events:none");
   });
 });
+
+// ─── showTopNotification ───────────────────────────────────────────────────
 
 describe("showTopNotification", () => {
   test("creates a notification bar in the container", () => {
@@ -140,7 +146,53 @@ describe("showTopNotification", () => {
       expect(icon.textContent).toBe(UI_NOTIFY_COLORS[type].icon);
     }
   });
+
+  test("accepts null options without throwing", () => {
+    expect(() => showTopNotification("hello", "info", null)).not.toThrow();
+  });
+
+  test("accepts no options argument without throwing", () => {
+    expect(() => showTopNotification("hello", "info")).not.toThrow();
+  });
+
+  test("passing custom duration option does not throw", () => {
+    expect(() =>
+      showTopNotification("custom duration", "success", { duration: 1000 })
+    ).not.toThrow();
+  });
+
+  test("passing duration 0 does not throw", () => {
+    expect(() =>
+      showTopNotification("persistent", "success", { duration: 0 })
+    ).not.toThrow();
+  });
+
+  test("text span contains the message", () => {
+    const bar = showTopNotification("My message text", "info");
+    const spans = bar.querySelectorAll("span");
+    const textSpan = Array.from(spans).find(
+      (s) => s.textContent === "My message text"
+    );
+    expect(textSpan).toBeTruthy();
+  });
+
+  test("bar is appended to the container", () => {
+    const bar = showTopNotification("Appended", "info");
+    expect(getNotifyContainer().contains(bar)).toBe(true);
+  });
+
+  test("multiple notifications are all in the container", () => {
+    const a = showTopNotification("A", "error");
+    const b = showTopNotification("B", "error");
+    const c = showTopNotification("C", "error");
+    const container = getNotifyContainer();
+    expect(container.contains(a)).toBe(true);
+    expect(container.contains(b)).toBe(true);
+    expect(container.contains(c)).toBe(true);
+  });
 });
+
+// ─── dismissTopNotification ────────────────────────────────────────────────
 
 describe("dismissTopNotification", () => {
   test("sets opacity to 0", () => {
@@ -164,7 +216,16 @@ describe("dismissTopNotification", () => {
     bar.parentNode.removeChild(bar);
     expect(() => dismissTopNotification(bar)).not.toThrow();
   });
+
+  test("element stays in DOM immediately (removal is deferred)", () => {
+    const bar = showTopNotification("Deferred", "info");
+    dismissTopNotification(bar);
+    // Immediately after dismiss call, opacity is 0 but element may still be in DOM
+    expect(bar.style.opacity).toBe("0");
+  });
 });
+
+// ─── clearAllTopNotifications ──────────────────────────────────────────────
 
 describe("clearAllTopNotifications", () => {
   test("removes all notifications", () => {
@@ -181,7 +242,16 @@ describe("clearAllTopNotifications", () => {
     document.body.innerHTML = "";
     expect(() => clearAllTopNotifications()).not.toThrow();
   });
+
+  test("can be called multiple times safely", () => {
+    showTopNotification("A", "error");
+    clearAllTopNotifications();
+    expect(() => clearAllTopNotifications()).not.toThrow();
+    expect(getNotifyContainer().children.length).toBe(0);
+  });
 });
+
+// ─── Close button ──────────────────────────────────────────────────────────
 
 describe("close button interaction", () => {
   test("clicking close sets opacity to 0", () => {
@@ -189,7 +259,15 @@ describe("close button interaction", () => {
     bar.querySelector("button").click();
     expect(bar.style.opacity).toBe("0");
   });
+
+  test("clicking close sets slide-up transform", () => {
+    const bar = showTopNotification("Slide close", "info");
+    bar.querySelector("button").click();
+    expect(bar.style.transform).toBe("translateY(-100%)");
+  });
 });
+
+// ─── Auto-dismiss configuration ────────────────────────────────────────────
 
 describe("auto-dismiss configuration", () => {
   test("error has duration 0 (no auto-dismiss)", () => {
@@ -210,5 +288,25 @@ describe("auto-dismiss configuration", () => {
     expect(UI_NOTIFY_AUTO_DISMISS_MS.success).toBeLessThan(
       UI_NOTIFY_AUTO_DISMISS_MS.info,
     );
+  });
+});
+
+// ─── Capacity management ───────────────────────────────────────────────────
+
+describe("capacity management", () => {
+  test("exactly MAX_VISIBLE notifications fit without any eviction", () => {
+    for (let i = 0; i < UI_NOTIFY_MAX_VISIBLE; i++) {
+      showTopNotification(`Message ${i}`, "error");
+    }
+    const container = getNotifyContainer();
+    expect(container.children.length).toBe(UI_NOTIFY_MAX_VISIBLE);
+  });
+
+  test("each notification id is unique", () => {
+    const ids = new Set();
+    for (let i = 0; i < UI_NOTIFY_MAX_VISIBLE; i++) {
+      ids.add(showTopNotification(`Message ${i}`, "error").id);
+    }
+    expect(ids.size).toBe(UI_NOTIFY_MAX_VISIBLE);
   });
 });

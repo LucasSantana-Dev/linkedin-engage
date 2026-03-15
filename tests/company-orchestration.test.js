@@ -667,7 +667,7 @@ describe('company orchestration in background', () => {
         expect(createdTabs).toHaveLength(1);
         expect(createdTabs[0].url).toContain(
             encodeURIComponent(
-                '("technology companies" OR "hiring teams")'
+                '("graphic design" OR "visual design" OR "creative studio" OR "comunicacao visual")'
             )
         );
         expect(updatedTabs).toHaveLength(0);

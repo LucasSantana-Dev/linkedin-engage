@@ -503,6 +503,152 @@
                 }
             },
             {
+                id: 'connect.graphic-design.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'graphic-design',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'graphic designer',
+                        'visual designer',
+                        'creative designer',
+                        'designer grafico',
+                        'designer visual'
+                    ],
+                    industry: ['graphic design', 'visual design', 'creative services', 'design'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
+                id: 'connect.art-direction.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'art-direction',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'art director',
+                        'creative director',
+                        'associate art director',
+                        'diretor de arte'
+                    ],
+                    industry: ['art direction', 'creative direction', 'advertising', 'brand campaigns'],
+                    market: ['brazil', 'latam'],
+                    level: ['senior', 'lead']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: false },
+                defaults: { roleLimit: 4 }
+            },
+            {
+                id: 'connect.branding.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'branding',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'brand strategist',
+                        'brand designer',
+                        'branding specialist',
+                        'estrategista de marca',
+                        'designer de marca'
+                    ],
+                    industry: ['branding', 'brand strategy', 'brand identity', 'identidade visual'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
+                id: 'connect.ui-ux.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'ui-ux',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'ui ux designer',
+                        'ux designer',
+                        'ui designer',
+                        'product designer',
+                        'designer de produto'
+                    ],
+                    industry: ['user experience', 'user interface', 'product design', 'design de produto'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
+                id: 'connect.motion-design.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'motion-design',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'motion designer',
+                        'motion graphics designer',
+                        'animator',
+                        'motion artist',
+                        'designer de motion'
+                    ],
+                    industry: ['motion design', 'motion graphics', 'animation', 'video animation'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
+                id: 'connect.video-editing.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'video-editing',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'video editor',
+                        'post production editor',
+                        'editor de video',
+                        'editor audiovisual',
+                        'montador de video'
+                    ],
+                    industry: ['video production', 'post production', 'audiovisual', 'video editing'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
+                id: 'connect.videomaker.peer_networking.balanced',
+                mode: 'connect',
+                areaPreset: 'videomaker',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                querySpec: {
+                    role: [
+                        'videomaker',
+                        'video producer',
+                        'content creator',
+                        'produtor audiovisual',
+                        'filmmaker'
+                    ],
+                    industry: ['video content', 'content production', 'media production', 'criacao de conteudo'],
+                    market: ['brazil', 'latam'],
+                    level: ['mid-level', 'senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: true, activelyHiring: false },
+                defaults: { roleLimit: 5 }
+            },
+            {
                 id: 'connect.talent.recruiter_outreach.balanced',
                 mode: 'connect',
                 areaPreset: 'talent',
@@ -628,6 +774,112 @@
                         'Canva',
                         'Figma',
                         'Adobe'
+                    ]
+                }
+            },
+            {
+                id: 'companies.graphic-design.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'graphic-design',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['graphic design', 'visual design', 'creative studio', 'comunicacao visual'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Canva', 'Adobe', '99designs', 'Shutterstock', 'Freepik',
+                        'Lobo', 'Vetor Zero', 'Mixer', 'Africa Creative', 'PROS'
+                    ]
+                }
+            },
+            {
+                id: 'companies.art-direction.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'art-direction',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['art direction', 'creative direction', 'advertising agency', 'brand campaigns'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Ogilvy', 'DDB', 'TBWA', 'AlmapBBDO', 'Wieden+Kennedy',
+                        'Leo Burnett', 'Grey', 'Publicis', 'Africa', 'W+K'
+                    ]
+                }
+            },
+            {
+                id: 'companies.branding.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'branding',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['branding', 'brand strategy', 'brand identity', 'identidade visual'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Interbrand', 'Landor', 'Wolff Olins', 'FutureBrand',
+                        'Koto', 'Pentagram', 'Moving Brands', 'Futurebrand', 'Superunion', 'SomeOne'
+                    ]
+                }
+            },
+            {
+                id: 'companies.ui-ux.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'ui-ux',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['product design', 'UX design', 'user experience', 'design system'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Figma', 'Canva', 'Nubank', 'iFood', 'Mercado Livre',
+                        'PicPay', 'Gympass', 'Stone', 'Loft', 'QuintoAndar'
+                    ]
+                }
+            },
+            {
+                id: 'companies.motion-design.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'motion-design',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['motion design', 'motion graphics', 'animation studio', 'visual effects'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Buck', 'Psyop', 'Hornet', 'Nexus Studios', 'Hue&Cry',
+                        'Lobo', 'Vetor Zero', 'Birdo', 'Studio Bossa', 'Materia Gris'
+                    ]
+                }
+            },
+            {
+                id: 'companies.video-editing.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'video-editing',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['video production', 'post production', 'audiovisual', 'content production'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Porta dos Fundos', 'Conspiração Filmes', 'Paranoid BR',
+                        'O2 Filmes', 'Quanta Comunicação', 'TV Cultura',
+                        'Record TV', 'Band', 'Globo', 'SBT'
+                    ]
+                }
+            },
+            {
+                id: 'companies.videomaker.talent_watchlist.balanced',
+                mode: 'companies',
+                areaPreset: 'videomaker',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                querySpec: { keywords: ['video content', 'content creation', 'digital content', 'producao audiovisual'] },
+                filterSpec: { batchSize: 10 },
+                defaults: {
+                    targetCompanies: [
+                        'Jovem Nerd', 'CasaNova', 'Galeria Play', 'Encantech',
+                        'RedeTV', 'Multishow', 'Canal Brasil', 'Woovit', 'Cine Group', 'Prodigo Films'
                     ]
                 }
             },
@@ -1221,6 +1473,125 @@
                         'Nubank',
                         'Mercado Livre'
                     ],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.graphic-design.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'graphic-design',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['graphic designer', 'visual designer', 'designer grafico', 'creative designer'],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
+                defaults: {
+                    preferredCompanies: ['Canva', 'Adobe', '99designs', 'Freepik', 'Shutterstock'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.art-direction.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'art-direction',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['art director', 'creative director', 'associate art director', 'diretor de arte'],
+                    locationTerms: ['remote', 'hybrid', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '4' },
+                defaults: {
+                    preferredCompanies: ['Ogilvy', 'DDB', 'AlmapBBDO', 'TBWA', 'Africa'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.branding.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'branding',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['brand strategist', 'brand designer', 'branding specialist', 'estrategista de marca'],
+                    locationTerms: ['remote', 'hybrid', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '3' },
+                defaults: {
+                    preferredCompanies: ['Interbrand', 'Landor', 'Wolff Olins', 'Koto', 'Pentagram'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.ui-ux.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'ui-ux',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['ux designer', 'ui designer', 'product designer', 'ui ux designer', 'designer de produto'],
+                    locationTerms: ['remote', 'brazil'],
+                    keywords: ['easy apply', 'design system']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
+                defaults: {
+                    preferredCompanies: ['Figma', 'Canva', 'Nubank', 'iFood', 'Mercado Livre', 'PicPay'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.motion-design.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'motion-design',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['motion designer', 'motion graphics designer', 'animator', 'motion artist'],
+                    locationTerms: ['remote', 'hybrid', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
+                defaults: {
+                    preferredCompanies: ['Buck', 'Psyop', 'Hornet', 'Lobo', 'Vetor Zero'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.video-editing.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'video-editing',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['video editor', 'post production editor', 'editor de video', 'editor audiovisual'],
+                    locationTerms: ['remote', 'hybrid', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
+                defaults: {
+                    preferredCompanies: ['Porta dos Fundos', 'Globo', 'Band', 'O2 Filmes', 'Conspiração Filmes'],
+                    excludedCompanies: []
+                }
+            },
+            {
+                id: 'jobs.videomaker.high_fit_easy_apply.precise',
+                mode: 'jobs',
+                areaPreset: 'videomaker',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    roleTerms: ['videomaker', 'video producer', 'content creator', 'produtor audiovisual', 'filmmaker'],
+                    locationTerms: ['remote', 'hybrid', 'brazil'],
+                    keywords: ['easy apply']
+                },
+                filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '2' },
+                defaults: {
+                    preferredCompanies: ['Jovem Nerd', 'CasaNova', 'Galeria Play', 'RedeTV', 'Multishow'],
                     excludedCompanies: []
                 }
             },
