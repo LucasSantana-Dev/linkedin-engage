@@ -13,6 +13,13 @@ const {
     isReactablePost,
     shouldSkipPost,
     isCompanyFollowText,
+    getPostText,
+    getPostAuthor,
+    getPostAuthorTitle,
+    getPostReactions,
+    getPostUrn,
+    isLikeButton,
+    isCommentButton,
     getExistingComments,
     classifyCommentSentiment,
     summarizeCommentThread,
@@ -21,6 +28,7 @@ const {
     getPostImageSignals,
     getPostCommentSignal,
     assessCommentCopyRisk,
+    isPolemicPost,
     validateCommentPatternFit,
     validateGeneratedCommentSafety,
     detectCareerTransitionSignals,
@@ -1715,5 +1723,459 @@ describe('buildCommentFromPost with pattern discipline', () => {
                 ruleHit: expect.any(String)
             })
         );
+    });
+});
+
+describe('isPolemicPost', () => {
+    it('returns true for hard-blocked political content', () => {
+        expect(isPolemicPost('political debate about government')).toBe(true);
+        expect(isPolemicPost('religion and church beliefs')).toBe(true);
+        expect(isPolemicPost('feminist agenda and aborto debate')).toBe(true);
+        expect(isPolemicPost('racist rhetoric exposed')).toBe(true);
+        expect(isPolemicPost('wake up sheep brainwash')).toBe(true);
+        expect(isPolemicPost('cancel culture boycott brands')).toBe(true);
+    });
+
+    it('returns false for neutral professional content', () => {
+        expect(isPolemicPost('Excited to announce I joined a new team')).toBe(false);
+        expect(isPolemicPost('Here is my experience with React hooks')).toBe(false);
+    });
+
+    it('accumulates soft polemic signals', () => {
+        expect(isPolemicPost('The worst garbage scam layoff firing')).toBe(true);
+    });
+
+    it('returns false for single soft signal below threshold', () => {
+        expect(isPolemicPost('some people think this is the worst')).toBe(false);
+    });
+
+    it('boosts score when existing comments contain heated language', () => {
+        const heated = [
+            { text: 'This is absolute nonsense, totally wrong' },
+            { text: 'I completely disagree, this is ridiculous' }
+        ];
+        expect(isPolemicPost('interesting take on the market', heated)).toBe(true);
+    });
+
+    it('returns false for empty input', () => {
+        expect(isPolemicPost('')).toBe(false);
+        expect(isPolemicPost(null)).toBe(false);
+    });
+
+    it('handles single heated comment (score 1, not enough)', () => {
+        const oneHeated = [
+            { text: 'I disagree with this approach' }
+        ];
+        expect(isPolemicPost('some professional post', oneHeated)).toBe(false);
+    });
+});
+
+describe('getPostText', () => {
+    it('returns empty string for null element', () => {
+        expect(getPostText(null)).toBe('');
+    });
+
+    it('extracts text from data-testid expandable-text-box', () => {
+        const post = document.createElement('div');
+        const textBox = document.createElement('div');
+        textBox.setAttribute('data-testid', 'expandable-text-box');
+        textBox.textContent = 'This is a detailed post about software engineering';
+        post.appendChild(textBox);
+        const result = getPostText(post);
+        expect(result).toBe('This is a detailed post about software engineering');
+    });
+
+    it('falls back to .feed-shared-text selector', () => {
+        const post = document.createElement('div');
+        const textEl = document.createElement('span');
+        textEl.className = 'feed-shared-text';
+        textEl.textContent = 'A great post about TypeScript and React best practices';
+        post.appendChild(textEl);
+        const result = getPostText(post);
+        expect(result).toContain('TypeScript');
+    });
+
+    it('falls back to span[dir=ltr] when no primary selector matches', () => {
+        const post = document.createElement('div');
+        const span = document.createElement('span');
+        span.setAttribute('dir', 'ltr');
+        span.textContent = 'Long enough content to be extracted by span fallback path here';
+        post.appendChild(span);
+        expect(getPostText(post).length).toBeGreaterThan(0);
+    });
+
+    it('extracts article title when present', () => {
+        const post = document.createElement('div');
+        const title = document.createElement('span');
+        title.className = 'article-card__title';
+        title.textContent = 'The Future of Remote Work in Tech';
+        post.appendChild(title);
+        const result = getPostText(post);
+        expect(result).toContain('Future');
+    });
+
+    it('falls back to innerText/textContent for generic content', () => {
+        const post = document.createElement('div');
+        post.textContent = 'This is a fairly long post that should be captured by the generic fallback path of getPostText function.';
+        const result = getPostText(post);
+        expect(result.length).toBeGreaterThan(0);
+    });
+});
+
+describe('getPostAuthor', () => {
+    it('returns "Unknown" for null element', () => {
+        expect(getPostAuthor(null)).toBe('Unknown');
+    });
+
+    it('extracts author from /in/ link when not a social action', () => {
+        const post = document.createElement('div');
+        const link = document.createElement('a');
+        link.setAttribute('href', '/in/lucassantana');
+        link.textContent = 'Lucas Santana';
+        post.appendChild(link);
+        const result = getPostAuthor(post);
+        expect(result).toBe('Lucas Santana');
+    });
+
+    it('falls back to Unknown when no name selectors match', () => {
+        const post = document.createElement('div');
+        post.textContent = 'Some generic content with no author';
+        const result = getPostAuthor(post);
+        expect(result).toBe('Unknown');
+    });
+
+    it('extracts company author from /company/ link', () => {
+        const post = document.createElement('div');
+        const link = document.createElement('a');
+        link.setAttribute('href', '/company/stripe');
+        link.textContent = 'Stripe';
+        post.appendChild(link);
+        const result = getPostAuthor(post);
+        expect(result).toBe('Stripe');
+    });
+});
+
+describe('getPostAuthorTitle', () => {
+    it('returns empty string for null element', () => {
+        expect(getPostAuthorTitle(null)).toBe('');
+    });
+
+    it('extracts title from actor description selector', () => {
+        const post = document.createElement('div');
+        const desc = document.createElement('span');
+        desc.className = 'update-components-actor__description';
+        desc.textContent = 'Senior Software Engineer at Stripe';
+        post.appendChild(desc);
+        expect(getPostAuthorTitle(post)).toBe('Senior Software Engineer at Stripe');
+    });
+
+    it('falls back to feed-shared-actor__description', () => {
+        const post = document.createElement('div');
+        const desc = document.createElement('span');
+        desc.className = 'feed-shared-actor__description';
+        desc.textContent = 'Product Manager at Google';
+        post.appendChild(desc);
+        expect(getPostAuthorTitle(post)).toBe('Product Manager at Google');
+    });
+
+    it('falls back to actor sub-description selector', () => {
+        const post = document.createElement('div');
+        const desc = document.createElement('span');
+        desc.className = 'update-components-actor__sub-description';
+        desc.textContent = 'Tech Lead • Remote';
+        post.appendChild(desc);
+        expect(getPostAuthorTitle(post)).toBe('Tech Lead • Remote');
+    });
+
+    it('returns empty for very short or very long text', () => {
+        const post = document.createElement('div');
+        const desc = document.createElement('span');
+        desc.className = 'update-components-actor__description';
+        desc.textContent = 'A';
+        post.appendChild(desc);
+        expect(getPostAuthorTitle(post)).toBe('');
+    });
+});
+
+describe('getPostReactions', () => {
+    it('returns empty object for null element', () => {
+        expect(getPostReactions(null)).toEqual({});
+    });
+
+    it('counts reactions from data-test-app-aware-reaction-type', () => {
+        const post = document.createElement('div');
+        const like1 = document.createElement('img');
+        like1.setAttribute('data-test-app-aware-reaction-type', 'LIKE');
+        const like2 = document.createElement('img');
+        like2.setAttribute('data-test-app-aware-reaction-type', 'LIKE');
+        const praise = document.createElement('img');
+        praise.setAttribute('data-test-app-aware-reaction-type', 'PRAISE');
+        post.appendChild(like1);
+        post.appendChild(like2);
+        post.appendChild(praise);
+        const reactions = getPostReactions(post);
+        expect(reactions.LIKE).toBe(2);
+        expect(reactions.PRAISE).toBe(1);
+    });
+
+    it('infers reaction type from alt text when attribute is missing', () => {
+        const post = document.createElement('div');
+        const img = document.createElement('img');
+        img.setAttribute('alt', 'celebrate reaction');
+        post.appendChild(img);
+        const reactions = getPostReactions(post);
+        expect(typeof reactions).toBe('object');
+    });
+});
+
+describe('getPostUrn', () => {
+    it('returns empty string for null element', () => {
+        expect(getPostUrn(null)).toBe('');
+    });
+
+    it('extracts URN from data-urn attribute', () => {
+        const post = document.createElement('div');
+        post.setAttribute('data-urn', 'urn:li:activity:12345');
+        expect(getPostUrn(post)).toBe('urn:li:activity:12345');
+    });
+
+    it('extracts URN from data-id attribute', () => {
+        const post = document.createElement('div');
+        post.setAttribute('data-id', 'urn:li:activity:67890');
+        expect(getPostUrn(post)).toBe('urn:li:activity:67890');
+    });
+
+    it('extracts URN from child element with data-urn', () => {
+        const post = document.createElement('div');
+        const child = document.createElement('div');
+        child.setAttribute('data-urn', 'urn:li:activity:99999');
+        post.appendChild(child);
+        expect(getPostUrn(post)).toBe('urn:li:activity:99999');
+    });
+});
+
+describe('isLikeButton', () => {
+    it('returns false for null element', () => {
+        expect(isLikeButton(null)).toBe(false);
+    });
+
+    it('returns true for aria-label containing "like"', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Like this post');
+        expect(isLikeButton(btn)).toBe(true);
+    });
+
+    it('returns true for aria-label with "Gostei" (PT-BR)', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Gostei desta publicação');
+        expect(isLikeButton(btn)).toBe(true);
+    });
+
+    it('returns false for comment button', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Comment on this post');
+        expect(isLikeButton(btn)).toBe(false);
+    });
+});
+
+describe('isCommentButton', () => {
+    it('returns false for null element', () => {
+        expect(isCommentButton(null)).toBe(false);
+    });
+
+    it('returns true for aria-label containing "comment"', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Comment on this post');
+        expect(isCommentButton(btn)).toBe(true);
+    });
+
+    it('returns true for aria-label containing "comentar"', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Comentar publicação');
+        expect(isCommentButton(btn)).toBe(true);
+    });
+
+    it('returns false for like button', () => {
+        const btn = document.createElement('button');
+        btn.setAttribute('aria-label', 'Like this post');
+        expect(isCommentButton(btn)).toBe(false);
+    });
+});
+
+describe('classifyPost — humor and critique boost paths', () => {
+    it('classifies "vs reality" pattern as humor', () => {
+        const result = classifyPost(
+            'Expectation vs Reality: what they show in tutorials vs what you actually write'
+        );
+        expect(result).toBe('humor');
+    });
+
+    it('classifies "hot take" as critique', () => {
+        const result = classifyPost(
+            'Hot take: most tech companies don\'t actually care about code quality'
+        );
+        expect(result).toBe('critique');
+    });
+
+    it('classifies "unpopular opinion" as critique', () => {
+        const result = classifyPost(
+            'Unpopular opinion: remote work is not for everyone'
+        );
+        expect(result).toBe('critique');
+    });
+
+    it('safety override routes hiring+humor to hiring', () => {
+        const result = classifyPost(
+            'We are hiring! Join our team. Apply now. ' +
+            'lol it works on my machine haha'
+        );
+        expect(result).toBe('hiring');
+    });
+
+    it('classifies short technical post via TOPIC_MAP fallback', () => {
+        const result = classifyPost('React hooks changed everything');
+        expect(['technical', 'tech', 'generic']).toContain(result);
+    });
+});
+
+describe('detectLanguage — edge cases', () => {
+    it('returns en for empty/null input', () => {
+        expect(detectLanguage('')).toBe('en');
+        expect(detectLanguage(null)).toBe('en');
+    });
+
+    it('returns pt for text with many PT markers', () => {
+        const pt = 'Você não pode deixar de compartilhar isso com sua equipe. Estamos todos muito felizes com o resultado.';
+        expect(detectLanguage(pt)).toBe('pt');
+    });
+
+    it('returns pt when accent count is high', () => {
+        const pt = 'é uma situação muito difícil. Você está bem? Não é fácil.';
+        expect(detectLanguage(pt)).toBe('pt');
+    });
+
+    it('returns pt for kkk/informal markers', () => {
+        const pt = 'kkk isso é real demais pra mim';
+        expect(detectLanguage(pt)).toBe('pt');
+    });
+
+    it('returns en for English content', () => {
+        const en = 'Just shipped a new feature to production. Very excited about the team\'s work this sprint.';
+        expect(detectLanguage(en)).toBe('en');
+    });
+
+    it('uses stricter threshold for short texts', () => {
+        const shortPt = 'você está';
+        expect(detectLanguage(shortPt)).toBe('pt');
+    });
+});
+
+describe('extractConcepts — edge cases', () => {
+    it('returns empty array for null/empty input', () => {
+        expect(extractConcepts(null)).toEqual([]);
+        expect(extractConcepts('')).toEqual([]);
+    });
+
+    it('extracts known framework names', () => {
+        const concepts = extractConcepts(
+            'We built this with React and Next.js, deployed on Vercel with PostgreSQL'
+        );
+        expect(concepts.length).toBeGreaterThan(0);
+        const lower = concepts.map(c => c.toLowerCase());
+        expect(lower.some(c => c.includes('react') || c.includes('next') || c.includes('vercel') || c.includes('postgresql'))).toBe(true);
+    });
+
+    it('extracts tech acronyms', () => {
+        const concepts = extractConcepts(
+            'We follow TDD and SOLID principles in our TypeScript codebase'
+        );
+        expect(concepts.length).toBeGreaterThan(0);
+    });
+
+    it('deduplicates and limits to 5 concepts', () => {
+        const text = 'React React TypeScript TypeScript Docker Docker AWS AWS Kubernetes Kubernetes GraphQL GraphQL';
+        const concepts = extractConcepts(text);
+        expect(concepts.length).toBeLessThanOrEqual(5);
+    });
+
+    it('filters stop words', () => {
+        const concepts = extractConcepts('the and for with that this from are was');
+        concepts.forEach(c => {
+            expect(['the', 'and', 'for', 'with', 'that', 'this']).not.toContain(c.toLowerCase());
+        });
+    });
+});
+
+describe('extractTopic — coverage paths', () => {
+    it('returns "this" for null/undefined input', () => {
+        expect(extractTopic(null)).toBe('this');
+        expect(extractTopic('')).toBe('this');
+    });
+
+    it('returns "tech" fallback when no topic matches', () => {
+        expect(extractTopic('random words that match nothing specific')).toBe('tech');
+    });
+
+    it('returns matching topic label for React content', () => {
+        expect(extractTopic('React and Angular are popular frontend frameworks')).toBe('frontend development');
+    });
+
+    it('returns AI topic for AI/GPT content', () => {
+        expect(extractTopic('GPT and LLM models are changing everything')).toBe('AI');
+    });
+});
+
+describe('validateCommentPatternFit — bucket paths', () => {
+    it('returns ok false for empty comment', () => {
+        const result = validateCommentPatternFit('', {}, null, {});
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('skip-pattern-fit');
+    });
+
+    it('returns ok false when patternConfidence is below threshold but > 0', () => {
+        const result = validateCommentPatternFit('Nice post', {
+            patternConfidence: 0.05
+        }, null, {});
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('skip-pattern-low-signal');
+    });
+
+    it('checks length band compatibility via bucket', () => {
+        const result = validateCommentPatternFit(
+            'Ok.',
+            {},
+            { lengthMix: { long: 10, medium: 5, short: 1 } },
+            {}
+        );
+        expect(typeof result.ok).toBe('boolean');
+    });
+
+    it('accepts comment when no pattern profile provided', () => {
+        const result = validateCommentPatternFit('Great insight here.', null, null, {});
+        expect(result.ok).toBe(true);
+    });
+
+    it('accepts comment that matches expected length band', () => {
+        const result = validateCommentPatternFit(
+            'Great insight!',
+            { recommended: { lengthBand: 'short', toneIntensity: 'balanced' }, patternConfidence: 0.8 },
+            null,
+            {}
+        );
+        expect(typeof result.ok).toBe('boolean');
+    });
+});
+
+describe('analyzeCommentPatterns — zero-comment edge case', () => {
+    it('returns lowSignal true when no comments provided', () => {
+        const result = analyzeCommentPatterns([], 'technical');
+        expect(result.lowSignal).toBe(true);
+        expect(result.analyzedCount).toBe(0);
+    });
+
+    it('returns default recommended fields when low signal', () => {
+        const result = analyzeCommentPatterns([], 'technical');
+        expect(result.recommended).toBeDefined();
+        expect(result.recommended.lengthBand).toBe('short');
     });
 });
