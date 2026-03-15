@@ -17,7 +17,7 @@ npm run test:coverage # Jest --coverage --text-summary
 extension/
   _locales/en/         # EN locale catalog (370 keys)
   _locales/pt_BR/      # PT-BR locale catalog (370 keys, full parity)
-  lib/                 # 32 pure-logic modules (testable in Node)
+  lib/                 # 33 pure-logic modules (testable in Node)
   popup/               # Popup UI (popup.html + popup.js)
   options.html         # Options/dashboard page
   options.js           # Options page logic
@@ -28,7 +28,7 @@ extension/
   jobs-assist.js       # Jobs Easy Apply content script
   vendor/              # mammoth.browser.min.js, pdf.min.mjs, pdf.worker.min.mjs
   manifest.json        # MV3 manifest
-tests/                 # 33 test suites, 1020 tests
+tests/                 # 34 test suites, 1052 tests
 .agents/skills/        # 4 project skills
 .github/workflows/     # ci.yml + release.yml
 ```
@@ -69,6 +69,7 @@ tests/                 # 33 test suites, 1020 tests
 | `i18n.js` | Locale catalog loader, getMessage, applyTranslations, key normalization |
 | `pattern-memory.js` | Comment thread pattern learning and style matching |
 | `analytics.js` | Run analytics, best hour/day, top category tracking |
+| `ui-notify.js` | Fixed top-bar notification overlay for errors/blockers (injected in all content scripts) |
 
 ## Extension Modes
 

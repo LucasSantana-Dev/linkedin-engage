@@ -4,6 +4,7 @@ const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 
 const FEED_LIB_SCRIPTS = [
+    'lib/ui-notify.js',
     'lib/templates.js',
     'lib/feed-copy-guard.js',
     'lib/feed-nlp-utils.js',
@@ -23,6 +24,7 @@ const COMPANY_FOLLOW_SCRIPTS = [
 ];
 
 const JOBS_ASSIST_SCRIPTS = [
+    'lib/ui-notify.js',
     'lib/jobs-utils.js',
     'jobs-assist.js'
 ];
@@ -886,6 +888,7 @@ function launchAutomation(config) {
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         files: [
+                            'lib/ui-notify.js',
                             'lib/invite-utils.js',
                             'lib/human-behavior.js'
                         ],

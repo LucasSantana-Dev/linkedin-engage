@@ -1283,6 +1283,12 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     '[LinkedIn Bot] Login wall or ' +
                     'challenge detected at start'
                 );
+                if (typeof showTopNotification === 'function') {
+                    showTopNotification(
+                        'LinkedIn login wall or security challenge detected — please log in and retry.',
+                        'error'
+                    );
+                }
                 window.postMessage({
                     type: 'LINKEDIN_BOT_LOGIN_REQUIRED'
                 }, '*');
@@ -1352,6 +1358,12 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                         console.log(
                             '[LinkedIn Bot] CAPTCHA detected'
                         );
+                        if (typeof showTopNotification === 'function') {
+                            showTopNotification(
+                                'LinkedIn security challenge detected — feed engagement stopped. Please solve the CAPTCHA and retry.',
+                                'error'
+                            );
+                        }
                         if (newUrns.length > 0) {
                             saveEngagedUrns(newUrns);
                         }
@@ -2075,6 +2087,12 @@ if (typeof window.linkedInFeedEngageInjected === 'undefined') {
                     `Interacted with ${totalEngaged} posts.`
             });
         } catch (error) {
+            if (typeof showTopNotification === 'function') {
+                showTopNotification(
+                    'Feed engagement failed: ' + (error.message || 'Unknown error'),
+                    'error'
+                );
+            }
             if (newUrns.length > 0) {
                 saveEngagedUrns(newUrns);
             }
