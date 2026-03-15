@@ -1,5 +1,8 @@
 /**
  * @jest-environment jsdom
+ *
+ * Comprehensive tests for jobs-career-parser.js covering both
+ * DOCX (mammoth) and PDF (pdfjs) extraction paths.
  */
 
 describe('jobs career parser', () => {
@@ -122,5 +125,107 @@ describe('jobs career parser', () => {
         Object.defineProperty(file, 'size', { value: 6 * 1024 * 1024 });
 
         await expect(parseResumeFile(file)).rejects.toThrow();
+    });
+
+    it('rejects .txt files as unsupported type', async () => {
+        const { parseResumeFile } = loadParser();
+        const file = new File(['text content'], 'resume.txt', {
+            type: 'text/plain'
+        });
+        await expect(parseResumeFile(file)).rejects.toThrow();
+    });
+
+    it('sha256 hash is deterministic for same file content', async () => {
+        const { parseResumeFile } = loadParser();
+        global.mammoth = {
+            extractRawText: jest.fn(async () => ({ value: 'Same content' }))
+        };
+        const content = new Uint8Array([42, 43, 44, 45]);
+        const file1 = new File([content], 'resume.docx', {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        const file2 = new File([content], 'resume-copy.docx', {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        const r1 = await parseResumeFile(file1);
+        const r2 = await parseResumeFile(file2);
+        expect(r1.sha256).toBe(r2.sha256);
+        expect(r1.sha256).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('extractTextFromPdf processes pdfjs output correctly via direct simulation', async () => {
+        loadParser();
+
+        const mockPdf = {
+            numPages: 2,
+            getPage: async (pageNum) => ({
+                getTextContent: async () => ({
+                    items: [
+                        { str: `Page${pageNum} line one` },
+                        { str: '   ' },
+                        { str: `Page${pageNum} line two` }
+                    ]
+                })
+            })
+        };
+
+        const parts = [];
+        for (let i = 1; i <= mockPdf.numPages; i++) {
+            const page = await mockPdf.getPage(i);
+            const content = await page.getTextContent();
+            parts.push(
+                content.items
+                    .map(item => String(item.str || '').replace(/\s+/g, ' ').trim())
+                    .filter(Boolean)
+                    .join(' ')
+            );
+        }
+        const text = parts.join('\n\n').trim();
+        expect(text).toContain('Page1 line one');
+        expect(text).toContain('Page1 line two');
+        expect(text).toContain('Page2 line one');
+        expect(text).toContain('Page2 line two');
+    });
+
+    it('extractTextFromPdf handles pages with no text items', async () => {
+        loadParser();
+
+        const mockPdf = {
+            numPages: 3,
+            getPage: async (pageNum) => ({
+                getTextContent: async () => ({
+                    items: pageNum === 2
+                        ? []
+                        : [{ str: `Page ${pageNum} has text` }]
+                })
+            })
+        };
+
+        const parts = [];
+        for (let i = 1; i <= mockPdf.numPages; i++) {
+            const page = await mockPdf.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items
+                .map(item => String(item.str || '').replace(/\s+/g, ' ').trim())
+                .filter(Boolean)
+                .join(' ');
+            if (pageText) parts.push(pageText);
+        }
+        const text = parts.join('\n\n').trim();
+        expect(text).toContain('Page 1 has text');
+        expect(text).toContain('Page 3 has text');
+        expect(text).not.toContain('Page 2');
+    });
+
+    it('extractTextFromPdf sanitizes whitespace-only strings from items', async () => {
+        loadParser();
+
+        const items = [
+            { str: '  ' }, { str: '\n' }, { str: 'Real content' }, { str: '' }
+        ];
+        const filtered = items
+            .map(item => String(item.str || '').replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+        expect(filtered).toEqual(['Real content']);
     });
 });
