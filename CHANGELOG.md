@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.33.0] - 2026-03-15
+
+### Added
+- **`tests/feed-post-classification.test.js`**: 49 new tests covering `getReactionType`, `classifyPost` (support reactions boost, humor boost patterns, critique boost patterns, hiring safety override), `isMetricsOrSocialImpactPostContext` (with `imageSignals.samples`), `detectCareerTransitionSignals`, `isPolemicPost`.
+- **`tests/search-templates.test.js`**: Extended with `normalizeMode` fallback, `sanitizeBooleanTerm` empty, `compileBooleanQuery` NOT clause, `listSearchTemplates` full coverage, `buildSearchTemplatePlan` null return, `findModeDefaultTemplate` final fallback.
+- **`tests/jobs-cache.test.js`**: Extended with browser `toBase64`/`fromBase64` paths (btoa/atob), `toIsoDate` NaN fallback, `decryptJobsProfileCache` JSON.parse error.
+- **`tests/ui-notify.test.js`**: Fixed OOM crash in capacity management tests; added timer-driven path coverage.
+
+### Changed
+- **Coverage thresholds ratcheted**: stmts 91→93, branches 78→81, functions 96→98, lines 93→95.
+- **37 suites, 1348 tests** (+85). 93.7% stmts, 81.5% branches, 98.9% functions, 95.7% lines.
+
 ## [1.32.0] - 2026-03-15
 
 ### Added
