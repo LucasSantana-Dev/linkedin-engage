@@ -27,10 +27,10 @@ Run the repo's quality gates and report pass/fail.
 
 | Metric | Threshold |
 |---|---|
-| Statements | 84% |
-| Branches | 70% |
-| Functions | 90% |
-| Lines | 88% |
+| Statements | 91% |
+| Branches | 78% |
+| Functions | 96% |
+| Lines | 93% |
 
 ## Commands
 

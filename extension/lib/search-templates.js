@@ -649,6 +649,111 @@
                 defaults: { roleLimit: 5 }
             },
             {
+                id: 'connect.graphic-design.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'graphic-design',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'sourcer', 'hiring manager'],
+                    industry: ['graphic design', 'creative services', 'visual design'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.art-direction.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'art-direction',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'creative recruiter', 'hiring manager'],
+                    industry: ['art direction', 'creative direction', 'advertising'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.branding.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'branding',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'brand recruiter', 'sourcer'],
+                    industry: ['branding', 'brand strategy', 'brand identity'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.ui-ux.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'ui-ux',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'product recruiter', 'design recruiter'],
+                    industry: ['user experience', 'product design', 'SaaS'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.motion-design.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'motion-design',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'creative recruiter', 'animation recruiter'],
+                    industry: ['motion design', 'motion graphics', 'animation'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.video-editing.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'video-editing',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'media recruiter', 'sourcer'],
+                    industry: ['video production', 'post production', 'audiovisual'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
+                id: 'connect.videomaker.recruiter_outreach.precise',
+                mode: 'connect',
+                areaPreset: 'videomaker',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'precise',
+                querySpec: {
+                    role: ['recruiter', 'talent acquisition', 'content recruiter', 'digital recruiter'],
+                    industry: ['video content', 'content production', 'digital media'],
+                    market: ['brazil'],
+                    level: ['senior']
+                },
+                filterSpec: { degree2nd: true, degree3rd: false, activelyHiring: true },
+                defaults: { roleLimit: 4, region: '106057199' }
+            },
+            {
                 id: 'connect.talent.recruiter_outreach.balanced',
                 mode: 'connect',
                 areaPreset: 'talent',
