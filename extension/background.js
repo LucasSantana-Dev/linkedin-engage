@@ -3,9 +3,20 @@ let companyRunState = null;
 const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 
-const COMPANY_FOLLOW_SCRIPTS = [
+const FEED_LIB_SCRIPTS = [
     'lib/templates.js',
-    'lib/feed-utils.js',
+    'lib/feed-copy-guard.js',
+    'lib/feed-nlp-utils.js',
+    'lib/feed-comment-analysis.js',
+    'lib/feed-post-classification.js',
+    'lib/feed-dom-extraction.js',
+    'lib/feed-comment-patterns.js',
+    'lib/feed-safety-guards.js',
+    'lib/feed-comment-generation.js',
+];
+
+const COMPANY_FOLLOW_SCRIPTS = [
+    ...FEED_LIB_SCRIPTS,
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
@@ -1085,8 +1096,7 @@ function launchFeedEngage(config) {
             }
             activeTabId = tab.id;
             injectAndStart(tab.id,
-                ['lib/templates.js',
-                    'lib/feed-utils.js',
+                [...FEED_LIB_SCRIPTS,
                     'lib/human-behavior.js',
                     'feed-engage.js'],
                 'LINKEDIN_FEED_ENGAGE_START',
@@ -1141,8 +1151,7 @@ function launchNurture(target, config) {
             }
             activeTabId = tab.id;
             injectAndStart(tab.id,
-                ['lib/templates.js',
-                    'lib/feed-utils.js',
+                [...FEED_LIB_SCRIPTS,
                     'lib/human-behavior.js',
                     'feed-engage.js'],
                 'LINKEDIN_FEED_ENGAGE_START',

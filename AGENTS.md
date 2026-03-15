@@ -17,7 +17,7 @@ npm run test:coverage # Jest --coverage --text-summary
 extension/
   _locales/en/         # EN locale catalog (370 keys)
   _locales/pt_BR/      # PT-BR locale catalog (370 keys, full parity)
-  lib/                 # 24 pure-logic modules (testable in Node)
+  lib/                 # 32 pure-logic modules (testable in Node)
   popup/               # Popup UI (popup.html + popup.js)
   options.html         # Options/dashboard page
   options.js           # Options page logic
@@ -50,7 +50,15 @@ tests/                 # 33 test suites, 1020 tests
 | `connect-config.js` | Area presets (19), company presets, role priority, area labels, STATE_TAG_VERSION |
 | `search-templates.js` | Boolean search template engine, AREA_FAMILY_MAP, SEARCH_TEMPLATES array |
 | `search-language.js` | EN/PT-BR term variants (400+), alias resolution, locale-aware query compilation |
-| `feed-utils.js` | Post classification (13 categories), comment generation, safety guards (2359 lines) |
+| `feed-utils.js` | Barrel re-export of 8 feed sub-modules (backward compat) |
+| `feed-copy-guard.js` | Copy/plagiarism risk detection (token overlap, Jaccard, 4-gram) |
+| `feed-nlp-utils.js` | Language detection, topic/key-phrase/concept extraction, tokenization |
+| `feed-comment-analysis.js` | Comment sentiment classification, thread summarization |
+| `feed-post-classification.js` | Post classification (13 categories), reaction typing, career transitions |
+| `feed-dom-extraction.js` | LinkedIn DOM parsing (post text, author, reactions, URN, buttons, comments) |
+| `feed-comment-patterns.js` | Deep pattern analysis, style resolution, pattern fit validation |
+| `feed-safety-guards.js` | Comment safety validation, low-quality detection, stranger distance risk |
+| `feed-comment-generation.js` | Comment building, template expansion, humanization, finalization |
 | `templates.js` | Comment templates EN/PT, topic map, concept patterns, COMPOSED_EN/PT |
 | `jobs-career-intelligence.js` | Resume analysis, career search plan generation, seniority/preset inference |
 | `jobs-career-vault.js` | Encrypted IndexedDB resume storage (AES-GCM + PBKDF2) |
@@ -81,7 +89,7 @@ tests/                 # 33 test suites, 1020 tests
 ## Coverage
 
 ```
-Statements: 88% | Branches: 75% | Functions: 92% | Lines: 90%
+Statements: 89% | Branches: 76% | Functions: 93% | Lines: 91%
 Thresholds: 84 stmts | 70 branches | 90 functions | 88 lines
 ```
 
@@ -110,6 +118,6 @@ CI auto-posts a coverage table comment on every PR.
 - `extension/lib/` modules are testable in Node; `extension/*.js` scripts are Chrome-only runtime
 - `jobs-career-parser.js` lines 27-56 (loadPdfJs/extractTextFromPdf) require `chrome.runtime.getURL` — untestable in Node/jsdom
 - `jobs-career-vault.js` needs `require('crypto').webcrypto` fallback for Node 18 (no global `crypto.subtle`)
-- `feed-utils.js` is 2359 lines — largest module, DOM-heavy sections need jsdom
+- `feed-utils.js` is a barrel re-export; real logic lives in 8 `feed-*.js` sub-modules (DOM-heavy ones need jsdom)
 - `STATE_TAG_VERSION` in `connect-config.js` must be bumped when adding presets (triggers migration)
 - Locale keys in `_locales/*/messages.json` must use `[A-Za-z0-9_]` only — dotted keys are normalized at the i18n boundary
