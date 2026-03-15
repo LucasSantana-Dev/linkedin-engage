@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.29.1] - 2026-03-15
+
+### Added
+- **AGENTS.md**: Comprehensive AI agent onboarding guide — project structure, 24 lib modules, 28 area presets, 4 skills, coverage thresholds, conventions, and gotchas. Eliminates cold-start context loading.
+
 ## [1.29.0] - 2026-03-15
 
 ### Added

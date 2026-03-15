@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_extensionName__",
-  "version": "1.29.0",
+  "version": "1.29.1",
   "description": "__MSG_extensionDescription__",
   "homepage_url": "https://github.com/LucasSantana-Dev/linkedin-engage",
   "icons": {
@@ -18,10 +18,7 @@
     "alarms",
     "notifications"
   ],
-  "host_permissions": [
-    "https://www.linkedin.com/*",
-    "https://api.groq.com/*"
-  ],
+  "host_permissions": ["https://www.linkedin.com/*", "https://api.groq.com/*"],
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "__MSG_extensionName__",
