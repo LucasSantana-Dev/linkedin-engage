@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.35.0] - 2026-03-15
+
+### Added
+- **`tests/feed-comment-analysis.test.js`**: 41 new tests covering `classifyCommentSentiment` all 8 sentiments, `summarizeCommentThread` brevity long/medium/short, energy high/low/balanced, `mapSentimentToStyle` all 8 mappings, short token skip, short phrase skip, opener length≤2 guard.
+- Extended **`tests/pattern-memory.test.js`**: normalizeWeightedMap object items with text/key/weight/value fields, weight≤0 skip, mergeWeightedMaps near-zero decay, ema non-finite, loadPatternBucket null return, mergePatternBucket null memory, buildPatternGuidance lowSignal.
+- Extended **`tests/company-utils.test.js`**: non-clickable-following signal, aria-disabled path, detectChallenge via body text, getResultsCountText body fallback, detectExplicitNoResults node match.
+- Extended **`tests/jobs-utils.test.js`**: inferSeniority lead/intern, getOffshoreCompatibility empty text, rankJobsForApply hours tiebreak.
+
+### Changed
+- **Coverage thresholds ratcheted**: stmts 94→95, branches 83→84, funcs 98→99, lines 96→97.
+- **41 suites, 1533 tests** (+60). 95.67% stmts, 84.29% branches, 99.2% functions, 97.24% lines.
+
 ## [1.34.0] - 2026-03-15
 
 ### Added
