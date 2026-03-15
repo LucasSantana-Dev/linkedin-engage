@@ -8,3 +8,5 @@ linkedin_cookies.json
 *.log
 .DS_Store
 .claude/
+coverage/
+opencode.jsonc
