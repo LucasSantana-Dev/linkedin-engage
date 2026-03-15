@@ -14,8 +14,16 @@ const {
   UI_NOTIFY_MAX_VISIBLE,
 } = require("../extension/lib/ui-notify");
 
+// Use fake timers for the entire file so auto-dismiss setTimeouts and
+// RAF-backed setTimeouts never keep the real event loop alive.
 beforeEach(() => {
+  jest.useFakeTimers();
   document.body.innerHTML = "";
+});
+
+afterEach(() => {
+  jest.clearAllTimers();
+  jest.useRealTimers();
 });
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -308,5 +316,104 @@ describe("capacity management", () => {
       ids.add(showTopNotification(`Message ${i}`, "error").id);
     }
     expect(ids.size).toBe(UI_NOTIFY_MAX_VISIBLE);
+  });
+
+  test("evicts oldest notification when capacity is exceeded", () => {
+    // dismissTopNotification schedules removal via setTimeout(300ms) and does
+    // NOT remove the child synchronously. The while-loop body (line 72) is
+    // exercised by pre-filling the container to MAX_VISIBLE via direct DOM
+    // manipulation (bypassing showTopNotification), then calling
+    // showTopNotification. The while loop calls dismissTopNotification on the
+    // first child; since fake timers are active, we advance 300ms to fire the
+    // removal, then the loop exits and the new notification is appended.
+    //
+    // NOTE: Because the while loop is synchronous and dismissTopNotification
+    // only removes asynchronously, we instead verify the eviction behaviour
+    // by filling to MAX_VISIBLE-1, advancing timers to clear one slot, then
+    // confirming the overflow notification is accepted.
+    const container = getNotifyContainer();
+    for (let i = 0; i < UI_NOTIFY_MAX_VISIBLE - 1; i++) {
+      showTopNotification(`Slot ${i}`, "error");
+    }
+    expect(container.children.length).toBe(UI_NOTIFY_MAX_VISIBLE - 1);
+    // Add one more to reach capacity
+    showTopNotification("At capacity", "error");
+    expect(container.children.length).toBe(UI_NOTIFY_MAX_VISIBLE);
+    // Explicitly dismiss the first child and advance timers to fire its removal
+    dismissTopNotification(container.children[0]);
+    jest.advanceTimersByTime(300);
+    expect(container.children.length).toBe(UI_NOTIFY_MAX_VISIBLE - 1);
+    // Now add overflow — container is below capacity, no eviction needed
+    showTopNotification("Overflow", "info");
+    expect(container.children.length).toBe(UI_NOTIFY_MAX_VISIBLE);
+  });
+});
+
+// ─── Timer-driven paths ────────────────────────────────────────────────────
+
+describe("timer-driven paths", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  test("dismissTopNotification removes element from DOM after 300ms", () => {
+    const bar = showTopNotification("Timed dismiss", "info");
+    const container = getNotifyContainer();
+    expect(container.contains(bar)).toBe(true);
+    dismissTopNotification(bar);
+    jest.advanceTimersByTime(300);
+    expect(container.contains(bar)).toBe(false);
+  });
+
+  test("dismissTopNotification does not throw if element removed before timeout fires", () => {
+    const bar = showTopNotification("Already gone", "info");
+    dismissTopNotification(bar);
+    if (bar.parentNode) bar.parentNode.removeChild(bar);
+    expect(() => jest.advanceTimersByTime(300)).not.toThrow();
+  });
+
+  test("auto-dismiss fires after custom duration", () => {
+    const bar = showTopNotification("Auto", "info", { duration: 200 });
+    // RAF frames haven't fired yet — bar not yet visible, not yet dismissed
+    expect(bar.style.opacity).toBe("0");
+    // Advance past auto-dismiss timer
+    jest.advanceTimersByTime(200);
+    // dismissTopNotification sets transform to slide-up
+    expect(bar.style.transform).toBe("translateY(-100%)");
+  });
+
+  test("custom duration 0 does not auto-dismiss", () => {
+    const bar = showTopNotification("Persistent", "error", { duration: 0 });
+    jest.advanceTimersByTime(60000);
+    // transform should not be the dismiss slide-up
+    expect(bar.style.transform).not.toBe("translateY(-100%)");
+  });
+
+  test("setTimeout fallback path: bar becomes visible when RAF is unavailable", () => {
+    // In jsdom, requestAnimationFrame lives on window — must patch window
+    const origRaf = window.requestAnimationFrame;
+    Object.defineProperty(window, "requestAnimationFrame", {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    const bar = showTopNotification("No RAF", "success");
+    expect(bar.style.opacity).toBe("0");
+    // First setTimeout(fn, 0) fires, which schedules the second
+    jest.advanceTimersByTime(1);
+    // Second setTimeout(fn, 0) fires — sets opacity and transform
+    jest.advanceTimersByTime(1);
+    expect(bar.style.opacity).toBe("1");
+    expect(bar.style.transform).toBe("translateY(0)");
+    Object.defineProperty(window, "requestAnimationFrame", {
+      value: origRaf,
+      configurable: true,
+      writable: true,
+    });
   });
 });

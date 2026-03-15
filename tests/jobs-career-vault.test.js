@@ -220,65 +220,68 @@ describe('jobs career vault', () => {
         ).rejects.toThrow();
     });
 
-    it('toBase64 / fromBase64 browser fallback paths round-trip correctly', () => {
-        // Temporarily remove Buffer to force browser btoa/atob paths
+    it('toBase64 / fromBase64 browser fallback paths round-trip correctly', async () => {
+        // Ensure btoa/atob are available (Node 18+ has them on globalThis)
+        if (typeof globalThis.btoa === 'undefined') {
+            const origBuffer = global.Buffer;
+            globalThis.btoa = (s) => origBuffer.from(s, 'binary').toString('base64');
+            globalThis.atob = (s) => origBuffer.from(s, 'base64').toString('binary');
+        }
+
+        // Remove Buffer so the module's toBase64/fromBase64 use the btoa/atob paths
         const origBuffer = global.Buffer;
+        jest.resetModules();
         global.Buffer = undefined;
 
-        // Re-require the module fresh so its factory runs without Buffer
-        jest.resetModules();
-        // Provide btoa/atob since Node 18+ has them on globalThis
-        if (typeof globalThis.btoa === 'undefined') {
-            globalThis.btoa = (s) => Buffer.from(s, 'binary').toString('base64');
-            globalThis.atob = (s) => Buffer.from(s, 'base64').toString('binary');
-        }
         const vaultModule = require('../extension/lib/jobs-career-vault');
-        // Use sha256Hex which indirectly exercises crypto paths; real test is
-        // that the encrypt/decrypt round-trip still works without Buffer
-        global.Buffer = origBuffer;
-        jest.resetModules();
 
-        // sha256Hex returns a 64-char hex string — verifies no crash
-        return vaultModule.sha256Hex(new Uint8Array([5, 6, 7]).buffer)
-            .then(hex => {
-                expect(hex).toHaveLength(64);
-                expect(hex).toMatch(/^[0-9a-f]+$/);
-            });
+        // Use the same createIndexedDbMock helper defined at top of this file
+        const fakeApi = createIndexedDbMock();
+
+        try {
+            await vaultModule.clearJobsCareerVault(fakeApi);
+            const doc = { id: 'browser-test', title: 'Browser Path Test', url: 'https://example.com' };
+            await vaultModule.upsertJobsCareerVaultDocument(doc, 'browser-pass', fakeApi);
+            const loaded = await vaultModule.loadJobsCareerVaultDocuments('browser-pass', fakeApi);
+            expect(loaded.length).toBe(1);
+            expect(loaded[0].id).toBe('browser-test');
+        } finally {
+            global.Buffer = origBuffer;
+            jest.resetModules();
+        }
     });
 
-    it('getCryptoApi throws when crypto is unavailable', () => {
+    it('getCryptoApi throws when crypto is unavailable', async () => {
         const origCrypto = globalThis.crypto;
-        // Remove globalThis.crypto to force fallback path
+        const origSubtle = globalThis.crypto?.subtle;
+
+        // Remove subtle from globalThis.crypto to force fallback path
         Object.defineProperty(globalThis, 'crypto', {
-            value: undefined,
+            value: { subtle: undefined },
             configurable: true,
             writable: true
         });
 
+        // Reload module so getCryptoApi sees the modified crypto
         jest.resetModules();
-        // Also ensure require('crypto').webcrypto is falsy
-        jest.mock('crypto', () => ({}), { virtual: true });
+        jest.mock('crypto', () => ({ webcrypto: { subtle: undefined } }));
+        const vaultModule = require('../extension/lib/jobs-career-vault');
 
-        let threwOrResolved;
         try {
-            require('../extension/lib/jobs-career-vault');
-            threwOrResolved = 'resolved';
-        } catch (e) {
-            threwOrResolved = 'threw';
+            // getCryptoApi() is called lazily — calling sha256Hex triggers it and
+            // should throw 'Web Crypto API unavailable'
+            await expect(
+                vaultModule.sha256Hex(new Uint8Array([1, 2, 3]).buffer)
+            ).rejects.toThrow('Web Crypto API unavailable');
+        } finally {
+            Object.defineProperty(globalThis, 'crypto', {
+                value: origCrypto,
+                configurable: true,
+                writable: true
+            });
+            jest.resetModules();
+            jest.unmock('crypto');
         }
-
-        // Restore
-        Object.defineProperty(globalThis, 'crypto', {
-            value: origCrypto,
-            configurable: true,
-            writable: true
-        });
-        jest.resetModules();
-        jest.unmock('crypto');
-
-        // The module itself doesn't throw on require — getCryptoApi() is
-        // called lazily when encrypt/decrypt ops run. Verify module loads.
-        expect(threwOrResolved).toBe('resolved');
     });
 
     it('overwrites existing document on upsert with same id', async () => {

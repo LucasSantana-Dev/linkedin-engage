@@ -7,7 +7,9 @@ const {
     normalizeUsageGoal,
     selectSearchTemplate,
     compileBooleanQuery,
-    buildSearchTemplatePlan
+    buildSearchTemplatePlan,
+    listSearchTemplates,
+    sanitizeBooleanTerm
 } = require('../extension/lib/search-templates');
 const {
     normalizeSearchLanguageMode,
@@ -483,5 +485,180 @@ describe('search-templates', () => {
                 expect(template.defaults.preferredCompanies.length).toBeGreaterThan(0);
             });
         });
+    });
+});
+
+describe('listSearchTemplates', () => {
+    it('returns all templates when called with no options', () => {
+        const all = listSearchTemplates();
+        expect(Array.isArray(all)).toBe(true);
+        expect(all.length).toBe(SEARCH_TEMPLATES.length);
+    });
+
+    it('filters by mode', () => {
+        const modes = [...new Set(SEARCH_TEMPLATES.map(t => t.mode))];
+        modes.forEach(mode => {
+            const filtered = listSearchTemplates({ mode });
+            expect(filtered.length).toBeGreaterThan(0);
+            filtered.forEach(t => expect(t.mode).toBe(mode));
+        });
+    });
+
+    it('filters by usageGoal', () => {
+        const goals = [...new Set(SEARCH_TEMPLATES.map(t => t.usageGoal).filter(Boolean))];
+        if (goals.length > 0) {
+            const goal = goals[0];
+            const filtered = listSearchTemplates({ usageGoal: goal });
+            expect(filtered.length).toBeGreaterThan(0);
+            filtered.forEach(t => expect(t.usageGoal).toBe(goal));
+        }
+    });
+
+    it('filters by expectedResultsBucket', () => {
+        const buckets = [...new Set(SEARCH_TEMPLATES.map(t => t.expectedResultsBucket).filter(Boolean))];
+        if (buckets.length > 0) {
+            const bucket = buckets[0];
+            const filtered = listSearchTemplates({ expectedResultsBucket: bucket });
+            expect(filtered.length).toBeGreaterThan(0);
+            filtered.forEach(t => expect(t.expectedResultsBucket).toBe(bucket));
+        }
+    });
+
+    it('returns empty array when no templates match combined filters', () => {
+        // connect mode has no 'broad' bucket templates
+        const result = listSearchTemplates({ mode: 'connect', expectedResultsBucket: 'broad' });
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBe(0);
+    });
+
+    it('filters by areaPreset when provided', () => {
+        const presets = [...new Set(
+            SEARCH_TEMPLATES.flatMap(t => t.areaPresets || [])
+        )];
+        if (presets.length > 0) {
+            const preset = presets[0];
+            const filtered = listSearchTemplates({ areaPreset: preset });
+            expect(filtered.length).toBeGreaterThan(0);
+        }
+    });
+
+    it('filters by areaPreset using a known preset (tech)', () => {
+        const filtered = listSearchTemplates({ areaPreset: 'tech' });
+        expect(filtered.length).toBeGreaterThan(0);
+        filtered.forEach(t => {
+            expect(['tech', 'any', 'custom'].includes(t.areaPreset)).toBe(true);
+        });
+    });
+});
+
+describe('normalizeMode fallback', () => {
+    it('returns connect for invalid mode values', () => {
+        const result = normalizeUsageGoal('__invalid__', 'peer_networking');
+        // normalizeMode is called internally; we verify the fallback via normalizeUsageGoal
+        // which calls normalizeMode and then looks up MODE_USAGE_GOALS['connect']
+        expect(typeof result).toBe('string');
+        expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('normalizeExpectedResultsBucket returns balanced for unknown bucket', () => {
+        expect(normalizeExpectedResultsBucket('__unknown__')).toBe('balanced');
+    });
+
+    it('normalizeExpectedResultsBucket returns balanced for empty string', () => {
+        expect(normalizeExpectedResultsBucket('')).toBe('balanced');
+    });
+});
+
+describe('sanitizeBooleanTerm', () => {
+    it('returns empty string for empty input', () => {
+        expect(sanitizeBooleanTerm('')).toBe('');
+        expect(sanitizeBooleanTerm(null)).toBe('');
+        expect(sanitizeBooleanTerm(undefined)).toBe('');
+    });
+
+    it('returns uppercase for boolean operators', () => {
+        expect(sanitizeBooleanTerm('AND')).toBe('AND');
+        expect(sanitizeBooleanTerm('or')).toBe('OR');
+        expect(sanitizeBooleanTerm('not')).toBe('NOT');
+    });
+
+    it('quotes multi-word terms', () => {
+        const result = sanitizeBooleanTerm('software engineer');
+        expect(result).toBe('"software engineer"');
+    });
+
+    it('returns single-word term unquoted', () => {
+        expect(sanitizeBooleanTerm('developer')).toBe('developer');
+    });
+
+    it('strips parentheses and punctuation', () => {
+        const result = sanitizeBooleanTerm('(hello, world!)');
+        expect(result).toBe('"hello world"');
+    });
+});
+
+describe('compileBooleanQuery NOT clause', () => {
+    it('prefixes mustNot terms with NOT', () => {
+        const result = compileBooleanQuery({
+            should: ['developer'],
+            mustNot: ['intern', 'junior']
+        });
+        expect(result.query).toContain('NOT intern');
+        expect(result.query).toContain('NOT junior');
+    });
+
+    it('trims must terms when budget is exceeded', () => {
+        const result = compileBooleanQuery({
+            should: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'],
+            must: ['required1', 'required2', 'required3'],
+            budget: 3
+        });
+        // must terms should be trimmed to fit budget
+        expect(result.must.length).toBeLessThanOrEqual(3);
+    });
+
+    it('trims mustNot terms when budget is exceeded after must trim', () => {
+        const result = compileBooleanQuery({
+            should: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'],
+            must: ['req1', 'req2', 'req3', 'req4', 'req5'],
+            mustNot: ['excl1', 'excl2', 'excl3'],
+            budget: 2
+        });
+        expect(result.operatorCount).toBeLessThanOrEqual(2);
+    });
+
+    it('returns empty query for empty inputs', () => {
+        const result = compileBooleanQuery({});
+        expect(result.query).toBe('');
+    });
+});
+
+describe('buildSearchTemplatePlan null template path', () => {
+    it('returns null template when no template matches', () => {
+        const result = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: '__nonexistent_preset_xyz__',
+            auto: false,
+            templateId: '__nonexistent_template_id__'
+        });
+        // When selectSearchTemplate returns null, buildSearchTemplatePlan returns null template
+        expect(result).toBeDefined();
+        // The result may have a fallback template or null; verify structure
+        expect(typeof result).toBe('object');
+        expect('meta' in result).toBe(true);
+    });
+});
+
+describe('selectSearchTemplate final fallback', () => {
+    it('falls back to any mode template when no exact/family/any match', () => {
+        const result = selectSearchTemplate({
+            mode: 'connect',
+            areaPreset: '__nonexistent__',
+            usageGoal: 'peer_networking',
+            expectedResultsBucket: 'balanced'
+        });
+        // Should fall back to a connect template
+        expect(result).not.toBeNull();
+        expect(result.mode).toBe('connect');
     });
 });

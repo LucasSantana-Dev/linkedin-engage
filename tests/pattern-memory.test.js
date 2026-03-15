@@ -3,7 +3,9 @@ const {
     getPatternBucketKey,
     loadPatternBucket,
     mergePatternBucket,
-    buildPatternGuidance
+    buildPatternGuidance,
+    normalizeWeightedMap,
+    topKeys
 } = require('../extension/lib/pattern-memory');
 
 describe('pattern-memory', () => {
@@ -125,5 +127,57 @@ describe('pattern-memory', () => {
     it('exports stable storage key', () => {
         expect(COMMENT_PATTERN_MEMORY_KEY)
             .toBe('commentPatternMemoryV1');
+    });
+
+    it('normalizeWeightedMap handles string items (lines 27-28)', () => {
+        // String items in the array should be counted with weight 1
+        const result = normalizeWeightedMap(['foo', 'bar', 'foo', 'baz']);
+        expect(result['foo']).toBe(2);
+        expect(result['bar']).toBe(1);
+        expect(result['baz']).toBe(1);
+    });
+
+    it('normalizeWeightedMap handles mixed string and object items', () => {
+        const result = normalizeWeightedMap([
+            'plain-string',
+            { text: 'weighted', weight: 1.5 },
+            'plain-string'
+        ]);
+        expect(result['plain-string']).toBe(2);
+        expect(result['weighted']).toBeCloseTo(1.5);
+    });
+
+    it('pickTop fallback: buildPatternGuidance uses fallback when learned maps are empty (lines 219-220)', () => {
+        // When learned bucket has empty mix maps, pickTop returns fallback values
+        const emptyBucket = {
+            confidenceEma: 30,
+            openers: {},
+            ngrams: {},
+            styleMix: {},
+            lengthMix: {},
+            rhythmMix: {},
+            toneMix: {}
+        };
+        const guidance = buildPatternGuidance({
+            patternConfidence: 30,
+            openers: [],
+            topNgrams: [],
+            recommended: {}
+        }, emptyBucket);
+
+        // pickTop with empty map returns fallback — these should be the defaults
+        expect(guidance.lengthBand).toBe('short');
+        expect(guidance.toneIntensity).toBe('low');
+        expect(guidance.punctuationRhythm).toBe('balanced');
+        expect(guidance.styleFamily).toBe('neutral-ack');
+    });
+
+    it('topKeys returns keys sorted by value descending', () => {
+        const map = { a: 1, b: 3, c: 2 };
+        expect(topKeys(map, 2)).toEqual(['b', 'c']);
+    });
+
+    it('topKeys returns empty array for empty map', () => {
+        expect(topKeys({}, 5)).toEqual([]);
     });
 });

@@ -228,4 +228,28 @@ describe('jobs career parser', () => {
             .filter(Boolean);
         expect(filtered).toEqual(['Real content']);
     });
+
+    it('extractTextFromPdf rejects when pdfjs cannot be loaded (loadPdfJs path)', async () => {
+        // In Node CJS Jest, import() of a chrome-extension:// URL rejects.
+        // This exercises lines 26-57 (loadPdfJs + extractTextFromPdf).
+        jest.resetModules();
+        global.crypto = require('crypto').webcrypto;
+        global.LinkedInJobsCareerIntelligence = require(
+            '../extension/lib/jobs-career-intelligence'
+        );
+        global.LinkedInJobsCareerVault = require(
+            '../extension/lib/jobs-career-vault'
+        );
+        global.chrome = {
+            runtime: {
+                getURL: (path) => `chrome-extension://fake-id/${path}`
+            }
+        };
+
+        const { extractTextFromPdf } = require('../extension/lib/jobs-career-parser');
+        const buf = new ArrayBuffer(8);
+
+        // The dynamic import of a chrome-extension:// URL will reject in Node
+        await expect(extractTextFromPdf(buf)).rejects.toBeDefined();
+    });
 });
