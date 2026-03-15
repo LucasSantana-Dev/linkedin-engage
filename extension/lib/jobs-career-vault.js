@@ -25,10 +25,21 @@
             if (globalThis.crypto?.subtle) {
                 return globalThis.crypto;
             }
+            if (typeof require === 'function') {
+                try {
+                    const nodeCrypto = require('crypto');
+                    if (nodeCrypto.webcrypto?.subtle) {
+                        return nodeCrypto.webcrypto;
+                    }
+                } catch (err) {}
+            }
             throw new Error('Web Crypto API unavailable');
         }
 
         function toBase64(buffer) {
+            if (typeof Buffer !== 'undefined') {
+                return Buffer.from(buffer).toString('base64');
+            }
             const bytes = new Uint8Array(buffer);
             let binary = '';
             bytes.forEach(byte => {
@@ -38,6 +49,11 @@
         }
 
         function fromBase64(input) {
+            if (typeof Buffer !== 'undefined') {
+                return Uint8Array.from(
+                    Buffer.from(String(input || ''), 'base64')
+                );
+            }
             const binary = atob(String(input || ''));
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -108,9 +124,10 @@
         }
 
         async function sha256Hex(arrayBuffer) {
+            const bytes = new Uint8Array(arrayBuffer);
             const digest = await getCryptoApi().subtle.digest(
                 'SHA-256',
-                arrayBuffer
+                bytes
             );
             return Array.from(new Uint8Array(digest))
                 .map(byte => byte.toString(16).padStart(2, '0'))
