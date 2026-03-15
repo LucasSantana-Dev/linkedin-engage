@@ -268,4 +268,220 @@ describe('search-templates', () => {
             'jobs.creative.target_company_roles.balanced'
         );
     });
+
+    describe('tech sub-preset templates', () => {
+        const TECH_SUB_PRESETS = [
+            'tech-frontend', 'tech-backend', 'tech-fullstack',
+            'tech-devops', 'tech-data', 'tech-cloud',
+            'tech-security', 'tech-mobile', 'tech-ml-ai'
+        ];
+
+        it('all tech sub-presets map to tech family', () => {
+            TECH_SUB_PRESETS.forEach(preset => {
+                expect(normalizeAreaFamily(preset)).toBe('tech');
+            });
+        });
+
+        it('each tech sub-preset has a Connect peer_networking template', () => {
+            const ids = SEARCH_TEMPLATES.map(t => t.id);
+            TECH_SUB_PRESETS.forEach(preset => {
+                expect(ids).toContain(
+                    `connect.${preset}.peer_networking.balanced`
+                );
+            });
+        });
+
+        it('each tech sub-preset has a Jobs high_fit_easy_apply template', () => {
+            const ids = SEARCH_TEMPLATES.map(t => t.id);
+            TECH_SUB_PRESETS.forEach(preset => {
+                expect(ids).toContain(
+                    `jobs.${preset}.high_fit_easy_apply.precise`
+                );
+            });
+        });
+
+        it('each tech sub-preset has a Companies talent_watchlist template', () => {
+            const ids = SEARCH_TEMPLATES.map(t => t.id);
+            TECH_SUB_PRESETS.forEach(preset => {
+                expect(ids).toContain(
+                    `companies.${preset}.talent_watchlist.balanced`
+                );
+            });
+        });
+
+        it('selectSearchTemplate resolves exact tech sub-preset match', () => {
+            const template = selectSearchTemplate({
+                mode: 'connect',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced'
+            });
+            expect(template).not.toBeNull();
+            expect(template.areaPreset).toBe('tech-frontend');
+        });
+
+        it('selectSearchTemplate falls back to tech family template for unmatched goal/bucket', () => {
+            const template = selectSearchTemplate({
+                mode: 'connect',
+                areaPreset: 'tech-frontend',
+                usageGoal: 'recruiter_outreach',
+                expectedResultsBucket: 'broad'
+            });
+            expect(template).not.toBeNull();
+            expect(['tech', 'tech-frontend', 'custom'].some(
+                p => template.areaPreset === p
+            )).toBe(true);
+        });
+
+        it('buildSearchTemplatePlan — tech-backend Connect generates role query', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'connect',
+                areaPreset: 'tech-backend',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query).toBeTruthy();
+            expect(plan.meta.mode).toBe('connect');
+            expect(plan.query.toLowerCase()).toMatch(
+                /backend|platform|api|software/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-data Jobs generates data role query', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'jobs',
+                areaPreset: 'tech-data',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query).toBeTruthy();
+            expect(plan.meta.mode).toBe('jobs');
+            expect(plan.query.toLowerCase()).toMatch(
+                /data|analytics|machine learning/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-ml-ai Connect generates AI role query', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'connect',
+                areaPreset: 'tech-ml-ai',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /machine learning|ai engineer|nlp|data scientist/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-devops Companies generates DevOps query', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'companies',
+                areaPreset: 'tech-devops',
+                usageGoal: 'talent_watchlist',
+                expectedResultsBucket: 'balanced',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /devops|site reliability|platform|infrastructure/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-backend pt_BR generates Portuguese terms', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'connect',
+                areaPreset: 'tech-backend',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                searchLanguageMode: 'pt_BR'
+            });
+            expect(plan.meta.resolvedSearchLocale).toBe('pt_BR');
+            expect(plan.query.toLowerCase()).toMatch(
+                /engenheiro|desenvolvedor|backend/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-security Jobs targets security roles', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'jobs',
+                areaPreset: 'tech-security',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /security|cybersecurity/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-mobile Jobs targets mobile roles', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'jobs',
+                areaPreset: 'tech-mobile',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /mobile|ios|android|react native/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-cloud Jobs targets cloud roles', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'jobs',
+                areaPreset: 'tech-cloud',
+                usageGoal: 'high_fit_easy_apply',
+                expectedResultsBucket: 'precise',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /cloud|architect|infrastructure/
+            );
+        });
+
+        it('buildSearchTemplatePlan — tech-fullstack includes full stack role terms', () => {
+            const plan = buildSearchTemplatePlan({
+                mode: 'connect',
+                areaPreset: 'tech-fullstack',
+                usageGoal: 'peer_networking',
+                expectedResultsBucket: 'balanced',
+                searchLanguageMode: 'en'
+            });
+            expect(plan.query.toLowerCase()).toMatch(
+                /full stack|fullstack|software engineer|product engineer/
+            );
+        });
+
+        it('all tech sub-preset Connect templates have filterSpec.degree2nd', () => {
+            TECH_SUB_PRESETS.forEach(preset => {
+                const template = SEARCH_TEMPLATES.find(
+                    t => t.id === `connect.${preset}.peer_networking.balanced`
+                );
+                expect(template.filterSpec).toBeDefined();
+                expect(typeof template.filterSpec.degree2nd).toBe('boolean');
+            });
+        });
+
+        it('all tech sub-preset Jobs templates have easyApplyOnly: true', () => {
+            TECH_SUB_PRESETS.forEach(preset => {
+                const template = SEARCH_TEMPLATES.find(
+                    t => t.id === `jobs.${preset}.high_fit_easy_apply.precise`
+                );
+                expect(template.filterSpec.easyApplyOnly).toBe(true);
+            });
+        });
+
+        it('all tech sub-preset Jobs templates seed preferredCompanies', () => {
+            TECH_SUB_PRESETS.forEach(preset => {
+                const template = SEARCH_TEMPLATES.find(
+                    t => t.id === `jobs.${preset}.high_fit_easy_apply.precise`
+                );
+                expect(Array.isArray(template.defaults.preferredCompanies)).toBe(true);
+                expect(template.defaults.preferredCompanies.length).toBeGreaterThan(0);
+            });
+        });
+    });
 });
