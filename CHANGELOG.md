@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.34.0] - 2026-03-15
+
+### Added
+- **`tests/feed-copy-guard.test.js`**: 48 new tests covering all exports + uncovered branches (`buildCharTrigramSet` short text, `computeTokenContainment` empty, rank 4 medium-token-high-char, rank 5 short-near-clone).
+- **`tests/feed-comment-patterns.test.js`**: 96 new tests covering all exports + uncovered branches (`getLengthBand` short/long, `detectPunctuationRhythm` flat, `extractIntent` humor/neutral, `resolveStyleFamily` all 4 branches, `analyzeCommentPatterns` zero-count, `collectPatternLexicon` bucket ngrams, `validateCommentPatternFit` question/emoji/rhythm/lexicon/irony/polemic/discussion rejections).
+- **`tests/feed-comment-generation.test.js`**: 26 new tests covering all exports + uncovered branches (`finalizeGeneratedComment` distanceRisk/safety/copy-risk rejections, `buildCommentFromPost` ptCount→pt lang, isDepartureOnly, avoidCelebration+career/generic, double-quote replacement).
+
+### Changed
+- **Coverage thresholds ratcheted**: stmts 93→94, branches 81→83, lines 95→96.
+- **40 suites, 1473 tests** (+123). 94.98% stmts, 83.35% branches, 98.88% functions, 96.73% lines.
+
 ## [1.33.0] - 2026-03-15
 
 ### Added
