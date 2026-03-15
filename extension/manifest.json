@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "default_locale": "en",
   "name": "__MSG_extensionName__",
-  "version": "1.29.1",
+  "version": "1.30.0",
   "description": "__MSG_extensionDescription__",
   "homepage_url": "https://github.com/LucasSantana-Dev/linkedin-engage",
   "icons": {
