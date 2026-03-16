@@ -49,7 +49,9 @@ const DEFAULT_LOCAL_UI_STATE = {
         jobs: null,
         feed: null
     },
-    tagSearch: ''
+    tagSearch: '',
+    activeRoleArea: '',
+    activeIndustryArea: ''
 };
 let useCustomQuery = false;
 let popupUiState = DEFAULT_LOCAL_UI_STATE;
@@ -1171,10 +1173,12 @@ function applyTagSearchFilter() {
     const query = input.value || '';
     popupUiState = normalizePopupUi(popupUiState);
     popupUiState.tagSearch = query;
+    const activeRoleArea = popupUiState.activeRoleArea || '';
+    const activeIndustryArea = popupUiState.activeIndustryArea || '';
     document.querySelectorAll(
         '#connectSection .tag[data-group]'
     ).forEach(tag => {
-        const match = typeof filterTagMatchesSearch ===
+        const textMatch = typeof filterTagMatchesSearch ===
             'function'
             ? filterTagMatchesSearch(
                 tag.textContent || '',
@@ -1184,8 +1188,34 @@ function applyTagSearchFilter() {
             : String(tag.textContent || '')
                 .toLowerCase()
                 .includes(String(query).toLowerCase());
-        tag.style.display = match ? '' : 'none';
+        const group = tag.dataset.group;
+        const tagArea = tag.dataset.area || '';
+        let areaMatch = true;
+        if (group === 'role' && activeRoleArea) {
+            areaMatch = tagArea === activeRoleArea;
+        } else if (group === 'industry' && activeIndustryArea) {
+            areaMatch = tagArea === activeIndustryArea;
+        }
+        tag.style.display = (textMatch && areaMatch) ? '' : 'none';
     });
+}
+
+function applyAreaFilter(filterEl, targetGroup) {
+    if (!filterEl) return;
+    const area = filterEl.dataset.area || '';
+    const pillsContainer = filterEl.closest('.area-filter-pills');
+    if (pillsContainer) {
+        pillsContainer.querySelectorAll('.area-pill').forEach(p => {
+            p.classList.toggle('active', p.dataset.area === area);
+        });
+    }
+    popupUiState = normalizePopupUi(popupUiState);
+    if (targetGroup === 'role') {
+        popupUiState.activeRoleArea = area;
+    } else if (targetGroup === 'industry') {
+        popupUiState.activeIndustryArea = area;
+    }
+    applyTagSearchFilter();
 }
 
 function syncFeedCommentSettingsVisibility() {
@@ -2386,6 +2416,22 @@ function loadState() {
 
         document.getElementById('tagSearchInput').value =
             popupUiState.tagSearch || '';
+        if (popupUiState.activeRoleArea) {
+            const roleFilter = document.getElementById('roleAreaFilter');
+            if (roleFilter) {
+                roleFilter.querySelectorAll('.area-pill').forEach(p => {
+                    p.classList.toggle('active', p.dataset.area === popupUiState.activeRoleArea);
+                });
+            }
+        }
+        if (popupUiState.activeIndustryArea) {
+            const industryFilter = document.getElementById('industryAreaFilter');
+            if (industryFilter) {
+                industryFilter.querySelectorAll('.area-pill').forEach(p => {
+                    p.classList.toggle('active', p.dataset.area === popupUiState.activeIndustryArea);
+                });
+            }
+        }
         applyTagSearchFilter();
         renderAccordions();
         updateRefineSelectedCount();
@@ -2709,6 +2755,16 @@ document.getElementById('tagSearchInput').addEventListener(
         saveState();
     }
 );
+
+document.querySelectorAll('.area-filter-pills').forEach(pillsContainer => {
+    const targetGroup = pillsContainer.dataset.targetGroup;
+    pillsContainer.querySelectorAll('.area-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            applyAreaFilter(pill, targetGroup);
+            saveState();
+        });
+    });
+});
 
 document.querySelectorAll('.template-card').forEach(card => {
     card.addEventListener('click', () => {

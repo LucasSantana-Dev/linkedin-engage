@@ -148,6 +148,38 @@
             margin-bottom: 1px;
         }
 
+        .area-filter-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+
+        .area-pill {
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+
+        .area-pill:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .area-pill.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
         .tag {
             display: inline-flex;
             align-items: center;
@@ -1537,212 +1569,240 @@
 
             <div class="tag-group">
                 <div class="tag-group-label">Role</div>
-                <span class="tag" data-group="role" data-value="recruiter">Recruiter</span>
-                <span class="tag" data-group="role" data-value="&quot;talent acquisition&quot;">Talent Acquisition</span>
-                <span class="tag" data-group="role" data-value="&quot;hiring manager&quot;">Hiring Manager</span>
-                <span class="tag" data-group="role" data-value="sourcer">Sourcer</span>
-                <span class="tag" data-group="role" data-value="&quot;staffing agency&quot;">Staffing Agency</span>
-                <span class="tag" data-group="role" data-value="&quot;head of talent&quot;">Head of Talent</span>
-                <span class="tag" data-group="role" data-value="&quot;software engineer&quot;">Software Engineer</span>
-                <span class="tag" data-group="role" data-value="&quot;engineering manager&quot;">Engineering Manager</span>
-                <span class="tag" data-group="role" data-value="developer">Developer</span>
-                <span class="tag" data-group="role" data-value="QA">QA</span>
-                <span class="tag" data-group="role" data-value="&quot;product manager&quot;">Product Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;tech lead&quot;">Tech Lead</span>
-                <span class="tag" data-group="role" data-value="&quot;financial analyst&quot;">Financial Analyst</span>
-                <span class="tag" data-group="role" data-value="&quot;investment analyst&quot;">Investment Analyst</span>
-                <span class="tag" data-group="role" data-value="&quot;risk manager&quot;">Risk Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;credit analyst&quot;">Credit Analyst</span>
-                <span class="tag" data-group="role" data-value="accountant">Accountant</span>
-                <span class="tag" data-group="role" data-value="auditor">Auditor</span>
-                <span class="tag" data-group="role" data-value="&quot;real estate agent&quot;">Real Estate Agent</span>
-                <span class="tag" data-group="role" data-value="broker">Broker</span>
-                <span class="tag" data-group="role" data-value="&quot;property manager&quot;">Property Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;corretor de imoveis&quot;">Corretor de Imóveis</span>
-                <span class="tag" data-group="role" data-value="&quot;consultor imobiliario&quot;">Consultor Imobiliário</span>
-                <span class="tag" data-group="role" data-value="headhunter">Headhunter</span>
-                <span class="tag" data-group="role" data-value="&quot;executive search&quot;">Executive Search</span>
-                <span class="tag" data-group="role" data-value="recrutador">Recrutador</span>
-                <span class="tag" data-group="role" data-value="lawyer">Lawyer</span>
-                <span class="tag" data-group="role" data-value="attorney">Attorney</span>
-                <span class="tag" data-group="role" data-value="&quot;legal counsel&quot;">Legal Counsel</span>
-                <span class="tag" data-group="role" data-value="&quot;judicial analyst&quot;">Judicial Analyst</span>
-                <span class="tag" data-group="role" data-value="journalist">Journalist</span>
-                <span class="tag" data-group="role" data-value="&quot;legal reporter&quot;">Legal Reporter</span>
-                <span class="tag" data-group="role" data-value="advogado">Advogado</span>
-                <span class="tag" data-group="role" data-value="&quot;analista juridico&quot;">Analista Jurídico</span>
-                <span class="tag" data-group="role" data-value="jornalista">Jornalista</span>
-                <span class="tag" data-group="role" data-value="&quot;environmental engineer&quot;">Environmental Engineer</span>
-                <span class="tag" data-group="role" data-value="&quot;environmental analyst&quot;">Environmental Analyst</span>
-                <span class="tag" data-group="role" data-value="&quot;sustainability specialist&quot;">Sustainability Specialist</span>
-                <span class="tag" data-group="role" data-value="&quot;environmental consultant&quot;">Environmental Consultant</span>
-                <span class="tag" data-group="role" data-value="&quot;engenheiro ambiental&quot;">Engenheiro Ambiental</span>
-                <span class="tag" data-group="role" data-value="&quot;consultor ambiental&quot;">Consultor Ambiental</span>
-                <span class="tag" data-group="role" data-value="&quot;sanitary engineer&quot;">Sanitary Engineer</span>
-                <span class="tag" data-group="role" data-value="&quot;water engineer&quot;">Water Engineer</span>
-                <span class="tag" data-group="role" data-value="&quot;wastewater engineer&quot;">Wastewater Engineer</span>
-                <span class="tag" data-group="role" data-value="&quot;sanitation specialist&quot;">Sanitation Specialist</span>
-                <span class="tag" data-group="role" data-value="&quot;engenheiro sanitarista&quot;">Engenheiro Sanitarista</span>
-                <span class="tag" data-group="role" data-value="&quot;engenheiro de saneamento&quot;">Engenheiro de Saneamento</span>
-                <span class="tag" data-group="role" data-value="physician">Physician</span>
-                <span class="tag" data-group="role" data-value="nurse">Nurse</span>
-                <span class="tag" data-group="role" data-value="&quot;healthcare manager&quot;">Healthcare Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;clinical director&quot;">Clinical Director</span>
-                <span class="tag" data-group="role" data-value="medico">Médico</span>
-                <span class="tag" data-group="role" data-value="enfermeiro">Enfermeiro</span>
-                <span class="tag" data-group="role" data-value="&quot;gestor de saude&quot;">Gestor de Saúde</span>
-                <span class="tag" data-group="role" data-value="teacher">Teacher</span>
-                <span class="tag" data-group="role" data-value="professor">Professor</span>
-                <span class="tag" data-group="role" data-value="educator">Educator</span>
-                <span class="tag" data-group="role" data-value="&quot;school coordinator&quot;">School Coordinator</span>
-                <span class="tag" data-group="role" data-value="docente">Docente</span>
-                <span class="tag" data-group="role" data-value="pedagogo">Pedagogo</span>
-                <span class="tag" data-group="role" data-value="&quot;marketing manager&quot;">Marketing Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;growth manager&quot;">Growth Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;content strategist&quot;">Content Strategist</span>
-                <span class="tag" data-group="role" data-value="&quot;brand manager&quot;">Brand Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;gerente de marketing&quot;">Gerente de Marketing</span>
-                <span class="tag" data-group="role" data-value="&quot;account executive&quot;">Account Executive</span>
-                <span class="tag" data-group="role" data-value="&quot;sales manager&quot;">Sales Manager</span>
-                <span class="tag" data-group="role" data-value="&quot;business development&quot;">Business Development</span>
-                <span class="tag" data-group="role" data-value="vendedor">Vendedor</span>
-                <span class="tag" data-group="role" data-value="&quot;executivo de contas&quot;">Executivo de Contas</span>
-                <span class="tag" data-group="role" data-value="&quot;graphic designer&quot;">Graphic Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;visual designer&quot;">Visual Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;designer grafico&quot;">Designer Grafico</span>
-                <span class="tag" data-group="role" data-value="&quot;designer visual&quot;">Designer Visual</span>
-                <span class="tag" data-group="role" data-value="&quot;creative designer&quot;">Creative Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;art director&quot;">Art Director</span>
-                <span class="tag" data-group="role" data-value="&quot;associate art director&quot;">Associate Art Director</span>
-                <span class="tag" data-group="role" data-value="&quot;creative director&quot;">Creative Director</span>
-                <span class="tag" data-group="role" data-value="&quot;diretor de arte&quot;">Diretor de Arte</span>
-                <span class="tag" data-group="role" data-value="&quot;direcao de arte&quot;">Direcao de Arte</span>
-                <span class="tag" data-group="role" data-value="&quot;brand strategist&quot;">Brand Strategist</span>
-                <span class="tag" data-group="role" data-value="&quot;brand designer&quot;">Brand Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;branding specialist&quot;">Branding Specialist</span>
-                <span class="tag" data-group="role" data-value="&quot;estrategista de marca&quot;">Estrategista de Marca</span>
-                <span class="tag" data-group="role" data-value="&quot;designer de marca&quot;">Designer de Marca</span>
-                <span class="tag" data-group="role" data-value="&quot;ui ux designer&quot;">UI/UX Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;ux designer&quot;">UX Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;ui designer&quot;">UI Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;product designer&quot;">Product Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;designer de produto&quot;">Designer de Produto</span>
-                <span class="tag" data-group="role" data-value="&quot;motion designer&quot;">Motion Designer</span>
-                <span class="tag" data-group="role" data-value="&quot;motion graphics designer&quot;">Motion Graphics Designer</span>
-                <span class="tag" data-group="role" data-value="animator">Animator</span>
-                <span class="tag" data-group="role" data-value="&quot;designer de motion&quot;">Designer de Motion</span>
-                <span class="tag" data-group="role" data-value="&quot;motion artist&quot;">Motion Artist</span>
-                <span class="tag" data-group="role" data-value="&quot;video editor&quot;">Video Editor</span>
-                <span class="tag" data-group="role" data-value="&quot;post production editor&quot;">Post Production Editor</span>
-                <span class="tag" data-group="role" data-value="&quot;editor de video&quot;">Editor de Video</span>
-                <span class="tag" data-group="role" data-value="&quot;editor audiovisual&quot;">Editor Audiovisual</span>
-                <span class="tag" data-group="role" data-value="&quot;montador de video&quot;">Montador de Video</span>
-                <span class="tag" data-group="role" data-value="videomaker">Videomaker</span>
-                <span class="tag" data-group="role" data-value="&quot;video producer&quot;">Video Producer</span>
-                <span class="tag" data-group="role" data-value="&quot;content creator&quot;">Content Creator</span>
-                <span class="tag" data-group="role" data-value="&quot;produtor audiovisual&quot;">Produtor Audiovisual</span>
-                <span class="tag" data-group="role" data-value="&quot;filmmaker&quot;">Filmmaker</span>
+                <div class="area-filter-pills" id="roleAreaFilter" data-target-group="role">
+                    <button class="area-pill active" data-area="">All</button>
+                    <button class="area-pill" data-area="tech">Tech</button>
+                    <button class="area-pill" data-area="recruiting">Recruiting</button>
+                    <button class="area-pill" data-area="finance">Finance</button>
+                    <button class="area-pill" data-area="real-estate">Real Estate</button>
+                    <button class="area-pill" data-area="legal">Legal</button>
+                    <button class="area-pill" data-area="healthcare">Health</button>
+                    <button class="area-pill" data-area="education">Education</button>
+                    <button class="area-pill" data-area="marketing">Marketing</button>
+                    <button class="area-pill" data-area="sales">Sales</button>
+                    <button class="area-pill" data-area="design">Design</button>
+                    <button class="area-pill" data-area="creative">Creative</button>
+                </div>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="recruiter">Recruiter</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="&quot;talent acquisition&quot;">Talent Acquisition</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="&quot;hiring manager&quot;">Hiring Manager</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="sourcer">Sourcer</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="&quot;staffing agency&quot;">Staffing Agency</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="&quot;head of talent&quot;">Head of Talent</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;software engineer&quot;">Software Engineer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;engineering manager&quot;">Engineering Manager</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="developer">Developer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="QA">QA</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;product manager&quot;">Product Manager</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;tech lead&quot;">Tech Lead</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="&quot;financial analyst&quot;">Financial Analyst</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="&quot;investment analyst&quot;">Investment Analyst</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="&quot;risk manager&quot;">Risk Manager</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="&quot;credit analyst&quot;">Credit Analyst</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="accountant">Accountant</span>
+                <span class="tag" data-group="role" data-area="finance" data-value="auditor">Auditor</span>
+                <span class="tag" data-group="role" data-area="real-estate" data-value="&quot;real estate agent&quot;">Real Estate Agent</span>
+                <span class="tag" data-group="role" data-area="real-estate" data-value="broker">Broker</span>
+                <span class="tag" data-group="role" data-area="real-estate" data-value="&quot;property manager&quot;">Property Manager</span>
+                <span class="tag" data-group="role" data-area="real-estate" data-value="&quot;corretor de imoveis&quot;">Corretor de Imóveis</span>
+                <span class="tag" data-group="role" data-area="real-estate" data-value="&quot;consultor imobiliario&quot;">Consultor Imobiliário</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="headhunter">Headhunter</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="&quot;executive search&quot;">Executive Search</span>
+                <span class="tag" data-group="role" data-area="recruiting" data-value="recrutador">Recrutador</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="lawyer">Lawyer</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="attorney">Attorney</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="&quot;legal counsel&quot;">Legal Counsel</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="&quot;judicial analyst&quot;">Judicial Analyst</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="journalist">Journalist</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="&quot;legal reporter&quot;">Legal Reporter</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="advogado">Advogado</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="&quot;analista juridico&quot;">Analista Jurídico</span>
+                <span class="tag" data-group="role" data-area="legal" data-value="jornalista">Jornalista</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;environmental engineer&quot;">Environmental Engineer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;environmental analyst&quot;">Environmental Analyst</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;sustainability specialist&quot;">Sustainability Specialist</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;environmental consultant&quot;">Environmental Consultant</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;engenheiro ambiental&quot;">Engenheiro Ambiental</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;consultor ambiental&quot;">Consultor Ambiental</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;sanitary engineer&quot;">Sanitary Engineer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;water engineer&quot;">Water Engineer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;wastewater engineer&quot;">Wastewater Engineer</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;sanitation specialist&quot;">Sanitation Specialist</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;engenheiro sanitarista&quot;">Engenheiro Sanitarista</span>
+                <span class="tag" data-group="role" data-area="tech" data-value="&quot;engenheiro de saneamento&quot;">Engenheiro de Saneamento</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="physician">Physician</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="nurse">Nurse</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="&quot;healthcare manager&quot;">Healthcare Manager</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="&quot;clinical director&quot;">Clinical Director</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="medico">Médico</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="enfermeiro">Enfermeiro</span>
+                <span class="tag" data-group="role" data-area="healthcare" data-value="&quot;gestor de saude&quot;">Gestor de Saúde</span>
+                <span class="tag" data-group="role" data-area="education" data-value="teacher">Teacher</span>
+                <span class="tag" data-group="role" data-area="education" data-value="professor">Professor</span>
+                <span class="tag" data-group="role" data-area="education" data-value="educator">Educator</span>
+                <span class="tag" data-group="role" data-area="education" data-value="&quot;school coordinator&quot;">School Coordinator</span>
+                <span class="tag" data-group="role" data-area="education" data-value="docente">Docente</span>
+                <span class="tag" data-group="role" data-area="education" data-value="pedagogo">Pedagogo</span>
+                <span class="tag" data-group="role" data-area="marketing" data-value="&quot;marketing manager&quot;">Marketing Manager</span>
+                <span class="tag" data-group="role" data-area="marketing" data-value="&quot;growth manager&quot;">Growth Manager</span>
+                <span class="tag" data-group="role" data-area="marketing" data-value="&quot;content strategist&quot;">Content Strategist</span>
+                <span class="tag" data-group="role" data-area="marketing" data-value="&quot;brand manager&quot;">Brand Manager</span>
+                <span class="tag" data-group="role" data-area="marketing" data-value="&quot;gerente de marketing&quot;">Gerente de Marketing</span>
+                <span class="tag" data-group="role" data-area="sales" data-value="&quot;account executive&quot;">Account Executive</span>
+                <span class="tag" data-group="role" data-area="sales" data-value="&quot;sales manager&quot;">Sales Manager</span>
+                <span class="tag" data-group="role" data-area="sales" data-value="&quot;business development&quot;">Business Development</span>
+                <span class="tag" data-group="role" data-area="sales" data-value="vendedor">Vendedor</span>
+                <span class="tag" data-group="role" data-area="sales" data-value="&quot;executivo de contas&quot;">Executivo de Contas</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;graphic designer&quot;">Graphic Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;visual designer&quot;">Visual Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;designer grafico&quot;">Designer Grafico</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;designer visual&quot;">Designer Visual</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;creative designer&quot;">Creative Designer</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;art director&quot;">Art Director</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;associate art director&quot;">Associate Art Director</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;creative director&quot;">Creative Director</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;diretor de arte&quot;">Diretor de Arte</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;direcao de arte&quot;">Direcao de Arte</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;brand strategist&quot;">Brand Strategist</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;brand designer&quot;">Brand Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;branding specialist&quot;">Branding Specialist</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;estrategista de marca&quot;">Estrategista de Marca</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;designer de marca&quot;">Designer de Marca</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;ui ux designer&quot;">UI/UX Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;ux designer&quot;">UX Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;ui designer&quot;">UI Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;product designer&quot;">Product Designer</span>
+                <span class="tag" data-group="role" data-area="design" data-value="&quot;designer de produto&quot;">Designer de Produto</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;motion designer&quot;">Motion Designer</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;motion graphics designer&quot;">Motion Graphics Designer</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="animator">Animator</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;designer de motion&quot;">Designer de Motion</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;motion artist&quot;">Motion Artist</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;video editor&quot;">Video Editor</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;post production editor&quot;">Post Production Editor</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;editor de video&quot;">Editor de Video</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;editor audiovisual&quot;">Editor Audiovisual</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;montador de video&quot;">Montador de Video</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="videomaker">Videomaker</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;video producer&quot;">Video Producer</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;content creator&quot;">Content Creator</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;produtor audiovisual&quot;">Produtor Audiovisual</span>
+                <span class="tag" data-group="role" data-area="creative" data-value="&quot;filmmaker&quot;">Filmmaker</span>
             </div>
 
             <div class="tag-group">
                 <div class="tag-group-label">Industry</div>
-                <span class="tag" data-group="industry" data-value="software">Software</span>
-                <span class="tag" data-group="industry" data-value="engineering">Engineering</span>
-                <span class="tag" data-group="industry" data-value="tech">Tech</span>
-                <span class="tag" data-group="industry" data-value="IT">IT</span>
-                <span class="tag" data-group="industry" data-value="data">Data</span>
-                <span class="tag" data-group="industry" data-value="startup">Startup</span>
-                <span class="tag" data-group="industry" data-value="finance">Finance</span>
-                <span class="tag" data-group="industry" data-value="banking">Banking</span>
-                <span class="tag" data-group="industry" data-value="&quot;financial services&quot;">Financial Services</span>
-                <span class="tag" data-group="industry" data-value="fintech">Fintech</span>
-                <span class="tag" data-group="industry" data-value="&quot;mercado financeiro&quot;">Mercado Financeiro</span>
-                <span class="tag" data-group="industry" data-value="&quot;servicos financeiros&quot;">Serviços Financeiros</span>
-                <span class="tag" data-group="industry" data-value="&quot;real estate&quot;">Real Estate</span>
-                <span class="tag" data-group="industry" data-value="proptech">Proptech</span>
-                <span class="tag" data-group="industry" data-value="&quot;property management&quot;">Property Management</span>
-                <span class="tag" data-group="industry" data-value="imobiliario">Imobiliário</span>
-                <span class="tag" data-group="industry" data-value="&quot;mercado imobiliario&quot;">Mercado Imobiliário</span>
-                <span class="tag" data-group="industry" data-value="recruiting">Recruiting</span>
-                <span class="tag" data-group="industry" data-value="staffing">Staffing</span>
-                <span class="tag" data-group="industry" data-value="&quot;executive search&quot;">Executive Search</span>
-                <span class="tag" data-group="industry" data-value="RH">RH</span>
-                <span class="tag" data-group="industry" data-value="&quot;recursos humanos&quot;">Recursos Humanos</span>
-                <span class="tag" data-group="industry" data-value="legal">Legal</span>
-                <span class="tag" data-group="industry" data-value="law">Law</span>
-                <span class="tag" data-group="industry" data-value="judicial">Judicial</span>
-                <span class="tag" data-group="industry" data-value="&quot;legal media&quot;">Legal Media</span>
-                <span class="tag" data-group="industry" data-value="juridico">Jurídico</span>
-                <span class="tag" data-group="industry" data-value="&quot;poder judiciario&quot;">Poder Judiciário</span>
-                <span class="tag" data-group="industry" data-value="journalism">Journalism</span>
-                <span class="tag" data-group="industry" data-value="jornalismo">Jornalismo</span>
-                <span class="tag" data-group="industry" data-value="environment">Environment</span>
-                <span class="tag" data-group="industry" data-value="sustainability">Sustainability</span>
-                <span class="tag" data-group="industry" data-value="ESG">ESG</span>
-                <span class="tag" data-group="industry" data-value="&quot;environmental services&quot;">Environmental Services</span>
-                <span class="tag" data-group="industry" data-value="&quot;meio ambiente&quot;">Meio Ambiente</span>
-                <span class="tag" data-group="industry" data-value="&quot;gestao ambiental&quot;">Gestão Ambiental</span>
-                <span class="tag" data-group="industry" data-value="sanitation">Sanitation</span>
-                <span class="tag" data-group="industry" data-value="&quot;water treatment&quot;">Water Treatment</span>
-                <span class="tag" data-group="industry" data-value="&quot;wastewater treatment&quot;">Wastewater Treatment</span>
-                <span class="tag" data-group="industry" data-value="saneamento">Saneamento</span>
-                <span class="tag" data-group="industry" data-value="&quot;tratamento de agua&quot;">Tratamento de Água</span>
-                <span class="tag" data-group="industry" data-value="&quot;tratamento de esgoto&quot;">Tratamento de Esgoto</span>
-                <span class="tag" data-group="industry" data-value="healthcare">Healthcare</span>
-                <span class="tag" data-group="industry" data-value="hospital">Hospital</span>
-                <span class="tag" data-group="industry" data-value="&quot;medical services&quot;">Medical Services</span>
-                <span class="tag" data-group="industry" data-value="pharma">Pharma</span>
-                <span class="tag" data-group="industry" data-value="saude">Saúde</span>
-                <span class="tag" data-group="industry" data-value="hospitalar">Hospitalar</span>
-                <span class="tag" data-group="industry" data-value="education">Education</span>
-                <span class="tag" data-group="industry" data-value="edtech">Edtech</span>
-                <span class="tag" data-group="industry" data-value="&quot;higher education&quot;">Higher Education</span>
-                <span class="tag" data-group="industry" data-value="educacao">Educação</span>
-                <span class="tag" data-group="industry" data-value="ensino">Ensino</span>
-                <span class="tag" data-group="industry" data-value="marketing">Marketing</span>
-                <span class="tag" data-group="industry" data-value="advertising">Advertising</span>
-                <span class="tag" data-group="industry" data-value="&quot;digital marketing&quot;">Digital Marketing</span>
-                <span class="tag" data-group="industry" data-value="branding">Branding</span>
-                <span class="tag" data-group="industry" data-value="publicidade">Publicidade</span>
-                <span class="tag" data-group="industry" data-value="sales">Sales</span>
-                <span class="tag" data-group="industry" data-value="&quot;inside sales&quot;">Inside Sales</span>
-                <span class="tag" data-group="industry" data-value="&quot;B2B sales&quot;">B2B Sales</span>
-                <span class="tag" data-group="industry" data-value="commercial">Commercial</span>
-                <span class="tag" data-group="industry" data-value="vendas">Vendas</span>
-                <span class="tag" data-group="industry" data-value="comercial">Comercial</span>
-                <span class="tag" data-group="industry" data-value="&quot;graphic design&quot;">Graphic Design</span>
-                <span class="tag" data-group="industry" data-value="&quot;visual design&quot;">Visual Design</span>
-                <span class="tag" data-group="industry" data-value="&quot;creative services&quot;">Creative Services</span>
-                <span class="tag" data-group="industry" data-value="design">Design</span>
-                <span class="tag" data-group="industry" data-value="&quot;comunicacao visual&quot;">Comunicacao Visual</span>
-                <span class="tag" data-group="industry" data-value="&quot;art direction&quot;">Art Direction</span>
-                <span class="tag" data-group="industry" data-value="&quot;creative direction&quot;">Creative Direction</span>
-                <span class="tag" data-group="industry" data-value="&quot;brand campaigns&quot;">Brand Campaigns</span>
-                <span class="tag" data-group="industry" data-value="&quot;direcao de arte&quot;">Direcao de Arte</span>
-                <span class="tag" data-group="industry" data-value="&quot;brand strategy&quot;">Brand Strategy</span>
-                <span class="tag" data-group="industry" data-value="&quot;brand identity&quot;">Brand Identity</span>
-                <span class="tag" data-group="industry" data-value="&quot;identidade visual&quot;">Identidade Visual</span>
-                <span class="tag" data-group="industry" data-value="&quot;gestao de marca&quot;">Gestao de Marca</span>
-                <span class="tag" data-group="industry" data-value="&quot;user experience&quot;">User Experience</span>
-                <span class="tag" data-group="industry" data-value="&quot;user interface&quot;">User Interface</span>
-                <span class="tag" data-group="industry" data-value="&quot;product design&quot;">Product Design</span>
-                <span class="tag" data-group="industry" data-value="&quot;design de produto&quot;">Design de Produto</span>
-                <span class="tag" data-group="industry" data-value="&quot;design de experiencia&quot;">Design de Experiencia</span>
-                <span class="tag" data-group="industry" data-value="&quot;motion design&quot;">Motion Design</span>
-                <span class="tag" data-group="industry" data-value="&quot;motion graphics&quot;">Motion Graphics</span>
-                <span class="tag" data-group="industry" data-value="animation">Animation</span>
-                <span class="tag" data-group="industry" data-value="&quot;video animation&quot;">Video Animation</span>
-                <span class="tag" data-group="industry" data-value="&quot;design de motion&quot;">Design de Motion</span>
-                <span class="tag" data-group="industry" data-value="&quot;video production&quot;">Video Production</span>
-                <span class="tag" data-group="industry" data-value="&quot;post production&quot;">Post Production</span>
-                <span class="tag" data-group="industry" data-value="audiovisual">Audiovisual</span>
-                <span class="tag" data-group="industry" data-value="&quot;video editing&quot;">Video Editing</span>
-                <span class="tag" data-group="industry" data-value="&quot;producao de video&quot;">Producao de Video</span>
-                <span class="tag" data-group="industry" data-value="&quot;video content&quot;">Video Content</span>
-                <span class="tag" data-group="industry" data-value="&quot;content production&quot;">Content Production</span>
-                <span class="tag" data-group="industry" data-value="&quot;media production&quot;">Media Production</span>
-                <span class="tag" data-group="industry" data-value="&quot;criacao de conteudo&quot;">Criacao de Conteudo</span>
-                <span class="tag" data-group="industry" data-value="&quot;producao audiovisual&quot;">Producao Audiovisual</span>
+                <div class="area-filter-pills" id="industryAreaFilter" data-target-group="industry">
+                    <button class="area-pill active" data-area="">All</button>
+                    <button class="area-pill" data-area="tech">Tech</button>
+                    <button class="area-pill" data-area="finance">Finance</button>
+                    <button class="area-pill" data-area="real-estate">Real Estate</button>
+                    <button class="area-pill" data-area="recruiting">Recruiting</button>
+                    <button class="area-pill" data-area="legal">Legal</button>
+                    <button class="area-pill" data-area="healthcare">Health</button>
+                    <button class="area-pill" data-area="education">Education</button>
+                    <button class="area-pill" data-area="marketing">Marketing</button>
+                    <button class="area-pill" data-area="sales">Sales</button>
+                    <button class="area-pill" data-area="design">Design</button>
+                    <button class="area-pill" data-area="creative">Creative</button>
+                </div>
+                <span class="tag" data-group="industry" data-area="tech" data-value="software">Software</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="engineering">Engineering</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="tech">Tech</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="IT">IT</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="data">Data</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="startup">Startup</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="finance">Finance</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="banking">Banking</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="&quot;financial services&quot;">Financial Services</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="fintech">Fintech</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="&quot;mercado financeiro&quot;">Mercado Financeiro</span>
+                <span class="tag" data-group="industry" data-area="finance" data-value="&quot;servicos financeiros&quot;">Serviços Financeiros</span>
+                <span class="tag" data-group="industry" data-area="real-estate" data-value="&quot;real estate&quot;">Real Estate</span>
+                <span class="tag" data-group="industry" data-area="real-estate" data-value="proptech">Proptech</span>
+                <span class="tag" data-group="industry" data-area="real-estate" data-value="&quot;property management&quot;">Property Management</span>
+                <span class="tag" data-group="industry" data-area="real-estate" data-value="imobiliario">Imobiliário</span>
+                <span class="tag" data-group="industry" data-area="real-estate" data-value="&quot;mercado imobiliario&quot;">Mercado Imobiliário</span>
+                <span class="tag" data-group="industry" data-area="recruiting" data-value="recruiting">Recruiting</span>
+                <span class="tag" data-group="industry" data-area="recruiting" data-value="staffing">Staffing</span>
+                <span class="tag" data-group="industry" data-area="recruiting" data-value="&quot;executive search&quot;">Executive Search</span>
+                <span class="tag" data-group="industry" data-area="recruiting" data-value="RH">RH</span>
+                <span class="tag" data-group="industry" data-area="recruiting" data-value="&quot;recursos humanos&quot;">Recursos Humanos</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="legal">Legal</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="law">Law</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="judicial">Judicial</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="&quot;legal media&quot;">Legal Media</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="juridico">Jurídico</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="&quot;poder judiciario&quot;">Poder Judiciário</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="journalism">Journalism</span>
+                <span class="tag" data-group="industry" data-area="legal" data-value="jornalismo">Jornalismo</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="environment">Environment</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="sustainability">Sustainability</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="ESG">ESG</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;environmental services&quot;">Environmental Services</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;meio ambiente&quot;">Meio Ambiente</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;gestao ambiental&quot;">Gestão Ambiental</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="sanitation">Sanitation</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;water treatment&quot;">Water Treatment</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;wastewater treatment&quot;">Wastewater Treatment</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="saneamento">Saneamento</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;tratamento de agua&quot;">Tratamento de Água</span>
+                <span class="tag" data-group="industry" data-area="tech" data-value="&quot;tratamento de esgoto&quot;">Tratamento de Esgoto</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="healthcare">Healthcare</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="hospital">Hospital</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="&quot;medical services&quot;">Medical Services</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="pharma">Pharma</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="saude">Saúde</span>
+                <span class="tag" data-group="industry" data-area="healthcare" data-value="hospitalar">Hospitalar</span>
+                <span class="tag" data-group="industry" data-area="education" data-value="education">Education</span>
+                <span class="tag" data-group="industry" data-area="education" data-value="edtech">Edtech</span>
+                <span class="tag" data-group="industry" data-area="education" data-value="&quot;higher education&quot;">Higher Education</span>
+                <span class="tag" data-group="industry" data-area="education" data-value="educacao">Educação</span>
+                <span class="tag" data-group="industry" data-area="education" data-value="ensino">Ensino</span>
+                <span class="tag" data-group="industry" data-area="marketing" data-value="marketing">Marketing</span>
+                <span class="tag" data-group="industry" data-area="marketing" data-value="advertising">Advertising</span>
+                <span class="tag" data-group="industry" data-area="marketing" data-value="&quot;digital marketing&quot;">Digital Marketing</span>
+                <span class="tag" data-group="industry" data-area="marketing" data-value="branding">Branding</span>
+                <span class="tag" data-group="industry" data-area="marketing" data-value="publicidade">Publicidade</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="sales">Sales</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="&quot;inside sales&quot;">Inside Sales</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="&quot;B2B sales&quot;">B2B Sales</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="commercial">Commercial</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="vendas">Vendas</span>
+                <span class="tag" data-group="industry" data-area="sales" data-value="comercial">Comercial</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;graphic design&quot;">Graphic Design</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;visual design&quot;">Visual Design</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;creative services&quot;">Creative Services</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="design">Design</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;comunicacao visual&quot;">Comunicacao Visual</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;art direction&quot;">Art Direction</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;creative direction&quot;">Creative Direction</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;brand campaigns&quot;">Brand Campaigns</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;direcao de arte&quot;">Direcao de Arte</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;brand strategy&quot;">Brand Strategy</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;brand identity&quot;">Brand Identity</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;identidade visual&quot;">Identidade Visual</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;gestao de marca&quot;">Gestao de Marca</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;user experience&quot;">User Experience</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;user interface&quot;">User Interface</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;product design&quot;">Product Design</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;design de produto&quot;">Design de Produto</span>
+                <span class="tag" data-group="industry" data-area="design" data-value="&quot;design de experiencia&quot;">Design de Experiencia</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;motion design&quot;">Motion Design</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;motion graphics&quot;">Motion Graphics</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="animation">Animation</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;video animation&quot;">Video Animation</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;design de motion&quot;">Design de Motion</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;video production&quot;">Video Production</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;post production&quot;">Post Production</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="audiovisual">Audiovisual</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;video editing&quot;">Video Editing</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;producao de video&quot;">Producao de Video</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;video content&quot;">Video Content</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;content production&quot;">Content Production</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;media production&quot;">Media Production</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;criacao de conteudo&quot;">Criacao de Conteudo</span>
+                <span class="tag" data-group="industry" data-area="creative" data-value="&quot;producao audiovisual&quot;">Producao Audiovisual</span>
             </div>
 
             <div class="tag-group">
