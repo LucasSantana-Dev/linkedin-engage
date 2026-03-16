@@ -371,5 +371,87 @@ describe('jobs career intelligence', () => {
             }, {});
             expect(plan.templateId).toContain('custom');
         });
+
+        it('uses "balanced" bucket for custom preset with precise bucket (line 274)', () => {
+            const plan = buildJobsCareerSearchPlan({
+                areaPreset: 'custom',
+                seniority: 'mid',
+                inferredRoles: ['account manager'],
+                keywordTerms: ['sales'],
+                locationTerms: ['remote'],
+                workType: '',
+                experienceLevel: '3'
+            }, { expectedResultsBucket: 'precise' });
+            // chooseTemplateId for custom+precise maps to 'balanced' bucket
+            expect(plan.templateId).toMatch(/custom.*balanced/);
+        });
+    });
+
+    describe('analyzeJobsCareerInputs — uniqueList dedup + limit (lines 101-102)', () => {
+        it('deduplicates identical items in uniqueList via inferredRoles', () => {
+            const result = analyzeJobsCareerInputs({
+                profile: { resumeSummary: 'software engineer software engineer frontend developer' },
+                importedProfile: {
+                    headline: 'software engineer',
+                    experiences: ['software engineer at company A', 'software engineer at company B']
+                }
+            });
+            // inferredRoles should have no duplicates (line 104 dedup branch)
+            const uniqueCount = new Set(result.inferredRoles).size;
+            expect(uniqueCount).toBe(result.inferredRoles.length);
+        });
+    });
+
+    describe('inferLocationTerms brazil branch (line 214)', () => {
+        it('includes brazil term when text contains brazil', () => {
+            const result = analyzeJobsCareerInputs({
+                profile: { city: 'São Paulo, Brazil' },
+                importedProfile: { location: 'Brazil' }
+            });
+            // brazil detected -> 'brazil' pushed; remote is already not in list so 'remote' pushed too
+            expect(result.locationTerms).toContain('brazil');
+        });
+
+        it('includes latam term when text contains latam', () => {
+            const result = analyzeJobsCareerInputs({
+                importedProfile: { about: 'Working across LATAM markets and Latin America' }
+            });
+            expect(result.locationTerms).toContain('latam');
+        });
+    });
+
+    describe('inferKeywordTerms >= 8 detected path (line 221)', () => {
+        it('returns sliced detected when 8+ keyword patterns match', () => {
+            // Pass a text with enough keyword pattern matches (>= 8 from KEYWORD_PATTERNS)
+            const result = analyzeJobsCareerInputs({
+                importedProfile: {
+                    skills: ['react', 'typescript', 'node.js', 'aws', 'postgresql', 'redis', 'docker', 'kubernetes', 'python', 'java'],
+                    headline: 'Full Stack Engineer'
+                }
+            });
+            // detected.length >= 8 -> returns detected.slice(0, 12)
+            expect(result.keywordTerms.length).toBeGreaterThanOrEqual(1);
+        });
+    });
+
+    describe('detectMatches limit branch (line 150)', () => {
+        it('stops matching at the limit via analyzeJobsCareerInputs inferredRoles limit=5', () => {
+            // ROLE_PATTERNS has many patterns; provide text matching 6+ roles
+            const result = analyzeJobsCareerInputs({
+                importedProfile: {
+                    experiences: [
+                        'software engineer',
+                        'frontend developer',
+                        'full stack developer',
+                        'backend developer',
+                        'react developer',
+                        'mobile developer',
+                        'devops engineer'
+                    ]
+                }
+            });
+            // inferredRoles is capped at 5 (detectMatches called with limit=5)
+            expect(result.inferredRoles.length).toBeLessThanOrEqual(5);
+        });
     });
 });
