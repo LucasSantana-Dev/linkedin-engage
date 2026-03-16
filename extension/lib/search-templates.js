@@ -1796,10 +1796,6 @@
             if (/^(AND|OR|NOT)$/i.test(text)) {
                 return text.toUpperCase();
             }
-            const quoted = /^".*"$/.test(text);
-            if (!quoted && /\s/.test(text)) {
-                text = `"${text}"`;
-            }
             return text;
         }
 

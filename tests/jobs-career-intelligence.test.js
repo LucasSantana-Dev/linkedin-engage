@@ -148,8 +148,8 @@ describe('jobs career intelligence', () => {
         expect(plan.keywordTerms).toEqual(
             expect.arrayContaining(['react', 'aws'])
         );
-        expect(plan.query).toContain('"full stack engineer"');
-        expect(plan.query).toContain('"software engineer"');
+        expect(plan.query).toContain('full stack engineer');
+        expect(plan.query).toContain('software engineer');
         expect(plan.operatorCount).toBeLessThanOrEqual(12);
         expect(plan.workType).toBe('2');
         expect(plan.experienceLevel).toBe('4');

@@ -582,9 +582,9 @@ describe('sanitizeBooleanTerm', () => {
         expect(sanitizeBooleanTerm('not')).toBe('NOT');
     });
 
-    it('quotes multi-word terms', () => {
+    it('returns multi-word terms unquoted (LinkedIn does not support quoted phrases in boolean keywords)', () => {
         const result = sanitizeBooleanTerm('software engineer');
-        expect(result).toBe('"software engineer"');
+        expect(result).toBe('software engineer');
     });
 
     it('returns single-word term unquoted', () => {
@@ -593,7 +593,7 @@ describe('sanitizeBooleanTerm', () => {
 
     it('strips parentheses and punctuation', () => {
         const result = sanitizeBooleanTerm('(hello, world!)');
-        expect(result).toBe('"hello world"');
+        expect(result).toBe('hello world');
     });
 });
 

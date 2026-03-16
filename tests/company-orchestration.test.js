@@ -667,7 +667,7 @@ describe('company orchestration in background', () => {
         expect(createdTabs).toHaveLength(1);
         expect(createdTabs[0].url).toContain(
             encodeURIComponent(
-                '("graphic design" OR "visual design" OR "creative studio" OR "comunicacao visual")'
+                '(graphic design OR visual design OR creative studio OR comunicacao visual)'
             )
         );
         expect(updatedTabs).toHaveLength(0);
@@ -697,7 +697,7 @@ describe('company orchestration in background', () => {
         expect(createdTabs).toHaveLength(1);
         expect(createdTabs[0].url).toContain(
             encodeURIComponent(
-                '(branding OR "brand strategy" OR "visual identity" OR "creative direction")'
+                '(branding OR brand strategy OR visual identity OR creative direction)'
             )
         );
         expect(createdTabs[0].url).not.toContain('keywords=Interbrand');
