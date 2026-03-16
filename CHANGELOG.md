@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.1] - 2026-03-16
+
+### Fixed
+- **Boolean search quoted phrases**: `sanitizeBooleanTerm()` no longer wraps multi-word terms in double quotes. LinkedIn people/company search does not support quoted phrase syntax (`"talent acquisition"`) in keyword boolean queries — this caused "No results found" for any search using multi-word role or industry tags. Multi-word terms now remain unquoted (`talent acquisition OR hiring manager`).
+
 ## [1.36.0] - 2026-03-15
 
 ### Added
