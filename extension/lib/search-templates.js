@@ -2046,11 +2046,12 @@
             const roles = groupTerms.role.slice(0, roleLimit);
 
             const compiled = compileBooleanQuery({
-                should: roles,
-                must: groupTerms.industry.concat(
+                should: roles.concat(
+                    groupTerms.industry,
                     groupTerms.market,
                     groupTerms.level
                 ),
+                must: [],
                 mustNot: [],
                 budget: 12,
                 explicitAnd: false,
