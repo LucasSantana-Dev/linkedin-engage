@@ -135,9 +135,42 @@
 
         .tag-group {
             display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 7px;
+        }
+
+        .tag-scroll-area {
+            display: flex;
             flex-wrap: wrap;
             gap: 5px;
-            margin-bottom: 7px;
+            max-height: 110px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .tag-scroll-area::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .tag-scroll-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tag-scroll-area::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        @keyframes tag-limit-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        .tag-limit-shake {
+            animation: tag-limit-shake 0.35s ease;
+            opacity: 0.5;
         }
 
         .tag-group-label {
@@ -1583,6 +1616,7 @@
                     <button class="area-pill" data-area="design">Design</button>
                     <button class="area-pill" data-area="creative">Creative</button>
                 </div>
+                <div class="tag-scroll-area">
                 <span class="tag" data-group="role" data-area="recruiting" data-value="recruiter">Recruiter</span>
                 <span class="tag" data-group="role" data-area="recruiting" data-value="talent acquisition">Talent Acquisition</span>
                 <span class="tag" data-group="role" data-area="recruiting" data-value="hiring manager">Hiring Manager</span>
@@ -1688,6 +1722,7 @@
                 <span class="tag" data-group="role" data-area="creative" data-value="content creator">Content Creator</span>
                 <span class="tag" data-group="role" data-area="creative" data-value="produtor audiovisual">Produtor Audiovisual</span>
                 <span class="tag" data-group="role" data-area="creative" data-value="filmmaker">Filmmaker</span>
+                </div>
             </div>
 
             <div class="tag-group">
@@ -1706,6 +1741,7 @@
                     <button class="area-pill" data-area="design">Design</button>
                     <button class="area-pill" data-area="creative">Creative</button>
                 </div>
+                <div class="tag-scroll-area">
                 <span class="tag" data-group="industry" data-area="tech" data-value="software">Software</span>
                 <span class="tag" data-group="industry" data-area="tech" data-value="engineering">Engineering</span>
                 <span class="tag" data-group="industry" data-area="tech" data-value="tech">Tech</span>
@@ -1803,10 +1839,12 @@
                 <span class="tag" data-group="industry" data-area="creative" data-value="media production">Media Production</span>
                 <span class="tag" data-group="industry" data-area="creative" data-value="criacao de conteudo">Criacao de Conteudo</span>
                 <span class="tag" data-group="industry" data-area="creative" data-value="producao audiovisual">Producao Audiovisual</span>
+                </div>
             </div>
 
             <div class="tag-group">
                 <div class="tag-group-label">Market Focus</div>
+                <div class="tag-scroll-area">
                 <span class="tag" data-group="market" data-value="latam">LATAM</span>
                 <span class="tag" data-group="market" data-value="brazil">Brazil</span>
                 <span class="tag" data-group="market" data-value="nearshore">Nearshore</span>
@@ -1814,15 +1852,18 @@
                 <span class="tag" data-group="market" data-value="offshore">Offshore</span>
                 <span class="tag" data-group="market" data-value="distributed team">Distributed Team</span>
                 <span class="tag" data-group="market" data-value="hiring in brazil">Hiring in Brazil</span>
+                </div>
             </div>
 
             <div class="tag-group">
                 <div class="tag-group-label">Level They Hire</div>
+                <div class="tag-scroll-area">
                 <span class="tag" data-group="level" data-value="junior">Junior</span>
                 <span class="tag" data-group="level" data-value="mid-level">Mid-Level</span>
                 <span class="tag" data-group="level" data-value="senior">Senior</span>
                 <span class="tag" data-group="level" data-value="lead">Lead</span>
                 <span class="tag" data-group="level" data-value="staff">Staff</span>
+                </div>
             </div>
 
                 </div>

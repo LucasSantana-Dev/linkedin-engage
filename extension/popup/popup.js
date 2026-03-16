@@ -2676,9 +2676,23 @@ function loadState() {
 
 // --- EVENT LISTENERS ---
 
+const MAX_ACTIVE_TAGS_PER_GROUP = 8;
+
 document.querySelectorAll('.tag').forEach(tag => {
     tag.addEventListener('click', () => {
         if (useCustomQuery) return;
+        const isActive = tag.classList.contains('active');
+        if (!isActive) {
+            const group = tag.dataset.group;
+            const activeInGroup = document.querySelectorAll(
+                `.tag.active[data-group="${group}"]`
+            ).length;
+            if (activeInGroup >= MAX_ACTIVE_TAGS_PER_GROUP) {
+                tag.classList.add('tag-limit-shake');
+                setTimeout(() => tag.classList.remove('tag-limit-shake'), 400);
+                return;
+            }
+        }
         tag.classList.toggle('active');
         const group = tag.dataset.group;
         const shouldResetPreset = typeof
