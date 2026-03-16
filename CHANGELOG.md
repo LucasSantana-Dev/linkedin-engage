@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.4] - 2026-03-16
+
+### Changed
+- **Coverage improvements**: Boosted branch coverage from 85.77% to 85.95% by adding 22 targeted tests across `company-utils.js` (+16 tests: `extractCompanySlugName` no-match, `extractCompanyInfo` innerText branches, `findFallbackCompanyContainers`, `getCompanyFollowConfirmationSignals` aria-pressed + btn.disabled, `isNextPageButton` null/disabled, `getCompanySearchPageState` body-text fallback + detectExplicit + parseResultsCount patterns) and `jobs-career-intelligence.js` (+6 tests: `uniqueList` dedup, `detectMatches` limit, `inferLocationTerms` brazil+latam, `inferKeywordTerms` ≥8 detected, `chooseTemplateId` custom+precise→balanced). Branch coverage threshold ratcheted 85.5% → 85.7%.
+
 ## [1.36.3] - 2026-03-16
 
 ### Fixed
