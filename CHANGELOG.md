@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.3] - 2026-03-16
+
+### Fixed
+- **Search tag quoted values**: All `data-value` attributes in popup.html had `&quot;` HTML entities embedding double-quote characters into tag values (e.g., `"talent acquisition"`). These quoted values flowed into the boolean query as `"talent acquisition"` which LinkedIn People Search rejects. Removed all 134 `&quot;` entities so tags emit clean unquoted values. Added defensive `.replace(/"/g, '')` to `sanitizeBooleanTerm()` to guard against future regressions. Bumped `STATE_TAG_VERSION` 6→7 to clear any stale Chrome storage entries containing old quoted values.
+
 ## [1.36.2] - 2026-03-16
 
 ### Fixed
