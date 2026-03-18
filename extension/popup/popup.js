@@ -1492,13 +1492,11 @@ function buildConnectSearchPlan(selectedTags) {
         };
     }
     const safeRoles = getSafeRoleTerms(tags.role);
-    const parts = [];
-    if (safeRoles.length === 1) parts.push(safeRoles[0]);
-    if (safeRoles.length > 1) parts.push(safeRoles.join(' OR '));
-    tags.industry.forEach(term => parts.push(term));
-    tags.market.forEach(term => parts.push(term));
-    tags.level.forEach(term => parts.push(term));
-    const query = parts.join(' ');
+    const queryTerms = safeRoles
+        .concat(tags.industry || [], tags.market || [], tags.level || [])
+        .map(term => String(term || '').trim())
+        .filter(Boolean);
+    const query = queryTerms.join(' OR ');
     return {
         query,
         filterSpec: {},

@@ -2002,6 +2002,15 @@
 
         function buildConnectQueryPlan(template, options) {
             const selectedTags = options?.selectedTags || {};
+            const hasSelectedKey = (key) => Object.prototype.hasOwnProperty
+                .call(selectedTags, key);
+            const selectedValues = (key) => listFrom(selectedTags[key]);
+            const shouldOmitDefaults = (key) => {
+                if (!hasSelectedKey(key)) return false;
+                if (key !== 'role' && key !== 'industry') return false;
+                if (!Array.isArray(selectedTags[key])) return false;
+                return selectedTags[key].length === 0;
+            };
             const searchLocale = typeof resolveSearchLocale === 'function'
                 ? resolveSearchLocale({
                     mode: 'connect',
@@ -2017,11 +2026,15 @@
             );
             const groupTerms = {
                 role: localizeTerms(
-                    mergeGroupTerms(template, selectedTags, 'role'),
+                    shouldOmitDefaults('role')
+                        ? selectedValues('role')
+                        : mergeGroupTerms(template, selectedTags, 'role'),
                     searchLocale
                 ),
                 industry: localizeTerms(
-                    mergeGroupTerms(template, selectedTags, 'industry'),
+                    shouldOmitDefaults('industry')
+                        ? selectedValues('industry')
+                        : mergeGroupTerms(template, selectedTags, 'industry'),
                     searchLocale
                 ),
                 market: localizeTerms(

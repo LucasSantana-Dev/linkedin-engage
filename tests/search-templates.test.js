@@ -175,7 +175,7 @@ describe('search-templates', () => {
         expect(plan.meta.compiledQueryLength).toBe(plan.query.length);
     });
 
-    it('builds connect template plan with portuguese query terms', () => {
+    it('allows omitting role/industry defaults while keeping selected market terms', () => {
         const plan = buildSearchTemplatePlan({
             mode: 'connect',
             areaPreset: 'tech',
@@ -191,8 +191,68 @@ describe('search-templates', () => {
             }
         });
 
-        expect(plan.query.toLowerCase()).toContain('recrutador');
         expect(plan.query.toLowerCase()).toContain('brasil');
+        expect(plan.query.toLowerCase()).not.toContain('recrutador');
+        expect(plan.query.toLowerCase()).not.toContain('engenharia');
+    });
+
+    it('preserves explicit role terms when industry is omitted', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                role: ['recruiter'],
+                industry: [],
+                market: [],
+                level: []
+            }
+        });
+
+        expect(plan.query.toLowerCase()).toContain('recruiter');
+        expect(plan.query.toLowerCase()).not.toContain('software');
+        expect(plan.query.toLowerCase()).not.toContain('engineering');
+    });
+
+    it('keeps connect defaults when role/industry keys are not provided', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                market: [],
+                level: []
+            }
+        });
+
+        expect(plan.query.toLowerCase()).toContain('recruiter');
+        expect(plan.query.toLowerCase()).toContain('software');
+    });
+
+    it('keeps defaults when role/industry values are undefined', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                role: undefined,
+                industry: undefined,
+                market: [],
+                level: []
+            }
+        });
+
+        expect(plan.query.toLowerCase()).toContain('recruiter');
+        expect(plan.query.toLowerCase()).toContain('software');
     });
 
     it('builds jobs template plan preferring explicit role title terms', () => {
