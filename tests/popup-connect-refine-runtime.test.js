@@ -1,0 +1,224 @@
+/**
+ * @jest-environment jsdom
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+function loadPopupHtml() {
+    const htmlPath = path.join(
+        __dirname,
+        '../extension/popup/popup.html'
+    );
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    document.open();
+    document.write(html);
+    document.close();
+}
+
+function createChromeMock() {
+    const localStore = {};
+    return {
+        runtime: {
+            sendMessage: jest.fn((message, callback) => {
+                if (callback) callback({ ok: true, message });
+            }),
+            onMessage: { addListener: jest.fn() },
+            getURL: jest.fn((p) => p)
+        },
+        storage: {
+            local: {
+                get: jest.fn((keys, callback) => {
+                    if (Array.isArray(keys)) {
+                        const out = {};
+                        keys.forEach((k) => {
+                            out[k] = localStore[k];
+                        });
+                        callback(out);
+                        return;
+                    }
+                    if (typeof keys === 'string') {
+                        callback({ [keys]: localStore[keys] });
+                        return;
+                    }
+                    callback({ ...localStore });
+                }),
+                set: jest.fn((data, callback) => {
+                    Object.assign(localStore, data || {});
+                    if (callback) callback();
+                }),
+                remove: jest.fn((key, callback) => {
+                    if (Array.isArray(key)) {
+                        key.forEach((k) => delete localStore[k]);
+                    } else {
+                        delete localStore[key];
+                    }
+                    if (callback) callback();
+                })
+            }
+        },
+        tabs: {
+            query: jest.fn((queryInfo, callback) => {
+                callback([
+                    {
+                        id: 1,
+                        url: 'https://www.linkedin.com/feed/'
+                    }
+                ]);
+            }),
+            sendMessage: jest.fn((tabId, message, callback) => {
+                if (callback) callback({ ok: true });
+            }),
+            create: jest.fn()
+        },
+        windows: {
+            create: jest.fn()
+        }
+    };
+}
+
+function click(el) {
+    el.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+}
+
+function selectedCountText() {
+    const el = document.getElementById('refineSelectedCount');
+    return (el && el.textContent) || '';
+}
+
+describe('popup connect refine runtime', () => {
+    let chromeMock;
+
+    beforeEach(() => {
+        jest.resetModules();
+        jest.useFakeTimers();
+
+        loadPopupHtml();
+
+        chromeMock = createChromeMock();
+        global.chrome = chromeMock;
+        global.window.chrome = chromeMock;
+        global.alert = jest.fn();
+        global.confirm = jest.fn(() => true);
+        global.prompt = jest.fn(() => '');
+        global.navigator.clipboard = {
+            writeText: jest.fn().mockResolvedValue(undefined)
+        };
+
+        jest.isolateModules(() => {
+            require('../extension/popup/popup.js');
+        });
+    });
+
+    afterEach(() => {
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+        delete global.chrome;
+        delete global.alert;
+        delete global.confirm;
+        delete global.prompt;
+    });
+
+    test('applies area pills per target group without cross-group side effects', () => {
+        const roleTechPill = document.querySelector(
+            '#roleAreaFilter .area-pill[data-area="tech"]'
+        );
+        const industryFinancePill = document.querySelector(
+            '#industryAreaFilter .area-pill[data-area="finance"]'
+        );
+
+        const roleTechTag = document.querySelector(
+            '#connectSection .tag[data-group="role"][data-area="tech"]'
+        );
+        const roleRecruitingTag = document.querySelector(
+            '#connectSection .tag[data-group="role"][data-area="recruiting"]'
+        );
+
+        const industryTechTag = document.querySelector(
+            '#connectSection .tag[data-group="industry"][data-area="tech"]'
+        );
+        const industryFinanceTag = document.querySelector(
+            '#connectSection .tag[data-group="industry"][data-area="finance"]'
+        );
+
+        expect(roleTechTag.style.display).not.toBe('none');
+        expect(roleRecruitingTag.style.display).not.toBe('none');
+        expect(industryTechTag.style.display).not.toBe('none');
+        expect(industryFinanceTag.style.display).not.toBe('none');
+
+        click(roleTechPill);
+
+        expect(roleTechPill.classList.contains('active')).toBe(true);
+        expect(roleTechTag.style.display).not.toBe('none');
+        expect(roleRecruitingTag.style.display).toBe('none');
+
+        expect(industryTechTag.style.display).not.toBe('none');
+        expect(industryFinanceTag.style.display).not.toBe('none');
+
+        click(industryFinancePill);
+
+        expect(industryFinancePill.classList.contains('active')).toBe(true);
+        expect(industryFinanceTag.style.display).not.toBe('none');
+        expect(industryTechTag.style.display).toBe('none');
+
+        expect(roleTechTag.style.display).not.toBe('none');
+        expect(roleRecruitingTag.style.display).toBe('none');
+    });
+
+    test('selected tags remain recoverable and selected count stays correct under area filters', () => {
+        const roleAllPill = document.querySelector(
+            '#roleAreaFilter .area-pill[data-area=""]'
+        );
+        const roleTechPill = document.querySelector(
+            '#roleAreaFilter .area-pill[data-area="tech"]'
+        );
+        const roleRecruitingTag = document.querySelector(
+            '#connectSection .tag[data-group="role"][data-area="recruiting"]'
+        );
+
+        click(roleRecruitingTag);
+        expect(roleRecruitingTag.classList.contains('active')).toBe(true);
+        expect(selectedCountText()).toContain('1');
+
+        click(roleTechPill);
+
+        expect(roleRecruitingTag.style.display).toBe('none');
+        expect(roleRecruitingTag.classList.contains('active')).toBe(true);
+        expect(selectedCountText()).toContain('1');
+
+        click(roleAllPill);
+
+        expect(roleRecruitingTag.style.display).not.toBe('none');
+        expect(roleRecruitingTag.classList.contains('active')).toBe(true);
+        expect(selectedCountText()).toContain('1');
+    });
+
+    test('blocks 9th tag in same group and preserves state while shake feedback resets', () => {
+        const roleTags = Array.from(
+            document.querySelectorAll('#connectSection .tag[data-group="role"]')
+        );
+        expect(roleTags.length).toBeGreaterThan(8);
+
+        roleTags.slice(0, 8).forEach((tag) => click(tag));
+        expect(
+            document.querySelectorAll('#connectSection .tag.active[data-group="role"]').length
+        ).toBe(8);
+        expect(selectedCountText()).toContain('8');
+
+        const setCallsBefore = chromeMock.storage.local.set.mock.calls.length;
+
+        const ninthTag = roleTags[8];
+        click(ninthTag);
+
+        expect(ninthTag.classList.contains('active')).toBe(false);
+        expect(ninthTag.classList.contains('tag-limit-shake')).toBe(true);
+        expect(
+            document.querySelectorAll('#connectSection .tag.active[data-group="role"]').length
+        ).toBe(8);
+        expect(selectedCountText()).toContain('8');
+        expect(chromeMock.storage.local.set.mock.calls.length).toBe(setCallsBefore);
+
+        jest.advanceTimersByTime(450);
+        expect(ninthTag.classList.contains('tag-limit-shake')).toBe(false);
+    });
+});
