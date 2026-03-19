@@ -318,6 +318,142 @@ describe('search-templates', () => {
         expect(plan.meta.operatorCount).toBeLessThanOrEqual(12);
     });
 
+    it('keeps companies default keywords when selectedTags.keywords is missing', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {}
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineering teams');
+        expect(q).toContain('developer tools');
+    });
+
+    it('omits companies default keywords when selectedTags.keywords is explicitly empty', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                keywords: []
+            }
+        });
+
+        expect(plan.query).toBe('');
+    });
+
+    it('keeps companies defaults when selectedTags.keywords is undefined', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                keywords: undefined
+            }
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineering teams');
+        expect(q).toContain('developer tools');
+    });
+
+    it('keeps jobs defaults when role/location/keywords keys are missing', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en'
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineer');
+        expect(q).toContain('remote');
+        expect(q).toContain('easy apply');
+    });
+
+    it('omits jobs role defaults when roleTerms is explicitly empty', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            roleTerms: []
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).not.toContain('software engineer');
+        expect(q).toContain('remote');
+        expect(q).toContain('easy apply');
+    });
+
+    it('omits jobs location defaults when locationTerms is explicitly empty', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            locationTerms: []
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineer');
+        expect(q).toContain('easy apply');
+        expect(q).not.toContain('remote');
+    });
+
+    it('omits jobs keyword defaults when keywords is explicitly empty', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            keywords: []
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineer');
+        expect(q).toContain('remote');
+        expect(q).not.toContain('easy apply');
+    });
+
+    it('keeps jobs defaults when role/location/keywords values are undefined', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            roleTerms: undefined,
+            locationTerms: undefined,
+            keywords: undefined
+        });
+
+        const q = plan.query.toLowerCase();
+        expect(q).toContain('software engineer');
+        expect(q).toContain('remote');
+        expect(q).toContain('easy apply');
+    });
+
     it('contains starter catalog templates', () => {
         const ids = SEARCH_TEMPLATES.map(t => t.id);
         expect(ids).toContain(

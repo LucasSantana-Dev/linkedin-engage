@@ -1546,27 +1546,18 @@ function buildCompanySearchPlan() {
     };
 }
 
-function getEffectiveJobsRoleTerms(directRoleTerms) {
-    const roleTerms = Array.isArray(directRoleTerms)
-        ? directRoleTerms
-        : parseMultilineList(
-            document.getElementById('jobsRoleTermsInput')?.value
-        );
-    if (roleTerms.length > 0) return roleTerms;
-    return getJobsPresetTerms(
-        getSelectedJobsAreaPreset()
-    ).role.slice(0, 4);
-}
-
 function buildJobsSearchPlan() {
     const templateState = getTemplateState('jobs');
     const manualQuery = document.getElementById(
         'jobsQueryInput'
     )?.value.trim() || '';
-    const roleTerms = getEffectiveJobsRoleTerms();
+    const roleTerms = parseMultilineList(
+        document.getElementById('jobsRoleTermsInput')?.value
+    );
     const locationTerms = parseMultilineList(
         document.getElementById('jobsLocationTermsInput')?.value
     );
+    const keywordTerms = buildJobsKeywordTerms();
     if (typeof buildSearchTemplatePlan === 'function') {
         const plan = buildSearchTemplatePlan({
             mode: 'jobs',
@@ -1579,7 +1570,8 @@ function buildJobsSearchPlan() {
             searchLanguageMode: templateState.searchLanguageMode,
             manualQuery,
             roleTerms,
-            locationTerms
+            locationTerms,
+            keywords: keywordTerms
         });
         if (plan?.query) return plan;
     }
@@ -3258,9 +3250,9 @@ function startJobsAssist() {
         'jobsProfilePassphraseInput'
     ).value;
     const jobsAreaPreset = getSelectedJobsAreaPreset();
-    let roleTerms = getEffectiveJobsRoleTerms(parseMultilineList(
+    const roleTerms = parseMultilineList(
         document.getElementById('jobsRoleTermsInput').value
-    ));
+    );
 
     const locationTerms = parseMultilineList(
         document.getElementById('jobsLocationTermsInput').value

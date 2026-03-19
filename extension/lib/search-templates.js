@@ -2000,6 +2000,21 @@
             return uniqueNormalized(localizeSearchTerms(values, locale));
         }
 
+        function hasExplicitEmptyArray(source, key) {
+            if (!source || typeof source !== 'object') return false;
+            if (!Object.prototype.hasOwnProperty.call(source, key)) return false;
+            return Array.isArray(source[key]) && source[key].length === 0;
+        }
+
+        function resolveLocalizedOptionalGroup(source, key, templateValues, locale) {
+            const selected = listFrom(source?.[key]);
+            if (hasExplicitEmptyArray(source, key)) {
+                return localizeTerms(selected, locale);
+            }
+            const merged = listFrom(templateValues).concat(selected);
+            return localizeTerms(merged, locale);
+        }
+
         function buildConnectQueryPlan(template, options) {
             const selectedTags = options?.selectedTags || {};
             const hasSelectedKey = (key) => Object.prototype.hasOwnProperty
@@ -2124,8 +2139,12 @@
                 };
             }
 
-            const keywords = localizeTerms(
-                listFrom(template?.querySpec?.keywords),
+            const selectedTags = options?.selectedTags || {};
+
+            const keywords = resolveLocalizedOptionalGroup(
+                selectedTags,
+                'keywords',
+                template?.querySpec?.keywords,
                 searchLocale
             );
             const compiled = compileBooleanQuery({
@@ -2190,24 +2209,26 @@
             }
 
             const roleTerms = uniqueNormalized(
-                listFrom(options?.roleTerms).concat(
-                    localizeTerms(
-                        listFrom(template?.querySpec?.roleTerms),
-                        searchLocale
-                    )
+                resolveLocalizedOptionalGroup(
+                    options,
+                    'roleTerms',
+                    template?.querySpec?.roleTerms,
+                    searchLocale
                 )
             );
             const locationTerms = uniqueNormalized(
-                listFrom(options?.locationTerms).concat(
-                    localizeTerms(
-                        listFrom(template?.querySpec?.locationTerms),
-                        searchLocale
-                    )
+                resolveLocalizedOptionalGroup(
+                    options,
+                    'locationTerms',
+                    template?.querySpec?.locationTerms,
+                    searchLocale
                 )
             );
             const keywords = uniqueNormalized(
-                localizeTerms(
-                    listFrom(template?.querySpec?.keywords),
+                resolveLocalizedOptionalGroup(
+                    options,
+                    'keywords',
+                    template?.querySpec?.keywords,
                     searchLocale
                 )
             );
