@@ -1,0 +1,47 @@
+name: PR Governance
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  size-label:
+    name: PR Size Label
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Label PR by size
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/XS'
+          xs_max_size: 10
+          s_label: 'size/S'
+          s_max_size: 100
+          m_label: 'size/M'
+          m_max_size: 400
+          l_label: 'size/L'
+          l_max_size: 800
+          xl_label: 'size/XL'
+          fail_if_xl: false
+          files_to_ignore: 'package-lock.json'
+
+  title-lint:
+    name: PR Title Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate conventional commit title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            refactor
+            docs
+            test
+            chore
+            ci
+            perf
+          requireScope: false
