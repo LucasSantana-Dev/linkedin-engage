@@ -256,8 +256,16 @@ async function runAutomation(searchQuery) {
     // 3. Find and Click Connect Buttons
     logger.info(chalk.blue('[BOT] Searching for "Connect" buttons on the page...'));
 
-    // Attempt 1: Look for exact Connect buttons
-    let connectButtons = await page.$$('button:has-text("Connect")');
+    // LinkedIn may render connect actions as button or anchor invite links.
+    // Support both EN/PT variants to avoid silently missing actionable cards.
+    let connectButtons = await page.$$(
+        [
+            'button:has-text("Connect")',
+            'button:has-text("Conectar")',
+            'a[aria-label*="Invite"][aria-label*="connect"]',
+            'a[aria-label*="Convidar"][aria-label*="conectar"]'
+        ].join(', ')
+    );
 
     let buttonsClicked = 0;
 
