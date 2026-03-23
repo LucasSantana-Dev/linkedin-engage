@@ -1,5 +1,6 @@
 let activeTabId = null;
 let companyRunState = null;
+let connectLaunchState = null;
 const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 
@@ -157,6 +158,109 @@ function normalizeTemplateMeta(meta, mode) {
             Number(source.compiledQueryLength) || 0
         ),
         mode: normalizedMode
+    };
+}
+
+function normalizeConnectQueryTerm(term) {
+    return String(term || '')
+        .replace(/[()\[\]"]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function buildRelaxedConnectQuery(query) {
+    const source = String(query || '').trim();
+    if (!source) return '';
+
+    const segments = source
+        .split(/\s+(?:OR|AND)\s+/i)
+        .map(normalizeConnectQueryTerm)
+        .filter(Boolean);
+
+    const uniqueSegments = [];
+    for (const term of segments) {
+        if (!uniqueSegments.includes(term)) {
+            uniqueSegments.push(term);
+        }
+    }
+    if (uniqueSegments.length > 0) {
+        return uniqueSegments.slice(0, 4).join(' OR ');
+    }
+
+    const words = source
+        .split(/\s+/)
+        .map(part => part.replace(/[^\w-]/g, ''))
+        .filter(part => part && !/^(AND|OR|NOT)$/i.test(part));
+
+    if (words.length === 0) return source;
+    return words.slice(0, 4).join(' ');
+}
+
+function shouldRetryConnectWithRelaxedQuery(result, launchState) {
+    if (!launchState || launchState.attempt >= 1) {
+        return false;
+    }
+
+    const normalized = typeof normalizeRunOutcome === 'function'
+        ? normalizeRunOutcome(result, 'connect')
+        : result;
+    const run = normalized && typeof normalized === 'object'
+        ? normalized
+        : {};
+    if (run.stoppedByUser === true) {
+        return false;
+    }
+
+    const mode = String(run.mode || 'connect').trim();
+    if (mode !== 'connect') {
+        return false;
+    }
+
+    const runStatus = String(run.runStatus || '').trim().toLowerCase();
+    if (runStatus !== 'failed') {
+        return false;
+    }
+
+    const reason = String(run.reason || '').trim().toLowerCase();
+    if (reason === 'challenge' || reason === 'stopped-by-user') {
+        return false;
+    }
+
+    const processedCount = Math.max(0, Number(run.processedCount) || 0);
+    if (reason === 'no-items-processed' || processedCount <= 0) {
+        return true;
+    }
+
+    return false;
+}
+
+function buildRelaxedConnectConfig(config) {
+    const source = config && typeof config === 'object'
+        ? config
+        : {};
+    const relaxedQuery = buildRelaxedConnectQuery(source.query);
+    if (!relaxedQuery) {
+        return null;
+    }
+
+    const normalizedTemplateMeta = normalizeTemplateMeta(
+        {
+            ...(source.templateMeta || {}),
+            operatorCount: countBooleanOperatorsSafe(relaxedQuery),
+            compiledQueryLength: relaxedQuery.length,
+            mode: 'connect'
+        },
+        'connect'
+    );
+
+    return {
+        ...source,
+        query: relaxedQuery,
+        activelyHiring: false,
+        networkFilter: encodeURIComponent('["S","O"]'),
+        connectRelaxAttempt:
+            Math.max(0, Number(source.connectRelaxAttempt) || 0) + 1,
+        templateMeta: normalizedTemplateMeta
     };
 }
 
@@ -822,7 +926,18 @@ function handleCompanyStepDone(result) {
 }
 
 function launchAutomation(config) {
-    const geoUrn = config.geoUrn
+    const launchConfig = config && typeof config === 'object'
+        ? config
+        : {};
+    connectLaunchState = {
+        config: { ...launchConfig },
+        attempt: Math.max(
+            0,
+            Number(launchConfig.connectRelaxAttempt) || 0
+        )
+    };
+
+    const geoUrn = launchConfig.geoUrn
         || '%5B%22103644278%22%2C%22101121807%22' +
            '%2C%22101165590%22%2C%22101282230%22' +
            '%2C%22102890719%22%5D';
@@ -831,14 +946,14 @@ function launchAutomation(config) {
         'https://www.linkedin.com/search/results/' +
         'people/' +
         `?geoUrn=${geoUrn}` +
-        `&keywords=${encodeURIComponent(config.query)}` +
+        `&keywords=${encodeURIComponent(launchConfig.query)}` +
         '&origin=FACETED_SEARCH';
 
-    if (config.activelyHiring) {
+    if (launchConfig.activelyHiring) {
         searchUrl += '&activelyHiring=true';
     }
 
-    const netFilter = config.networkFilter
+    const netFilter = launchConfig.networkFilter
         || encodeURIComponent('["S","O"]');
     searchUrl += `&network=${netFilter}`;
 
@@ -919,38 +1034,38 @@ function launchAutomation(config) {
                             tab.id,
                             {
                                 action: 'runAutomation',
-                                limit: config.limit,
-                                sendNote: config.sendNote,
+                                limit: launchConfig.limit,
+                                sendNote: launchConfig.sendNote,
                                 noteTemplate:
-                                    config.noteTemplate,
-                                geoUrn: config.geoUrn,
+                                    launchConfig.noteTemplate,
+                                geoUrn: launchConfig.geoUrn,
                                 goalMode:
-                                    config.goalMode || 'passive',
+                                    launchConfig.goalMode || 'passive',
                                 areaPreset:
                                     normalizeRuntimeAreaPreset(
-                                        config.areaPreset
+                                        launchConfig.areaPreset
                                     ),
                                 excludedCompanies:
                                     parseExcludedCompanyList(
-                                        config.excludedCompanies
+                                        launchConfig.excludedCompanies
                                     ),
                                 skipOpenToWorkRecruiters:
-                                    config
+                                    launchConfig
                                         .skipOpenToWorkRecruiters
                                     !== false,
                                 skipJobSeekingSignals:
-                                    config
+                                    launchConfig
                                         .skipJobSeekingSignals
                                     === true,
                                 sentUrls:
-                                    config.sentUrls || [],
+                                    launchConfig.sentUrls || [],
                                 templateMeta:
                                     normalizeTemplateMeta(
-                                        config.templateMeta,
+                                        launchConfig.templateMeta,
                                         'connect'
                                     ),
                                 engagementOnly:
-                                    config.engagementOnly
+                                    launchConfig.engagementOnly
                                     || false
                             },
                             () => {
@@ -3435,6 +3550,20 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'done') {
+            if (shouldRetryConnectWithRelaxedQuery(
+                request.result,
+                connectLaunchState
+            )) {
+                const relaxedConfig = buildRelaxedConnectConfig(
+                    connectLaunchState?.config
+                );
+                if (relaxedConfig) {
+                    activeTabId = null;
+                    launchAutomation(relaxedConfig);
+                    return;
+                }
+            }
+            connectLaunchState = null;
             if (companyRunState?.active &&
                 request.result?.mode === 'company') {
                 handleCompanyStepDone(request.result);
