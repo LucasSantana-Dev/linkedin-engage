@@ -3098,12 +3098,9 @@ async function startConnect() {
         document.getElementById('limitInput').value = remaining;
     }
     const geoUrn = getSelectedRegionGeoUrn();
-    const activelyHiring = plan.filterSpec &&
-        typeof plan.filterSpec.activelyHiring === 'boolean'
-        ? plan.filterSpec.activelyHiring
-        : document.getElementById(
-            'activelyHiringCheckbox'
-        ).checked;
+    const activelyHiring = document.getElementById(
+        'activelyHiringCheckbox'
+    ).checked;
     const goalMode =
         document.getElementById('goalMode').value || 'passive';
     const areaPreset = getSelectedAreaPreset();
@@ -3126,14 +3123,8 @@ async function startConnect() {
         ).checked;
 
     const networkTypes = [];
-    const degree2nd = plan.filterSpec &&
-        typeof plan.filterSpec.degree2nd === 'boolean'
-        ? plan.filterSpec.degree2nd
-        : document.getElementById('degree2nd').checked;
-    const degree3rd = plan.filterSpec &&
-        typeof plan.filterSpec.degree3rd === 'boolean'
-        ? plan.filterSpec.degree3rd
-        : document.getElementById('degree3rd').checked;
+    const degree2nd = document.getElementById('degree2nd').checked;
+    const degree3rd = document.getElementById('degree3rd').checked;
     if (degree2nd) {
         networkTypes.push('"S"');
     }

@@ -3712,16 +3712,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                 if (!query) return;
 
                 const networkTypes = [];
-                const degree2nd = typeof
-                    connectRuntime.filterSpec.degree2nd
-                        === 'boolean'
-                    ? connectRuntime.filterSpec.degree2nd
-                    : state.degree2nd !== false;
-                const degree3rd = typeof
-                    connectRuntime.filterSpec.degree3rd
-                        === 'boolean'
-                    ? connectRuntime.filterSpec.degree3rd
-                    : state.degree3rd !== false;
+                const degree2nd = state.degree2nd !== false;
+                const degree3rd = state.degree3rd !== false;
                 if (degree2nd) {
                     networkTypes.push('"S"');
                 }
@@ -3770,12 +3762,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                                 )
                             ),
                     geoUrn,
-                    activelyHiring: typeof
-                        connectRuntime.filterSpec.activelyHiring
-                            === 'boolean'
-                        ? connectRuntime.filterSpec
-                            .activelyHiring
-                        : !!state.activelyHiring,
+                    activelyHiring: !!state.activelyHiring,
                     networkFilter,
                     templateMeta:
                         connectRuntime.templateMeta,
@@ -4064,16 +4051,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
             if (!query) return;
 
             const networkTypes = [];
-            const degree2nd = typeof
-                connectRuntime.filterSpec.degree2nd
-                    === 'boolean'
-                ? connectRuntime.filterSpec.degree2nd
-                : state.degree2nd !== false;
-            const degree3rd = typeof
-                connectRuntime.filterSpec.degree3rd
-                    === 'boolean'
-                ? connectRuntime.filterSpec.degree3rd
-                : state.degree3rd !== false;
+            const degree2nd = state.degree2nd !== false;
+            const degree3rd = state.degree3rd !== false;
             if (degree2nd) {
                 networkTypes.push('"S"');
             }
@@ -4115,11 +4094,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
                         connectRuntime.areaPreset
                     ),
                 geoUrn,
-                activelyHiring: typeof
-                    connectRuntime.filterSpec.activelyHiring
-                        === 'boolean'
-                    ? connectRuntime.filterSpec.activelyHiring
-                    : !!state.activelyHiring,
+                activelyHiring: !!state.activelyHiring,
                 networkFilter,
                 templateMeta: connectRuntime.templateMeta,
                 sentUrls: data.sentProfileUrls || []
