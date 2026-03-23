@@ -230,6 +230,37 @@ describe('popup connect refine runtime', () => {
         expect(ninthTag.classList.contains('tag-limit-shake')).toBe(false);
     });
 
+    test('connect launch payload honors checkbox filters over template filterSpec', async () => {
+        global.buildSearchTemplatePlan = jest.fn(() => ({
+            query: 'recruiter finance',
+            filterSpec: {
+                degree2nd: false,
+                degree3rd: false,
+                activelyHiring: true
+            },
+            defaults: {},
+            meta: { mode: 'connect' },
+            diagnostics: {}
+        }));
+
+        document.getElementById('degree2nd').checked = true;
+        document.getElementById('degree3rd').checked = true;
+        document.getElementById('activelyHiringCheckbox').checked = false;
+
+        click(document.getElementById('startBtn'));
+        await Promise.resolve();
+        await Promise.resolve();
+
+        const launchCall = chromeMock.runtime.sendMessage.mock.calls.find(
+            ([message]) => message && message.action === 'start'
+        );
+        expect(launchCall).toBeTruthy();
+
+        const payload = launchCall[0];
+        expect(payload.activelyHiring).toBe(false);
+        expect(payload.networkFilter).toBe('%5B%22S%22%2C%22O%22%5D');
+    });
+
     test('jobs planner treats blank refine fields as missing, not explicit empty arrays', () => {
         global.buildSearchTemplatePlan = jest.fn((opts) => ({
             query: 'software engineer remote easy apply',

@@ -334,6 +334,155 @@ describe('background connect runtime config', () => {
             .toEqual(['Legacy Corp']);
     });
 
+    it('scheduled connect run honors popup filter toggles over template filterSpec', async () => {
+        global.buildSearchTemplatePlan = jest.fn(() => ({
+            query: 'recruiter finance',
+            filterSpec: {
+                degree2nd: false,
+                degree3rd: false,
+                activelyHiring: true
+            },
+            meta: { mode: 'connect' }
+        }));
+
+        storageData.popupState = {
+            tags: { role: ['recruiter'], industry: ['finance'] },
+            tagVersion: 5,
+            areaPreset: 'finance',
+            limit: '10',
+            roleTermsLimit: 6,
+            region: '103644278',
+            sendNote: false,
+            degree2nd: true,
+            degree3rd: true,
+            activelyHiring: false,
+            connectTemplateAuto: true,
+            connectTemplateId:
+                'connect.business.decision_makers.balanced'
+        };
+        storageData.schedule = { enabled: true };
+
+        alarmListener({ name: 'linkedinSchedule' });
+        await tick();
+
+        const createdUrl = chrome.tabs.create.mock.calls[0][0].url;
+        expect(createdUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
+        expect(createdUrl).not.toContain('activelyHiring=true');
+    });
+
+    it('quota retry connect run honors popup filter toggles over template filterSpec', async () => {
+        global.buildSearchTemplatePlan = jest.fn(() => ({
+            query: 'recruiter finance',
+            filterSpec: {
+                degree2nd: false,
+                degree3rd: false,
+                activelyHiring: true
+            },
+            meta: { mode: 'connect' }
+        }));
+
+        storageData.popupState = {
+            tags: { role: ['recruiter'], industry: ['finance'] },
+            tagVersion: 5,
+            areaPreset: 'finance',
+            savedQueries: 'recruiter finance',
+            limit: '50',
+            roleTermsLimit: 6,
+            region: '103644278',
+            sendNote: false,
+            degree2nd: true,
+            degree3rd: true,
+            activelyHiring: false,
+            connectTemplateAuto: true,
+            connectTemplateId:
+                'connect.business.decision_makers.balanced'
+        };
+
+        alarmListener({ name: 'fuseLimitRetry' });
+        await tick();
+
+        const createdUrl = chrome.tabs.create.mock.calls[0][0].url;
+        expect(createdUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
+        expect(createdUrl).not.toContain('activelyHiring=true');
+    });
+
+    it('retries connect once with relaxed query when no items are processed', async () => {
+        const response = await sendRequest({
+            action: 'start',
+            query: 'recruiter OR talent acquisition OR hiring manager OR tech',
+            limit: 5,
+            activelyHiring: true,
+            networkFilter: encodeURIComponent('["S"]')
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+
+        expect(chrome.tabs.create).toHaveBeenCalledTimes(1);
+        const firstUrl = chrome.tabs.create.mock.calls[0][0].url;
+        expect(firstUrl).toContain('activelyHiring=true');
+        expect(firstUrl).toContain('&network=%5B%22S%22%5D');
+
+        await sendRequest({
+            action: 'done',
+            result: {
+                mode: 'connect',
+                runStatus: 'failed',
+                reason: 'no-items-processed',
+                processedCount: 0,
+                log: []
+            }
+        });
+        await tick();
+
+        expect(chrome.tabs.create).toHaveBeenCalledTimes(2);
+        const secondUrl = chrome.tabs.create.mock.calls[1][0].url;
+        expect(secondUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
+        expect(secondUrl).not.toContain('activelyHiring=true');
+        expect(secondUrl).toContain(
+            encodeURIComponent('recruiter OR talent acquisition OR hiring manager OR tech')
+        );
+    });
+
+    it('does not retry connect more than once after relaxed attempt', async () => {
+        await sendRequest({
+            action: 'start',
+            query: 'recruiter OR talent acquisition OR hiring manager OR tech',
+            limit: 5,
+            activelyHiring: true,
+            networkFilter: encodeURIComponent('["S"]')
+        });
+        await tick();
+
+        await sendRequest({
+            action: 'done',
+            result: {
+                mode: 'connect',
+                runStatus: 'failed',
+                reason: 'no-items-processed',
+                processedCount: 0,
+                log: []
+            }
+        });
+        await tick();
+
+        expect(chrome.tabs.create).toHaveBeenCalledTimes(2);
+
+        await sendRequest({
+            action: 'done',
+            result: {
+                mode: 'connect',
+                runStatus: 'failed',
+                reason: 'no-items-processed',
+                processedCount: 0,
+                log: []
+            }
+        });
+        await tick();
+
+        expect(chrome.tabs.create).toHaveBeenCalledTimes(2);
+    });
+
     it('returns blocked unknown when connect rate-limit check fails', async () => {
         const originalGet = chrome.storage.local.get;
         chrome.storage.local.get = jest.fn(() => {

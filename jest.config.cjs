@@ -12,6 +12,5 @@ module.exports = {
             functions: 99,
             lines: 97.5
         }
-    },
-    forceExit: true
+    }
 };
