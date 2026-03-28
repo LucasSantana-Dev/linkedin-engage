@@ -293,6 +293,12 @@ describe('connect-config', () => {
             });
         });
 
+        it('normalizes tech company sub-presets to generic tech', () => {
+            TECH_SUB_PRESETS.forEach((preset) => {
+                expect(normalizeCompanyAreaPreset(preset)).toBe('tech');
+            });
+        });
+
         it('each tech sub-preset has roles and industries defined', () => {
             TECH_SUB_PRESETS.forEach((preset) => {
                 const p = AREA_PRESETS[preset];

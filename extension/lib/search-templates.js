@@ -1812,6 +1812,14 @@
             return raw.toLowerCase();
         }
 
+        function normalizeCompaniesAreaPreset(value) {
+            const normalized = normalizeAreaPresetValue(value);
+            if (normalized === 'tech' || normalized.startsWith('tech-')) {
+                return 'tech';
+            }
+            return normalized;
+        }
+
         function normalizeAreaFamily(areaPreset) {
             const key = normalizeAreaPresetValue(areaPreset);
             return AREA_FAMILY_MAP[key] || 'custom';
@@ -2006,7 +2014,9 @@
                 source.expectedResultsBucket
             );
             const auto = source.auto !== false;
-            const areaPreset = normalizeAreaPresetValue(source.areaPreset);
+            const areaPreset = mode === 'companies'
+                ? normalizeCompaniesAreaPreset(source.areaPreset)
+                : normalizeAreaPresetValue(source.areaPreset);
             const areaFamily = normalizeAreaFamily(areaPreset);
 
             if (!auto) {
@@ -2450,7 +2460,9 @@
                 )
                 : '';
             const areaPreset = source.areaPreset
-                ? normalizeAreaPresetValue(source.areaPreset)
+                ? (mode === 'companies'
+                    ? normalizeCompaniesAreaPreset(source.areaPreset)
+                    : normalizeAreaPresetValue(source.areaPreset))
                 : '';
             const areaFamily = areaPreset
                 ? normalizeAreaFamily(areaPreset)

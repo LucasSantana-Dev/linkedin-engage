@@ -1064,7 +1064,11 @@
         }
 
         function normalizeCompanyAreaPreset(value) {
-            if (isValidCompanyAreaPreset(value)) return value;
+            const raw = String(value || '').trim();
+            if (raw === 'tech' || raw.startsWith('tech-')) {
+                return 'tech';
+            }
+            if (isValidCompanyAreaPreset(raw)) return raw;
             return 'custom';
         }
 

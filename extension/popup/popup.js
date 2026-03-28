@@ -314,6 +314,14 @@ const AREA_PRESET_OPTION_KEYS = Object.freeze({
     videomaker: 'popup.areaPreset.videomaker'
 });
 
+function normalizeCompanyPresetForUi(value) {
+    const normalized = String(value || '').trim();
+    if (normalized === 'tech' || normalized.startsWith('tech-')) {
+        return 'tech';
+    }
+    return normalized;
+}
+
 function getSelectedAreaPreset() {
     const select = document.getElementById('areaPresetSelect');
     const value = select?.value || DEFAULT_AREA_PRESET;
@@ -338,9 +346,9 @@ function getSelectedCompanyAreaPreset() {
     );
     const value = select?.value || DEFAULT_COMPANY_AREA_PRESET;
     if (typeof normalizeCompanyAreaPreset === 'function') {
-        return normalizeCompanyAreaPreset(value);
+        return normalizeCompanyPresetForUi(normalizeCompanyAreaPreset(value));
     }
-    return value || DEFAULT_COMPANY_AREA_PRESET;
+    return normalizeCompanyPresetForUi(value || DEFAULT_COMPANY_AREA_PRESET);
 }
 
 function getSelectedJobsAreaPreset() {
@@ -452,7 +460,13 @@ function setCompanyAreaPresetSelectValue(value) {
         === 'function'
         ? normalizeCompanyAreaPreset(value)
         : (value || DEFAULT_COMPANY_AREA_PRESET);
-    select.value = normalized || DEFAULT_COMPANY_AREA_PRESET;
+    const collapsed = normalizeCompanyPresetForUi(
+        normalized || DEFAULT_COMPANY_AREA_PRESET
+    );
+    const hasOption = Array.from(select.options).some((option) => {
+        return option.value === collapsed;
+    });
+    select.value = hasOption ? collapsed : DEFAULT_COMPANY_AREA_PRESET;
 }
 
 function getCompanyPresetDefaultQuery(companyAreaPreset) {

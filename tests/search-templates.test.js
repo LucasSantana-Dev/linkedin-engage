@@ -577,7 +577,7 @@ describe('search-templates', () => {
             );
         });
 
-        it('buildSearchTemplatePlan — tech-devops Companies generates DevOps query', () => {
+        it('buildSearchTemplatePlan — companies tech sub-presets collapse to generic tech query', () => {
             const plan = buildSearchTemplatePlan({
                 mode: 'companies',
                 areaPreset: 'tech-devops',
@@ -586,7 +586,7 @@ describe('search-templates', () => {
                 searchLanguageMode: 'en'
             });
             const query = plan.query.toLowerCase();
-            expect(query).toMatch(/devops|site reliability|platform|infrastructure/);
+            expect(plan.template.id).toBe('companies.tech.talent_watchlist.balanced');
             expect(query).toMatch(/hiring latam developers|latam talent partner/);
             expect(query).toContain('not university');
         });
@@ -746,6 +746,17 @@ describe('listSearchTemplates', () => {
         const filtered = listSearchTemplates({ areaPreset: 'tech' });
         expect(filtered.length).toBeGreaterThan(0);
         filtered.forEach(t => {
+            expect(['tech', 'any', 'custom'].includes(t.areaPreset)).toBe(true);
+        });
+    });
+
+    it('filters companies by areaPreset using tech sub-presets as generic tech', () => {
+        const filtered = listSearchTemplates({
+            mode: 'companies',
+            areaPreset: 'tech-devops'
+        });
+        expect(filtered.length).toBeGreaterThan(0);
+        filtered.forEach((t) => {
             expect(['tech', 'any', 'custom'].includes(t.areaPreset)).toBe(true);
         });
     });

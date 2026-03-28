@@ -382,16 +382,16 @@ describe('popup connect refine runtime', () => {
         expect(launchCall[0].limit).toBe(13);
     });
 
-    test('companies area preset select includes tech and engineering options', () => {
+    test('companies area preset select keeps only generic tech preset', () => {
         switchToCompaniesMode();
 
         const select = document.getElementById('companyAreaPresetSelect');
         const values = Array.from(select.options).map((option) => option.value);
 
         expect(values).toContain('tech');
-        expect(values).toContain('tech-fullstack');
-        expect(values).toContain('tech-frontend');
-        expect(values).toContain('tech-backend');
+        expect(values).not.toContain('tech-fullstack');
+        expect(values).not.toContain('tech-frontend');
+        expect(values).not.toContain('tech-backend');
     });
 
     test('companies done no-results with zero processed is treated as success in popup', () => {
