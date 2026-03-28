@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.13] - 2026-03-28
+
+### Fixed
+- **Stricter offshore LATAM tech targeting**: Tightened Companies tech and key tech sub-preset (`tech-frontend`, `tech-backend`, `tech-fullstack`) search terms to emphasize remote/nearshore product engineering and LATAM hiring intent.
+- **Noise suppression in company search queries**: Added bounded exclusion terms (`NOT university/college/institute`) in template compilation and preset defaults to reduce education/group/job-board noise in LinkedIn company results while keeping queries within boolean budget.
+
+### Added
+- **Regression coverage for stricter company query strategy**: Expanded search-template tests to lock in offshore/LATAM keyword and exclusion behavior for Companies planning.
+
 ## [1.36.12] - 2026-03-28
 
 ### Fixed
