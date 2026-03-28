@@ -6,6 +6,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     const connectionLog = [];
     let lastInviteStatus = null;
     let fuseLimitHit = false;
+    const connectActionUtils =
+        (typeof LinkedInConnectActionUtils !== 'undefined' &&
+            LinkedInConnectActionUtils) ||
+        (typeof globalThis !== 'undefined' &&
+            globalThis.LinkedInConnectActionUtils) ||
+        null;
 
     const origFetch = window.fetch;
     window.fetch = async function(...args) {
@@ -445,27 +451,37 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     async function tryConnectViaMore(card) {
-        const moreBtn = card.querySelector(
-            'button[aria-label*="more action"],' +
-            'button[aria-label*="More action"],' +
-            'button[aria-label*="mais ações"],' +
-            'button[class*="artdeco-dropdown__trigger"]'
-        );
+        const moreBtn = typeof connectActionUtils
+            ?.findMoreActionsButtonInCard === 'function'
+            ? connectActionUtils.findMoreActionsButtonInCard(card)
+            : card.querySelector(
+                'button[aria-label*="more action"],' +
+                'button[aria-label*="More action"],' +
+                'button[aria-label*="mais ações"],' +
+                'button[class*="artdeco-dropdown__trigger"]'
+            );
         if (!moreBtn) return null;
 
         moreBtn.click();
         await delay(600);
 
-        const menuItems = document.querySelectorAll(
+        const menuItems = Array.from(document.querySelectorAll(
             '[role="menuitem"], ' +
             '.artdeco-dropdown__content button, ' +
             '.artdeco-dropdown__content a'
-        );
-        for (const item of menuItems) {
-            const text = (item.innerText || '')
-                .trim().toLowerCase();
-            if (text === 'connect' || text === 'conectar') {
-                return item;
+        ));
+        if (typeof connectActionUtils
+            ?.findConnectActionInMenuItems === 'function') {
+            const connectItem = connectActionUtils
+                .findConnectActionInMenuItems(menuItems);
+            if (connectItem) return connectItem;
+        } else {
+            for (const item of menuItems) {
+                const text = (item.innerText || '')
+                    .trim().toLowerCase();
+                if (text === 'connect' || text === 'conectar') {
+                    return item;
+                }
             }
         }
 
@@ -523,6 +539,43 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             }
         }
         return follows;
+    }
+
+    function findFollowButtonInCard(card) {
+        if (typeof connectActionUtils
+            ?.findFollowButtonInCard === 'function') {
+            return connectActionUtils.findFollowButtonInCard(card);
+        }
+        const btns = card?.querySelectorAll
+            ? card.querySelectorAll('button')
+            : [];
+        for (const btn of btns) {
+            if (isFollowButtonText(btn.innerText || '') &&
+                !btn.disabled) {
+                return btn;
+            }
+        }
+        return null;
+    }
+
+    function cardHasExplicitConnect(card) {
+        if (typeof connectActionUtils
+            ?.cardHasExplicitConnect === 'function') {
+            return connectActionUtils.cardHasExplicitConnect(card);
+        }
+        const elements = card?.querySelectorAll
+            ? card.querySelectorAll('button, a, span')
+            : [];
+        for (const element of elements) {
+            const text = (element.innerText || '').trim();
+            const aria = element.getAttribute
+                ? (element.getAttribute('aria-label') || '').trim()
+                : '';
+            if (isConnectButtonText(text) || isConnectButtonText(aria)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function buildConnectOutcomeMetrics(log) {
@@ -889,24 +942,25 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     'li.reusable-search__result-container'
                 );
                 for (const card of followCards) {
-                    const primaryBtn = card.querySelector(
-                        'button'
+                    const contextBtn = card.querySelector(
+                        'button, a'
                     );
-                    if (!primaryBtn) continue;
-                    const btnText = (primaryBtn.innerText || '')
-                        .trim().toLowerCase();
-                    if (btnText !== 'follow' &&
-                        btnText !== 'seguir') continue;
-                    if (isAlreadyConnectedElement(primaryBtn)) {
+                    if (!contextBtn) continue;
+                    if (isAlreadyConnectedElement(contextBtn)) {
                         continue;
                     }
+                    if (cardHasExplicitConnect(card)) {
+                        continue;
+                    }
+
+                    const followBtn = findFollowButtonInCard(card);
 
                     const connectItem =
                         await tryConnectViaMore(card);
                     if (connectItem && !seen.has(connectItem)) {
                         seen.add(connectItem);
                         const profile = extractProfileInfo(
-                            primaryBtn
+                            followBtn || contextBtn
                         );
                         actionTargets.push({
                             button: connectItem,
@@ -914,14 +968,15 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             profile
                         });
                     } else if (!connectItem &&
-                        !seen.has(primaryBtn) &&
-                        isButtonClickable(primaryBtn)) {
-                        seen.add(primaryBtn);
+                        followBtn &&
+                        !seen.has(followBtn) &&
+                        isButtonClickable(followBtn)) {
+                        seen.add(followBtn);
                         const profile = extractProfileInfo(
-                            primaryBtn
+                            followBtn
                         );
                         actionTargets.push({
-                            button: primaryBtn,
+                            button: followBtn,
                             action: 'follow',
                             profile
                         });
