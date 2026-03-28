@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.9] - 2026-03-28
+
+### Fixed
+- **Connect search hardening**: Launch keywords are now sanitized into plain deduplicated terms (boolean operators stripped) before building LinkedIn People URLs, reducing zero-result runs caused by over-restrictive boolean payloads.
+- **Companies runtime reliability**: Added scheduled rate-limit guard, multi-page pagination processing, and stronger boundary-aware company target matching to improve follow execution consistency.
+- **Runtime outcome and messaging stability**: Normalized company explicit no-results outcomes as success where appropriate, fixed sync bridge message handling to avoid pending channel warnings, and reduced noisy Connect runtime logging.
+
+### Added
+- **Feed skip-keyword templates**: Added reusable templates (including `crypto_hype` and `job_spam`) with apply/append controls in popup, plus EN/PT-BR localization support.
+- **Regression coverage**: Expanded test suites for connect runtime fallback, companies orchestration/runtime/utils, bridge sync handling, popup template/companies UX behavior, and run-outcome status branches.
+
 ## [1.36.8] - 2026-03-23
 
 ### Fixed
