@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.11] - 2026-03-28
+
+### Fixed
+- **Auto-connect follow-only handling**: Connect automation now processes profiles that only expose follow actions, attempting implicit connect from the card action menu first and falling back to follow when connect is unavailable.
+- **Implicit connect detection robustness**: Added shared connect-action utilities to detect more-actions triggers, connect menu entries, and explicit card connect controls across localized UI variants.
+
+### Added
+- **Connect action regression coverage**: Added focused tests for connect-action utility behavior and branch-level detection paths to prevent follow/connect fallback regressions.
+
 ## [1.36.10] - 2026-03-28
 
 ### Added
