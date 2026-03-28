@@ -747,18 +747,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     async function runAutomation(config) {
-        console.log('[LinkedIn Bot] Started', config);
-
         if (config?.engagementOnly) {
             return runEngagement(config);
         }
 
         const persistedFuse = await checkPersistedFuseLimit();
         if (persistedFuse) {
-            console.log(
-                '[LinkedIn Bot] Fuse limit active — ' +
-                'switching to engagement mode'
-            );
             fuseLimitHit = true;
             return runEngagement(config);
         }
@@ -1016,12 +1010,6 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 actionTargets.length = 0;
                 actionTargets.push(...sorted);
 
-                console.log(
-                    `[LinkedIn Bot] ${totalFound} found` +
-                    ` (${networkedCount} networked,` +
-                    ` ${unnetworkedCount} unnetworked)`
-                );
-
                 for (const target of actionTargets) {
                     if (totalSent >= limit || stopRequested) break;
                     const button = target.button;
@@ -1041,10 +1029,6 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             skipped: totalSkipped,
                             error: 'FUSE_LIMIT_EXCEEDED'
                         }, '*');
-                        console.log(
-                            '[LinkedIn Bot] Quota hit — ' +
-                            'falling back to engagement'
-                        );
                         const engResult =
                             await runEngagement({
                                 limit: limit - totalSent,
@@ -1295,13 +1279,6 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                 !templateIsPt
                                     ? defaultTemplatePt
                                     : noteTemplate;
-                            if (usePortugueseNote) {
-                                console.log(
-                                    '[LinkedIn Bot] Using ' +
-                                    'PT-BR note for: ' +
-                                    profile.name
-                                );
-                            }
                             const noteText =
                                 activeTemplate.replace(
                                     /{name}/gi, personName
@@ -1529,9 +1506,6 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 }
             }
 
-            console.log(
-                `[LinkedIn Bot] Done. ${totalSent} sent.`
-            );
             if (stopRequested) {
                 return buildConnectResult({
                     stoppedByUser: true,

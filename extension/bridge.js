@@ -5,7 +5,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             config: request
         }, '*');
         sendResponse({ status: 'started' });
-        return true;
+        return;
     }
     if (request.action === 'runCustom') {
         window.postMessage({
@@ -13,14 +13,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             config: request.config
         }, '*');
         sendResponse({ status: 'started' });
-        return true;
+        return;
     }
     if (request.action === 'stop') {
         window.postMessage({
             type: 'LINKEDIN_BOT_STOP'
         }, '*');
         sendResponse({ status: 'stopping' });
-        return true;
+        return;
     }
 });
 

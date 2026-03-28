@@ -93,6 +93,20 @@ function switchToJobsMode() {
     click(jobsModeBtn);
 }
 
+function switchToFeedMode() {
+    const feedModeBtn = document.querySelector(
+        'button.mode-btn[data-mode="feed"]'
+    );
+    click(feedModeBtn);
+}
+
+function switchToCompaniesMode() {
+    const companiesModeBtn = document.querySelector(
+        'button.mode-btn[data-mode="companies"]'
+    );
+    click(companiesModeBtn);
+}
+
 describe('popup connect refine runtime', () => {
     let chromeMock;
 
@@ -259,6 +273,135 @@ describe('popup connect refine runtime', () => {
         const payload = launchCall[0];
         expect(payload.activelyHiring).toBe(false);
         expect(payload.networkFilter).toBe('%5B%22S%22%2C%22O%22%5D');
+    });
+
+    test('skip-keyword template replace overwrites textarea with template terms', () => {
+        switchToFeedMode();
+
+        const textarea = document.getElementById('skipKeywordsInput');
+        const select = document.getElementById('skipKeywordsTemplateSelect');
+        const applyBtn = document.getElementById('applySkipKeywordsTemplateBtn');
+
+        textarea.value = 'legacy\nold-term';
+        select.value = 'sponsored';
+
+        click(applyBtn);
+
+        expect(textarea.value).toBe(
+            'sponsored\nad\npromoted\nadvertisement\npartnership'
+        );
+    });
+
+    test('skip-keyword template append preserves existing terms and deduplicates', () => {
+        switchToFeedMode();
+
+        const textarea = document.getElementById('skipKeywordsInput');
+        const select = document.getElementById('skipKeywordsTemplateSelect');
+        const appendBtn = document.getElementById('appendSkipKeywordsTemplateBtn');
+
+        textarea.value = 'custom term\nad\nSponsored';
+        select.value = 'sponsored';
+
+        click(appendBtn);
+
+        expect(textarea.value).toBe(
+            'custom term\nad\nSponsored\npromoted\nadvertisement\npartnership'
+        );
+    });
+
+    test('skip-keyword crypto template replace applies expected terms', () => {
+        switchToFeedMode();
+
+        const textarea = document.getElementById('skipKeywordsInput');
+        const select = document.getElementById('skipKeywordsTemplateSelect');
+        const applyBtn = document.getElementById('applySkipKeywordsTemplateBtn');
+
+        textarea.value = 'old';
+        select.value = 'crypto_hype';
+
+        click(applyBtn);
+
+        expect(textarea.value).toBe(
+            'crypto\nweb3\nnft\ntoken presale\nairdrop'
+        );
+    });
+
+    test('company batch size update syncs active schedule settings', () => {
+        switchToCompaniesMode();
+
+        const scheduleCheckbox = document.getElementById(
+            'companyScheduleCheckbox'
+        );
+        const batchSizeInput = document.getElementById('companyBatchSize');
+        const intervalInput = document.getElementById(
+            'companyScheduleInterval'
+        );
+
+        scheduleCheckbox.checked = true;
+        batchSizeInput.value = '7';
+        intervalInput.value = '12';
+
+        batchSizeInput.dispatchEvent(new window.Event('change', {
+            bubbles: true
+        }));
+
+        const scheduleCalls = chromeMock.runtime.sendMessage.mock.calls
+            .map((args) => args[0])
+            .filter((message) => {
+                return message && message.action === 'setCompanySchedule';
+            });
+
+        expect(scheduleCalls.length).toBeGreaterThan(0);
+        expect(scheduleCalls[scheduleCalls.length - 1]).toEqual(
+            expect.objectContaining({
+                action: 'setCompanySchedule',
+                enabled: true,
+                intervalHours: 12,
+                batchSize: 7
+            })
+        );
+    });
+
+    test('companies launch payload prefers company-specific limit input', () => {
+        switchToCompaniesMode();
+
+        const companyQueryInput = document.getElementById('companyQueryInput');
+        const globalLimitInput = document.getElementById('limitInput');
+        const companyLimitInput = document.getElementById('companyLimitInput');
+
+        companyQueryInput.value = 'product design studios';
+        globalLimitInput.value = '99';
+        companyLimitInput.value = '13';
+
+        click(document.getElementById('startBtn'));
+
+        const launchCall = chromeMock.runtime.sendMessage.mock.calls.find(
+            ([message]) => message && message.action === 'startCompanyFollow'
+        );
+        expect(launchCall).toBeTruthy();
+        expect(launchCall[0].limit).toBe(13);
+    });
+
+    test('companies done no-results with zero processed is treated as success in popup', () => {
+        const listener = chromeMock.runtime.onMessage.addListener.mock.calls[0][0];
+        const statusBox = document.getElementById('statusBox');
+        const startBtn = document.getElementById('startBtn');
+
+        listener({
+            action: 'done',
+            result: {
+                mode: 'companies',
+                reason: 'no-results',
+                stepCode: 'no-results',
+                processedCount: 0,
+                actionCount: 0,
+                success: true,
+                message: 'No results found for this query.'
+            }
+        });
+
+        expect(statusBox.textContent).toContain('Success!');
+        expect(startBtn.textContent).toBe('Done!');
     });
 
     test('jobs planner treats blank refine fields as missing, not explicit empty arrays', () => {

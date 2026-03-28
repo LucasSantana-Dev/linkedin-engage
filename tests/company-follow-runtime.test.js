@@ -6,26 +6,28 @@ describe('company-follow runtime classification', () => {
     beforeEach(() => {
         jest.resetModules();
         document.body.innerHTML = '';
-        delete window.linkedInCompanyFollowInjected;
     });
 
     afterEach(() => {
         document.body.innerHTML = '';
-        delete window.linkedInCompanyFollowInjected;
         delete global.extractCompanyInfo;
         delete global.matchesTargetCompanies;
         delete global.isCompanyFollowText;
         delete global.isFollowingText;
         delete global.isCompanyFollowConfirmed;
         delete global.getCompanySearchPageState;
+        delete global.actionDelay;
+        delete global.shouldTakePause;
+        delete global.pauseDuration;
+        delete global.scrollBehavior;
     });
 
-    function waitForCompanyDone() {
+    function waitForCompanyDone(timeoutMs = 4000) {
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 window.removeEventListener('message', handler);
                 reject(new Error('Timed out waiting company step done'));
-            }, 2000);
+            }, timeoutMs);
             function handler(event) {
                 if (event.data?.type !==
                     'LINKEDIN_BOT_COMPANY_STEP_DONE') {
@@ -150,6 +152,94 @@ describe('company-follow runtime classification', () => {
                 status: 'skipped-follow-not-confirmed',
                 followAttempts: 0
             })
+        );
+    });
+
+    it('paginates across company result pages until limit is reached', async () => {
+        let currentPage = 0;
+        const nextBtn = document.createElement('button');
+        nextBtn.setAttribute('aria-label', 'Next');
+        nextBtn.scrollIntoView = jest.fn();
+        nextBtn.addEventListener('click', () => {
+            currentPage += 1;
+            nextBtn.disabled = true;
+        });
+        document.body.appendChild(nextBtn);
+
+        function createCard(name) {
+            const card = document.createElement('div');
+            card.className = 'entity-result';
+            const button = document.createElement('button');
+            button.textContent = 'Follow';
+            button.scrollIntoView = jest.fn();
+            button.addEventListener('click', () => {
+                button.textContent = 'Following';
+            });
+            card.appendChild(button);
+            card.dataset.companyName = name;
+            return card;
+        }
+
+        const pageCards = [
+            createCard('Acme Labs'),
+            createCard('Beta Labs')
+        ];
+
+        global.extractCompanyInfo = (card) => ({
+            name: card.dataset.companyName,
+            subtitle: 'Software',
+            companyUrl: 'https://www.linkedin.com/company/' +
+                card.dataset.companyName
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')
+        });
+        global.matchesTargetCompanies = () => true;
+        global.isCompanyFollowText = (text) =>
+            String(text || '').trim().toLowerCase() === 'follow';
+        global.isFollowingText = (text) =>
+            String(text || '').trim().toLowerCase() === 'following';
+        global.isCompanyFollowConfirmed = undefined;
+        global.actionDelay = () => 0;
+        global.shouldTakePause = () => false;
+        global.getCompanySearchPageState = () => ({
+            cards: [pageCards[currentPage]],
+            cardsFound: true,
+            isExplicitNoResults: false,
+            resultsCountHint: 2,
+            resultsCountText: '2 results',
+            selectorHits: {
+                entityResult: 1
+            }
+        });
+
+        require('../extension/company-follow');
+        const donePromise = waitForCompanyDone();
+        window.dispatchEvent(new MessageEvent('message', {
+            data: {
+                type: 'LINKEDIN_COMPANY_FOLLOW_START',
+                config: {
+                    query: 'labs',
+                    limit: 2,
+                    targetCompanies: []
+                }
+            },
+            source: window
+        }));
+
+        const result = await donePromise;
+        expect(result.success).toBe(true);
+        expect(result.actionCount).toBe(2);
+        expect(result.diagnostics).toEqual(
+            expect.objectContaining({
+                pagesVisited: 2,
+                followed: 2
+            })
+        );
+        expect(result.log).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ status: 'followed' }),
+                expect.objectContaining({ status: 'followed' })
+            ])
         );
     });
 });

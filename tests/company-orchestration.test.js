@@ -595,6 +595,32 @@ describe('company orchestration in background', () => {
         );
     });
 
+    it('scheduled company run is blocked when company rate limit is exhausted', async () => {
+        global.checkLimits = jest.fn(() => ({
+            allowed: false,
+            reason: 'hourly-limit'
+        }));
+
+        storageData.popupState = {
+            targetCompanies: 'Acme\nBeta',
+            companyQuery: 'software technology',
+            limit: '10'
+        };
+        storageData.companySchedule = {
+            enabled: true,
+            intervalHours: 24,
+            batchSize: 2
+        };
+        storageData.companyRotationIndex = 0;
+
+        alarmListener({ name: 'companySchedule' });
+        await tick();
+
+        expect(createdTabs).toHaveLength(0);
+        expect(updatedTabs).toHaveLength(0);
+        expect(doneMessages()).toHaveLength(0);
+    });
+
     it('scheduled company run uses queue orchestration', async () => {
         storageData.popupState = {
             targetCompanies: 'Acme\nBeta',

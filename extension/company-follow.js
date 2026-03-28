@@ -7,6 +7,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     const FOLLOW_CONFIRM_RETRIES = 2;
     const FOLLOW_CONFIRM_POLL_MS = 220;
     const FOLLOW_CONFIRM_TIMEOUT_MS = 1600;
+    const MAX_COMPANY_PAGES_PER_QUERY = 8;
     let stopRequested = false;
     const followLog = [];
     let consecutiveFails = 0;
@@ -248,7 +249,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     }
 
     async function processCurrentPage(
-        cards, companies, limit, totalFollowed
+        cards, companies, limit, totalFollowed, currentPage
     ) {
         const stats = {
             cardsScanned: 0,
@@ -381,7 +382,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                 }
 
                 reportProgress(
-                    totalFollowed, limit, 0
+                    totalFollowed, limit, currentPage
                 );
                 if (typeof shouldTakePause === 'function'
                     && shouldTakePause(
@@ -454,81 +455,239 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         followLog.length = 0;
 
         try {
-            const waitResult = await waitForCompanyPageState();
-            const diagnostics = buildDiagnostics(
-                query,
-                waitResult
-            );
-
-            if (waitResult.state?.isExplicitNoResults &&
-                !waitResult.state?.cardsFound) {
-                followLog.push({
-                    name: query || 'Company search',
-                    subtitle: '',
-                    companyUrl: '',
-                    query,
-                    status: 'skipped-no-results',
-                    time: new Date().toISOString()
-                });
-                return {
-                    success: true,
-                    mode: 'company',
-                    stepCode: 'no-results',
-                    message: 'No results for current query.',
-                    runStatus: 'success',
-                    reason: 'unknown',
-                    followedThisStep: 0,
-                    processedCount: 0,
-                    actionCount: 0,
-                    skippedCount: 0,
-                    diagnostics,
-                    log: followLog
-                };
-            }
-
-            if (waitResult.timedOut ||
-                !waitResult.state?.cardsFound) {
-                followLog.push({
-                    name: query || 'Company search',
-                    subtitle: '',
-                    companyUrl: '',
-                    query,
-                    status: 'error-no-cards-detected',
-                    details: 'No company cards detected ' +
-                        'within timeout.',
-                    diagnostics,
-                    time: new Date().toISOString()
-                });
-                return {
-                    success: false,
-                    mode: 'company',
-                    stepCode: 'cards-timeout',
-                    error: 'No company cards detected ' +
-                        'within timeout.',
-                    runStatus: 'failed',
-                    reason: 'runtime-error',
-                    followedThisStep: 0,
-                    processedCount: 0,
-                    actionCount: 0,
-                    skippedCount: 0,
-                    diagnostics,
-                    log: followLog
-                };
-            }
-
-            const pageResult = await processCurrentPage(
-                waitResult.state.cards,
-                companies,
-                limit,
-                totalFollowed
-            );
-            const stepStats = pageResult?.stats || {
+            let page = 1;
+            let pagesVisited = 0;
+            let paginationCapped = false;
+            let sawExplicitNoResults = false;
+            let diagnostics = null;
+            const stepStats = {
                 cardsScanned: 0,
                 targetMatched: 0,
                 followed: 0,
                 alreadyFollowing: 0,
+                followAttempts: 0,
+                unconfirmedFollowCount: 0,
+                confirmSignalsSeen: {},
                 targetFilterActive: companies.length > 0
             };
+
+            while (!stopRequested && totalFollowed < limit) {
+                const waitResult = await waitForCompanyPageState();
+                const pageDiagnostics = buildDiagnostics(
+                    query,
+                    waitResult
+                );
+
+                if (!diagnostics) {
+                    diagnostics = pageDiagnostics;
+                }
+
+                pagesVisited++;
+                diagnostics.waitedMs += pageDiagnostics.waitedMs;
+                diagnostics.timedOut = diagnostics.timedOut ||
+                    pageDiagnostics.timedOut;
+                diagnostics.resultsCountHint =
+                    pageDiagnostics.resultsCountHint;
+                diagnostics.resultsCountText =
+                    pageDiagnostics.resultsCountText;
+                diagnostics.selectorHits =
+                    pageDiagnostics.selectorHits || {};
+                diagnostics.cardsFound =
+                    diagnostics.cardsFound ||
+                    pageDiagnostics.cardsFound;
+                diagnostics.url = pageDiagnostics.url;
+
+                const noResultsThisPage =
+                    waitResult.state?.isExplicitNoResults &&
+                    !waitResult.state?.cardsFound;
+                if (noResultsThisPage) {
+                    sawExplicitNoResults = true;
+                    if (pagesVisited === 1) {
+                        followLog.push({
+                            name: query || 'Company search',
+                            subtitle: '',
+                            companyUrl: '',
+                            query,
+                            status: 'skipped-no-results',
+                            time: new Date().toISOString()
+                        });
+                        diagnostics.pagesVisited = pagesVisited;
+                        diagnostics.paginationCapped = false;
+                        diagnostics.cardsScanned = 0;
+                        diagnostics.targetMatched = 0;
+                        diagnostics.followed = 0;
+                        diagnostics.alreadyFollowing = 0;
+                        diagnostics.followAttempts = 0;
+                        diagnostics.unconfirmedFollowCount = 0;
+                        diagnostics.confirmSignalsSeen = {};
+                        diagnostics.targetFilterActive =
+                            stepStats.targetFilterActive;
+                        return {
+                            success: true,
+                            mode: 'company',
+                            stepCode: 'no-results',
+                            message: 'No results for current query.',
+                            runStatus: 'success',
+                            reason: 'no-results',
+                            followedThisStep: 0,
+                            processedCount: 0,
+                            actionCount: 0,
+                            skippedCount: 0,
+                            diagnostics,
+                            log: followLog
+                        };
+                    }
+                    break;
+                }
+
+                if (waitResult.timedOut ||
+                    !waitResult.state?.cardsFound) {
+                    if (pagesVisited === 1) {
+                        followLog.push({
+                            name: query || 'Company search',
+                            subtitle: '',
+                            companyUrl: '',
+                            query,
+                            status: 'error-no-cards-detected',
+                            details: 'No company cards detected ' +
+                                'within timeout.',
+                            diagnostics,
+                            time: new Date().toISOString()
+                        });
+                        diagnostics.pagesVisited = pagesVisited;
+                        diagnostics.paginationCapped = false;
+                        diagnostics.cardsScanned = 0;
+                        diagnostics.targetMatched = 0;
+                        diagnostics.followed = 0;
+                        diagnostics.alreadyFollowing = 0;
+                        diagnostics.followAttempts = 0;
+                        diagnostics.unconfirmedFollowCount = 0;
+                        diagnostics.confirmSignalsSeen = {};
+                        diagnostics.targetFilterActive =
+                            stepStats.targetFilterActive;
+                        return {
+                            success: false,
+                            mode: 'company',
+                            stepCode: 'cards-timeout',
+                            error: 'No company cards detected ' +
+                                'within timeout.',
+                            runStatus: 'failed',
+                            reason: 'runtime-error',
+                            followedThisStep: 0,
+                            processedCount: 0,
+                            actionCount: 0,
+                            skippedCount: 0,
+                            diagnostics,
+                            log: followLog
+                        };
+                    }
+                    break;
+                }
+
+                const pageResult = await processCurrentPage(
+                    waitResult.state.cards,
+                    companies,
+                    limit,
+                    totalFollowed,
+                    page
+                );
+
+                const pageStats = pageResult?.stats || {};
+                stepStats.cardsScanned +=
+                    pageStats.cardsScanned || 0;
+                stepStats.targetMatched +=
+                    pageStats.targetMatched || 0;
+                stepStats.followed +=
+                    pageStats.followed || 0;
+                stepStats.alreadyFollowing +=
+                    pageStats.alreadyFollowing || 0;
+                stepStats.followAttempts +=
+                    pageStats.followAttempts || 0;
+                stepStats.unconfirmedFollowCount +=
+                    pageStats.unconfirmedFollowCount || 0;
+                const pageSignals =
+                    pageStats.confirmSignalsSeen || {};
+                Object.keys(pageSignals).forEach((key) => {
+                    stepStats.confirmSignalsSeen[key] =
+                        (stepStats.confirmSignalsSeen[key] || 0) +
+                        (pageSignals[key] || 0);
+                });
+
+                totalFollowed = pageResult?.totalFollowed ||
+                    totalFollowed;
+
+                if (pageResult?.challengeDetected) {
+                    diagnostics.pagesVisited = pagesVisited;
+                    diagnostics.paginationCapped = paginationCapped;
+                    diagnostics.cardsScanned = stepStats.cardsScanned;
+                    diagnostics.targetMatched = stepStats.targetMatched;
+                    diagnostics.followed = stepStats.followed;
+                    diagnostics.alreadyFollowing =
+                        stepStats.alreadyFollowing;
+                    diagnostics.followAttempts =
+                        stepStats.followAttempts;
+                    diagnostics.unconfirmedFollowCount =
+                        stepStats.unconfirmedFollowCount;
+                    diagnostics.confirmSignalsSeen =
+                        stepStats.confirmSignalsSeen;
+                    diagnostics.targetFilterActive =
+                        stepStats.targetFilterActive;
+                    return {
+                        success: false,
+                        mode: 'company',
+                        stepCode: 'challenge',
+                        error: 'CAPTCHA or security ' +
+                            'challenge detected',
+                        runStatus: 'failed',
+                        reason: 'challenge',
+                        followedThisStep: countFollowedEntries(
+                            followLog
+                        ),
+                        processedCount: followLog.length,
+                        actionCount: countFollowedEntries(
+                            followLog
+                        ),
+                        skippedCount: Math.max(
+                            0,
+                            followLog.length -
+                                countFollowedEntries(followLog)
+                        ),
+                        diagnostics,
+                        log: followLog
+                    };
+                }
+
+                if (stopRequested || totalFollowed >= limit) {
+                    break;
+                }
+
+                const nextButton = findNextPageButton();
+                if (!nextButton) {
+                    break;
+                }
+
+                if (pagesVisited >= MAX_COMPANY_PAGES_PER_QUERY) {
+                    paginationCapped = true;
+                    break;
+                }
+
+                nextButton.click();
+                await delay(1200);
+                page += 1;
+            }
+
+            diagnostics = diagnostics || {
+                query,
+                waitedMs: 0,
+                timedOut: false,
+                resultsCountHint: null,
+                resultsCountText: '',
+                selectorHits: {},
+                cardsFound: false,
+                url: window.location.href
+            };
+            diagnostics.pagesVisited = pagesVisited;
+            diagnostics.paginationCapped = paginationCapped;
             diagnostics.cardsScanned = stepStats.cardsScanned;
             diagnostics.targetMatched = stepStats.targetMatched;
             diagnostics.followed = stepStats.followed;
@@ -540,33 +699,6 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                 stepStats.confirmSignalsSeen;
             diagnostics.targetFilterActive = stepStats.targetFilterActive;
 
-            totalFollowed = pageResult?.totalFollowed ||
-                totalFollowed;
-            if (pageResult?.challengeDetected) {
-                return {
-                    success: false,
-                    mode: 'company',
-                    stepCode: 'challenge',
-                    error: 'CAPTCHA or security ' +
-                        'challenge detected',
-                    runStatus: 'failed',
-                    reason: 'challenge',
-                    followedThisStep: countFollowedEntries(
-                        followLog
-                    ),
-                    processedCount: followLog.length,
-                    actionCount: countFollowedEntries(
-                        followLog
-                    ),
-                    skippedCount: Math.max(
-                        0,
-                        followLog.length -
-                            countFollowedEntries(followLog)
-                    ),
-                    diagnostics,
-                    log: followLog
-                };
-            }
             if (stopRequested) {
                 return {
                     success: false,
@@ -597,6 +729,24 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             const eligibleCount = stepStats.targetFilterActive
                 ? stepStats.targetMatched
                 : stepStats.cardsScanned;
+
+            if (followedThisStep <= 0 && sawExplicitNoResults) {
+                return {
+                    success: true,
+                    mode: 'company',
+                    stepCode: 'no-results',
+                    message: 'No additional results for current query.',
+                    runStatus: 'success',
+                    reason: 'no-results',
+                    followedThisStep: 0,
+                    processedCount: followLog.length,
+                    actionCount: 0,
+                    skippedCount: Math.max(0, followLog.length),
+                    diagnostics,
+                    log: followLog
+                };
+            }
+
             if (followedThisStep <= 0) {
                 let reason = 'no-companies-followed';
                 let error =

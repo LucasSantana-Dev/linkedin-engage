@@ -97,6 +97,7 @@ const UI_LABEL_KEYS = Object.freeze({
     companyTemplateAutoCheckbox: 'common.autoSelectTemplate',
     companyTemplateSelect: 'common.template',
     targetCompanies: 'popup.company.targetCompanies',
+    companyLimitInput: 'popup.company.limit',
     companyScheduleCheckbox: 'popup.company.scheduleRecurring',
     companyScheduleInterval: 'common.runEveryHours',
     companyBatchSize: 'popup.company.batchSize',
@@ -133,6 +134,7 @@ const UI_LABEL_KEYS = Object.freeze({
     aiApiKeyInput: 'popup.feed.aiApiKey',
     commentTemplatesInput: 'popup.feed.fallbackTemplates',
     skipKeywordsInput: 'popup.feed.skipKeywords',
+    skipKeywordsTemplateSelect: 'popup.feed.skipTemplateLabel',
     feedScheduleCheckbox: 'popup.feed.scheduleRecurring',
     feedScheduleInterval: 'common.runEveryHours',
     nurtureScheduleCheckbox: 'popup.feed.nurtureConnections',
@@ -233,7 +235,61 @@ const POPUP_SELECT_OPTION_KEYS = Object.freeze({
         '1': 'popup.jobs.workTypeOnsite',
         '2': 'popup.jobs.workTypeRemote',
         '3': 'popup.jobs.workTypeHybrid'
+    },
+    skipKeywordsTemplateSelect: {
+        '': 'popup.feed.skipTemplateChoose',
+        sponsored: 'popup.feed.skipTemplateSponsored',
+        engagement_bait: 'popup.feed.skipTemplateEngagementBait',
+        politics: 'popup.feed.skipTemplatePolitics',
+        controversy: 'popup.feed.skipTemplateControversy',
+        crypto_hype: 'popup.feed.skipTemplateCryptoHype',
+        job_spam: 'popup.feed.skipTemplateJobSpam'
     }
+});
+
+const SKIP_KEYWORD_TEMPLATES = Object.freeze({
+    sponsored: [
+        'sponsored',
+        'ad',
+        'promoted',
+        'advertisement',
+        'partnership'
+    ],
+    engagement_bait: [
+        'comment interested',
+        'type amen',
+        'drop a fire emoji',
+        'follow for part 2',
+        'tag 3 people'
+    ],
+    politics: [
+        'election',
+        'left vs right',
+        'government policy',
+        'political debate',
+        'partisan'
+    ],
+    controversy: [
+        'hot take',
+        'cancel culture',
+        'outrage',
+        'rage bait',
+        'drama'
+    ],
+    crypto_hype: [
+        'crypto',
+        'web3',
+        'nft',
+        'token presale',
+        'airdrop'
+    ],
+    job_spam: [
+        'we are hiring',
+        'urgent hiring',
+        'walk-in interview',
+        'apply now',
+        'multiple openings'
+    ]
 });
 
 const AREA_PRESET_OPTION_KEYS = Object.freeze({
@@ -314,6 +370,63 @@ function parseMultilineList(raw) {
         .split('\n')
         .map(item => item.trim())
         .filter(Boolean);
+}
+
+function getSkipKeywordsTemplateId() {
+    return getValueOrDefault('skipKeywordsTemplateSelect', '');
+}
+
+function getSkipKeywordsTemplateTerms(templateId) {
+    const terms = SKIP_KEYWORD_TEMPLATES[templateId];
+    return Array.isArray(terms) ? terms.slice() : [];
+}
+
+function mergeUniqueKeywordTerms(baseTerms, extraTerms) {
+    const merged = [];
+    const seen = new Set();
+
+    [...baseTerms, ...extraTerms].forEach((term) => {
+        const value = String(term || '').trim();
+        if (!value) return;
+        const normalized = value.toLowerCase();
+        if (seen.has(normalized)) return;
+        seen.add(normalized);
+        merged.push(value);
+    });
+
+    return merged;
+}
+
+function applySkipKeywordsTemplate(mode) {
+    const templateId = getSkipKeywordsTemplateId();
+    if (!templateId) {
+        setStatusMessageKey(
+            'popup.feed.skipTemplateSelectFirst',
+            'warning',
+            'Choose a keyword template first.'
+        );
+        return;
+    }
+
+    const templateTerms = getSkipKeywordsTemplateTerms(templateId);
+    if (!templateTerms.length) return;
+
+    const textarea = document.getElementById('skipKeywordsInput');
+    const currentTerms = parseMultilineList(textarea.value);
+    const nextTerms = mode === 'append'
+        ? mergeUniqueKeywordTerms(currentTerms, templateTerms)
+        : templateTerms;
+
+    textarea.value = nextTerms.join('\n');
+    saveState();
+
+    const messageKey = mode === 'append'
+        ? 'popup.feed.skipTemplateAppended'
+        : 'popup.feed.skipTemplateApplied';
+    const fallback = mode === 'append'
+        ? 'Keyword template appended.'
+        : 'Keyword template applied.';
+    setStatusMessageKey(messageKey, 'success', fallback);
 }
 
 function getJobsPresetTerms(preset) {
@@ -689,6 +802,15 @@ async function applyPopupLocalization() {
     setElementText('#resetFeedWarmupProgressBtn',
         'popup.feed.resetLearningProgress',
         'Reset Learning Progress');
+    setElementText('#applySkipKeywordsTemplateBtn',
+        'popup.feed.skipTemplateReplace',
+        'Replace list');
+    setElementText('#appendSkipKeywordsTemplateBtn',
+        'popup.feed.skipTemplateAppend',
+        'Append list');
+    setElementText('#skipKeywordsTemplateHelp',
+        'popup.feed.skipTemplateHelp',
+        'Use a template as a starting point, then customize the list.');
     setElementText('#checkAcceptedBtn',
         'popup.tools.checkAccepted',
         'Check Accepted Connections');
@@ -860,6 +982,10 @@ async function applyPopupLocalization() {
     translateSelectOptions(
         'jobsWorkTypeSelect',
         POPUP_SELECT_OPTION_KEYS.jobsWorkTypeSelect
+    );
+    translateSelectOptions(
+        'skipKeywordsTemplateSelect',
+        POPUP_SELECT_OPTION_KEYS.skipKeywordsTemplateSelect
     );
     translateAreaPresetOptions('areaPresetSelect');
     translateAreaPresetOptions('companyAreaPresetSelect');
@@ -2083,6 +2209,8 @@ function saveState() {
             getCompanySearchLanguageMode(),
         companyQuery: document.getElementById(
             'companyQueryInput').value,
+        companyLimit: document.getElementById(
+            'companyLimitInput').value,
         targetCompanies: document.getElementById(
             'targetCompanies').value,
         jobsAreaPreset: getSelectedJobsAreaPreset(),
@@ -2131,6 +2259,7 @@ function saveState() {
             'commentTemplatesInput').value,
         skipKeywords: document.getElementById(
             'skipKeywordsInput').value,
+        skipKeywordsTemplate: getSkipKeywordsTemplateId(),
         companyScheduleEnabled: document.getElementById(
             'companyScheduleCheckbox').checked,
         companyScheduleInterval: document.getElementById(
@@ -2242,6 +2371,11 @@ function loadState() {
                 'jobsExpectedResultsSelect',
                 DEFAULT_EXPECTED_RESULTS,
                 DEFAULT_EXPECTED_RESULTS
+            );
+            setSelectValue(
+                'skipKeywordsTemplateSelect',
+                '',
+                ''
             );
             refreshTemplatesForArea();
             refreshTemplateControls();
@@ -2446,6 +2580,13 @@ function loadState() {
             document.getElementById('companyQueryInput').value =
                 popupState.companyQuery;
         }
+        if (popupState.companyLimit) {
+            document.getElementById('companyLimitInput').value =
+                popupState.companyLimit;
+        } else if (popupState.limit) {
+            document.getElementById('companyLimitInput').value =
+                popupState.limit;
+        }
         setCompanyAreaPresetSelectValue(
             popupState.companyAreaPreset || 'custom'
         );
@@ -2616,6 +2757,11 @@ function loadState() {
             document.getElementById('skipKeywordsInput').value =
                 popupState.skipKeywords;
         }
+        setSelectValue(
+            'skipKeywordsTemplateSelect',
+            popupState.skipKeywordsTemplate || '',
+            ''
+        );
         if (popupState.companyScheduleEnabled) {
             document.getElementById(
                 'companyScheduleCheckbox'
@@ -2819,6 +2965,7 @@ document.getElementById('degree2nd').addEventListener('change', saveState);
 document.getElementById('degree3rd').addEventListener('change', saveState);
 document.getElementById('regionSelect').addEventListener('change', saveState);
 document.getElementById('limitInput').addEventListener('change', saveState);
+document.getElementById('companyLimitInput').addEventListener('change', saveState);
 document.getElementById('goalMode').addEventListener('change', saveState);
 document.getElementById('connectUsageGoalSelect').addEventListener(
     'change',
@@ -3203,9 +3350,15 @@ function startCompanyFollow() {
         return;
     }
 
-    const limit = parseInt(
-        document.getElementById('limitInput').value
-    ) || 50;
+    const companyLimitValue = parseInt(
+        document.getElementById('companyLimitInput')?.value,
+        10
+    );
+    const fallbackLimitValue = parseInt(
+        document.getElementById('limitInput').value,
+        10
+    );
+    const limit = companyLimitValue || fallbackLimitValue || 50;
 
     lastReportedSent = 0;
     showProgressUI(
@@ -3578,6 +3731,18 @@ function deriveDoneRunStatus(response) {
     const text = String(
         source.error || source.message || source.reason || ''
     ).toLowerCase();
+    const reason = String(source.reason || '').toLowerCase();
+    const stepCode = String(source.stepCode || '').toLowerCase();
+    const isCompanyNoResults = source.mode === 'companies' && (
+        reason === 'no-results' ||
+        stepCode === 'no-results' ||
+        Array.isArray(source.log) &&
+            source.log.some((entry) => String(entry?.status || '')
+                .toLowerCase() === 'skipped-no-results')
+    );
+    if (isCompanyNoResults) {
+        return 'success';
+    }
     if (source.stoppedByUser === true ||
         /stopped by user|canceled by user|cancelled by user/.test(text)) {
         return 'canceled';
@@ -3595,20 +3760,51 @@ function deriveDoneRunStatus(response) {
 }
 
 function getDoneFailureMessage(response) {
-    const reason = String(response?.reason || '')
-        .trim().toLowerCase();
-    const reasonMessages = {
-        'follow-not-confirmed':
-            'Follow click attempted but could not be confirmed on LinkedIn UI.',
-        'no-target-matches':
-            'No company matched the target filter for this run.',
-        'already-following-only':
-            'All matched companies were already followed.'
-    };
-    return reasonMessages[reason] ||
-        response?.error ||
-        response?.message ||
-        'No items processed.';
+    const reason = String(response?.reason || '').trim().toLowerCase();
+    const stepCode = String(response?.stepCode || '').trim().toLowerCase();
+    const isCompaniesMode = response?.mode === 'companies';
+    const reasonMessages = isCompaniesMode
+        ? {
+            'follow-not-confirmed': tr(
+                'popup.company.followNotConfirmed',
+                null,
+                'Follow click attempted but could not be confirmed on LinkedIn UI.'
+            ),
+            'no-target-matches': tr(
+                'popup.company.noTargetMatches',
+                null,
+                'No company matched the target filter for this run.'
+            ),
+            'already-following-only': tr(
+                'popup.company.alreadyFollowingOnly',
+                null,
+                'All matched companies were already followed.'
+            ),
+            'cards-timeout': tr(
+                'popup.company.cardsTimeout',
+                null,
+                'LinkedIn did not load company results in time. Try again.'
+            )
+        }
+        : {
+            'follow-not-confirmed':
+                'Follow click attempted but could not be confirmed on LinkedIn UI.',
+            'no-target-matches':
+                'No company matched the target filter for this run.',
+            'already-following-only':
+                'All matched companies were already followed.'
+        };
+    if (reasonMessages[reason]) {
+        return reasonMessages[reason];
+    }
+    if (isCompaniesMode && stepCode === 'cards-timeout') {
+        return reasonMessages['cards-timeout'];
+    }
+    return response?.error || response?.message || tr(
+        'popup.runNoItemsProcessed',
+        null,
+        'No items processed.'
+    );
 }
 
 document.getElementById('exportBtn').addEventListener('click', () => {
@@ -4498,6 +4694,12 @@ document.getElementById('commentTemplatesInput')
     .addEventListener('input', saveState);
 document.getElementById('skipKeywordsInput')
     .addEventListener('input', saveState);
+document.getElementById('skipKeywordsTemplateSelect')
+    .addEventListener('change', saveState);
+document.getElementById('applySkipKeywordsTemplateBtn')
+    .addEventListener('click', () => applySkipKeywordsTemplate('replace'));
+document.getElementById('appendSkipKeywordsTemplateBtn')
+    .addEventListener('click', () => applySkipKeywordsTemplate('append'));
 document.getElementById('loadDefaultCompanies')
     .addEventListener('click', () => {
         const preset = getSelectedCompanyAreaPreset();
@@ -4573,7 +4775,30 @@ document.getElementById('companyScheduleInterval')
     });
 
 document.getElementById('companyBatchSize')
-    .addEventListener('change', saveState);
+    .addEventListener('change', () => {
+        const enabled = document.getElementById(
+            'companyScheduleCheckbox'
+        ).checked;
+        if (enabled) {
+            const hours = parseInt(
+                document.getElementById(
+                    'companyScheduleInterval'
+                ).value
+            ) || 24;
+            const batchSize = parseInt(
+                document.getElementById(
+                    'companyBatchSize'
+                ).value
+            ) || 10;
+            chrome.runtime.sendMessage({
+                action: 'setCompanySchedule',
+                enabled: true,
+                intervalHours: hours,
+                batchSize
+            });
+        }
+        saveState();
+    });
 
 document.getElementById('feedScheduleCheckbox')
     .addEventListener('change', (e) => {

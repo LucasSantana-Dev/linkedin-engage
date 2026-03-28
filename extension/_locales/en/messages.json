@@ -392,11 +392,26 @@
   "popup_company_defaultTargetsHelp": {
     "message": "Preset defaults include global + Brazil companies. Fill in to only follow matching companies."
   },
+  "popup_company_followNotConfirmed": {
+    "message": "Follow click attempted but could not be confirmed on LinkedIn UI."
+  },
+  "popup_company_cardsTimeout": {
+    "message": "LinkedIn did not load company results in time. Try again."
+  },
   "popup_company_errorMissingQuery": {
     "message": "Enter a search query, select a company preset, or add target companies."
   },
+  "popup_company_limit": {
+    "message": "Companies per run"
+  },
   "popup_company_leaveEmptyFollowAll": {
     "message": "Leave empty to follow all results."
+  },
+  "popup_company_alreadyFollowingOnly": {
+    "message": "All matched companies were already followed."
+  },
+  "popup_company_noTargetMatches": {
+    "message": "No company matched the target filter for this run."
   },
   "popup_company_openingSearch": {
     "message": "Searching companies by name..."
@@ -613,6 +628,48 @@
   },
   "popup_feed_skipKeywords": {
     "message": "Skip posts with keywords (one per line)"
+  },
+  "popup_feed_skipTemplateApplied": {
+    "message": "Keyword template applied."
+  },
+  "popup_feed_skipTemplateAppend": {
+    "message": "Append list"
+  },
+  "popup_feed_skipTemplateAppended": {
+    "message": "Keyword template appended."
+  },
+  "popup_feed_skipTemplateChoose": {
+    "message": "Choose template"
+  },
+  "popup_feed_skipTemplateCryptoHype": {
+    "message": "Crypto / Web3 hype"
+  },
+  "popup_feed_skipTemplateControversy": {
+    "message": "Controversy / rage-bait"
+  },
+  "popup_feed_skipTemplateEngagementBait": {
+    "message": "Engagement bait"
+  },
+  "popup_feed_skipTemplateHelp": {
+    "message": "Use a template as a starting point, then customize the list."
+  },
+  "popup_feed_skipTemplateLabel": {
+    "message": "Keyword template"
+  },
+  "popup_feed_skipTemplateJobSpam": {
+    "message": "Job spam / mass hiring"
+  },
+  "popup_feed_skipTemplatePolitics": {
+    "message": "Politics-heavy"
+  },
+  "popup_feed_skipTemplateReplace": {
+    "message": "Replace list"
+  },
+  "popup_feed_skipTemplateSelectFirst": {
+    "message": "Choose a keyword template first."
+  },
+  "popup_feed_skipTemplateSponsored": {
+    "message": "Sponsored & Ads"
   },
   "popup_feed_warmupDisabled": {
     "message": "Learning warmup disabled. Comments are unlocked."
@@ -913,6 +970,9 @@
   },
   "popup_runCanceled": {
     "message": "Run canceled by user."
+  },
+  "popup_runNoItemsProcessed": {
+    "message": "No items processed."
   },
   "popup_start_blockedCareerIntelLocked": {
     "message": "Career intelligence is locked. Enter the session passphrase to unlock it."

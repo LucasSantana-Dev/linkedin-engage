@@ -52,6 +52,55 @@ describe('normalizeRunOutcome', () => {
         expect(result.success).toBe(false);
     });
 
+    test('keeps company no-results as success when explicitly signaled', () => {
+        const result = normalizeRunOutcome({
+            mode: 'company',
+            success: true,
+            reason: 'no-results',
+            stepCode: 'no-results',
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            log: [{ status: 'skipped-no-results' }]
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
+        expect(result.reason).toBe('no-results');
+        expect(result.success).toBe(true);
+    });
+
+    test('keeps company no-results as success when only log signal exists', () => {
+        const result = normalizeRunOutcome({
+            mode: 'company',
+            reason: 'unknown',
+            stepCode: '',
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            log: [{ status: 'skipped-no-results' }]
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
+        expect(result.reason).toBe('unknown');
+        expect(result.success).toBe(true);
+    });
+
+    test('keeps zero-processed company runs as failed when no no-results signal exists', () => {
+        const result = normalizeRunOutcome({
+            mode: 'company',
+            reason: 'unknown',
+            stepCode: '',
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            log: []
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_FAILED);
+        expect(result.reason).toBe('no-items-processed');
+        expect(result.success).toBe(false);
+    });
+
     test('preserves explicit failed reason when provided', () => {
         const result = normalizeRunOutcome({
             mode: 'company',
@@ -82,5 +131,30 @@ describe('normalizeRunOutcome', () => {
         expect(result.processedCount).toBe(2);
         expect(result.actionCount).toBe(1);
         expect(result.skippedCount).toBe(1);
+    });
+
+    test('infers processed count from mode-specific fields and mode hint', () => {
+        const feed = normalizeRunOutcome(
+            {
+                processedCount: 0,
+                processedPosts: 3,
+                actionCount: 0,
+                skippedCount: 0
+            },
+            'feed'
+        );
+        const company = normalizeRunOutcome({
+            mode: 'company',
+            processedCount: 0,
+            followedThisStep: 2,
+            actionCount: 0,
+            skippedCount: 0
+        });
+
+        expect(feed.mode).toBe('feed');
+        expect(feed.processedCount).toBe(3);
+        expect(feed.runStatus).toBe(RUN_STATUS_SUCCESS);
+        expect(company.processedCount).toBe(2);
+        expect(company.runStatus).toBe(RUN_STATUS_SUCCESS);
     });
 });

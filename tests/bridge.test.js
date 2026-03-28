@@ -41,6 +41,37 @@ describe('bridge AI relay', () => {
         delete global.chrome;
     });
 
+    it('does not leave runtime message channels pending for sync actions', () => {
+        const listener = chrome.runtime.onMessage
+            .addListener.mock.calls[0][0];
+        const sendResponse = jest.fn();
+
+        const runResult = listener({
+            action: 'runAutomation'
+        }, null, sendResponse);
+        const customResult = listener({
+            action: 'runCustom',
+            msgType: 'LINKEDIN_BOT_CUSTOM',
+            config: {}
+        }, null, sendResponse);
+        const stopResult = listener({
+            action: 'stop'
+        }, null, sendResponse);
+
+        expect(runResult).toBeUndefined();
+        expect(customResult).toBeUndefined();
+        expect(stopResult).toBeUndefined();
+        expect(sendResponse).toHaveBeenNthCalledWith(1, {
+            status: 'started'
+        });
+        expect(sendResponse).toHaveBeenNthCalledWith(2, {
+            status: 'started'
+        });
+        expect(sendResponse).toHaveBeenNthCalledWith(3, {
+            status: 'stopping'
+        });
+    });
+
     it('forwards goalMode and returns diagnostics in AI result relay', async () => {
         const postSpy = jest.spyOn(window, 'postMessage');
 

@@ -82,12 +82,33 @@ function findFallbackCompanyContainers(root) {
     return uniqueElements(out);
 }
 
+function normalizeCompanyMatchValue(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function escapeRegex(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function matchesTargetCompanies(companyName, targets) {
     if (!targets || !targets.length) return true;
-    const lower = (companyName || '').toLowerCase();
-    return targets.some(t =>
-        lower.includes(t.toLowerCase())
-    );
+    const normalizedCompany = normalizeCompanyMatchValue(companyName);
+    if (!normalizedCompany) return false;
+    return targets.some((target) => {
+        const normalizedTarget = normalizeCompanyMatchValue(target);
+        if (!normalizedTarget) return false;
+        if (normalizedCompany === normalizedTarget) return true;
+        const boundaryPattern = new RegExp(
+            `(^|\\s)${escapeRegex(normalizedTarget)}(\\s|$)`
+        );
+        return boundaryPattern.test(normalizedCompany);
+    });
 }
 
 function isFollowingText(text) {

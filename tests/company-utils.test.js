@@ -177,6 +177,24 @@ describe('matchesTargetCompanies', () => {
         )).toBe(true);
     });
 
+    it('matches using word boundaries to avoid partial word collisions', () => {
+        expect(matchesTargetCompanies(
+            'Metabase', ['meta']
+        )).toBe(false);
+        expect(matchesTargetCompanies(
+            'Meta Platforms', ['meta']
+        )).toBe(true);
+    });
+
+    it('normalizes accents and punctuation in company names and targets', () => {
+        expect(matchesTargetCompanies(
+            'Sao Joao Tech', ['são joão']
+        )).toBe(true);
+        expect(matchesTargetCompanies(
+            'CI&T Brasil', ['ci t']
+        )).toBe(true);
+    });
+
     it('handles null company name', () => {
         expect(matchesTargetCompanies(null, ['test']))
             .toBe(false);

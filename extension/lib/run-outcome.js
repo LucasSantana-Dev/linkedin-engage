@@ -96,10 +96,28 @@ function inferReason(runStatus, result) {
     return 'unknown';
 }
 
-function inferRunStatus(result, stoppedByUser, processedCount) {
+function hasCompanyNoResultsSignal(result, mode) {
+    if (mode !== 'company') return false;
+    var reason = String(result?.reason || '').trim().toLowerCase();
+    var stepCode = String(result?.stepCode || '').trim().toLowerCase();
+    if (reason === 'no-results' || stepCode === 'no-results') {
+        return true;
+    }
+    if (!Array.isArray(result?.log)) return false;
+    return result.log.some(function(entry) {
+        return String(entry?.status || '') === 'skipped-no-results';
+    });
+}
+
+function inferRunStatus(result, stoppedByUser, processedCount, mode) {
     if (stoppedByUser) return RUN_STATUS_CANCELED;
     if (String(result?.error || '').trim()) return RUN_STATUS_FAILED;
-    if (processedCount === 0) return RUN_STATUS_FAILED;
+    if (processedCount === 0) {
+        if (hasCompanyNoResultsSignal(result, mode)) {
+            return RUN_STATUS_SUCCESS;
+        }
+        return RUN_STATUS_FAILED;
+    }
     return RUN_STATUS_SUCCESS;
 }
 
@@ -123,7 +141,12 @@ function normalizeRunOutcome(result, modeHint) {
         skippedCount
     );
     var stoppedByUser = detectStoppedByUser(source);
-    var runStatus = inferRunStatus(source, stoppedByUser, processedCount);
+    var runStatus = inferRunStatus(
+        source,
+        stoppedByUser,
+        processedCount,
+        mode
+    );
     var reason = inferReason(runStatus, {
         ...source,
         processedCount

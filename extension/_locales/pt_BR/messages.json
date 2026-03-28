@@ -392,11 +392,26 @@
   "popup_company_defaultTargetsHelp": {
     "message": "Os padrões incluem empresas globais e do Brasil. Preencha para seguir apenas empresas correspondentes."
   },
+  "popup_company_followNotConfirmed": {
+    "message": "A tentativa de seguir foi feita, mas não foi possível confirmar no LinkedIn."
+  },
+  "popup_company_cardsTimeout": {
+    "message": "O LinkedIn não carregou os resultados de empresas a tempo. Tente novamente."
+  },
   "popup_company_errorMissingQuery": {
     "message": "Informe uma busca, selecione um preset de empresa ou adicione empresas-alvo."
   },
+  "popup_company_limit": {
+    "message": "Empresas por execução"
+  },
   "popup_company_leaveEmptyFollowAll": {
     "message": "Deixe vazio para seguir todos os resultados."
+  },
+  "popup_company_alreadyFollowingOnly": {
+    "message": "Todas as empresas encontradas já estavam sendo seguidas."
+  },
+  "popup_company_noTargetMatches": {
+    "message": "Nenhuma empresa correspondeu ao filtro de empresas-alvo nesta execução."
   },
   "popup_company_openingSearch": {
     "message": "Buscando empresas por nome..."
@@ -613,6 +628,48 @@
   },
   "popup_feed_skipKeywords": {
     "message": "Pular posts com palavras-chave (uma por linha)"
+  },
+  "popup_feed_skipTemplateApplied": {
+    "message": "Template de palavras-chave aplicado."
+  },
+  "popup_feed_skipTemplateAppend": {
+    "message": "Adicionar lista"
+  },
+  "popup_feed_skipTemplateAppended": {
+    "message": "Template de palavras-chave adicionado."
+  },
+  "popup_feed_skipTemplateChoose": {
+    "message": "Escolher template"
+  },
+  "popup_feed_skipTemplateCryptoHype": {
+    "message": "Hype de Crypto / Web3"
+  },
+  "popup_feed_skipTemplateControversy": {
+    "message": "Controvérsia / bait de raiva"
+  },
+  "popup_feed_skipTemplateEngagementBait": {
+    "message": "Isca de engajamento"
+  },
+  "popup_feed_skipTemplateHelp": {
+    "message": "Use um template como ponto de partida e depois personalize a lista."
+  },
+  "popup_feed_skipTemplateLabel": {
+    "message": "Template de palavras-chave"
+  },
+  "popup_feed_skipTemplateJobSpam": {
+    "message": "Spam de vagas / contratação em massa"
+  },
+  "popup_feed_skipTemplatePolitics": {
+    "message": "Temas políticos"
+  },
+  "popup_feed_skipTemplateReplace": {
+    "message": "Substituir lista"
+  },
+  "popup_feed_skipTemplateSelectFirst": {
+    "message": "Escolha um template de palavras-chave primeiro."
+  },
+  "popup_feed_skipTemplateSponsored": {
+    "message": "Patrocinados e anúncios"
   },
   "popup_feed_warmupDisabled": {
     "message": "Warmup de aprendizado desativado. Comentários liberados."
@@ -913,6 +970,9 @@
   },
   "popup_runCanceled": {
     "message": "Execução cancelada pelo usuário."
+  },
+  "popup_runNoItemsProcessed": {
+    "message": "Nenhum item processado."
   },
   "popup_start_blockedCareerIntelLocked": {
     "message": "O Career Intelligence está bloqueado. Informe a senha da sessão para desbloquear."

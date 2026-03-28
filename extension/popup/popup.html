@@ -807,6 +807,15 @@
                         class="note-area" rows="3"
                         placeholder="Google&#10;Microsoft&#10;Meta&#10;Amazon&#10;Apple"></textarea>
                 </div>
+                <div class="input-group">
+                    <label for="companyLimitInput">Companies per run</label>
+                    <input type="number"
+                        id="companyLimitInput"
+                        value="50"
+                        min="1"
+                        max="100"
+                        style="width:100px;" />
+                </div>
                 <div style="margin-top:4px; display:flex;
                     justify-content:space-between;
                     align-items:center;">
@@ -1372,6 +1381,45 @@
                     <textarea id="skipKeywordsInput"
                         class="note-area" rows="2"
                         placeholder="sponsored&#10;ad&#10;promoted"></textarea>
+                </div>
+                <div class="input-group" style="margin-top:8px; margin-bottom:0;">
+                    <label for="skipKeywordsTemplateSelect">
+                        Keyword template
+                    </label>
+                    <select id="skipKeywordsTemplateSelect">
+                        <option value="">Choose template</option>
+                        <option value="sponsored">Sponsored &amp; Ads</option>
+                        <option value="engagement_bait">Engagement bait</option>
+                        <option value="politics">Politics-heavy</option>
+                        <option value="controversy">Controversy / rage-bait</option>
+                        <option value="crypto_hype">Crypto / Web3 hype</option>
+                        <option value="job_spam">Job spam / mass hiring</option>
+                    </select>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <button id="applySkipKeywordsTemplateBtn"
+                            type="button"
+                            style="flex:1; padding:8px;
+                            border:1px solid var(--primary);
+                            border-radius:var(--radius-sm);
+                            background:var(--primary-light);
+                            color:var(--primary);
+                            font-size:11px; font-weight:600; cursor:pointer;">
+                            Replace list
+                        </button>
+                        <button id="appendSkipKeywordsTemplateBtn"
+                            type="button"
+                            style="flex:1; padding:8px;
+                            border:1px solid var(--border);
+                            border-radius:var(--radius-sm);
+                            background:transparent;
+                            color:var(--text-main);
+                            font-size:11px; font-weight:600; cursor:pointer;">
+                            Append list
+                        </button>
+                    </div>
+                    <div id="skipKeywordsTemplateHelp" style="font-size:10px; color:var(--text-muted); margin-top:6px;">
+                        Use a template as a starting point, then customize the list.
+                    </div>
                 </div>
             </div>
 

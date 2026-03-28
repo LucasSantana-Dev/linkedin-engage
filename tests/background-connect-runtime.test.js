@@ -10,6 +10,11 @@ describe('background connect runtime config', () => {
         return new Promise(resolve => setTimeout(resolve, 0));
     }
 
+    function getKeywordsFromUrl(url) {
+        const parsed = new URL(url);
+        return parsed.searchParams.get('keywords') || '';
+    }
+
     function emitTabUpdated(tabId, tab) {
         for (const listener of tabUpdatedListeners) {
             listener(tabId, { status: 'complete' }, tab);
@@ -422,6 +427,9 @@ describe('background connect runtime config', () => {
         const firstUrl = chrome.tabs.create.mock.calls[0][0].url;
         expect(firstUrl).toContain('activelyHiring=true');
         expect(firstUrl).toContain('&network=%5B%22S%22%5D');
+        expect(getKeywordsFromUrl(firstUrl)).toBe(
+            'recruiter talent acquisition hiring manager tech'
+        );
 
         await sendRequest({
             action: 'done',
@@ -439,8 +447,8 @@ describe('background connect runtime config', () => {
         const secondUrl = chrome.tabs.create.mock.calls[1][0].url;
         expect(secondUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
         expect(secondUrl).not.toContain('activelyHiring=true');
-        expect(secondUrl).toContain(
-            encodeURIComponent('recruiter OR talent acquisition OR hiring manager OR tech')
+        expect(getKeywordsFromUrl(secondUrl)).toBe(
+            'recruiter talent acquisition hiring manager tech'
         );
     });
 
