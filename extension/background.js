@@ -1034,7 +1034,8 @@ function launchAutomation(config) {
                         files: [
                             'lib/ui-notify.js',
                             'lib/invite-utils.js',
-                            'lib/human-behavior.js'
+                            'lib/human-behavior.js',
+                            'lib/connect-action-utils.js'
                         ],
                         world: 'MAIN'
                     }, () => {
