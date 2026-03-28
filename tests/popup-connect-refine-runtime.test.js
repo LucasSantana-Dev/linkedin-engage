@@ -382,6 +382,26 @@ describe('popup connect refine runtime', () => {
         expect(launchCall[0].limit).toBe(13);
     });
 
+    test('companies launch collapses legacy tech sub-preset values to generic tech', () => {
+        switchToCompaniesMode();
+
+        const select = document.getElementById('companyAreaPresetSelect');
+        const legacyOption = document.createElement('option');
+        legacyOption.value = 'tech-backend';
+        legacyOption.textContent = 'Backend Engineering';
+        select.appendChild(legacyOption);
+        select.value = 'tech-backend';
+
+        document.getElementById('companyQueryInput').value = 'api companies';
+        click(document.getElementById('startBtn'));
+
+        const launchCall = chromeMock.runtime.sendMessage.mock.calls.find(
+            ([message]) => message && message.action === 'startCompanyFollow'
+        );
+        expect(launchCall).toBeTruthy();
+        expect(launchCall[0].companyAreaPreset).toBe('tech');
+    });
+
     test('companies area preset select keeps only generic tech preset', () => {
         switchToCompaniesMode();
 
