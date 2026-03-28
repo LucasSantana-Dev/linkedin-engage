@@ -15,6 +15,7 @@ describe('company-follow runtime classification', () => {
         delete global.isCompanyFollowText;
         delete global.isFollowingText;
         delete global.isCompanyFollowConfirmed;
+        delete global.isLowFitCompanyEntity;
         delete global.getCompanySearchPageState;
         delete global.actionDelay;
         delete global.shouldTakePause;
@@ -239,6 +240,76 @@ describe('company-follow runtime classification', () => {
             expect.arrayContaining([
                 expect.objectContaining({ status: 'followed' }),
                 expect.objectContaining({ status: 'followed' })
+            ])
+        );
+    });
+
+    it('skips low-fit entities before attempting follow actions', async () => {
+        const card = document.createElement('div');
+        card.className = 'entity-result';
+        const button = document.createElement('button');
+        button.textContent = 'Follow';
+        button.scrollIntoView = jest.fn();
+        card.appendChild(button);
+        card.dataset.companyName = 'Acme University';
+        document.body.appendChild(card);
+
+        global.extractCompanyInfo = () => ({
+            name: 'Acme University',
+            subtitle: 'Higher Education',
+            companyUrl: 'https://www.linkedin.com/company/acme-university/'
+        });
+        global.matchesTargetCompanies = () => true;
+        global.isCompanyFollowText = () => true;
+        global.isFollowingText = () => false;
+        global.isCompanyFollowConfirmed = () => ({
+            confirmed: false,
+            signals: []
+        });
+        global.isLowFitCompanyEntity = () => ({
+            isLowFit: true,
+            reason: 'education',
+            match: 'university'
+        });
+        global.getCompanySearchPageState = () => ({
+            cards: [card],
+            cardsFound: true,
+            isExplicitNoResults: false,
+            resultsCountHint: 1,
+            resultsCountText: '1 result',
+            selectorHits: {}
+        });
+
+        require('../extension/company-follow');
+        const donePromise = waitForCompanyDone();
+        window.dispatchEvent(new MessageEvent('message', {
+            data: {
+                type: 'LINKEDIN_COMPANY_FOLLOW_START',
+                config: {
+                    query: 'acme',
+                    limit: 1,
+                    targetCompanies: []
+                }
+            },
+            source: window
+        }));
+
+        const result = await donePromise;
+        expect(result.success).toBe(false);
+        expect(result.reason).toBe('no-companies-followed');
+        expect(result.diagnostics).toEqual(
+            expect.objectContaining({
+                lowFitSkipped: 1,
+                followAttempts: 0
+            })
+        );
+        expect(result.log).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    status: 'skipped-low-fit-entity',
+                    reason: 'education',
+                    match: 'university'
+                })
             ])
         );
     });

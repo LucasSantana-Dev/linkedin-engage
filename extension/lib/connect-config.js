@@ -514,8 +514,9 @@
             },
             tech: {
                 defaultQuery:
-                    '"software engineering" OR "software development" OR ' +
-                    '"product engineering" OR "technology platform"',
+                    '"nearshore software company" OR "latam talent partner" OR ' +
+                    '"offshore engineering team" OR "remote product company" ' +
+                    'NOT university NOT college NOT institute NOT academy',
                 defaultTargetCompanies: [
                     'Google',
                     'Microsoft',

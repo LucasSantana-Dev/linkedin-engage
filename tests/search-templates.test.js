@@ -313,8 +313,9 @@ describe('search-templates', () => {
             searchLanguageMode: 'bilingual'
         });
 
-        expect(plan.query.toLowerCase()).toContain('developer tools');
-        expect(plan.query.toLowerCase()).toContain('ferramentas para desenvolvedores');
+        expect(plan.query.toLowerCase()).toContain('nearshore software company');
+        expect(plan.query.toLowerCase()).toContain('empresa de software nearshore');
+        expect(plan.query.toLowerCase()).toContain('not university');
         expect(plan.meta.operatorCount).toBeLessThanOrEqual(12);
     });
 
@@ -330,8 +331,9 @@ describe('search-templates', () => {
         });
 
         const q = plan.query.toLowerCase();
-        expect(q).toContain('software engineering teams');
-        expect(q).toContain('developer tools');
+        expect(q).toContain('nearshore software company');
+        expect(q).toContain('latam talent partner');
+        expect(q).toContain('not university');
     });
 
     it('omits companies default keywords when selectedTags.keywords is explicitly empty', () => {
@@ -364,8 +366,9 @@ describe('search-templates', () => {
         });
 
         const q = plan.query.toLowerCase();
-        expect(q).toContain('software engineering teams');
-        expect(q).toContain('developer tools');
+        expect(q).toContain('nearshore software company');
+        expect(q).toContain('latam talent partner');
+        expect(q).toContain('not university');
     });
 
     it('keeps jobs defaults when role/location/keywords keys are missing', () => {

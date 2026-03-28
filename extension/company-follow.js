@@ -99,6 +99,13 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         return null;
     }
 
+    function getLowFitEntityCheck(info) {
+        if (typeof isLowFitCompanyEntity === 'function') {
+            return isLowFitCompanyEntity(info);
+        }
+        return { isLowFit: false, reason: '', match: '' };
+    }
+
     function getFollowConfirmation(card) {
         if (typeof isCompanyFollowConfirmed === 'function') {
             return isCompanyFollowConfirmed(card, document);
@@ -254,6 +261,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         const stats = {
             cardsScanned: 0,
             targetMatched: 0,
+            lowFitSkipped: 0,
             followed: 0,
             alreadyFollowing: 0,
             followAttempts: 0,
@@ -290,6 +298,19 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
 
             try {
                 const info = extractCompanyInfo(card);
+
+                const lowFitCheck = getLowFitEntityCheck(info);
+                if (lowFitCheck?.isLowFit) {
+                    stats.lowFitSkipped++;
+                    followLog.push({
+                        ...info,
+                        status: 'skipped-low-fit-entity',
+                        reason: lowFitCheck.reason || 'low-fit-entity',
+                        match: lowFitCheck.match || '',
+                        time: new Date().toISOString()
+                    });
+                    continue;
+                }
 
                 if (companies.length > 0 &&
                     !matchesTargetCompanies(
@@ -463,6 +484,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             const stepStats = {
                 cardsScanned: 0,
                 targetMatched: 0,
+                lowFitSkipped: 0,
                 followed: 0,
                 alreadyFollowing: 0,
                 followAttempts: 0,
@@ -515,6 +537,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                         diagnostics.paginationCapped = false;
                         diagnostics.cardsScanned = 0;
                         diagnostics.targetMatched = 0;
+                        diagnostics.lowFitSkipped = 0;
                         diagnostics.followed = 0;
                         diagnostics.alreadyFollowing = 0;
                         diagnostics.followAttempts = 0;
@@ -558,6 +581,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                         diagnostics.paginationCapped = false;
                         diagnostics.cardsScanned = 0;
                         diagnostics.targetMatched = 0;
+                        diagnostics.lowFitSkipped = 0;
                         diagnostics.followed = 0;
                         diagnostics.alreadyFollowing = 0;
                         diagnostics.followAttempts = 0;
@@ -597,6 +621,8 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     pageStats.cardsScanned || 0;
                 stepStats.targetMatched +=
                     pageStats.targetMatched || 0;
+                stepStats.lowFitSkipped +=
+                    pageStats.lowFitSkipped || 0;
                 stepStats.followed +=
                     pageStats.followed || 0;
                 stepStats.alreadyFollowing +=
@@ -621,6 +647,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     diagnostics.paginationCapped = paginationCapped;
                     diagnostics.cardsScanned = stepStats.cardsScanned;
                     diagnostics.targetMatched = stepStats.targetMatched;
+                    diagnostics.lowFitSkipped = stepStats.lowFitSkipped;
                     diagnostics.followed = stepStats.followed;
                     diagnostics.alreadyFollowing =
                         stepStats.alreadyFollowing;
@@ -690,6 +717,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             diagnostics.paginationCapped = paginationCapped;
             diagnostics.cardsScanned = stepStats.cardsScanned;
             diagnostics.targetMatched = stepStats.targetMatched;
+            diagnostics.lowFitSkipped = stepStats.lowFitSkipped;
             diagnostics.followed = stepStats.followed;
             diagnostics.alreadyFollowing = stepStats.alreadyFollowing;
             diagnostics.followAttempts = stepStats.followAttempts;

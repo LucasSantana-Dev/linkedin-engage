@@ -1012,9 +1012,12 @@
                 expectedResultsBucket: 'balanced',
                 querySpec: {
                     keywords: [
-                        'software engineering teams',
-                        'developer tools',
-                        'saas'
+                        'nearshore software company',
+                        'latam talent partner',
+                        'empresa de software nearshore'
+                    ],
+                    excludeKeywords: [
+                        'university'
                     ]
                 },
                 filterSpec: {
@@ -2147,10 +2150,18 @@
                 template?.querySpec?.keywords,
                 searchLocale
             );
+            const excludeKeywords = resolveLocalizedOptionalGroup(
+                selectedTags,
+                'excludeKeywords',
+                template?.querySpec?.excludeKeywords,
+                searchLocale
+            );
             const compiled = compileBooleanQuery({
                 should: keywords,
                 must: [],
-                mustNot: [],
+                mustNot: keywords.length > 0
+                    ? excludeKeywords
+                    : [],
                 budget: 12,
                 explicitAnd: true,
                 wrapShould: true
@@ -2169,7 +2180,8 @@
                     mode: 'companies'
                 },
                 diagnostics: {
-                    keywords: compiled.should
+                    keywords: compiled.should,
+                    excludeKeywords: compiled.mustNot
                 }
             };
         }

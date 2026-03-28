@@ -6,6 +6,7 @@ const {
     findCompanyCards,
     getCompanySearchPageState,
     matchesTargetCompanies,
+    isLowFitCompanyEntity,
     isFollowingText,
     isCompanyFollowConfirmed,
     getCompanyFollowConfirmationSignals,
@@ -198,6 +199,29 @@ describe('matchesTargetCompanies', () => {
     it('handles null company name', () => {
         expect(matchesTargetCompanies(null, ['test']))
             .toBe(false);
+    });
+});
+
+describe('isLowFitCompanyEntity', () => {
+    it('flags universities and institutes as low-fit entities', () => {
+        expect(isLowFitCompanyEntity({
+            name: 'Software Engineering Institute',
+            subtitle: 'Higher Education'
+        }).isLowFit).toBe(true);
+    });
+
+    it('flags generic groups and job boards as low-fit entities', () => {
+        expect(isLowFitCompanyEntity({
+            name: 'Software Improvement Group',
+            subtitle: 'Professional Training and Jobs'
+        }).isLowFit).toBe(true);
+    });
+
+    it('keeps product companies as eligible entities', () => {
+        expect(isLowFitCompanyEntity({
+            name: 'Vercel',
+            subtitle: 'Software Development'
+        }).isLowFit).toBe(false);
     });
 });
 

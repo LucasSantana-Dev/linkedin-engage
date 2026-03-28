@@ -92,6 +92,55 @@ function normalizeCompanyMatchValue(value) {
         .trim();
 }
 
+function normalizeEntityClassifierText(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isLowFitCompanyEntity(info) {
+    const name = normalizeEntityClassifierText(info?.name);
+    const subtitle = normalizeEntityClassifierText(info?.subtitle);
+    const haystack = `${name} ${subtitle}`.trim();
+    if (!haystack) {
+        return { isLowFit: false, reason: '', match: '' };
+    }
+
+    const LOW_FIT_PATTERNS = [
+        { term: 'university', reason: 'education' },
+        { term: 'college', reason: 'education' },
+        { term: 'institute', reason: 'education' },
+        { term: 'instituto', reason: 'education' },
+        { term: 'school', reason: 'education' },
+        { term: 'faculdade', reason: 'education' },
+        { term: 'academy', reason: 'training' },
+        { term: 'bootcamp', reason: 'training' },
+        { term: 'e learning', reason: 'training' },
+        { term: 'training', reason: 'training' },
+        { term: 'curso', reason: 'training' },
+        { term: 'group', reason: 'generic-group' },
+        { term: 'jobs', reason: 'job-board' },
+        { term: 'vagas', reason: 'job-board' }
+    ];
+
+    for (const pattern of LOW_FIT_PATTERNS) {
+        const re = new RegExp(`(^|\\s)${escapeRegex(pattern.term)}(\\s|$)`);
+        if (re.test(haystack)) {
+            return {
+                isLowFit: true,
+                reason: pattern.reason,
+                match: pattern.term
+            };
+        }
+    }
+
+    return { isLowFit: false, reason: '', match: '' };
+}
+
 function escapeRegex(value) {
     return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -384,6 +433,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         extractCompanyInfo,
         matchesTargetCompanies,
+        isLowFitCompanyEntity,
         isFollowingText,
         isCompanyFollowConfirmed,
         getCompanyFollowConfirmationSignals,
