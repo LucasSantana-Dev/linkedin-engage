@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.15] - 2026-03-28
+
+### Fixed
+- **Companies offshore-anchor retention under boolean budget**: `buildCompaniesQueryPlan` now interleaves offshore/LATAM anchors with tech sub-preset specialization terms so operator trimming does not drop all offshore intent from compiled queries.
+- **Tech preset consistency for LATAM/offshore hiring**: Tightened remaining tech sub-preset company defaults (`tech-devops`, `tech-data`, `tech-cloud`, `tech-security`, `tech-mobile`, `tech-ml-ai`) to include remote LATAM-hiring phrasing and low-fit exclusions.
+
+### Added
+- **Regression coverage for anchor preservation**: Expanded search-template tests to assert tech-devops Companies planning keeps offshore anchors and exclusion clauses in generated query output.
+
 ## [1.36.14] - 2026-03-28
 
 ### Fixed
