@@ -2075,6 +2075,57 @@
 
         <hr class="divider">
 
+        <!-- PASSIVE VISIBILITY: profile-view walker -->
+        <div class="accordion"
+            id="connectPassiveAccordion"
+            data-mode="connect"
+            data-panel="passive">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:passive">
+                <span>Passive visibility</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
+                <div class="checkbox-group">
+                    <label for="enableProfileWalkCheckbox">
+                        Enable profile-view walker (opt-in)
+                    </label>
+                    <input type="checkbox"
+                        id="enableProfileWalkCheckbox" />
+                </div>
+                <div class="input-group">
+                    <label for="profileWalkDailyTargetInput">
+                        Daily profile-view target (max 50)
+                    </label>
+                    <input type="number"
+                        id="profileWalkDailyTargetInput"
+                        value="25" min="1" max="50" />
+                </div>
+                <div class="input-group"
+                    style="display:flex; gap:8px;">
+                    <button type="button"
+                        id="profileWalkStartBtn"
+                        class="primary-button">
+                        Start walk
+                    </button>
+                    <button type="button"
+                        id="profileWalkStopBtn"
+                        class="secondary-button">
+                        Stop
+                    </button>
+                </div>
+                <div id="profileWalkStatus"
+                    style="font-size:11px;
+                           color:var(--text-muted);
+                           margin-top:4px;">
+                    Uses your nurtureList profiles. Opens each
+                    in a background tab for ~6–10s. Cap: 50/day.
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
         <!-- NOTE TEMPLATES -->
         <div class="accordion"
             id="connectMessageAccordion"

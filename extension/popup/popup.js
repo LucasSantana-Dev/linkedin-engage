@@ -3131,6 +3131,62 @@ document.getElementById('excludedCompaniesInput').addEventListener(
     const yMaxEl = document.getElementById('yearsMaxInput');
     if (yMaxEl) yMaxEl.addEventListener('input', onYearsChange);
 })();
+
+(function wireProfileWalker() {
+    const startBtn = document.getElementById(
+        'profileWalkStartBtn'
+    );
+    const stopBtn = document.getElementById(
+        'profileWalkStopBtn'
+    );
+    const statusEl = document.getElementById(
+        'profileWalkStatus'
+    );
+    const enableEl = document.getElementById(
+        'enableProfileWalkCheckbox'
+    );
+    const targetEl = document.getElementById(
+        'profileWalkDailyTargetInput'
+    );
+    if (!startBtn || !stopBtn) return;
+
+    startBtn.addEventListener('click', () => {
+        if (!enableEl?.checked) {
+            if (statusEl) {
+                statusEl.textContent =
+                    'Enable the profile walker first.';
+            }
+            return;
+        }
+        const dailyTarget = Number(targetEl?.value) || 25;
+        if (statusEl) {
+            statusEl.textContent =
+                `Starting profile walk (target ${dailyTarget})...`;
+        }
+        chrome.runtime.sendMessage({
+            action: 'startProfileWalk',
+            dailyTarget
+        }, () => {
+            if (chrome.runtime.lastError) {
+                if (statusEl) {
+                    statusEl.textContent =
+                        'Failed to start walk: ' +
+                        chrome.runtime.lastError.message;
+                }
+            }
+        });
+    });
+    stopBtn.addEventListener('click', () => {
+        chrome.runtime.sendMessage({
+            action: 'stopProfileWalk'
+        }, () => {
+            if (statusEl) {
+                statusEl.textContent = 'Stop requested.';
+            }
+        });
+    });
+})();
+
 document.getElementById(
     'skipOpenToWorkRecruitersCheckbox'
 ).addEventListener('change', saveState);
@@ -3958,6 +4014,20 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 });
 
 chrome.runtime.onMessage.addListener((request) => {
+    if (request.action === 'profileWalkDone') {
+        const statusEl = document.getElementById(
+            'profileWalkStatus'
+        );
+        const r = request.result || {};
+        if (statusEl) {
+            statusEl.textContent =
+                `Walk done — visited ${r.visited || 0}` +
+                ` (today ${r.dayCount || 0}/` +
+                `${r.dailyCap || '?'}) ` +
+                `reason=${r.reason || 'n/a'}`;
+        }
+        return;
+    }
     if (request.action === 'progress') {
         const isConnect = currentMode === 'connect';
         const engMode = isConnect && document.getElementById(

@@ -57,6 +57,135 @@ importScripts('lib/jobs-career-cache.js');
 importScripts('lib/jobs-career-intelligence.js');
 importScripts('lib/jobs-utils.js');
 importScripts('lib/run-outcome.js');
+importScripts('lib/profile-visitor.js');
+
+let profileWalkStopRequested = false;
+
+function getProfileWalkDateKey() {
+    const now = new Date();
+    return `profileWalkCount_${now.getFullYear()}_` +
+        `${String(now.getMonth() + 1).padStart(2, '0')}_` +
+        `${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function readProfileWalkCount() {
+    return new Promise(resolve => {
+        const key = getProfileWalkDateKey();
+        chrome.storage.local.get(key, (data) => {
+            resolve(Number(data[key]) || 0);
+        });
+    });
+}
+
+function incrementProfileWalkCount() {
+    return new Promise(resolve => {
+        const key = getProfileWalkDateKey();
+        chrome.storage.local.get(key, (data) => {
+            const next = (Number(data[key]) || 0) + 1;
+            chrome.storage.local.set({ [key]: next }, () => {
+                resolve(next);
+            });
+        });
+    });
+}
+
+async function harvestProfileWalkUrls(request) {
+    const fromRequest = Array.isArray(request?.urls)
+        ? request.urls : [];
+    const fromNurture = await new Promise(resolve => {
+        chrome.storage.local.get('nurtureList', (data) => {
+            const list = Array.isArray(data?.nurtureList)
+                ? data.nurtureList : [];
+            resolve(list.map(x => x && x.profileUrl)
+                .filter(Boolean));
+        });
+    });
+    const visitor = typeof LinkedInProfileVisitor !==
+        'undefined' ? LinkedInProfileVisitor : null;
+    if (visitor && typeof visitor.dedupeProfileUrls
+        === 'function') {
+        return visitor.dedupeProfileUrls(
+            fromRequest.concat(fromNurture)
+        );
+    }
+    return fromRequest.concat(fromNurture);
+}
+
+async function launchProfileWalk(request) {
+    const visitor = typeof LinkedInProfileVisitor !==
+        'undefined' ? LinkedInProfileVisitor : null;
+    if (!visitor) {
+        return {
+            visited: 0,
+            errors: 1,
+            reason: 'profile-visitor-missing'
+        };
+    }
+    const urls = await harvestProfileWalkUrls(request);
+    const dailyTarget = Number(request?.dailyTarget) ||
+        visitor.DEFAULTS.dailyTarget;
+    const dailyCap = Math.min(
+        dailyTarget,
+        visitor.DEFAULTS.dailyTargetMax
+    );
+    const startCount = await readProfileWalkCount();
+    if (startCount >= dailyCap) {
+        return {
+            visited: 0,
+            errors: 0,
+            reason: 'daily-cap-already',
+            visitedUrls: [],
+            dayCount: startCount
+        };
+    }
+
+    const openTab = (url) => new Promise((resolve, reject) => {
+        chrome.tabs.create({ url, active: false }, (tab) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
+            resolve(tab && tab.id);
+        });
+    });
+    const closeTab = (tabId) => new Promise((resolve) => {
+        if (!tabId) return resolve();
+        chrome.tabs.remove(tabId, () => {
+            if (chrome.runtime.lastError) {
+                // tab likely closed by user — ignore
+            }
+            resolve();
+        });
+    });
+
+    const result = await visitor.runProfileWalk({
+        urls,
+        config: {
+            dailyTarget: dailyCap - startCount,
+            dwellMsMin: request?.dwellMsMin,
+            dwellMsMax: request?.dwellMsMax,
+            jitterMsMin: request?.jitterMsMin,
+            jitterMsMax: request?.jitterMsMax,
+            perMinuteMax: request?.perMinuteMax
+        },
+        openTab,
+        closeTab,
+        isDailyCapReached: async () => {
+            const c = await readProfileWalkCount();
+            return c >= dailyCap;
+        },
+        recordVisit: async () => {
+            await incrementProfileWalkCount();
+        },
+        shouldStop: () => profileWalkStopRequested
+    });
+    const finalCount = await readProfileWalkCount();
+    return {
+        ...result,
+        dayCount: finalCount,
+        dailyCap
+    };
+}
 
 function parseExcludedCompanyList(raw) {
     if (typeof parseExcludedCompanies === 'function') {
@@ -2912,6 +3041,44 @@ chrome.runtime.onMessage.addListener(
                 });
             });
             return true;
+        }
+
+        if (request.action === 'startProfileWalk') {
+            profileWalkStopRequested = false;
+            launchProfileWalk(request)
+                .then(result => {
+                    chrome.runtime.sendMessage({
+                        action: 'profileWalkDone',
+                        result
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            // popup closed — swallow
+                        }
+                    });
+                })
+                .catch(err => {
+                    chrome.runtime.sendMessage({
+                        action: 'profileWalkDone',
+                        result: {
+                            visited: 0,
+                            errors: 1,
+                            reason: 'exception',
+                            error: String(err?.message || err)
+                        }
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            // popup closed — swallow
+                        }
+                    });
+                });
+            sendResponse({ status: 'started' });
+            return true;
+        }
+
+        if (request.action === 'stopProfileWalk') {
+            profileWalkStopRequested = true;
+            sendResponse({ status: 'stopping' });
+            return;
         }
 
         if (request.action === 'saveJobsProfileCache') {
