@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.18] - 2026-04-24
+
+### Fixed
+- **Follow-when-no-Connect not firing on live LinkedIn search** (#63): the follow-card pass used selectors that no longer match LinkedIn's current DOM, and the fallback text matcher required exact `"Follow"`/`"Seguir"` so it silently skipped the `"+ Follow"` button label. Introduced `isFollowActionTextPermissive` (strips `+ ` prefix, word-start match), broadened the follow-card selector to include `[data-chameleon-result-urn]` and `search-entity-result-universal-template`, and added a final button-first follow scan that works independently of card class.
+- **Duplicate search tab on relaxed retry** (#63): when a run returned zero targets, `launchAutomation(relaxedConfig)` opened a new tab without closing the old one, leaving two automation loops running in parallel against the same account. Background now fires a `chrome.tabs.remove` on the stale tab before launching the retry.
+
 ## [1.36.17] - 2026-04-24
 
 ### Added
