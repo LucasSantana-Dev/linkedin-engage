@@ -833,6 +833,13 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             config?.skipOpenToWorkRecruiters !== false;
         const skipJobSeekingSignals =
             config?.skipJobSeekingSignals === true;
+        const followFallbackEnabled =
+            config?.followFallback !== false;
+        const followFirstMode =
+            config?.followFirstMode === true;
+        const followMax = Number.isFinite(config?.followMax)
+            ? Math.max(0, config.followMax) : 40;
+        let followsUsed = 0;
         let totalSent = 0;
         let totalSkipped = 0;
         let currentPage = 1;
@@ -968,6 +975,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             profile
                         });
                     } else if (!connectItem &&
+                        followFallbackEnabled &&
+                        followsUsed + followTargetsPending() <
+                            followMax &&
                         followBtn &&
                         !seen.has(followBtn) &&
                         isButtonClickable(followBtn)) {
@@ -980,6 +990,41 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             action: 'follow',
                             profile
                         });
+                    }
+                }
+
+                function followTargetsPending() {
+                    let pending = 0;
+                    for (const t of actionTargets) {
+                        if (t.action === 'follow') pending++;
+                    }
+                    return pending;
+                }
+
+                if (followFirstMode && followFallbackEnabled) {
+                    for (let i = actionTargets.length - 1;
+                        i >= 0; i--) {
+                        const t = actionTargets[i];
+                        if (t.action !== 'connect') continue;
+                        const card = t.button.closest(
+                            '.entity-result, ' +
+                            'li.reusable-search__result-container, ' +
+                            'li, [data-chameleon-result-urn]'
+                        );
+                        if (!card) continue;
+                        const fbtn = findFollowButtonInCard(card);
+                        if (fbtn && !seen.has(fbtn) &&
+                            isButtonClickable(fbtn) &&
+                            followsUsed +
+                                followTargetsPending() <
+                                followMax) {
+                            seen.add(fbtn);
+                            actionTargets[i] = {
+                                button: fbtn,
+                                action: 'follow',
+                                profile: t.profile
+                            };
+                        }
                     }
                 }
 
@@ -1206,6 +1251,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                 await verifyFollowState(button);
                             if (followVerified) {
                                 totalSent++;
+                                followsUsed++;
                                 const followedInfo =
                                     extractProfileInfo(button);
                                 if (followedInfo.profileUrl) {
