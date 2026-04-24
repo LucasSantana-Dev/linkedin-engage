@@ -1929,147 +1929,182 @@
 
         <hr class="divider">
 
-        <!-- FILTERS & SETTINGS -->
-        <div class="row">
-            <div class="input-group">
-                <label for="limitInput">
-                    Limit
-                </label>
-                <input type="number" id="limitInput" value="50" min="1" max="1000" />
-            </div>
-            <div class="input-group">
-                <label for="regionSelect">
-                    Recruiter Location
-                </label>
-                <select id="regionSelect">
-                    <option value="103644278,101121807,101165590,101282230,102890719">Global (US/CA/UK/DE/NL)</option>
-                    <option value="103644278">United States</option>
-                    <option value="101121807">Canada</option>
-                    <option value="101165590">United Kingdom</option>
-                    <option value="101282230">Germany</option>
-                    <option value="102890719">Netherlands</option>
-                    <option value="105646813">Ireland</option>
-                    <option value="100364837">Portugal</option>
-                    <option value="105015875">Spain</option>
-                    <option value="106057199">Brazil</option>
-                    <option value="103644278,106057199">US + Brazil</option>
-                    <option value="103644278,101121807,101165590,101282230,102890719,105646813,100364837,105015875">US + EU Extended</option>
-                </select>
+        <!-- COMPILED QUERY PREVIEW -->
+        <div class="section">
+            <div class="section-label">Compiled query</div>
+            <div class="query-preview" id="queryPreview"></div>
+            <pre id="booleanPreviewPre"
+                style="background:#f5f5f5; padding:6px;
+                       border-radius:4px; font-size:11px;
+                       white-space:pre-wrap; word-break:break-word;
+                       margin:6px 0 0 0; min-height:28px;"></pre>
+            <span class="toggle-custom" id="toggleCustomQuery">
+                Edit query manually
+            </span>
+            <input type="text" class="custom-query-input"
+                id="customQueryInput"
+                placeholder="Type your search query..." />
+        </div>
+
+        <!-- EXCLUSIONS -->
+        <div class="accordion"
+            id="connectExclusionsAccordion"
+            data-mode="connect"
+            data-panel="exclusions">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:exclusions">
+                <span>Exclusions</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
+                <div class="input-group">
+                    <label for="excludedCompaniesInput">
+                        Excluded companies (one per line)
+                    </label>
+                    <textarea id="excludedCompaniesInput"
+                        class="note-area" rows="2"
+                        placeholder="Acme Corp&#10;Beta Labs"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="excludeKeywordsInput">
+                        Exclude keywords (comma-separated, maps to NOT)
+                    </label>
+                    <input type="text" id="excludeKeywordsInput"
+                        placeholder="intern, junior, bootcamp" />
+                </div>
+
+                <div class="checkbox-group">
+                    <label for="skipOpenToWorkRecruitersCheckbox">
+                        Skip Open to Work recruiters
+                    </label>
+                    <input type="checkbox"
+                        id="skipOpenToWorkRecruitersCheckbox"
+                        checked />
+                </div>
+
+                <div class="checkbox-group">
+                    <label for="skipJobSeekingSignalsCheckbox">
+                        Skip explicit job-seeking signals
+                    </label>
+                    <input type="checkbox"
+                        id="skipJobSeekingSignalsCheckbox" />
+                </div>
             </div>
         </div>
 
-        <div class="query-preview" id="queryPreview"></div>
-        <span class="toggle-custom" id="toggleCustomQuery">
-            Edit query manually
-        </span>
-        <input type="text" class="custom-query-input"
-            id="customQueryInput"
-            placeholder="Type your search query..." />
-
+        <!-- AUDIENCE FILTERS -->
         <div class="accordion"
             id="connectAudienceAccordion"
             data-mode="connect"
             data-panel="filters">
             <button class="accordion-toggle" type="button"
                 data-accordion-toggle="connect:filters">
-                <span>Audience Filters</span>
+                <span>Audience filters</span>
                 <span class="accordion-chevron">▼</span>
             </button>
             <div class="accordion-body">
-        <div class="checkbox-group">
-            <label for="activelyHiringCheckbox">Only "Actively Hiring" profiles</label>
-            <input type="checkbox" id="activelyHiringCheckbox" />
-        </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label for="limitInput">Limit</label>
+                        <input type="number" id="limitInput"
+                            value="50" min="1" max="1000" />
+                    </div>
+                    <div class="input-group">
+                        <label for="regionSelect">
+                            Recruiter location
+                        </label>
+                        <select id="regionSelect">
+                            <option value="103644278,101121807,101165590,101282230,102890719">Global (US/CA/UK/DE/NL)</option>
+                            <option value="103644278">United States</option>
+                            <option value="101121807">Canada</option>
+                            <option value="101165590">United Kingdom</option>
+                            <option value="101282230">Germany</option>
+                            <option value="102890719">Netherlands</option>
+                            <option value="105646813">Ireland</option>
+                            <option value="100364837">Portugal</option>
+                            <option value="105015875">Spain</option>
+                            <option value="106057199">Brazil</option>
+                            <option value="103644278,106057199">US + Brazil</option>
+                            <option value="103644278,101121807,101165590,101282230,102890719,105646813,100364837,105015875">US + EU Extended</option>
+                        </select>
+                    </div>
+                </div>
 
-        <div class="checkbox-group">
-            <label for="engagementOnlyCheckbox">Engagement only (visit + follow, no connect)</label>
-            <input type="checkbox" id="engagementOnlyCheckbox" />
-        </div>
+                <div class="checkbox-group">
+                    <label for="activelyHiringCheckbox">
+                        Only "Actively Hiring" profiles
+                    </label>
+                    <input type="checkbox" id="activelyHiringCheckbox" />
+                </div>
 
-        <div class="checkbox-group">
-            <label for="followFallbackCheckbox">Follow people when Connect is unavailable</label>
-            <input type="checkbox" id="followFallbackCheckbox" checked />
-        </div>
+                <div class="input-group">
+                    <label>Connection degree</label>
+                    <div style="display:flex; gap:8px; margin-top:2px;">
+                        <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
+                            <input type="checkbox" id="degree2nd" checked /> 2nd
+                        </label>
+                        <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
+                            <input type="checkbox" id="degree3rd" checked /> 3rd+
+                        </label>
+                    </div>
+                </div>
 
-        <div class="checkbox-group">
-            <label for="followFirstModeCheckbox">Prefer Follow over Connect when both are shown (advanced)</label>
-            <input type="checkbox" id="followFirstModeCheckbox" />
-        </div>
-
-        <div class="input-group">
-            <label for="followMaxInput">Max follows per run</label>
-            <input type="number" id="followMaxInput"
-                value="40" min="0" max="200" />
-        </div>
-
-        <div class="input-group">
-            <label for="excludedCompaniesInput">
-                Excluded Companies (one per line)
-            </label>
-            <textarea id="excludedCompaniesInput"
-                class="note-area" rows="2"
-                placeholder="Acme Corp&#10;Beta Labs"></textarea>
-        </div>
-
-        <div class="input-group">
-            <label for="excludeKeywordsInput">
-                Exclude Keywords (comma-separated, maps to NOT)
-            </label>
-            <input type="text" id="excludeKeywordsInput"
-                placeholder="intern, junior, bootcamp" />
-        </div>
-
-        <div class="input-group">
-            <label>Years of Experience</label>
-            <div style="display:flex; gap:8px; margin-top:2px;">
-                <input type="number" id="yearsMinInput"
-                    placeholder="min" min="0" max="50"
-                    style="width:72px;" />
-                <input type="number" id="yearsMaxInput"
-                    placeholder="max" min="0" max="50"
-                    style="width:72px;" />
+                <div class="input-group">
+                    <label>Years of experience</label>
+                    <div style="display:flex; gap:8px; margin-top:2px;">
+                        <input type="number" id="yearsMinInput"
+                            placeholder="min" min="0" max="50"
+                            style="width:72px;" />
+                        <input type="number" id="yearsMaxInput"
+                            placeholder="max" min="0" max="50"
+                            style="width:72px;" />
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="input-group">
-            <label for="booleanPreviewPre">
-                Compiled Boolean query (live)
-            </label>
-            <pre id="booleanPreviewPre"
-                style="background:#f5f5f5; padding:6px;
-                       border-radius:4px; font-size:11px;
-                       white-space:pre-wrap; word-break:break-word;
-                       margin:0; min-height:28px;"></pre>
-        </div>
+        <!-- AUTOMATION BEHAVIOR -->
+        <div class="accordion"
+            id="connectAutomationAccordion"
+            data-mode="connect"
+            data-panel="automation">
+            <button class="accordion-toggle" type="button"
+                data-accordion-toggle="connect:automation">
+                <span>Automation behavior</span>
+                <span class="accordion-chevron">▼</span>
+            </button>
+            <div class="accordion-body">
+                <div class="checkbox-group">
+                    <label for="engagementOnlyCheckbox">
+                        Engagement only (visit + follow, no connect)
+                    </label>
+                    <input type="checkbox" id="engagementOnlyCheckbox" />
+                </div>
 
-        <div class="checkbox-group">
-            <label for="skipOpenToWorkRecruitersCheckbox">
-                Skip Open to Work recruiters
-            </label>
-            <input type="checkbox"
-                id="skipOpenToWorkRecruitersCheckbox"
-                checked />
-        </div>
+                <div class="checkbox-group">
+                    <label for="followFallbackCheckbox">
+                        Follow people when Connect is unavailable
+                    </label>
+                    <input type="checkbox"
+                        id="followFallbackCheckbox" checked />
+                </div>
 
-        <div class="checkbox-group">
-            <label for="skipJobSeekingSignalsCheckbox">
-                Skip explicit job-seeking signals
-            </label>
-            <input type="checkbox"
-                id="skipJobSeekingSignalsCheckbox" />
-        </div>
+                <div class="checkbox-group">
+                    <label for="followFirstModeCheckbox">
+                        Prefer Follow over Connect when both are shown (advanced)
+                    </label>
+                    <input type="checkbox"
+                        id="followFirstModeCheckbox" />
+                </div>
 
-        <div class="input-group">
-            <label>Connection Degree</label>
-            <div style="display:flex; gap:8px; margin-top:2px;">
-                <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
-                    <input type="checkbox" id="degree2nd" checked /> 2nd
-                </label>
-                <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
-                    <input type="checkbox" id="degree3rd" checked /> 3rd+
-                </label>
-            </div>
-        </div>
+                <div class="input-group">
+                    <label for="followMaxInput">
+                        Max follows per run
+                    </label>
+                    <input type="number" id="followMaxInput"
+                        value="40" min="0" max="200" />
+                </div>
             </div>
         </div>
 

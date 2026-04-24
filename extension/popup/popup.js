@@ -780,13 +780,16 @@ async function applyPopupLocalization() {
         'Refine Filters');
     setElementText('#connectAudienceAccordion .accordion-toggle span:first-child',
         'popup.connect.audienceFilters',
-        'Audience Filters');
+        'Audience filters');
+    setElementText('#connectExclusionsAccordion .accordion-toggle span:first-child',
+        'popup.connect.exclusionsSection',
+        'Exclusions');
     setElementText('#connectMessageAccordion .accordion-toggle span:first-child',
         'popup.connect.messageSection',
         'Message');
     setElementText('#connectAutomationAccordion .accordion-toggle span:first-child',
-        'common.automation',
-        'Automation');
+        'popup.connect.automationSection',
+        'Automation behavior');
     setElementText('#toolsAccordion .accordion-toggle span:first-child',
         'popup.tools.section',
         'Tools');
