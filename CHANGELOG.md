@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.17] - 2026-04-24
+
+### Added
+- **Follow-fallback and follow-first toggles for people search** (#58): `followFallbackCheckbox` (default on) makes follow the explicit action when LinkedIn hides the Connect button; `followFirstModeCheckbox` prefers follow over connect when both are visible; `followMaxInput` caps follows per run. State persists in `popupState.follow*`; flags flow popup → background → content.
+- **Recruiter preset family** (#59): six new people-search presets (`recruiter-tech-general`, `-senior`, `-remote-global`, `-startup-saas`, `-agency`, `-brazil`) grouped under a "Recruiters" optgroup. Each bundles role/industry tags, a research-backed Boolean template via new `getAreaPresetDefaultQuery`, and auto-sets `connectUsageGoal='recruiter_outreach'` on selection.
+- **Exclude-keywords, years-of-experience range, and live Boolean preview** (#60): `excludeKeywordsInput` threads into `buildConnectQueryPlan` as `mustNot[]`, producing `NOT term` segments; `yearsMin`/`yearsMax` filter cards client-side in `runAutomation` with a `skipped-years-range` log reason; `booleanPreviewPre` renders the compiled query live (150 ms debounce) on every tag, preset, or exclude-keyword change.
+- **Profile-view walker for passive-inbound signal** (#61): opt-in "Passive visibility" section drives the "people viewed your profile" counter by opening LinkedIn profiles in background tabs with 6–10s dwell and jitter. New `extension/lib/profile-visitor.js` with dependency-injected `runProfileWalk`; per-day counter at `profileWalkCount_YYYY_MM_DD` (auto-rollover); clamped `dailyTarget` to [0,50], `perMinuteMax` throttle; respects `shouldStop`, `isDailyCapReached`, `isChallengeDetected`.
+
+### Fixed
+- **Offshore query sanitization, multiline split, and target deduplication** (#56): hardened companies-mode offshore-hiring intent detection.
+
+### Changed
+- **Jobs-career-parser pdfjs loader is now injectable** (#57): `_setPdfJsLoader(fn)` seam lets tests swap in a CJS fake, removing the `file://` ESM workaround. New `tests/fixtures/fake-pdfjs.cjs` drives the jobs-career-parser coverage path in Node Jest.
+
 ## [1.36.16] - 2026-03-28
 
 ### Fixed
