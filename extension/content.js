@@ -840,6 +840,10 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         const followMax = Number.isFinite(config?.followMax)
             ? Math.max(0, config.followMax) : 40;
         let followsUsed = 0;
+        const yearsMin = Number.isFinite(config?.yearsMin)
+            ? config.yearsMin : null;
+        const yearsMax = Number.isFinite(config?.yearsMax)
+            ? config.yearsMax : null;
         let totalSent = 0;
         let totalSkipped = 0;
         let currentPage = 1;
@@ -1116,6 +1120,39 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     const actionType = target.action;
                     const targetProfile =
                         target.profile || {};
+
+                    if (yearsMin !== null || yearsMax !== null) {
+                        const cardForYears = button.closest(
+                            '.entity-result, li, ' +
+                            '[data-chameleon-result-urn]'
+                        );
+                        const txt = (cardForYears?.innerText
+                            || '').toLowerCase();
+                        const m = txt.match(
+                            /(\d{1,2})\s*\+?\s*(?:years?|yrs?)/
+                        );
+                        if (m) {
+                            const yrs = parseInt(m[1], 10);
+                            const tooLow = yearsMin !== null &&
+                                yrs < yearsMin;
+                            const tooHigh = yearsMax !== null &&
+                                yrs > yearsMax;
+                            if (tooLow || tooHigh) {
+                                totalSkipped++;
+                                connectionLog.push({
+                                    ...targetProfile,
+                                    status: 'skipped-years-range',
+                                    reason:
+                                        `yrs=${yrs} out of ` +
+                                        `[${yearsMin ?? ''},` +
+                                        `${yearsMax ?? ''}]`,
+                                    time: new Date()
+                                        .toISOString()
+                                });
+                                continue;
+                            }
+                        }
+                    }
 
                     if (fuseLimitHit) {
                         connectionLog.push({

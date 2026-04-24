@@ -213,6 +213,50 @@ describe('search-templates', () => {
         expect(plan.meta.compiledQueryLength).toBe(plan.query.length);
     });
 
+    it('threads excludeKeywords into the compiled query as NOT terms', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                role: ['recruiter'],
+                industry: ['software'],
+                market: [],
+                level: []
+            },
+            roleTermsLimit: 6,
+            excludeKeywords: ['intern', 'junior']
+        });
+        expect(plan.query).toMatch(/NOT intern/);
+        expect(plan.query).toMatch(/NOT junior/);
+        expect(plan.meta.excludeKeywordsCount).toBe(2);
+    });
+
+    it('accepts comma-separated excludeKeywords string', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                role: ['recruiter'],
+                industry: ['software'],
+                market: [],
+                level: []
+            },
+            roleTermsLimit: 6,
+            excludeKeywords: 'intern, bootcamp'
+        });
+        expect(plan.query).toMatch(/NOT intern/);
+        expect(plan.query).toMatch(/NOT bootcamp/);
+        expect(plan.meta.excludeKeywordsCount).toBe(2);
+    });
+
     it('allows omitting role/industry defaults while keeping selected market terms', () => {
         const plan = buildSearchTemplatePlan({
             mode: 'connect',

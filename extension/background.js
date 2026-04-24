@@ -1151,7 +1151,16 @@ function launchAutomation(config) {
                                     === true,
                                 followMax: Number.isFinite(
                                     launchConfig.followMax
-                                ) ? launchConfig.followMax : 40
+                                ) ? launchConfig.followMax : 40,
+                                excludeKeywords: Array.isArray(
+                                    launchConfig.excludeKeywords
+                                ) ? launchConfig.excludeKeywords : [],
+                                yearsMin: Number.isFinite(
+                                    launchConfig.yearsMin
+                                ) ? launchConfig.yearsMin : undefined,
+                                yearsMax: Number.isFinite(
+                                    launchConfig.yearsMax
+                                ) ? launchConfig.yearsMax : undefined
                             },
                             () => {
                                 if (chrome.runtime

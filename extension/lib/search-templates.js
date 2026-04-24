@@ -2140,6 +2140,14 @@
             const roleLimit = Math.min(maxByBucket, maxByUi, templateRoleLimit);
             const roles = groupTerms.role.slice(0, roleLimit);
 
+            const rawExcludes = options?.excludeKeywords;
+            const excludeKeywords = Array.isArray(rawExcludes)
+                ? rawExcludes
+                : String(rawExcludes || '')
+                    .split(/[,\n]/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+
             const compiled = compileBooleanQuery({
                 should: roles.concat(
                     groupTerms.industry,
@@ -2147,7 +2155,7 @@
                     groupTerms.level
                 ),
                 must: [],
-                mustNot: [],
+                mustNot: excludeKeywords,
                 budget: 12,
                 explicitAnd: false,
                 wrapShould: false
@@ -2165,6 +2173,7 @@
                     compiledQueryLength: compiled.query.length,
                     resolvedSearchLocale: searchLocale,
                     roleTermsUsed: roles.length,
+                    excludeKeywordsCount: excludeKeywords.length,
                     mode: 'connect'
                 },
                 diagnostics: {

@@ -1601,6 +1601,16 @@ function getSafeRoleTerms(roles) {
     return Array.isArray(roles) ? roles : [];
 }
 
+function getExcludeKeywordsTerms() {
+    const raw = document.getElementById(
+        'excludeKeywordsInput'
+    )?.value || '';
+    return raw
+        .split(/[,\n]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+}
+
 function buildConnectSearchPlan(selectedTags) {
     const tags = selectedTags && typeof selectedTags === 'object'
         ? selectedTags
@@ -1623,7 +1633,8 @@ function buildConnectSearchPlan(selectedTags) {
             templateId: templateState.templateId,
             searchLanguageMode: templateState.searchLanguageMode,
             selectedTags: tags,
-            roleTermsLimit: getRoleTermsLimit()
+            roleTermsLimit: getRoleTermsLimit(),
+            excludeKeywords: getExcludeKeywordsTerms()
         });
         if (plan?.query) return plan;
     }
@@ -2120,15 +2131,21 @@ function getJobsCareerIntelErrorMessage(error) {
 function updateQueryPreview() {
     const preview = document.getElementById('queryPreview');
     const query = buildQuery();
+    const boolPreview = document.getElementById(
+        'booleanPreviewPre'
+    );
     if (!query) {
-        preview.textContent = tr(
+        const emptyMsg = tr(
             'popup.connect.previewEmpty',
             null,
             'Select at least one tag to build a query'
         );
+        if (preview) preview.textContent = emptyMsg;
+        if (boolPreview) boolPreview.textContent = emptyMsg;
         return;
     }
-    preview.textContent = query;
+    if (preview) preview.textContent = query;
+    if (boolPreview) boolPreview.textContent = query;
 }
 
 function updateCharCounter() {
@@ -2198,6 +2215,13 @@ function saveState() {
         excludedCompanies: document.getElementById(
             'excludedCompaniesInput'
         ).value.trim(),
+        excludeKeywords: document.getElementById(
+            'excludeKeywordsInput'
+        )?.value.trim() || '',
+        yearsMin: document.getElementById('yearsMinInput')?.value
+            || '',
+        yearsMax: document.getElementById('yearsMaxInput')?.value
+            || '',
         skipOpenToWorkRecruiters:
             document.getElementById(
                 'skipOpenToWorkRecruitersCheckbox'
@@ -2509,6 +2533,20 @@ function loadState() {
             document.getElementById(
                 'excludedCompaniesInput'
             ).value = popupState.excludedCompanies;
+        }
+        if (popupState.excludeKeywords !== undefined) {
+            const el = document.getElementById(
+                'excludeKeywordsInput'
+            );
+            if (el) el.value = popupState.excludeKeywords || '';
+        }
+        if (popupState.yearsMin !== undefined) {
+            const el = document.getElementById('yearsMinInput');
+            if (el) el.value = popupState.yearsMin || '';
+        }
+        if (popupState.yearsMax !== undefined) {
+            const el = document.getElementById('yearsMaxInput');
+            if (el) el.value = popupState.yearsMax || '';
         }
         if (popupState.skipOpenToWorkRecruiters !==
             undefined) {
@@ -3073,6 +3111,26 @@ document.getElementById(
 document.getElementById('excludedCompaniesInput').addEventListener(
     'input', saveState
 );
+(function wireRichFilters() {
+    const debounce = (fn, ms) => {
+        let t = null;
+        return (...args) => {
+            if (t) clearTimeout(t);
+            t = setTimeout(() => fn(...args), ms);
+        };
+    };
+    const onExcludeChange = debounce(() => {
+        updateQueryPreview();
+        saveState();
+    }, 150);
+    const onYearsChange = debounce(saveState, 150);
+    const exEl = document.getElementById('excludeKeywordsInput');
+    if (exEl) exEl.addEventListener('input', onExcludeChange);
+    const yMinEl = document.getElementById('yearsMinInput');
+    if (yMinEl) yMinEl.addEventListener('input', onYearsChange);
+    const yMaxEl = document.getElementById('yearsMaxInput');
+    if (yMaxEl) yMaxEl.addEventListener('input', onYearsChange);
+})();
 document.getElementById(
     'skipOpenToWorkRecruitersCheckbox'
 ).addEventListener('change', saveState);
@@ -3387,7 +3445,14 @@ async function startConnect() {
         )?.checked,
         followMax: Number(
             document.getElementById('followMaxInput')?.value
-        ) || 40
+        ) || 40,
+        excludeKeywords: getExcludeKeywordsTerms(),
+        yearsMin: Number(
+            document.getElementById('yearsMinInput')?.value
+        ) || undefined,
+        yearsMax: Number(
+            document.getElementById('yearsMaxInput')?.value
+        ) || undefined
     }, handleLaunchResponse);
 }
 

@@ -2011,6 +2011,37 @@
                 placeholder="Acme Corp&#10;Beta Labs"></textarea>
         </div>
 
+        <div class="input-group">
+            <label for="excludeKeywordsInput">
+                Exclude Keywords (comma-separated, maps to NOT)
+            </label>
+            <input type="text" id="excludeKeywordsInput"
+                placeholder="intern, junior, bootcamp" />
+        </div>
+
+        <div class="input-group">
+            <label>Years of Experience</label>
+            <div style="display:flex; gap:8px; margin-top:2px;">
+                <input type="number" id="yearsMinInput"
+                    placeholder="min" min="0" max="50"
+                    style="width:72px;" />
+                <input type="number" id="yearsMaxInput"
+                    placeholder="max" min="0" max="50"
+                    style="width:72px;" />
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="booleanPreviewPre">
+                Compiled Boolean query (live)
+            </label>
+            <pre id="booleanPreviewPre"
+                style="background:#f5f5f5; padding:6px;
+                       border-radius:4px; font-size:11px;
+                       white-space:pre-wrap; word-break:break-word;
+                       margin:0; min-height:28px;"></pre>
+        </div>
+
         <div class="checkbox-group">
             <label for="skipOpenToWorkRecruitersCheckbox">
                 Skip Open to Work recruiters
