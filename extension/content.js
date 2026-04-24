@@ -529,12 +529,32 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         }
     }
 
+    function isFollowActionTextPermissive(value) {
+        if (typeof connectActionUtils?.isFollowActionText
+            === 'function') {
+            return connectActionUtils.isFollowActionText(value);
+        }
+        const raw = String(value || '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/^\+\s*/, '');
+        if (!raw) return false;
+        if (/^(following|seguindo)\b/.test(raw)) return false;
+        return /^(follow|seguir)\b/.test(raw);
+    }
+
     function findFollowButtons() {
         const btns = document.querySelectorAll('button');
         const follows = [];
         for (const btn of btns) {
-            if (isFollowButtonText(btn.innerText || '') &&
-                !btn.disabled) {
+            if (btn.disabled) continue;
+            const text = btn.innerText || btn.textContent || '';
+            const aria = btn.getAttribute
+                ? (btn.getAttribute('aria-label') || '')
+                : '';
+            if (isFollowActionTextPermissive(text) ||
+                isFollowActionTextPermissive(aria)) {
                 follows.push(btn);
             }
         }
@@ -550,8 +570,13 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             ? card.querySelectorAll('button')
             : [];
         for (const btn of btns) {
-            if (isFollowButtonText(btn.innerText || '') &&
-                !btn.disabled) {
+            if (btn.disabled) continue;
+            const text = btn.innerText || btn.textContent || '';
+            const aria = btn.getAttribute
+                ? (btn.getAttribute('aria-label') || '')
+                : '';
+            if (isFollowActionTextPermissive(text) ||
+                isFollowActionTextPermissive(aria)) {
                 return btn;
             }
         }
@@ -950,7 +975,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 const followCards = document.querySelectorAll(
                     '.entity-result, ' +
                     '.reusable-search__result-container, ' +
-                    'li.reusable-search__result-container'
+                    'li.reusable-search__result-container, ' +
+                    '[data-chameleon-result-urn], ' +
+                    'div[data-view-name="search-entity-result-universal-template"]'
                 );
                 for (const card of followCards) {
                     const contextBtn = card.querySelector(
@@ -1003,6 +1030,42 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         if (t.action === 'follow') pending++;
                     }
                     return pending;
+                }
+
+                if (followFallbackEnabled) {
+                    const followBtns = findFollowButtons();
+                    for (const fbtn of followBtns) {
+                        if (followsUsed +
+                            followTargetsPending() >= followMax) {
+                            break;
+                        }
+                        if (seen.has(fbtn)) continue;
+                        if (!isButtonClickable(fbtn)) continue;
+                        const card = fbtn.closest(
+                            '.entity-result, ' +
+                            '.reusable-search__result-container, ' +
+                            'li.reusable-search__result-container, ' +
+                            '[data-chameleon-result-urn], ' +
+                            'div[data-view-name="search-entity-result-universal-template"], ' +
+                            'li'
+                        );
+                        if (!card) continue;
+                        if (cardHasExplicitConnect(card)) continue;
+                        if (isAlreadyConnectedElement(fbtn)) {
+                            continue;
+                        }
+                        const cardHasQueuedTarget =
+                            actionTargets.some(t => {
+                                return card.contains(t.button);
+                            });
+                        if (cardHasQueuedTarget) continue;
+                        seen.add(fbtn);
+                        actionTargets.push({
+                            button: fbtn,
+                            action: 'follow',
+                            profile: extractProfileInfo(fbtn)
+                        });
+                    }
                 }
 
                 if (followFirstMode && followFallbackEnabled) {

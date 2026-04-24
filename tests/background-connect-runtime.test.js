@@ -508,6 +508,13 @@ describe('background connect runtime config', () => {
         expect(getKeywordsFromUrl(secondUrl)).toBe(
             'recruiter talent acquisition hiring manager tech'
         );
+        expect(chrome.tabs.remove).toHaveBeenCalled();
+        const removedTabId = chrome.tabs.remove.mock.calls[0][0];
+        const firstTabId = chrome.tabs.create.mock.results[0]
+            .value?.id;
+        if (firstTabId) {
+            expect(removedTabId).toBe(firstTabId);
+        }
     });
 
     it('does not retry connect more than once after relaxed attempt', async () => {
