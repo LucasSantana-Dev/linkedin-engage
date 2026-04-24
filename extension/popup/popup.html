@@ -1978,6 +1978,22 @@
             <input type="checkbox" id="engagementOnlyCheckbox" />
         </div>
 
+        <div class="checkbox-group">
+            <label for="followFallbackCheckbox">Follow people when Connect is unavailable</label>
+            <input type="checkbox" id="followFallbackCheckbox" checked />
+        </div>
+
+        <div class="checkbox-group">
+            <label for="followFirstModeCheckbox">Prefer Follow over Connect when both are shown (advanced)</label>
+            <input type="checkbox" id="followFirstModeCheckbox" />
+        </div>
+
+        <div class="input-group">
+            <label for="followMaxInput">Max follows per run</label>
+            <input type="number" id="followMaxInput"
+                value="40" min="0" max="200" />
+        </div>
+
         <div class="input-group">
             <label for="excludedCompaniesInput">
                 Excluded Companies (one per line)

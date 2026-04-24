@@ -2199,6 +2199,15 @@ function saveState() {
         region: document.getElementById('regionSelect').value,
         activelyHiring: document.getElementById('activelyHiringCheckbox').checked,
         engagementOnly: document.getElementById('engagementOnlyCheckbox').checked,
+        followFallback: document.getElementById(
+            'followFallbackCheckbox'
+        )?.checked !== false,
+        followFirstMode: !!document.getElementById(
+            'followFirstModeCheckbox'
+        )?.checked,
+        followMax: Number(
+            document.getElementById('followMaxInput')?.value
+        ) || 40,
         degree2nd: document.getElementById('degree2nd').checked,
         degree3rd: document.getElementById('degree3rd').checked,
         sendNote: document.getElementById('sendNoteCheckbox').checked,
@@ -2512,6 +2521,22 @@ function loadState() {
         if (popupState.engagementOnly) {
             document.getElementById('engagementOnlyCheckbox')
                 .checked = true;
+        }
+        if (popupState.followFallback !== undefined) {
+            const el = document.getElementById(
+                'followFallbackCheckbox'
+            );
+            if (el) el.checked = popupState.followFallback !== false;
+        }
+        if (popupState.followFirstMode !== undefined) {
+            const el = document.getElementById(
+                'followFirstModeCheckbox'
+            );
+            if (el) el.checked = !!popupState.followFirstMode;
+        }
+        if (popupState.followMax !== undefined) {
+            const el = document.getElementById('followMaxInput');
+            if (el) el.value = popupState.followMax;
         }
         if (popupState.degree2nd !== undefined) {
             document.getElementById('degree2nd').checked =
@@ -3336,7 +3361,16 @@ async function startConnect() {
         networkFilter,
         templateMeta,
         sentUrls,
-        engagementOnly
+        engagementOnly,
+        followFallback: document.getElementById(
+            'followFallbackCheckbox'
+        )?.checked !== false,
+        followFirstMode: !!document.getElementById(
+            'followFirstModeCheckbox'
+        )?.checked,
+        followMax: Number(
+            document.getElementById('followMaxInput')?.value
+        ) || 40
     }, handleLaunchResponse);
 }
 

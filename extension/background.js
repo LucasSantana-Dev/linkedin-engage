@@ -1142,7 +1142,16 @@ function launchAutomation(config) {
                                     ),
                                 engagementOnly:
                                     launchConfig.engagementOnly
-                                    || false
+                                    || false,
+                                followFallback:
+                                    launchConfig.followFallback
+                                    !== false,
+                                followFirstMode:
+                                    launchConfig.followFirstMode
+                                    === true,
+                                followMax: Number.isFinite(
+                                    launchConfig.followMax
+                                ) ? launchConfig.followMax : 40
                             },
                             () => {
                                 if (chrome.runtime

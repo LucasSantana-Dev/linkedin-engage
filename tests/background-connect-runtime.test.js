@@ -287,6 +287,64 @@ describe('background connect runtime config', () => {
         });
     });
 
+    it('forwards follow-config flags to content on start', async () => {
+        const response = await sendRequest({
+            action: 'start',
+            query: 'recruiter tech',
+            limit: 5,
+            areaPreset: 'tech',
+            followFallback: true,
+            followFirstMode: true,
+            followMax: 25,
+            sendNote: false
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+
+        expect(sentToContent.length).toBeGreaterThan(0);
+        const payload = sentToContent[0].payload;
+        expect(payload.followFallback).toBe(true);
+        expect(payload.followFirstMode).toBe(true);
+        expect(payload.followMax).toBe(25);
+    });
+
+    it('defaults follow-config flags when not supplied', async () => {
+        const response = await sendRequest({
+            action: 'start',
+            query: 'recruiter tech',
+            limit: 5,
+            areaPreset: 'tech',
+            sendNote: false
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+
+        expect(sentToContent.length).toBeGreaterThan(0);
+        const payload = sentToContent[0].payload;
+        expect(payload.followFallback).toBe(true);
+        expect(payload.followFirstMode).toBe(false);
+        expect(payload.followMax).toBe(40);
+    });
+
+    it('honors followFallback=false passthrough', async () => {
+        const response = await sendRequest({
+            action: 'start',
+            query: 'recruiter tech',
+            limit: 5,
+            areaPreset: 'tech',
+            followFallback: false,
+            sendNote: false
+        });
+
+        expect(response).toEqual({ status: 'started' });
+        await tick();
+
+        const payload = sentToContent[0].payload;
+        expect(payload.followFallback).toBe(false);
+    });
+
     it('scheduled connect run reuses areaPreset and excludedCompanies', async () => {
         storageData.popupState = {
             tags: { role: ['recruiter'], industry: ['finance'] },
