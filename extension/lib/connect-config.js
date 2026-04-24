@@ -473,6 +473,142 @@
                     '"criacao de conteudo"',
                     '"producao audiovisual"'
                 ]
+            },
+            'recruiter-tech-general': {
+                role: [
+                    '"Technical Recruiter"',
+                    '"Tech Recruiter"',
+                    '"Talent Acquisition"',
+                    '"Talent Sourcer"',
+                    '"IT Recruiter"'
+                ],
+                industry: [
+                    'software',
+                    'engineering',
+                    'tech',
+                    '"talent acquisition"',
+                    '"staffing and recruiting"'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("Technical Recruiter" OR ' +
+                    '"Tech Recruiter" OR ' +
+                    '"Talent Acquisition" OR ' +
+                    '"Talent Sourcer") AND ' +
+                    '(software OR engineer OR developer)'
+            },
+            'recruiter-tech-senior': {
+                role: [
+                    '"Senior Technical Recruiter"',
+                    '"Lead Recruiter"',
+                    '"Head of Talent"',
+                    '"Talent Acquisition Manager"',
+                    '"Director of Talent"'
+                ],
+                industry: [
+                    'tech',
+                    'software',
+                    'engineering',
+                    'SaaS',
+                    '"talent acquisition"'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("Senior Technical Recruiter" OR ' +
+                    '"Lead Recruiter" OR ' +
+                    '"Head of Talent" OR ' +
+                    '"Talent Acquisition Manager") AND ' +
+                    '(tech OR engineering OR software)'
+            },
+            'recruiter-tech-remote-global': {
+                role: [
+                    '"Technical Recruiter"',
+                    '"Talent Acquisition"',
+                    '"Global Recruiter"',
+                    '"International Recruiter"',
+                    '"Remote Recruiter"'
+                ],
+                industry: [
+                    'remote',
+                    'offshore',
+                    'nearshore',
+                    'global',
+                    'LATAM'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("Technical Recruiter" OR ' +
+                    '"Talent Acquisition") AND ' +
+                    '(remote OR offshore OR nearshore OR ' +
+                    'global OR LATAM)'
+            },
+            'recruiter-tech-startup-saas': {
+                role: [
+                    '"Technical Recruiter"',
+                    '"Head of Talent"',
+                    '"People Operations"',
+                    '"Talent Partner"',
+                    '"Founding Recruiter"'
+                ],
+                industry: [
+                    'SaaS',
+                    'startup',
+                    'fintech',
+                    '"Series A"',
+                    '"Series B"'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("Technical Recruiter" OR ' +
+                    '"Head of Talent") AND ' +
+                    '(SaaS OR startup OR fintech OR ' +
+                    '"Series A" OR "Series B")'
+            },
+            'recruiter-tech-agency': {
+                role: [
+                    '"Agency Recruiter"',
+                    '"Executive Search"',
+                    'Headhunter',
+                    'Staffing',
+                    '"Search Consultant"'
+                ],
+                industry: [
+                    'tech',
+                    'engineering',
+                    'software',
+                    '"staffing and recruiting"',
+                    '"executive search"'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("Agency Recruiter" OR ' +
+                    '"Executive Search" OR ' +
+                    'Headhunter OR Staffing) AND ' +
+                    '(tech OR engineering OR software) ' +
+                    'NOT intern'
+            },
+            'recruiter-tech-brazil': {
+                role: [
+                    '"recrutador tecnico"',
+                    '"recrutadora tecnica"',
+                    '"tech recruiter"',
+                    '"aquisicao de talentos"',
+                    'recrutador'
+                ],
+                industry: [
+                    'tecnologia',
+                    'software',
+                    'desenvolvimento',
+                    'startup',
+                    'fintech'
+                ],
+                defaultUsageGoal: 'recruiter_outreach',
+                defaultQuery:
+                    '("recrutador tecnico" OR ' +
+                    '"recrutadora tecnica" OR ' +
+                    '"tech recruiter" OR ' +
+                    '"aquisicao de talentos") AND ' +
+                    '(desenvolvedor OR engenheiro OR software)'
             }
         };
 
@@ -504,6 +640,12 @@
             'motion-design',
             'video-editing',
             'videomaker',
+            'recruiter-tech-general',
+            'recruiter-tech-senior',
+            'recruiter-tech-remote-global',
+            'recruiter-tech-startup-saas',
+            'recruiter-tech-agency',
+            'recruiter-tech-brazil',
             'custom'
         ]);
 
@@ -1079,6 +1221,20 @@
             return String(preset.defaultQuery || '').trim();
         }
 
+        function getAreaPresetDefaultQuery(value) {
+            const normalized = normalizeAreaPreset(value);
+            const preset = AREA_PRESETS[normalized];
+            if (!preset) return '';
+            return String(preset.defaultQuery || '').trim();
+        }
+
+        function getAreaPresetDefaultUsageGoal(value) {
+            const normalized = normalizeAreaPreset(value);
+            const preset = AREA_PRESETS[normalized];
+            if (!preset) return '';
+            return String(preset.defaultUsageGoal || '').trim();
+        }
+
         function getCompanyAreaPresetDefaultTargetCompanies(value) {
             const normalized = normalizeCompanyAreaPreset(value);
             const preset = COMPANY_AREA_PRESETS[normalized] ||
@@ -1337,6 +1493,8 @@
             normalizeCompanyAreaPreset,
             getCompanyAreaPresetDefaultQuery,
             getCompanyAreaPresetDefaultTargetCompanies,
+            getAreaPresetDefaultQuery,
+            getAreaPresetDefaultUsageGoal,
             shouldResetAreaPresetOnManualTag,
             parseExcludedCompanies,
             applyAreaPresetToTags,

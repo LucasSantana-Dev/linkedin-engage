@@ -1450,6 +1450,17 @@ function applyAreaPreset(preset, shouldSave) {
         setTagsForGroup('role', next.role);
         setTagsForGroup('industry', next.industry);
     }
+    if (typeof getAreaPresetDefaultUsageGoal === 'function') {
+        const presetGoal = getAreaPresetDefaultUsageGoal(
+            normalized
+        );
+        if (presetGoal) {
+            const goalSelect = document.getElementById(
+                'connectUsageGoalSelect'
+            );
+            if (goalSelect) goalSelect.value = presetGoal;
+        }
+    }
     refreshTemplatesForArea();
     refreshTemplateControls();
     const activeTemplate = document.querySelector(
@@ -2919,7 +2930,13 @@ document.getElementById('toggleCustomQuery').addEventListener('click', () => {
 
     if (useCustomQuery) {
         input.style.display = 'block';
-        input.value = input.value || buildQuery();
+        let seededDefault = '';
+        if (typeof getAreaPresetDefaultQuery === 'function') {
+            seededDefault = getAreaPresetDefaultQuery(
+                getSelectedAreaPreset()
+            );
+        }
+        input.value = input.value || seededDefault || buildQuery();
         toggle.textContent = tr(
             'popup.connect.useTagBuilder',
             null,

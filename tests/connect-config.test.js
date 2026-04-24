@@ -10,8 +10,19 @@ const {
     COMPANY_AREA_PRESET_VALUES,
     normalizeCompanyAreaPreset,
     getCompanyAreaPresetDefaultQuery,
-    getCompanyAreaPresetDefaultTargetCompanies
+    getCompanyAreaPresetDefaultTargetCompanies,
+    getAreaPresetDefaultQuery,
+    getAreaPresetDefaultUsageGoal
 } = require('../extension/lib/connect-config');
+
+const RECRUITER_PRESETS = [
+    'recruiter-tech-general',
+    'recruiter-tech-senior',
+    'recruiter-tech-remote-global',
+    'recruiter-tech-startup-saas',
+    'recruiter-tech-agency',
+    'recruiter-tech-brazil'
+];
 
 const CREATIVE_PRESETS = [
     'graphic-design',
@@ -34,6 +45,46 @@ describe('connect-config', () => {
                 expect(AREA_PRESETS[preset].industry.length)
                     .toBeGreaterThan(0);
             });
+        });
+
+        it('includes all recruiter presets as valid options', () => {
+            RECRUITER_PRESETS.forEach((preset) => {
+                expect(AREA_PRESET_VALUES).toContain(preset);
+                expect(AREA_PRESETS[preset]).toBeDefined();
+                expect(AREA_PRESETS[preset].role.length)
+                    .toBeGreaterThan(0);
+                expect(AREA_PRESETS[preset].industry.length)
+                    .toBeGreaterThan(0);
+                expect(AREA_PRESETS[preset].defaultUsageGoal)
+                    .toBe('recruiter_outreach');
+                expect(AREA_PRESETS[preset].defaultQuery)
+                    .toMatch(/AND|OR/);
+            });
+        });
+
+        it('getAreaPresetDefaultQuery returns a Boolean-ish string for each recruiter preset', () => {
+            RECRUITER_PRESETS.forEach((preset) => {
+                const q = getAreaPresetDefaultQuery(preset);
+                expect(q.length).toBeGreaterThan(20);
+                expect(q).toMatch(/\b(AND|OR)\b/);
+                expect(q).toMatch(/\(.+\)/);
+            });
+        });
+
+        it('getAreaPresetDefaultQuery returns empty string for non-recruiter presets', () => {
+            expect(getAreaPresetDefaultQuery('tech')).toBe('');
+            expect(getAreaPresetDefaultQuery('finance')).toBe('');
+            expect(getAreaPresetDefaultQuery('custom')).toBe('');
+            expect(getAreaPresetDefaultQuery('')).toBe('');
+        });
+
+        it('getAreaPresetDefaultUsageGoal returns recruiter_outreach for recruiter presets only', () => {
+            RECRUITER_PRESETS.forEach((preset) => {
+                expect(getAreaPresetDefaultUsageGoal(preset))
+                    .toBe('recruiter_outreach');
+            });
+            expect(getAreaPresetDefaultUsageGoal('tech')).toBe('');
+            expect(getAreaPresetDefaultUsageGoal('custom')).toBe('');
         });
 
         it('applies role and industry terms for every preset', () => {
