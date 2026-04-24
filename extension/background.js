@@ -3819,7 +3819,22 @@ chrome.runtime.onMessage.addListener(
                     connectLaunchState?.config
                 );
                 if (relaxedConfig) {
+                    const staleTabId = activeTabId;
                     activeTabId = null;
+                    if (staleTabId) {
+                        try {
+                            chrome.tabs.remove(
+                                staleTabId,
+                                () => {
+                                    if (chrome.runtime.lastError) {
+                                        // tab already closed — fine
+                                    }
+                                }
+                            );
+                        } catch (err) {
+                            // ignore — fire and forget
+                        }
+                    }
                     launchAutomation(relaxedConfig);
                     return;
                 }
