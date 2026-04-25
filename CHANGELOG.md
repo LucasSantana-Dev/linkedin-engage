@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.19] - 2026-04-24
+
+### Fixed
+- **Follow-fallback silently skipped every card with a screen-reader "connect" hint** (#65): `cardHasExplicitConnect` matched any span containing the word `connect`, including screen-reader text like "View profile and connect with them". Tightened to actionable `button, a` only, exact `/^(connect|conectar)$/` text match (or short "Connect X" labels), and stricter `invite … to connect` aria patterns. Disabled buttons are ignored.
+- **Boolean query demolished at URL-build time** (#65): `buildConnectSearchKeywords` was stripping OR/AND/NOT operators, quotes, and parens before sending the search URL — turning recruiter presets' Boolean templates into plain space-separated keywords. Boolean syntax now passes through verbatim; plain-text queries still get the word-cap sanitization.
+
+### Changed
+- **Preset intent picker** (#65): new top-level `intentPresetSelect` with nine curated intents (Recruiters — Tech / Senior / Remote / Startup / Agency / Brasil / Design; Peer networking — Tech; Tech decision-makers; Custom). Selecting one cascades area preset, usage goal, expected results, search language, goal mode, and auto-template. The previous seven search-builder sub-controls moved into a collapsed "Advanced search settings" accordion.
+- **Popup IA redesign** (#65): single 13-control Audience Filters accordion replaced with Compiled query (prominent), Exclusions, Audience filters, and Automation behavior sections. Every element id preserved; popup.js wiring untouched.
+
 ## [1.36.18] - 2026-04-24
 
 ### Fixed
