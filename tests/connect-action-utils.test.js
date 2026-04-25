@@ -111,6 +111,28 @@ describe('connect-action-utils', () => {
         expect(cardHasExplicitConnect(null)).toBe(false);
     });
 
+    it('ignores free-text spans that mention connect but have no action button', () => {
+        const card = document.createElement('div');
+        const srSpan = document.createElement('span');
+        srSpan.className = 'visually-hidden';
+        srSpan.textContent =
+            'View profile and connect with them on LinkedIn';
+        card.appendChild(srSpan);
+        const follow = document.createElement('button');
+        follow.textContent = '+ Follow';
+        card.appendChild(follow);
+        expect(cardHasExplicitConnect(card)).toBe(false);
+    });
+
+    it('skips disabled connect buttons', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Connect';
+        btn.disabled = true;
+        card.appendChild(btn);
+        expect(cardHasExplicitConnect(card)).toBe(false);
+    });
+
     it('finds enabled more-actions button and skips disabled controls', () => {
         const card = document.createElement('div');
         const disabledMore = document.createElement('button');

@@ -780,13 +780,16 @@ async function applyPopupLocalization() {
         'Refine Filters');
     setElementText('#connectAudienceAccordion .accordion-toggle span:first-child',
         'popup.connect.audienceFilters',
-        'Audience Filters');
+        'Audience filters');
+    setElementText('#connectExclusionsAccordion .accordion-toggle span:first-child',
+        'popup.connect.exclusionsSection',
+        'Exclusions');
     setElementText('#connectMessageAccordion .accordion-toggle span:first-child',
         'popup.connect.messageSection',
         'Message');
     setElementText('#connectAutomationAccordion .accordion-toggle span:first-child',
-        'common.automation',
-        'Automation');
+        'popup.connect.automationSection',
+        'Automation behavior');
     setElementText('#toolsAccordion .accordion-toggle span:first-child',
         'popup.tools.section',
         'Tools');
@@ -2243,6 +2246,9 @@ function saveState() {
         followMax: Number(
             document.getElementById('followMaxInput')?.value
         ) || 40,
+        intentPreset: document.getElementById(
+            'intentPresetSelect'
+        )?.value || 'custom',
         degree2nd: document.getElementById('degree2nd').checked,
         degree3rd: document.getElementById('degree3rd').checked,
         sendNote: document.getElementById('sendNoteCheckbox').checked,
@@ -2586,6 +2592,12 @@ function loadState() {
         if (popupState.followMax !== undefined) {
             const el = document.getElementById('followMaxInput');
             if (el) el.value = popupState.followMax;
+        }
+        if (popupState.intentPreset !== undefined) {
+            const el = document.getElementById(
+                'intentPresetSelect'
+            );
+            if (el) el.value = popupState.intentPreset;
         }
         if (popupState.degree2nd !== undefined) {
             document.getElementById('degree2nd').checked =
@@ -2960,6 +2972,120 @@ document.getElementById('areaPresetSelect').addEventListener(
     'change',
     (e) => applyAreaPreset(e.target.value, true)
 );
+
+const INTENT_PRESETS = {
+    'recruiter-tech-global': {
+        areaPreset: 'recruiter-tech-general',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'balanced',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'recruiter-tech-senior': {
+        areaPreset: 'recruiter-tech-senior',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'precise',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'recruiter-tech-remote': {
+        areaPreset: 'recruiter-tech-remote-global',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'balanced',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'recruiter-tech-startup': {
+        areaPreset: 'recruiter-tech-startup-saas',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'balanced',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'recruiter-tech-agency': {
+        areaPreset: 'recruiter-tech-agency',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'broad',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'recruiter-tech-brazil': {
+        areaPreset: 'recruiter-tech-brazil',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'balanced',
+        language: 'pt_BR',
+        goalMode: 'passive'
+    },
+    'recruiter-design': {
+        areaPreset: 'ui-ux',
+        usageGoal: 'recruiter_outreach',
+        expectedResults: 'balanced',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'peer-networking-tech': {
+        areaPreset: 'tech',
+        usageGoal: 'peer_networking',
+        expectedResults: 'balanced',
+        language: 'en',
+        goalMode: 'passive'
+    },
+    'decision-makers-tech': {
+        areaPreset: 'tech',
+        usageGoal: 'decision_makers',
+        expectedResults: 'precise',
+        language: 'en',
+        goalMode: 'passive'
+    }
+};
+
+function applyIntentPreset(intentKey, shouldSave) {
+    const spec = INTENT_PRESETS[intentKey];
+    if (!spec) return;
+    applyAreaPreset(spec.areaPreset, false);
+    const goalSel = document.getElementById(
+        'connectUsageGoalSelect'
+    );
+    if (goalSel) goalSel.value = spec.usageGoal;
+    const resultsSel = document.getElementById(
+        'connectExpectedResultsSelect'
+    );
+    if (resultsSel) resultsSel.value = spec.expectedResults;
+    const langSel = document.getElementById(
+        'connectSearchLanguageModeSelect'
+    );
+    if (langSel) langSel.value = spec.language;
+    const goalModeSel = document.getElementById('goalMode');
+    if (goalModeSel) goalModeSel.value = spec.goalMode;
+    const autoCheckbox = document.getElementById(
+        'connectTemplateAutoCheckbox'
+    );
+    if (autoCheckbox) autoCheckbox.checked = true;
+    if (typeof refreshTemplatesForArea === 'function') {
+        refreshTemplatesForArea();
+    }
+    if (typeof refreshTemplateControls === 'function') {
+        refreshTemplateControls();
+    }
+    if (typeof updateQueryPreview === 'function') {
+        updateQueryPreview();
+    }
+    if (shouldSave) saveState();
+}
+
+const intentSelectEl = document.getElementById(
+    'intentPresetSelect'
+);
+if (intentSelectEl) {
+    intentSelectEl.addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value && value !== 'custom') {
+            applyIntentPreset(value, true);
+        } else if (value === 'custom') {
+            saveState();
+        }
+    });
+}
 
 document.getElementById('toggleCustomQuery').addEventListener('click', () => {
     useCustomQuery = !useCustomQuery;

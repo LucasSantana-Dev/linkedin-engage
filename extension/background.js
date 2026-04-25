@@ -329,26 +329,16 @@ function buildConnectSearchKeywords(query) {
     const source = String(query || '').trim();
     if (!source) return '';
 
-    const segments = source
-        .split(/\s+(?:OR|AND|NOT)\s+/i)
-        .map(normalizeConnectQueryTerm)
-        .filter(Boolean);
-
-    const uniqueSegments = [];
-    for (const term of segments) {
-        if (!uniqueSegments.includes(term)) {
-            uniqueSegments.push(term);
-        }
-    }
-    if (uniqueSegments.length > 0) {
-        return uniqueSegments.slice(0, 8).join(' ');
+    const hasBooleanOps = /\b(AND|OR|NOT)\b/.test(source) ||
+        /["()]/.test(source);
+    if (hasBooleanOps) {
+        return source.replace(/\s+/g, ' ').trim();
     }
 
     const words = source
         .split(/\s+/)
         .map(part => part.replace(/[^\w-]/g, ''))
-        .filter(part => part && !/^(AND|OR|NOT)$/i.test(part));
-
+        .filter(Boolean);
     if (words.length === 0) return source;
     return words.slice(0, 8).join(' ');
 }

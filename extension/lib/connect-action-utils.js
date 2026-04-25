@@ -91,14 +91,28 @@
 
         function cardHasExplicitConnect(card) {
             if (!card?.querySelectorAll) return false;
-            const elements = card.querySelectorAll('button, a, span');
-            for (const element of elements) {
-                const text = element.innerText || element.textContent || '';
-                const aria = element.getAttribute
-                    ? element.getAttribute('aria-label')
-                    : '';
-                if (isImplicitConnectMenuAction(text) ||
-                    isImplicitConnectMenuAction(aria)) {
+            const actionable = card.querySelectorAll('button, a');
+            for (const element of actionable) {
+                if (element.disabled ||
+                    element.getAttribute('aria-disabled') === 'true') {
+                    continue;
+                }
+                const text = normalizeActionText(
+                    element.innerText || element.textContent || ''
+                );
+                const aria = normalizeActionText(
+                    element.getAttribute
+                        ? element.getAttribute('aria-label') : ''
+                );
+                if (/^(connect|conectar)$/.test(text)) return true;
+                if (/^\s*connect\s+/.test(text) &&
+                    text.length < 40) return true;
+                if (/\binvite\b.*\bto\s+connect\b/.test(aria) &&
+                    aria.length < 80) {
+                    return true;
+                }
+                if (/\bconvidar\b.*\bpara\s+conectar\b/.test(aria) &&
+                    aria.length < 80) {
                     return true;
                 }
             }

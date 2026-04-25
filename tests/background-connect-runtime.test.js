@@ -486,7 +486,7 @@ describe('background connect runtime config', () => {
         expect(firstUrl).toContain('activelyHiring=true');
         expect(firstUrl).toContain('&network=%5B%22S%22%5D');
         expect(getKeywordsFromUrl(firstUrl)).toBe(
-            'recruiter talent acquisition hiring manager tech'
+            'recruiter OR talent acquisition OR hiring manager OR tech'
         );
 
         await sendRequest({
