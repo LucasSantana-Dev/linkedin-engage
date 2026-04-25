@@ -136,6 +136,7 @@
 
         return {
             isImplicitConnectMenuAction,
+            isFollowActionText,
             isPotentialMoreActionsButton,
             findConnectActionInMenuItems,
             findFollowButtonInCard,
