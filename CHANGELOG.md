@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.21] - 2026-04-25
+
+### Added
+- **Seniority chips and Work Mode filter group with EN/PT-BR localization** (#72): Added `Intern` and `Associate` chips to the Connect "Level They Hire" group (now covers intern → staff). New "Work Mode" tag group with `Remote` / `On-site` / `Hybrid`. Both groups are area-agnostic — they compose with any area preset (tech, design, regulated engineering, business). New `TERM_VARIANTS` for `junior`, `staff`, `intern`, `associate`, `on-site` with PT-BR variants (`estagiário`/`estágio`, `assistente`, `presencial`, `engenheiro staff`, `júnior`). The existing Search Language selector localizes them automatically. No `STATE_TAG_VERSION` bump — additive change to existing groups.
+
+### Fixed
+- **Standalone Boolean operators in `excludeKeywords` produced malformed queries** (#71): A user typing `AND`/`OR`/`NOT` (case-insensitive) into the exclude-keywords input added in v1.36.17 produced `NOT AND` / `NOT OR` / `NOT NOT` in the final clause string. `getExcludeKeywordsTerms()` forwarded the raw token to `compileBooleanQuery`'s `mustNot` bucket, and the existing `sanitizeBooleanTerm` preserved standalone operators as uppercase. Fixed at the compile boundary in `extension/lib/search-templates.js` — after the sanitize map, filter `^(AND|OR|NOT)$` tokens out of `should`/`must`/`mustNot`. All callers benefit (popup free-text, template-defined excludes, future callers); `sanitizeBooleanTerm`'s contract unchanged.
+
 ## [1.36.20] - 2026-04-25
 
 ### Fixed
