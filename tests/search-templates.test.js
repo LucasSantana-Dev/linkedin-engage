@@ -952,6 +952,35 @@ describe('compileBooleanQuery NOT clause', () => {
         const result = compileBooleanQuery({});
         expect(result.query).toBe('');
     });
+
+    it('drops standalone Boolean operators from mustNot to avoid NOT AND/OR/NOT in output', () => {
+        const result = compileBooleanQuery({
+            should: ['developer'],
+            mustNot: ['and', 'or', 'NOT', 'intern']
+        });
+        expect(result.mustNot).toEqual(['intern']);
+        expect(result.query).toBe('developer NOT intern');
+        expect(result.query).not.toMatch(/NOT (AND|OR|NOT)\b/);
+    });
+
+    it('drops standalone Boolean operators from should and must too', () => {
+        const result = compileBooleanQuery({
+            should: ['engineer', 'AND', 'or'],
+            must: ['NOT', 'remote']
+        });
+        expect(result.should).toEqual(['engineer']);
+        expect(result.must).toEqual(['remote']);
+        expect(result.query).not.toMatch(/\b(AND|OR|NOT)\b\s*(AND|OR|NOT)\b/);
+    });
+
+    it('strips embedded parentheses and quotes from mustNot via sanitizeBooleanTerm', () => {
+        const result = compileBooleanQuery({
+            should: ['developer'],
+            mustNot: ['(intern)', '"junior"']
+        });
+        expect(result.mustNot).toEqual(['intern', 'junior']);
+        expect(result.query).toBe('developer NOT intern NOT junior');
+    });
 });
 
 describe('listFrom string branch (lines 1770-1771)', () => {

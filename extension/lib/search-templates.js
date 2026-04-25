@@ -1932,15 +1932,20 @@
             );
             const explicitAnd = source.explicitAnd === true;
             const wrapShould = source.wrapShould !== false;
+            const isStandaloneOperator = (term) =>
+                /^(AND|OR|NOT)$/.test(term);
             const should = uniqueNormalized(source.should)
                 .map(sanitizeBooleanTerm)
-                .filter(Boolean);
+                .filter(Boolean)
+                .filter(term => !isStandaloneOperator(term));
             const must = uniqueNormalized(source.must)
                 .map(sanitizeBooleanTerm)
-                .filter(Boolean);
+                .filter(Boolean)
+                .filter(term => !isStandaloneOperator(term));
             const mustNot = uniqueNormalized(source.mustNot)
                 .map(sanitizeBooleanTerm)
-                .filter(Boolean);
+                .filter(Boolean)
+                .filter(term => !isStandaloneOperator(term));
 
             const trimmed = trimShouldByBudget(
                 should,
