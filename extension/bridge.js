@@ -1,3 +1,16 @@
+function safeSend(payload) {
+    try {
+        const ret = chrome.runtime.sendMessage(payload);
+        if (ret && typeof ret.catch === 'function') {
+            ret.catch(() => {
+                // popup/background closed before response — expected
+            });
+        }
+    } catch (err) {
+        // chrome.runtime gone (extension reload) — swallow
+    }
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'runAutomation') {
         window.postMessage({
@@ -27,14 +40,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     if (event.data?.type === 'LINKEDIN_BOT_DONE') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'done',
             result: event.data.result
         });
     }
     if (event.data?.type ===
         'LINKEDIN_BOT_COMPANY_STEP_DONE') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'companyStepDone',
             result: event.data.result
         });
@@ -98,7 +111,7 @@ window.addEventListener('message', (event) => {
         });
     }
     if (event.data?.type === 'LINKEDIN_BOT_LOGIN_REQUIRED') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'loginRequired'
         });
     }
@@ -124,7 +137,7 @@ window.addEventListener('message', (event) => {
         });
     }
     if (event.data?.type === 'LINKEDIN_BOT_NURTURE_ENGAGED') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'nurtureEngaged',
             profileUrl: event.data.profileUrl
         });
@@ -204,7 +217,7 @@ window.addEventListener('message', (event) => {
         }
     }
     if (event.data?.type === 'LINKEDIN_BOT_PATTERN_LEARN') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'ingestPatternProfile',
             lang: event.data.lang,
             category: event.data.category,
@@ -213,7 +226,7 @@ window.addEventListener('message', (event) => {
         });
     }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
-        chrome.runtime.sendMessage({
+        safeSend({
             action: 'progress',
             sent: event.data.sent,
             limit: event.data.limit,

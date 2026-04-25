@@ -260,4 +260,62 @@ describe('bridge AI relay', () => {
             })
         );
     });
+
+    it('safeSend swallows promise rejection from a closed message channel', async () => {
+        let listenerHandler;
+        global.chrome = {
+            runtime: {
+                lastError: null,
+                onMessage: {
+                    addListener: jest.fn(fn => {
+                        listenerHandler = fn;
+                    })
+                },
+                sendMessage: jest.fn(() => {
+                    return Promise.reject(new Error(
+                        'A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received'
+                    ));
+                })
+            },
+            storage: {
+                local: {
+                    get: jest.fn(),
+                    set: jest.fn()
+                }
+            }
+        };
+        let unhandled = null;
+        const onUnhandled = (event) => {
+            unhandled = event;
+            event.preventDefault?.();
+        };
+        if (typeof window !== 'undefined') {
+            window.addEventListener(
+                'unhandledrejection', onUnhandled
+            );
+        }
+
+        require('../extension/bridge');
+
+        window.dispatchEvent(new MessageEvent('message', {
+            source: window,
+            data: {
+                type: 'LINKEDIN_BOT_DONE',
+                result: { sent: 0 }
+            }
+        }));
+
+        expect(chrome.runtime.sendMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ action: 'done' })
+        );
+
+        await new Promise(r => setTimeout(r, 25));
+
+        if (typeof window !== 'undefined') {
+            window.removeEventListener(
+                'unhandledrejection', onUnhandled
+            );
+        }
+        expect(unhandled).toBeNull();
+    });
 });
