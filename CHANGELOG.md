@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.20] - 2026-04-25
+
+### Fixed
+- **MV3 message-channel-closed warnings on every completion** (#69): `chrome.runtime.sendMessage` returns a Promise in MV3 when no callback is given. The six fire-and-forget bridge → background dispatches in `extension/bridge.js` never attached a `.catch`, so when the popup closed mid-flight (or the service worker idled) the rejection bubbled to Chrome's unhandled-promise warning. New `safeSend(payload)` helper attaches a no-op `.catch` and wraps in try/catch for the extension-reload race; replaces all six callsites.
+
+### Internal
+- **No-vuln baseline restored** (#68): `npm audit` now reports 0 vulnerabilities. Cleared `@xmldom/xmldom` DoS + XML-injection (transitive via `mammoth`) and `picomatch` ReDoS. Lockfile-only — no shipped extension code change.
+
 ## [1.36.19] - 2026-04-24
 
 ### Fixed
