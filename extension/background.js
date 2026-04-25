@@ -58,6 +58,7 @@ importScripts('lib/jobs-career-intelligence.js');
 importScripts('lib/jobs-utils.js');
 importScripts('lib/run-outcome.js');
 importScripts('lib/profile-visitor.js');
+importScripts('lib/storage-key-sweeper.js');
 
 let profileWalkStopRequested = false;
 
@@ -4550,8 +4551,14 @@ function getTemplate(key, lang, areaPreset) {
 
 chrome.runtime.onInstalled.addListener(() => {
     cleanExpiredNurtures(chrome.storage.local);
+    if (typeof sweepStaleDailyKeys === 'function') {
+        sweepStaleDailyKeys(chrome.storage.local);
+    }
 });
 
 chrome.runtime.onStartup.addListener(() => {
     cleanExpiredNurtures(chrome.storage.local);
+    if (typeof sweepStaleDailyKeys === 'function') {
+        sweepStaleDailyKeys(chrome.storage.local);
+    }
 });
