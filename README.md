@@ -15,6 +15,15 @@ A Chrome Extension and standalone Playwright connector for automating LinkedIn n
 - **Auto + manual template override** — each search mode supports
   `Usage Goal`, `Expected Results`, `Template`, and `Auto-select template`
   controls; scheduled runs reuse the same template resolution logic
+- **Intent preset picker** — top-of-popup `Preset intent` selector with curated one-click intents (Recruiters — Tech / Senior / Remote / Startup / Agency / Brasil / Design; Peer networking — Tech; Tech decision-makers; Custom). Selecting one cascades area preset + usage goal + expected results + search language + goal mode in a single click; the previous seven sub-controls now live in a collapsed "Advanced search settings" accordion (#65, v1.36.19)
+- **Recruiter preset family** — six area presets tailored for outreach to recruiters (`recruiter-tech-general`, `-senior`, `-remote-global`, `-startup-saas`, `-agency`, `-brazil`), each with role/industry tags and a research-backed Boolean default query (#59, v1.36.17)
+- **Seniority chips: Intern → Staff** — Connect "Level They Hire" group covers Intern, Associate, Junior, Mid-Level, Senior, Lead, Staff with EN/PT-BR localization (`estagiário`, `assistente`, `júnior`, `pleno`, `sênior`) (#72, v1.36.21)
+- **Work Mode filter group** — area-agnostic chips for Remote / On-site / Hybrid that compose with any area preset and localize to PT-BR (`remoto` / `presencial` / `híbrido`) via the search-language selector (#72, v1.36.21)
+- **Exclude-keywords filter** — free-text comma- or newline-separated exclusion list threads into the compiled query as Boolean `NOT` segments; standalone operator tokens (`AND`/`OR`/`NOT`) are filtered out so user typos can't break the query (#60, v1.36.17 / #71, v1.36.21)
+- **Years-of-experience range** — optional `yearsMin` / `yearsMax` filter applied client-side during card scanning, with a `skipped-years-range` skip reason in the run log (#60, v1.36.17)
+- **Live Boolean preview** — compiled Boolean query rendered live (150 ms debounce) on every tag, preset, or exclude-keyword change so the URL-bound query is visible before launch (#60, v1.36.17)
+- **Profile-view walker (passive visibility)** — opt-in background tab walker drives the "people viewed your profile" counter with 6–10 s dwell + jitter; clamped daily target ([0, 50]) and per-minute throttle; respects stop / daily-cap / challenge signals (#61, v1.36.17)
+- **Follow-fallback / follow-first toggles** — `Follow fallback` (default on) makes follow the explicit action when LinkedIn hides the Connect button; `Follow-first mode` prefers follow over connect when both are visible; `Max follows per run` caps follow volume (#58, v1.36.17)
 - **Area-aware note templates** — Senior, Mid-Level, Junior, Lead, General Networking, and Custom with role-neutral wording adapted to the selected area
 - **300-char validation** — enforces LinkedIn's invitation note character limit
 - **Smart prioritization** — profiles with mutual connections and closer network degree are processed first
@@ -299,7 +308,7 @@ gh release upload <tag> linkedin-engage-<tag>.zip --clobber
 
 Workflows currently use `actions/checkout@v6` and `actions/setup-node@v6` for Node 24-ready GitHub Actions runtime compatibility.
 
-Coverage policy is enforced in Jest for shared testable modules (`extension/lib/**`) with release gate minimums of `80%` statements and `80%` lines.
+Coverage policy is enforced in Jest for shared testable modules (`extension/lib/**`) with release gate minimums of `96%` statements / `85.7%` branches / `99%` functions / `97.5%` lines (see `jest.config.cjs`).
 
 ## Disclaimer
 
