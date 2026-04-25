@@ -1126,3 +1126,56 @@ describe('connect plan — workMode and seniority chip groups', () => {
         expect(plan.query).not.toMatch(/\b(remote|on-site|hybrid)\b/);
     });
 });
+
+describe('user-selected chips outrank template defaults (D-14)', () => {
+    it('user level chip lands at index 0 when template has level defaults', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'peer_networking',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { level: ['intern'] }
+        });
+        const levelTerms = plan.diagnostics.groupTerms.level;
+        expect(levelTerms[0]).toBe('intern');
+        // Template defaults are still present, just behind the user term.
+        expect(levelTerms).toContain('mid-level');
+        expect(levelTerms).toContain('senior');
+    });
+
+    it('user industry chip lands at index 0 when template has industry defaults', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'peer_networking',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                industry: ['fintech']
+            }
+        });
+        const industryTerms = plan.diagnostics.groupTerms.industry;
+        expect(industryTerms[0]).toBe('fintech');
+    });
+
+    it('user role chip survives the role-limit slice (precedence over template roles)', () => {
+        const plan = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'peer_networking',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { role: ['cto'] },
+            roleTermsLimit: 2
+        });
+        // With roleTermsLimit=2 and the template providing 6+ role
+        // defaults, before the fix 'cto' would be sliced out. After the
+        // fix it sits at index 0 of groupTerms.role and survives the
+        // .slice(0, roleLimit) downstream.
+        expect(plan.diagnostics.groupTerms.role[0]).toBe('cto');
+    });
+});

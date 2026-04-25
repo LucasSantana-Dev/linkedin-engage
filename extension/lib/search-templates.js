@@ -2061,7 +2061,10 @@
         function mergeGroupTerms(template, selected, key) {
             const base = listFrom(template?.querySpec?.[key]);
             const extra = listFrom(selected?.[key]);
-            return uniqueNormalized(base.concat(extra));
+            // User selections come first so they survive both
+            // dedupe (uniqueNormalized keeps first occurrence) and
+            // budget-trim (compileBooleanQuery trims from tail).
+            return uniqueNormalized(extra.concat(base));
         }
 
         function localizeTerms(values, locale) {
