@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.22] - 2026-04-25
+
+### Fixed
+- **User-selected chips silently trimmed by template-default budget** (#77): `mergeGroupTerms` concatenated template defaults first, then user selections, before piping the merged list into `compileBooleanQuery`. Two effects worked against user intent: `uniqueNormalized` keeps the first occurrence on dedupe (so a template-default form of a term won over a user-typed variant), and `trimShouldByBudget` pops from the **tail** when over the 12-operator budget (so user selections were trimmed first while busy templates' defaults were preserved). Surfaced during PR #72 testing — with `connect.tech.peer_networking.balanced`, a user clicking `Intern` got a query containing `mid-level` and `senior` (template) but not `intern` (user). Single-line swap in `mergeGroupTerms`: user selections now lead. Effects: dedupe favors user-typed term, budget trim drops template defaults first, and `groupTerms.role.slice(0, roleLimit)` now keeps user-selected roles even when `roleTermsLimit` is small. Three regression cases lock the precedence at index 0 for level / industry / role.
+
+### Internal
+- **Pre-commit credential-pattern scan** (#76): `scripts/install-hooks.sh` now also installs a `pre-commit` hook that scans staged additions for JWT (`eyJ`...), Google API (`AIza`...), OpenAI (`sk-`...), and LinkedIn `li_at` cookie patterns. Bypassable with `git commit --no-verify`. Existing pre-push gate (lint/typecheck/test) untouched.
+- **`INTENT_PRESETS` extracted to `extension/lib/intent-presets.js`** (#74): UMD module, frozen. Six contract assertions in `tests/intent-presets.test.js` lock `areaPreset` ⊂ `AREA_PRESETS`, `usageGoal` ⊂ `MODE_USAGE_GOALS.connect`, `expectedResults` ⊂ `EXPECTED_RESULTS_BUCKETS`, `language` ⊂ `SEARCH_LANGUAGE_MODES`, `goalMode` ∈ {`passive`, `active`}, dict frozen.
+
+### Documentation
+- **README catch-up for v1.36.17–21 features** (#75): added bullets for intent preset picker, recruiter preset family, seniority chips, Work Mode group, exclude-keywords filter, years-of-experience range, live Boolean preview, profile-view walker, and follow-fallback / follow-first toggles. Corrected the Releasing section's coverage threshold figures (was `80% / 80%`, actual is `96% / 85.7% / 99% / 97.5%` per `jest.config.cjs`).
+
 ## [1.36.21] - 2026-04-25
 
 ### Added
