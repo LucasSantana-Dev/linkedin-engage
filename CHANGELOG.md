@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.25] - 2026-04-27
+
+### Changed
+- **Full popup visual rework** (#95): redesigned the inline `<style>` block of `extension/popup/popup.html` (660 → 773 LOC of CSS) around a 40-token semantic design system — color (15 tokens for primary, surfaces, text levels, status, borders), spacing (6-step scale 4px–24px), elevation (3 shadow tiers), radius (4 tiers), and motion (3 transition timings 120/200/350ms with cubic-bezier easing). Dark-led palette with a clean light-mode fallback via `prefers-color-scheme`. Refined chip system (subtle active pulse instead of bold fill), smoother accordions, gradient primary CTA with press feedback, clearer section hierarchy. All 130+ DOM IDs preserved; stable class names (`tag`, `tag.active`, `tag-limit-shake`, `accordion`, `mode-btn`, `area-pill`, `template-card`) and data-attrs (`data-group`, `data-area`, `data-value`, `data-mode`, `data-template`) unchanged — popup.js handlers and 1813 tests pass without modification.
+
+### Internal
+- **`company-query` helpers extracted to `extension/lib/company-query.js`** (#93): UMD module with `buildCompanySearchUrl`, `sanitizeCompanySearchQuery`, `splitCompanySearchQueries`, `normalizeCompanyTargets`, `buildJobsSearchUrl`. 56 contract tests in `tests/company-query.test.js`. `extension/background.js` shrinks 4478 → 4422 LOC (-56). E-11 phase 2 of the background.js split.
+- **`extract-umd-lib` SKILL doc** (#94): codifies the lib-extraction recipe (UMD wrapper, importScripts vs script-tag wiring, contract tests, the `Object.assign(global, require(lib))` test-setup pattern, four common pitfalls). The pattern recurred 3× this release cycle.
+
 ## [1.36.24] - 2026-04-27
 
 ### Internal
