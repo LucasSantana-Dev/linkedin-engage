@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.26] - 2026-04-27
+
+### Changed
+- **Group chips hydrated from `AREA_PRESETS` at popup load** (#99, A-2): replaces 219 hardcoded `<span class="tag">` elements in `extension/popup/popup.html` with JS-driven hydration via new `extension/lib/chip-hydrator.js` (UMD, `buildChipMarkup` / `hydrateChipsForGroup` / `hydrateAllChips`, plus static `MARKET_CHIPS` / `LEVEL_CHIPS` / `WORK_MODE_CHIPS` and `AREA_TO_PRESETS_MAPPING`). Tag click handler swapped from per-element `forEach` listeners (which only saw chips that existed at module load) to delegated click on `connectSection` via `event.target.closest('.tag')`, so dynamically hydrated chips are wired correctly. Stable contracts preserved: `class="tag"`, `class="tag active"`, `class="tag-limit-shake"`, `data-group`, `data-area`, `data-value`, 8-tag limit, shake feedback. 20 hydrator contract tests.
+
+### Internal
+- **`copy-guard` helpers extracted to `extension/lib/copy-guard.js`** (#98, E-11 phase 3): UMD module with `normalizeCompareText`, `normalizeCopyGuardText`, `tokenizeCopyGuard`, `extractFourWordSnippets`, `buildCharTrigramSet`, `roundCopyMetric`, `computeTokenContainment`, `computeJaccardSimilarity`, `assessCommentCopyRisk`, and `COPY_GUARD_STOP_WORDS`. 60 contract tests cover all 5 rule-hit branches of `assessCommentCopyRisk` (exact-normalized, shared-4gram, high-token-containment, medium-token-high-char, short-near-clone). `extension/background.js` shrinks 4422 → 4253 LOC (-169).
+
 ## [1.36.25] - 2026-04-27
 
 ### Changed
