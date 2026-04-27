@@ -229,6 +229,7 @@ describe('jobs orchestration in background', () => {
     beforeEach(() => {
         jest.resetModules();
         setupChrome();
+        Object.assign(global, require('../extension/lib/company-query'));
         require('../extension/background');
     });
 
@@ -305,6 +306,11 @@ describe('jobs orchestration in background', () => {
         delete global.shouldRetryConnectWithRelaxedQuery;
         delete global.buildRelaxedConnectConfig;
         delete global.countBooleanOperatorsSafe;
+        delete global.buildCompanySearchUrl;
+        delete global.sanitizeCompanySearchQuery;
+        delete global.splitCompanySearchQueries;
+        delete global.normalizeCompanyTargets;
+        delete global.buildJobsSearchUrl;
     });
 
     it('starts jobs assist with decrypted profile and forwards config to page runtime', async () => {

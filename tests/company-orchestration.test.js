@@ -238,6 +238,7 @@ describe('company orchestration in background', () => {
     beforeEach(() => {
         jest.resetModules();
         setupChrome();
+        Object.assign(global, require('../extension/lib/company-query'));
         require('../extension/background');
     });
 
@@ -322,6 +323,11 @@ describe('company orchestration in background', () => {
         delete global.buildCompaniesTemplatePlan;
         delete global.buildJobsTemplatePlan;
         delete global.normalizeTemplateMeta;
+        delete global.buildCompanySearchUrl;
+        delete global.sanitizeCompanySearchQuery;
+        delete global.splitCompanySearchQueries;
+        delete global.normalizeCompanyTargets;
+        delete global.buildJobsSearchUrl;
     });
 
     it('executes multi-company queue and emits one final done', async () => {
