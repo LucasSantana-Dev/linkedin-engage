@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.23] - 2026-04-27
+
+### Performance
+- **Outer button scan scoped to `<main>`** (#83): connect-mode poll loop in `extension/content.js` now queries `document.querySelector('main')?.querySelectorAll('button:enabled, a')` with fallback to `document` when the landmark is absent. The previous full-document scan revisited every button in the global header, nav, messaging overlay, and toaster on each 3-second poll. Strict narrowing — the scanner already rejected out-of-main buttons via `isButtonClickable` / `shouldExcludeButton` filters, so no behavior change in normal cases.
+- **`customQueryInput` live preview debounced to 150ms** (#84): the custom-query textarea fired `updateQueryPreview()` + `saveState()` on every keystroke. Both can hit the search-template plan path and write to `chrome.storage.local`. Wrapped in the same 150ms debounce already used by `excludeKeywordsInput` / `yearsMin` / `yearsMax`.
+
+### Internal
+- **`popupState` extracted to `extension/lib/popup-state.js`** (#85, #86): UMD module, frozen `DEFAULT_POPUP_STATE`, `loadPopupState(migrate)` and `savePopupState(state, uiLanguageMode)` helpers. 12 contract tests lock the public API. Phase 2 swapped `loadState()` / `saveState()` call sites in `extension/popup/popup.js` to use the new module; the inline migration block is removed. -22/+10 LOC in popup.js.
+- **lkdDebug-gated launch breadcrumb** (#81): `logLaunchBreadcrumb` in `extension/background.js` `launchAutomation`. Off by default. Toggle per-machine via `chrome.storage.local.set({ lkdDebug: true })` in the SW console; logs `{rawQuery, searchKeywords, searchUrl, geoUrn, networkFilter, areaPreset, goalMode, templateId, usageGoal, operatorCount, compiledQueryLength, followFallback, followFirstMode, relaxAttempt, excludeKeywordsCount}` once per launch. No user-facing output.
+- **`capture-linkedin-card` skill doc** (#82): `.agents/skills/capture-linkedin-card/SKILL.md` documents the workflow + sanitization checklist for replacing hand-authored fixtures in `tests/fixtures/linkedin-cards/` with sanitized real captures.
+
 ## [1.36.22] - 2026-04-25
 
 ### Fixed
