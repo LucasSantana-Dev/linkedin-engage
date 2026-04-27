@@ -124,6 +124,23 @@ describe('buildRelaxedConnectQuery', () => {
         const segments = result.split(/\s+/);
         expect(segments.length).toBeLessThanOrEqual(4);
     });
+
+    it('uses fallback word path when all segments normalize to empty', () => {
+        // When source is split by AND/OR but contains only special chars that normalize away
+        const result = buildRelaxedConnectQuery('"""" AND """"');
+        // Split by AND produces ['""""', '""""'], both normalize to empty strings
+        // uniqueSegments is empty, so falls back to word path on the original source
+        expect(result).toBe('"""" AND """"');
+    });
+
+    it('extracts and caps words in fallback path', () => {
+        // The source '"""" AND """"' in fallback path:
+        // - splits by /\s+/: ['""""', 'AND', '""""']
+        // - maps to remove non-word chars: ['', 'AND', '']
+        // - filters out empty and AND: []
+        // - returns source since words.length === 0
+        expect(buildRelaxedConnectQuery('"""" AND """"')).toBe('"""" AND """"');
+    });
 });
 
 describe('countBooleanOperatorsSafe', () => {
@@ -261,6 +278,17 @@ describe('shouldRetryConnectWithRelaxedQuery', () => {
         };
         expect(shouldRetryConnectWithRelaxedQuery(result, undefined)).toBe(false);
     });
+
+    it('returns false for other failure reasons with processedCount > 0', () => {
+        const result = {
+            mode: 'connect',
+            runStatus: 'failed',
+            reason: 'unknown-error',
+            processedCount: 5
+        };
+        const launchState = { attempt: 0 };
+        expect(shouldRetryConnectWithRelaxedQuery(result, launchState)).toBe(false);
+    });
 });
 
 describe('buildRelaxedConnectConfig', () => {
@@ -385,5 +413,52 @@ describe('buildRelaxedConnectConfig', () => {
         );
         expect(result.otherProp).toBe('value');
         expect(result.nested.prop).toBe(123);
+    });
+
+    it('builds config with maxed out connectRelaxAttempt', () => {
+        const config = {
+            query: 'python AND javascript',
+            connectRelaxAttempt: 999
+        };
+        const result = buildRelaxedConnectConfig(
+            config,
+            mockNormalizeTemplateMeta
+        );
+        expect(result.connectRelaxAttempt).toBe(1000);
+    });
+
+    it('handles null templateMeta in source config', () => {
+        const config = {
+            query: 'python AND javascript',
+            templateMeta: null
+        };
+        const result = buildRelaxedConnectConfig(
+            config,
+            mockNormalizeTemplateMeta
+        );
+        expect(result.templateMeta).toBeDefined();
+    });
+
+    it('handles undefined query gracefully', () => {
+        const config = {
+            query: undefined
+        };
+        const result = buildRelaxedConnectConfig(
+            config,
+            mockNormalizeTemplateMeta
+        );
+        expect(result).toBe(null);
+    });
+
+    it('builds config with numeric connectRelaxAttempt', () => {
+        const config = {
+            query: 'test query',
+            connectRelaxAttempt: 5
+        };
+        const result = buildRelaxedConnectConfig(
+            config,
+            mockNormalizeTemplateMeta
+        );
+        expect(result.connectRelaxAttempt).toBe(6);
     });
 });
