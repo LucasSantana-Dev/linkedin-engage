@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.24] - 2026-04-27
+
+### Internal
+- **`pdfjs-dist` 3.48.0 → 5.7.284 (vendor + npm aligned)** (#88): vendored `extension/vendor/pdf.min.mjs` and `pdf.worker.min.mjs` were on `pdfjs-dist@3.48.0` (mid-2023) while the npm dep was at `5.6.205`. Both now at `5.7.284`. API surface used by `extension/lib/jobs-career-parser.js` (`getDocument({data})`, `numPages`, `getPage(i)`, `getTextContent()`, `item.str`, `GlobalWorkerOptions.workerSrc`) is unchanged v3 → v5 per the official pdf.js docs. v5 ships ~50K smaller minified bundle. CONTRIBUTING.md gains a one-line rebuild note for future bumps.
+- **`connect-query` helpers extracted to `extension/lib/connect-query.js`** (#91): UMD module with `normalizeConnectQueryTerm`, `buildRelaxedConnectQuery`, `buildConnectSearchKeywords`, `shouldRetryConnectWithRelaxedQuery`, `buildRelaxedConnectConfig`, `countBooleanOperatorsSafe`. 59 contract tests in `tests/connect-query.test.js`. `extension/background.js` shrinks 4607 → 4479 LOC (-128). E-11 phase 1 of the background.js split.
+- **Skill docs corrected** (#90): `.agents/skills/verify/SKILL.md` had wrong coverage thresholds (was 91/78/96/93, actual 96/85.7/99/97.5). `.agents/skills/release/SKILL.md` step 7 said `git push origin main --tags` after a direct commit — `main` is branch-protected; flow now matches the actual PR-based path used in #70/#73/#78/#87.
+- **Lint clean** (#89): dropped a stale `// eslint-disable-next-line no-console` left by PR #81; the rule isn't configured, so the directive itself triggered a lint warning.
+
 ## [1.36.23] - 2026-04-27
 
 ### Performance
