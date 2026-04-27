@@ -154,6 +154,8 @@ describe('background AI comment copy guard', () => {
             preferredOpeners: ['solid point'],
             topNgrams: ['vibe coding', 'clear prompts']
         }));
+        const copyGuard = require('../extension/lib/copy-guard');
+        Object.assign(global, copyGuard);
         const runOutcome = require('../extension/lib/run-outcome');
         Object.assign(global, runOutcome);
         setupChrome();
