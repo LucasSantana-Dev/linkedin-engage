@@ -626,6 +626,23 @@ function notifyError(msg) {
     createLocalizedNotification(null, msg);
 }
 
+// Debug breadcrumb for triaging "search not working" reports.
+// Off by default. Enable in popup devtools:
+//   chrome.storage.local.set({ lkdDebug: true })
+// Then retry the failing search and copy the [lkd-debug] line from the
+// background service-worker devtools (chrome://extensions → Inspect SW).
+function logLaunchBreadcrumb(context) {
+    try {
+        chrome.storage.local.get('lkdDebug', (data) => {
+            if (!data || !data.lkdDebug) return;
+            // eslint-disable-next-line no-console
+            console.log('[lkd-debug] connect.launch', context);
+        });
+    } catch (_e) {
+        // storage unavailable — drop the breadcrumb silently
+    }
+}
+
 function getBackgroundUiLanguageMode() {
     return new Promise(resolve => {
         chrome.storage.local.get('uiLanguageMode', (data) => {
@@ -1151,6 +1168,32 @@ function launchAutomation(config) {
     const netFilter = launchConfig.networkFilter
         || encodeURIComponent('["S","O"]');
     searchUrl += `&network=${netFilter}`;
+
+    logLaunchBreadcrumb({
+        rawQuery: launchConfig.query,
+        searchKeywords,
+        searchUrl,
+        geoUrn,
+        networkFilter: netFilter,
+        activelyHiring: !!launchConfig.activelyHiring,
+        areaPreset: launchConfig.areaPreset,
+        goalMode: launchConfig.goalMode,
+        templateId:
+            launchConfig.templateMeta?.templateId
+            || launchConfig.connectTemplateId,
+        usageGoal: launchConfig.templateMeta?.usageGoal,
+        operatorCount: launchConfig.templateMeta?.operatorCount,
+        compiledQueryLength:
+            launchConfig.templateMeta?.compiledQueryLength,
+        followFallback: launchConfig.followFallback,
+        followFirstMode: launchConfig.followFirstMode,
+        relaxAttempt: launchConfig.connectRelaxAttempt || 0,
+        excludeKeywordsCount:
+            Array.isArray(launchConfig.excludeKeywords)
+                ? launchConfig.excludeKeywords.length
+                : 0,
+        timestamp: new Date().toISOString()
+    });
 
     chrome.tabs.create(
         { url: searchUrl, active: true },
