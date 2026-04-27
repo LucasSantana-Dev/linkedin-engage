@@ -27,6 +27,11 @@ describe('gaussianRandom', () => {
     });
 
     test('respects stdDev spread', () => {
+        // Expected fraction within ±3σ for a true normal is ~99.73%
+        // (997/1000 in expectation). Using `>=985` keeps the test
+        // meaningful for catching a broken gaussianRandom while
+        // tolerating natural RNG variance — observed flake on Node
+        // 20 with `>990` (got exactly 990 in CI run 25024496224).
         const samples = Array.from(
             { length: 1000 },
             () => gaussianRandom(0, 1)
@@ -34,7 +39,7 @@ describe('gaussianRandom', () => {
         const inRange = samples.filter(
             s => s > -3 && s < 3
         ).length;
-        expect(inRange).toBeGreaterThan(990);
+        expect(inRange).toBeGreaterThanOrEqual(985);
     });
 });
 
