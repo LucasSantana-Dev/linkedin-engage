@@ -906,8 +906,14 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 const actionTargets = [];
                 const seen = new Set();
 
+                // Scope to <main> when present so we skip the global
+                // header / nav / msg-overlay / toaster subtrees that
+                // can each contain dozens of buttons. Falls back to
+                // document if LinkedIn ever changes the landmark.
+                const scanRoot =
+                    document.querySelector('main') || document;
                 const allElements = Array.from(
-                    document.querySelectorAll(
+                    scanRoot.querySelectorAll(
                         'button:enabled, a'
                     )
                 );
