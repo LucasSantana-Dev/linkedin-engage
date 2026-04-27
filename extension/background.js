@@ -53,6 +53,7 @@ importScripts('lib/search-language.js');
 importScripts('lib/connect-config.js');
 importScripts('lib/search-templates.js');
 importScripts('lib/connect-query.js');
+importScripts('lib/company-query.js');
 importScripts('lib/jobs-cache.js');
 importScripts('lib/jobs-career-cache.js');
 importScripts('lib/jobs-career-intelligence.js');
@@ -583,63 +584,6 @@ function createLocalizedNotification(key, fallbackMessage, substitutions) {
     });
 }
 
-function buildCompanySearchUrl(query) {
-    return 'https://www.linkedin.com/search/results/' +
-        'companies/' +
-        `?keywords=${encodeURIComponent(query)}` +
-        '&origin=FACETED_SEARCH';
-}
-
-function sanitizeCompanySearchQuery(value) {
-    const normalizedQuotes = String(value || '')
-        .replace(/[“”]/g, '"')
-        .replace(/[‘’]/g, "'");
-    const normalizedWhitespace = normalizedQuotes
-        .replace(/\s+/g, ' ')
-        .trim();
-    if (!normalizedWhitespace) return '';
-
-    return normalizedWhitespace
-        .replace(/\b(and|or|not)\b/gi, function(match) {
-            return match.toUpperCase();
-        })
-        .replace(/\b(OR|AND|NOT)\s+(?=\b(OR|AND|NOT)\b)/g, '')
-        .replace(/^(OR|AND|NOT)\b\s*/i, '')
-        .replace(/\s+\b(OR|AND)\s*$/i, '')
-        .trim();
-}
-
-function splitCompanySearchQueries(value) {
-    return String(value || '')
-        .split(/\n+/)
-        .map(function(part) {
-            return sanitizeCompanySearchQuery(part);
-        })
-        .filter(Boolean);
-}
-
-function normalizeCompanyTargets(values) {
-    const seen = new Set();
-    const normalized = [];
-    for (const raw of values || []) {
-        const clean = String(raw || '').replace(/\s+/g, ' ').trim();
-        if (!clean) continue;
-        const key = clean.toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        normalized.push(clean);
-    }
-    return normalized;
-}
-
-function buildJobsSearchUrl(query, options) {
-    if (typeof buildLinkedInJobsSearchUrl === 'function') {
-        return buildLinkedInJobsSearchUrl(query, options);
-    }
-    return 'https://www.linkedin.com/jobs/search/' +
-        `?keywords=${encodeURIComponent(query)}` +
-        '&f_AL=true';
-}
 
 function resolveCompanySearches(
     query,
