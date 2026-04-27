@@ -3064,10 +3064,22 @@ document.getElementById('toggleCustomQuery').addEventListener('click', () => {
     saveState();
 });
 
-document.getElementById('customQueryInput').addEventListener('input', () => {
-    updateQueryPreview();
-    saveState();
-});
+(function wireCustomQueryInput() {
+    const customQueryInputEl = document.getElementById(
+        'customQueryInput'
+    );
+    if (!customQueryInputEl) return;
+    let pending = null;
+    const onChange = () => {
+        if (pending) clearTimeout(pending);
+        pending = setTimeout(() => {
+            pending = null;
+            updateQueryPreview();
+            saveState();
+        }, 150);
+    };
+    customQueryInputEl.addEventListener('input', onChange);
+})();
 
 document.getElementById('tagSearchInput').addEventListener(
     'input',
