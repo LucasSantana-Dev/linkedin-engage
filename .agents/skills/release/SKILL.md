@@ -18,49 +18,52 @@ Automate the release flow after merging PRs to main.
 
 ## Steps
 
-1. **Ensure on main and up to date**
+`main` is branch-protected — releases go through a PR, not a direct push.
+
+1. **Sync main**
    ```bash
-   git checkout main && git pull origin main
+   git checkout main && git pull --ff-only
    ```
 
 2. **Determine version bump type**
    - `major` — breaking changes (rare)
-   - `minor` — new features (feat commits)
-   - `patch` — bug fixes, tests, chores
+   - `minor` — new features (`feat` commits)
+   - `patch` — bug fixes, tests, chores, perf, docs
 
-3. **Bump version** (updates package.json + package-lock.json)
+3. **Branch + bump versions**
    ```bash
+   git checkout -b chore/release-X.Y.Z
    npm version <major|minor|patch> --no-git-tag-version
+   sed -i '' 's/"version": "<old>"/"version": "<new>"/' extension/manifest.json
    ```
 
-4. **Update manifest.json** to match the new version
-   ```
-   "version": "<new-version>"
-   ```
+4. **Update CHANGELOG.md** — leave `## [Unreleased]` empty and insert a new `## [X.Y.Z] - YYYY-MM-DD` section below it. Cite PR numbers and group by `### Performance` / `### Internal` / `### Fixed` / `### Added`.
 
-5. **Update CHANGELOG.md** — move `[Unreleased]` content into a new versioned section:
-   ```markdown
-   ## [X.Y.Z] - YYYY-MM-DD
-
-   ### Added / Changed / Fixed
-   - Description from the merged PR(s)
-   ```
-
-6. **Commit the release**
+5. **Commit, push, open PR**
    ```bash
    git add package.json package-lock.json extension/manifest.json CHANGELOG.md
    git commit -m "chore(release): bump version to X.Y.Z"
+   git push -u origin chore/release-X.Y.Z
+   gh pr create --title "chore(release): bump version to X.Y.Z" --body "..."
    ```
 
-7. **Tag and push**
+6. **Wait for CI green, then squash-merge**
    ```bash
+   gh pr merge <num> --squash --delete-branch
+   ```
+
+7. **Tag main and push the tag**
+   ```bash
+   git checkout main && git pull --ff-only
    git tag -a vX.Y.Z -m "vX.Y.Z: <short description>"
-   git push origin main --tags
+   git push origin vX.Y.Z
    ```
 
 8. **Verify** — the `release.yml` workflow will automatically:
    - Create a GitHub Release with auto-generated notes
    - Build and upload `linkedin-engage-vX.Y.Z.zip` as a release asset
+
+Confirm via `gh release list --limit 3` and `gh run list --workflow release.yml --limit 3`.
 
 ## Files modified per release
 

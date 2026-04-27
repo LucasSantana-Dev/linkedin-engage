@@ -27,10 +27,12 @@ Run the repo's quality gates and report pass/fail.
 
 | Metric | Threshold |
 |---|---|
-| Statements | 91% |
-| Branches | 78% |
-| Functions | 96% |
-| Lines | 93% |
+| Statements | 96% |
+| Branches | 85.7% |
+| Functions | 99% |
+| Lines | 97.5% |
+
+Coverage applies to `extension/lib/**` only (see `collectCoverageFrom`). As of v1.36.23 main is at 96.21 / 86.07 / 99.12 / 97.63 — branch headroom is the tightest at ~0.37pp; watch on refactors that add new conditionals.
 
 ## Commands
 
