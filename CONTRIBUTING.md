@@ -113,3 +113,4 @@ The tag push triggers `.github/workflows/release.yml`, which packages `extension
 - **EN / PT-BR full parity.** Both `extension/_locales/*/messages.json` files share the same key set.
 - **Dark-only UI.** No light-theme support.
 - **Trunk-based.** PRs target `main`; squash merge.
+- **Vendored `pdf.min.mjs` + `pdf.worker.min.mjs`** in `extension/vendor/` are copies of `pdfjs-dist@<package.json pinned version>` `build/` artifacts. To rebuild after a version bump: `cp node_modules/pdfjs-dist/build/pdf.min.mjs extension/vendor/pdf.min.mjs && cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs extension/vendor/pdf.worker.min.mjs`. Used at runtime by `extension/lib/jobs-career-parser.js` for resume PDF text extraction.
