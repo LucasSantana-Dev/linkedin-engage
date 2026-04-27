@@ -635,7 +635,6 @@ function logLaunchBreadcrumb(context) {
     try {
         chrome.storage.local.get('lkdDebug', (data) => {
             if (!data || !data.lkdDebug) return;
-            // eslint-disable-next-line no-console
             console.log('[lkd-debug] connect.launch', context);
         });
     } catch (_e) {
