@@ -1387,27 +1387,63 @@ function syncFeedCommentSettingsVisibility() {
     }
 }
 
-function initializeAccordionInteractions() {
-    document.querySelectorAll('[data-accordion-toggle]')
-        .forEach(btn => {
-            btn.addEventListener('click', () => {
-                const token = btn.dataset
-                    .accordionToggle || '';
-                const [mode, panel] = token.split(':');
-                if (!mode || !panel) return;
-                const next = !getPopupAccordionState(
-                    mode,
-                    panel
-                );
-                setPopupAccordionState(
-                    mode,
-                    panel,
-                    next
-                );
-                renderAccordions();
-                saveState();
-            });
+function logAccordionBreadcrumb(label, payload) {
+    try {
+        if (typeof chrome === 'undefined' ||
+            !chrome.storage || !chrome.storage.local) {
+            return;
+        }
+        chrome.storage.local.get('lkdDebug', (data) => {
+            if (!data || !data.lkdDebug) return;
+            console.log('[lkd-debug] accordion.' + label, payload);
         });
+    } catch (_e) {
+        // storage unavailable — drop silently
+    }
+}
+
+function initializeAccordionInteractions() {
+    const buttons = document.querySelectorAll(
+        '[data-accordion-toggle]'
+    );
+    logAccordionBreadcrumb('init', {
+        buttonCount: buttons.length,
+        tokens: Array.from(buttons).map(
+            b => b.dataset.accordionToggle
+        ),
+        accordionsState: popupUiState &&
+            popupUiState.accordions
+    });
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const token = btn.dataset
+                .accordionToggle || '';
+            const [mode, panel] = token.split(':');
+            if (!mode || !panel) {
+                logAccordionBreadcrumb('click.malformed', {
+                    token,
+                    rawDataset: { ...btn.dataset }
+                });
+                return;
+            }
+            const prev = getPopupAccordionState(mode, panel);
+            const next = !prev;
+            setPopupAccordionState(mode, panel, next);
+            renderAccordions();
+            const root = btn.closest('.accordion');
+            const hasOpenClass = !!(
+                root && root.classList.contains('open')
+            );
+            logAccordionBreadcrumb('click', {
+                token,
+                prev,
+                next,
+                hasOpenClass,
+                rootId: root && root.id
+            });
+            saveState();
+        });
+    });
 }
 
 function refreshTemplatesForArea() {
