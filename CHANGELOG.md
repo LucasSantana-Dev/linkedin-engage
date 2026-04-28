@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.28] - 2026-04-27
+
+### Internal
+- **`ai-context-formatters` helpers extracted to `extension/lib/ai-context-formatters.js`** (#104, E-11 phase 4): UMD module with `formatReactionContext`, `inferAuthorRoleTone`, `formatThreadStyleContext`, `formatThreadTopicContext`, `formatImageContext`, `formatEngagementContext`, `formatPatternProfileContext`, `formatLearnedPatternContext`. 54 contract tests in `tests/ai-context-formatters.test.js`. `extension/background.js` shrinks 4254 → 4089 LOC (-165). All eight functions are pure text formatters used by the AI comment-generation prompt builder.
+- **`jobs-profile` helpers extracted to `extension/lib/jobs-profile.js`** (#105, E-11 phase 5): UMD module with `parseExcludedCompanyList`, `parseTextList`, `normalizeJobsRuntimeProfile`, `mergeJobsRuntimeProfiles`. 52 contract tests in `tests/jobs-profile.test.js`. `extension/background.js` shrinks 4089 → 4024 LOC (-65). Cumulatively across phases 1-5, `background.js` is down from its 4607-LOC peak by ~580 LOC into focused libs.
+
 ## [1.36.27] - 2026-04-27
 
 ### Changed
