@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.36.27] - 2026-04-27
+
+### Changed
+- **Advanced Search Settings collapsed to two key controls + disclosure** (#102): the Connect tab's `#connectAdvancedAccordion` previously showed all 8 controls (Goal, Role Terms Limit, Area Preset, Usage Goal, Expected Results, Auto-select template, Template, Search language mode) every time the accordion expanded. Restructured to surface only **Area Preset** + **Expected Results** by default; the other 6 are tucked into a native `<details class="advanced-disclosure"><summary>Edit advanced…</summary>…</details>` element styled with existing design tokens. All element IDs, classes, data-attrs, and `<select>` options preserved verbatim — `popup.js` and 1949 tests unchanged.
+
+### Internal
+- **`lkdDebug`-gated accordion breadcrumbs in popup** (#101): triage instrumentation for the user-reported "Advanced Search Settings dropdown is not working" report. `logAccordionBreadcrumb` in `extension/popup/popup.js` logs three events when `chrome.storage.local.set({ lkdDebug: true })` is set: `accordion.init` (button count, tokens, `popupUiState.accordions` shape at popup load), `accordion.click` (token, prev/next state, whether `.open` landed on the `.accordion` root), and `accordion.click.malformed` (token + raw dataset on parse failure). Same flag used by `logLaunchBreadcrumb` (#81). No user-facing output.
+
 ## [1.36.26] - 2026-04-27
 
 ### Changed
