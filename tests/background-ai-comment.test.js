@@ -156,6 +156,8 @@ describe('background AI comment copy guard', () => {
         }));
         const copyGuard = require('../extension/lib/copy-guard');
         Object.assign(global, copyGuard);
+        const aiContextLib = require('../extension/lib/ai-context-formatters');
+        Object.assign(global, aiContextLib);
         const runOutcome = require('../extension/lib/run-outcome');
         Object.assign(global, runOutcome);
         setupChrome();
