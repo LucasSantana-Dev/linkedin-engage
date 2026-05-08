@@ -24,6 +24,12 @@ describe('ui-layout', () => {
             expect(ui.accordions.jobs.profile).toBe(false);
         });
 
+        it('returns unchanged state when mode does not exist in accordions', () => {
+            const ui = normalizePopupUiState();
+            const next = setPopupAccordionOpen(ui, 'nonexistent', 'panel', true);
+            expect(next).toEqual(normalizePopupUiState());
+        });
+
         it('persists and restores accordion state with last-open panel', () => {
             const base = normalizePopupUiState({
                 accordions: {
