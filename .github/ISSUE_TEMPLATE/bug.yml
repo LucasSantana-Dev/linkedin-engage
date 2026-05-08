@@ -1,0 +1,65 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is broken? What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open LinkedIn → search for "..."
+        2. Click the extension icon → Start
+        3. Observe: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      placeholder: |
+        **Expected:** ...
+        **Actual:** ...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - "connect (content.js)"
+        - "jobs (jobs-assist.js)"
+        - "feed (feed-engage.js)"
+        - "companies (company-follow.js)"
+        - "popup / dashboard"
+        - "background (service worker)"
+        - "playwright connector"
+        - "ci / tooling"
+        - "unknown"
+    validations:
+      required: false
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Affected files
+      description: If known, list the files most likely responsible.
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Console errors, lkd-debug breadcrumbs, LinkedIn DOM screenshots, or any other relevant context.
+    validations:
+      required: false

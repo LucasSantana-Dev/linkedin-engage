@@ -2,7 +2,7 @@
 
 A Chrome Extension for automating LinkedIn networking — connection requests, company follows, feed engagement, and job applications.
 
-[<img src="https://storage.googleapis.com/web-dev-uploads/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/UV4C4ybeBTsZt43U4xis.png" alt="Available in the Chrome Web Store" height="58"/>](https://chromewebstore.google.com/detail/linkedin-engage/naofclbmkhogidppkccoojdjhllmfcbh)
+[<img src="docs/media/chrome-webstore-badge.png" alt="Available in the Chrome Web Store" height="58"/>](https://chromewebstore.google.com/detail/linkedin-engage/naofclbmkhogidppkccoojdjhllmfcbh)
 
 ---
 
