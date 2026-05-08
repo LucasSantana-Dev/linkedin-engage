@@ -982,5 +982,17 @@
   },
   "popup_connect_selectedCount": {
     "message": "$1 selected"
+  },
+  "popup_settings_featureToggles": {
+    "message": "Feature Toggles"
+  },
+  "popup_settings_connectEnabled": {
+    "message": "Enable Connect automation"
+  },
+  "popup_settings_jobsEnabled": {
+    "message": "Enable Jobs automation"
+  },
+  "popup_settings_companiesEnabled": {
+    "message": "Enable Companies automation"
   }
 }

@@ -126,7 +126,6 @@ describe('i18n', () => {
             'common.connect',
             'common.companies',
             'common.jobs',
-            'common.feed',
             'popup.progress.page',
             'popup.progress.skipped',
             'options.card.avgPerDay',

@@ -51,6 +51,7 @@ importScripts('lib/search-runtime-builders.js');
 importScripts('lib/run-outcome.js');
 importScripts('lib/profile-visitor.js');
 importScripts('lib/storage-key-sweeper.js');
+importScripts('lib/feature-toggles.js');
 
 let lkdDebug = false;
 try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
@@ -2105,7 +2106,12 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'start') {
-            checkRateLimit('connect').then(status => {
+            getFeatureToggles((toggles) => {
+                if (!toggles.connectEnabled) {
+                    sendResponse({ status: 'blocked', reason: 'feature_disabled' });
+                    return;
+                }
+                checkRateLimit('connect').then(status => {
                 if (!status.allowed) {
                     sendResponse({
                         status: 'blocked',
@@ -2139,6 +2145,7 @@ chrome.runtime.onMessage.addListener(
                     status: 'blocked',
                     reason: 'unknown'
                 });
+            });
             });
             return true;
         }
@@ -2509,7 +2516,12 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'startCompanyFollow') {
-            checkRateLimit('companyFollow').then(status => {
+            getFeatureToggles((toggles) => {
+                if (!toggles.companiesEnabled) {
+                    sendResponse({ status: 'blocked', reason: 'feature_disabled' });
+                    return;
+                }
+                checkRateLimit('companyFollow').then(status => {
                 if (!status.allowed) {
                     sendResponse({
                         status: 'blocked',
@@ -2552,11 +2564,17 @@ chrome.runtime.onMessage.addListener(
                     reason: 'unknown'
                 });
             });
+            });
             return true;
         }
 
         if (request.action === 'startJobsAssist') {
-            checkRateLimit('jobsAssist').then((status) => {
+            getFeatureToggles((toggles) => {
+                if (!toggles.jobsEnabled) {
+                    sendResponse({ status: 'blocked', reason: 'feature_disabled' });
+                    return;
+                }
+                checkRateLimit('jobsAssist').then((status) => {
                 if (!status.allowed) {
                     sendResponse({
                         status: 'blocked',
@@ -2734,6 +2752,7 @@ chrome.runtime.onMessage.addListener(
                     status: 'blocked',
                     reason: 'unknown'
                 });
+            });
             });
             return true;
         }

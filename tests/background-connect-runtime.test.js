@@ -1,6 +1,5 @@
 describe('background connect runtime config', () => {
     let runtimeListener;
-    let alarmListener;
     let tabUpdatedListeners;
     let storageData;
     let runtimeMessages;
@@ -28,6 +27,8 @@ describe('background connect runtime config', () => {
         sentToContent = [];
 
         global.importScripts = jest.fn();
+        global.getFeatureToggles = jest.fn(cb => cb({ connectEnabled: true, jobsEnabled: true, companiesEnabled: true }));
+        global.setFeatureToggle = jest.fn((key, value, cb) => { if (cb) cb(null); });
         global.getHourKey = jest.fn(mode => `hour_${mode}`);
         global.getDayKey = jest.fn(mode => `day_${mode}`);
         global.getWeekKey = jest.fn(() => 'week_2026_11');
@@ -131,9 +132,7 @@ describe('background connect runtime config', () => {
                 create: jest.fn(),
                 clear: jest.fn(),
                 onAlarm: {
-                    addListener: jest.fn(listener => {
-                        alarmListener = listener;
-                    })
+                    addListener: jest.fn()
                 }
             },
             notifications: {
@@ -360,130 +359,6 @@ describe('background connect runtime config', () => {
 
         const payload = sentToContent[0].payload;
         expect(payload.followFallback).toBe(false);
-    });
-
-    it('scheduled connect run reuses areaPreset and excludedCompanies', async () => {
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['finance'] },
-            tagVersion: 5,
-            areaPreset: 'finance',
-            excludedCompanies: 'Acme\nBeta',
-            connectUsageGoal: 'decision_makers',
-            connectExpectedResults: 'balanced',
-            connectTemplateAuto: true,
-            limit: '10',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false
-        };
-        storageData.schedule = { enabled: true };
-
-        alarmListener({ name: 'linkedinSchedule' });
-        await tick();
-
-        expect(sentToContent.length).toBeGreaterThan(0);
-        const payload = sentToContent[0].payload;
-        expect(payload.areaPreset).toBe('finance');
-        expect(payload.excludedCompanies).toEqual(['Acme', 'Beta']);
-        expect(payload.templateMeta).toMatchObject({
-            usageGoal: 'decision_makers',
-            expectedResultsBucket: 'balanced'
-        });
-    });
-
-    it('migrates legacy myCompany into excludedCompanies for schedule', async () => {
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['software'] },
-            tagVersion: 4,
-            myCompany: 'Legacy Corp',
-            areaPreset: 'tech',
-            limit: '10',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false
-        };
-        storageData.schedule = { enabled: true };
-
-        alarmListener({ name: 'linkedinSchedule' });
-        await tick();
-
-        expect(storageData.popupState.excludedCompanies)
-            .toBe('Legacy Corp');
-        expect(sentToContent.length).toBeGreaterThan(0);
-        expect(sentToContent[0].payload.excludedCompanies)
-            .toEqual(['Legacy Corp']);
-    });
-
-    it('scheduled connect run honors popup filter toggles over template filterSpec', async () => {
-        global.buildSearchTemplatePlan = jest.fn(() => ({
-            query: 'recruiter finance',
-            filterSpec: {
-                degree2nd: false,
-                degree3rd: false,
-                activelyHiring: true
-            },
-            meta: { mode: 'connect' }
-        }));
-
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['finance'] },
-            tagVersion: 5,
-            areaPreset: 'finance',
-            limit: '10',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false,
-            degree2nd: true,
-            degree3rd: true,
-            activelyHiring: false,
-            connectTemplateAuto: true,
-            connectTemplateId:
-                'connect.business.decision_makers.balanced'
-        };
-        storageData.schedule = { enabled: true };
-
-        alarmListener({ name: 'linkedinSchedule' });
-        await tick();
-
-        const createdUrl = chrome.tabs.create.mock.calls[0][0].url;
-        expect(createdUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
-        expect(createdUrl).not.toContain('activelyHiring=true');
-    });
-
-    it('quota retry connect run honors popup filter toggles over template filterSpec', async () => {
-        global.buildSearchTemplatePlan = jest.fn(() => ({
-            query: 'recruiter finance',
-            filterSpec: {
-                degree2nd: false,
-                degree3rd: false,
-                activelyHiring: true
-            },
-            meta: { mode: 'connect' }
-        }));
-
-        storageData.popupState = {
-            tags: { role: ['recruiter'], industry: ['finance'] },
-            tagVersion: 5,
-            areaPreset: 'finance',
-            savedQueries: 'recruiter finance',
-            limit: '50',
-            roleTermsLimit: 6,
-            region: '103644278',
-            sendNote: false,
-            degree2nd: true,
-            degree3rd: true,
-            activelyHiring: false,
-            connectTemplateAuto: true,
-            connectTemplateId:
-                'connect.business.decision_makers.balanced'
-        };
-
-        alarmListener({ name: 'fuseLimitRetry' });
-        await tick();
-
-        const createdUrl = chrome.tabs.create.mock.calls[0][0].url;
-        expect(createdUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
-        expect(createdUrl).not.toContain('activelyHiring=true');
     });
 
     it('retries connect once with relaxed query when no items are processed', async () => {

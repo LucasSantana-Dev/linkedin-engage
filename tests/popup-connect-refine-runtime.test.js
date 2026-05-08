@@ -139,6 +139,10 @@ describe('popup connect refine runtime', () => {
                 '../extension/lib/chip-hydrator'
             );
             Object.assign(global, chipHydrator);
+            const featureToggles = require(
+                '../extension/lib/feature-toggles'
+            );
+            Object.assign(global, featureToggles);
             require('../extension/popup/popup.js');
         });
     });
@@ -285,42 +289,6 @@ describe('popup connect refine runtime', () => {
         const payload = launchCall[0];
         expect(payload.activelyHiring).toBe(false);
         expect(payload.networkFilter).toBe('%5B%22S%22%2C%22O%22%5D');
-    });
-
-    test('company batch size update syncs active schedule settings', () => {
-        switchToCompaniesMode();
-
-        const scheduleCheckbox = document.getElementById(
-            'companyScheduleCheckbox'
-        );
-        const batchSizeInput = document.getElementById('companyBatchSize');
-        const intervalInput = document.getElementById(
-            'companyScheduleInterval'
-        );
-
-        scheduleCheckbox.checked = true;
-        batchSizeInput.value = '7';
-        intervalInput.value = '12';
-
-        batchSizeInput.dispatchEvent(new window.Event('change', {
-            bubbles: true
-        }));
-
-        const scheduleCalls = chromeMock.runtime.sendMessage.mock.calls
-            .map((args) => args[0])
-            .filter((message) => {
-                return message && message.action === 'setCompanySchedule';
-            });
-
-        expect(scheduleCalls.length).toBeGreaterThan(0);
-        expect(scheduleCalls[scheduleCalls.length - 1]).toEqual(
-            expect.objectContaining({
-                action: 'setCompanySchedule',
-                enabled: true,
-                intervalHours: 12,
-                batchSize: 7
-            })
-        );
     });
 
     test('companies launch payload prefers company-specific limit input', () => {

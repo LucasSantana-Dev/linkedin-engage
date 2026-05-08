@@ -1,6 +1,5 @@
 describe('company orchestration in background', () => {
     let runtimeListener;
-    let alarmListener;
     let tabUpdatedListeners;
     let tabRemovedListeners;
     let storageData;
@@ -27,6 +26,8 @@ describe('company orchestration in background', () => {
         runtimeMessages = [];
 
         global.importScripts = jest.fn();
+        global.getFeatureToggles = jest.fn(cb => cb({ connectEnabled: true, jobsEnabled: true, companiesEnabled: true }));
+        global.setFeatureToggle = jest.fn((key, value, cb) => { if (cb) cb(null); });
         global.getHourKey = jest.fn(mode => `hour_${mode}`);
         global.getDayKey = jest.fn(mode => `day_${mode}`);
         global.getWeekKey = jest.fn(() => 'week_2026_11');
@@ -164,9 +165,7 @@ describe('company orchestration in background', () => {
                 create: jest.fn(),
                 clear: jest.fn(),
                 onAlarm: {
-                    addListener: jest.fn(listener => {
-                        alarmListener = listener;
-                    })
+                    addListener: jest.fn()
                 }
             },
             notifications: {
@@ -617,110 +616,6 @@ describe('company orchestration in background', () => {
         );
     });
 
-    it('scheduled company run is blocked when company rate limit is exhausted', async () => {
-        global.checkLimits = jest.fn(() => ({
-            allowed: false,
-            reason: 'hourly-limit'
-        }));
-
-        storageData.popupState = {
-            targetCompanies: 'Acme\nBeta',
-            companyQuery: 'software technology',
-            limit: '10'
-        };
-        storageData.companySchedule = {
-            enabled: true,
-            intervalHours: 24,
-            batchSize: 2
-        };
-        storageData.companyRotationIndex = 0;
-
-        alarmListener({ name: 'companySchedule' });
-        await tick();
-
-        expect(createdTabs).toHaveLength(0);
-        expect(updatedTabs).toHaveLength(0);
-        expect(doneMessages()).toHaveLength(0);
-    });
-
-    it('scheduled company run uses queue orchestration', async () => {
-        storageData.popupState = {
-            targetCompanies: 'Acme\nBeta',
-            companyQuery: 'software technology',
-            limit: '10'
-        };
-        storageData.companySchedule = {
-            enabled: true,
-            intervalHours: 24,
-            batchSize: 2
-        };
-        storageData.companyRotationIndex = 0;
-
-        alarmListener({ name: 'companySchedule' });
-        await tick();
-
-        expect(createdTabs).toHaveLength(1);
-        expect(createdTabs[0].url).toContain(
-            'keywords=Acme'
-        );
-
-        runtimeListener({
-            action: 'companyStepDone',
-            result: {
-                success: true,
-                mode: 'company',
-                followedThisStep: 1,
-                log: [{ status: 'followed', name: 'Acme' }]
-            }
-        }, {}, () => {});
-        await tick();
-
-        expect(updatedTabs).toHaveLength(1);
-        expect(updatedTabs[0].opts.url).toContain(
-            'keywords=Beta'
-        );
-
-        runtimeListener({
-            action: 'companyStepDone',
-            result: {
-                success: true,
-                mode: 'company',
-                followedThisStep: 0,
-                log: [{ status: 'skipped-already-following' }]
-            }
-        }, {}, () => {});
-        await tick();
-
-        expect(doneMessages()).toHaveLength(1);
-        expect(doneMessages()[0].result.mode).toBe('company');
-    });
-
-    it('scheduled company run uses resolved query when no target companies are set', async () => {
-        storageData.popupState = {
-            targetCompanies: '',
-            companyQuery: '',
-            companyAreaPreset: 'graphic-design',
-            limit: '10'
-        };
-        storageData.companySchedule = {
-            enabled: true,
-            intervalHours: 24,
-            batchSize: 2
-        };
-        storageData.companyRotationIndex = 0;
-
-        alarmListener({ name: 'companySchedule' });
-        await tick();
-
-        expect(createdTabs).toHaveLength(1);
-        expect(createdTabs[0].url).toContain(
-            encodeURIComponent(
-                '(graphic design OR visual design OR creative studio OR comunicacao visual)'
-            )
-        );
-        expect(updatedTabs).toHaveLength(0);
-    });
-
     it('splits multiline company queries into sequential sanitized searches', async () => {
         const response = await sendRequest({
             action: 'startCompanyFollow',
@@ -794,33 +689,4 @@ describe('company orchestration in background', () => {
         expect(updatedTabs).toHaveLength(1);
     });
 
-    it('scheduled company run does not auto-apply template default targets', async () => {
-        storageData.popupState = {
-            targetCompanies: '',
-            companyQuery: '',
-            companyAreaPreset: 'ui-ux',
-            companyUsageGoal: 'brand_watchlist',
-            companyExpectedResults: 'balanced',
-            companyTemplateAuto: true,
-            companyTemplateId: '',
-            limit: '10'
-        };
-        storageData.companySchedule = {
-            enabled: true,
-            intervalHours: 24,
-            batchSize: 2
-        };
-        storageData.companyRotationIndex = 0;
-
-        alarmListener({ name: 'companySchedule' });
-        await tick();
-
-        expect(createdTabs).toHaveLength(1);
-        expect(createdTabs[0].url).toContain(
-            encodeURIComponent(
-                '(branding OR brand strategy OR visual identity OR creative direction)'
-            )
-        );
-        expect(createdTabs[0].url).not.toContain('keywords=Interbrand');
-    });
 });

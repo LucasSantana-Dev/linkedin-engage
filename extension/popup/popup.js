@@ -92,8 +92,6 @@ const UI_LABEL_KEYS = Object.freeze({
     companyTemplateSelect: 'common.template',
     targetCompanies: 'popup.company.targetCompanies',
     companyLimitInput: 'popup.company.limit',
-    companyScheduleCheckbox: 'popup.company.scheduleRecurring',
-    companyScheduleInterval: 'common.runEveryHours',
     companyBatchSize: 'popup.company.batchSize',
     jobsAreaPresetSelect: 'popup.jobs.areaPreset',
     jobsQueryInput: 'popup.jobs.query',
@@ -2104,12 +2102,6 @@ function saveState() {
         jobsBrazilOffshoreFriendly: document.getElementById(
             'jobsBrazilOffshoreFriendlyCheckbox'
         ).checked,
-        companyScheduleEnabled: document.getElementById(
-            'companyScheduleCheckbox').checked,
-        companyScheduleInterval: document.getElementById(
-            'companyScheduleInterval').value,
-        companyBatchSize: document.getElementById(
-            'companyBatchSize').value,
     };
 
     popupUiState = normalizePopupUi(popupUiState);
@@ -2365,23 +2357,9 @@ function loadState() {
             document.getElementById('customQueryInput').value =
                 popupState.customQuery;
         }
-        if (popupState.scheduleEnabled) {
-            document.getElementById('scheduleCheckbox').checked =
-                true;
-            document.getElementById('scheduleOptions')
-                .style.display = 'block';
-        }
-        if (popupState.scheduleInterval) {
-            document.getElementById('scheduleInterval').value =
-                popupState.scheduleInterval;
-        }
         if (popupState.savedQueries) {
             document.getElementById('savedQueries').value =
                 popupState.savedQueries;
-        }
-        if (popupState.smartMode) {
-            document.getElementById(
-                'smartModeCheckbox').checked = true;
         }
         if (popupState.useCustomQuery) {
             useCustomQuery = true;
@@ -2555,25 +2533,6 @@ function loadState() {
             ).checked =
                 popupState.jobsBrazilOffshoreFriendly === true;
         }
-        if (popupState.companyScheduleEnabled) {
-            document.getElementById(
-                'companyScheduleCheckbox'
-            ).checked = true;
-            document.getElementById(
-                'companyScheduleOptions'
-            ).style.display = 'block';
-        }
-        if (popupState.companyScheduleInterval) {
-            document.getElementById(
-                'companyScheduleInterval'
-            ).value = popupState.companyScheduleInterval;
-        }
-        if (popupState.companyBatchSize) {
-            document.getElementById(
-                'companyBatchSize'
-            ).value = popupState.companyBatchSize;
-        }
-
         setActiveTemplate(popupState.activeTemplate || DEFAULT_TEMPLATE_KEY);
         updateQueryPreview();
         updateCharCounter();
@@ -2942,100 +2901,9 @@ document.getElementById(
     'skipJobSeekingSignalsCheckbox'
 ).addEventListener('change', saveState);
 
-document.getElementById('scheduleCheckbox').addEventListener(
-    'change', (e) => {
-        const opts = document.getElementById('scheduleOptions');
-        opts.style.display = e.target.checked ? 'block' : 'none';
-        const hours = parseInt(
-            document.getElementById('scheduleInterval').value
-        ) || 24;
-        const smart = document.getElementById(
-            'smartModeCheckbox').checked;
-        chrome.runtime.sendMessage({
-            action: 'setSchedule',
-            enabled: e.target.checked,
-            intervalHours: hours,
-            smartMode: smart
-        });
-        saveState();
-        if (e.target.checked) fetchScheduleInsight();
-    }
-);
-
 document.getElementById('savedQueries').addEventListener(
     'input', saveState
 );
-
-document.getElementById('scheduleInterval').addEventListener(
-    'change', () => {
-        const enabled = document.getElementById(
-            'scheduleCheckbox'
-        ).checked;
-        if (!enabled) return;
-        const hours = parseInt(
-            document.getElementById('scheduleInterval').value
-        ) || 24;
-        const smart = document.getElementById(
-            'smartModeCheckbox').checked;
-        chrome.runtime.sendMessage({
-            action: 'setSchedule',
-            enabled: true,
-            intervalHours: hours,
-            smartMode: smart
-        });
-        saveState();
-    }
-);
-
-document.getElementById('smartModeCheckbox').addEventListener(
-    'change', () => {
-        const enabled = document.getElementById(
-            'scheduleCheckbox').checked;
-        if (!enabled) return;
-        const hours = parseInt(
-            document.getElementById('scheduleInterval').value
-        ) || 24;
-        const smart = document.getElementById(
-            'smartModeCheckbox').checked;
-        chrome.runtime.sendMessage({
-            action: 'setSchedule',
-            enabled: true,
-            intervalHours: hours,
-            smartMode: smart
-        });
-        saveState();
-        if (smart) fetchScheduleInsight();
-    }
-);
-
-function fetchScheduleInsight() {
-    chrome.runtime.sendMessage(
-        { action: 'getScheduleInsight' },
-        (rec) => {
-            if (chrome.runtime.lastError || !rec) return;
-            const box = document.getElementById(
-                'scheduleInsight');
-            const text = document.getElementById(
-                'insightText');
-            if (!box || !text) return;
-
-            const windows = (rec.windows || [])
-                .map(w => `${w.start}:00-${w.end}:00 ` +
-                    `(${w.label})`)
-                .join(', ');
-            const days = (rec.bestDays || []).join(', ');
-
-            let msg = rec.recommended
-                ? 'Now is a good time to run.'
-                : rec.suggestion || 'Waiting for optimal window.';
-            msg += ` Best windows: ${windows || 'default'}.`;
-            msg += ` Top days: ${days || 'weekdays'}.`;
-
-            text.textContent = msg;
-            box.style.display = 'block';
-        }
-    );
-}
 
 document.getElementById('startBtn').addEventListener('click', async () => {
     if (currentMode === 'companies') {
@@ -4494,83 +4362,6 @@ document.getElementById('loadDefaultCompanies')
         saveState();
     });
 
-document.getElementById('companyScheduleCheckbox')
-    .addEventListener('change', (e) => {
-        const opts = document.getElementById(
-            'companyScheduleOptions'
-        );
-        opts.style.display = e.target.checked
-            ? 'block' : 'none';
-        const hours = parseInt(
-            document.getElementById(
-                'companyScheduleInterval'
-            ).value
-        ) || 24;
-        const batchSize = parseInt(
-            document.getElementById(
-                'companyBatchSize'
-            ).value
-        ) || 10;
-        chrome.runtime.sendMessage({
-            action: 'setCompanySchedule',
-            enabled: e.target.checked,
-            intervalHours: hours,
-            batchSize
-        });
-        saveState();
-    });
-
-document.getElementById('companyScheduleInterval')
-    .addEventListener('change', () => {
-        const enabled = document.getElementById(
-            'companyScheduleCheckbox'
-        ).checked;
-        if (!enabled) return;
-        const hours = parseInt(
-            document.getElementById(
-                'companyScheduleInterval'
-            ).value
-        ) || 24;
-        const batchSize = parseInt(
-            document.getElementById(
-                'companyBatchSize'
-            ).value
-        ) || 10;
-        chrome.runtime.sendMessage({
-            action: 'setCompanySchedule',
-            enabled: true,
-            intervalHours: hours,
-            batchSize
-        });
-        saveState();
-    });
-
-document.getElementById('companyBatchSize')
-    .addEventListener('change', () => {
-        const enabled = document.getElementById(
-            'companyScheduleCheckbox'
-        ).checked;
-        if (enabled) {
-            const hours = parseInt(
-                document.getElementById(
-                    'companyScheduleInterval'
-                ).value
-            ) || 24;
-            const batchSize = parseInt(
-                document.getElementById(
-                    'companyBatchSize'
-                ).value
-            ) || 10;
-            chrome.runtime.sendMessage({
-                action: 'setCompanySchedule',
-                enabled: true,
-                intervalHours: hours,
-                batchSize
-            });
-        }
-        saveState();
-    });
-
 function loadRateLimitStatus() {
     const now = new Date();
     const h = now.getUTCHours();
@@ -4631,7 +4422,21 @@ updateWeeklyDisplay();
 loadRecentProfiles();
 loadRateLimitStatus();
 
-if (document.getElementById('scheduleCheckbox').checked &&
-    document.getElementById('smartModeCheckbox').checked) {
-    fetchScheduleInsight();
-}
+getFeatureToggles((toggles) => {
+    document.getElementById('connectToggle').checked = toggles.connectEnabled;
+    document.getElementById('jobsToggle').checked = toggles.jobsEnabled;
+    document.getElementById('companiesToggle').checked = toggles.companiesEnabled;
+});
+
+const _toggleKeyMap = {
+    connectToggle: 'connectEnabled',
+    jobsToggle: 'jobsEnabled',
+    companiesToggle: 'companiesEnabled'
+};
+['connectToggle', 'jobsToggle', 'companiesToggle'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', (e) => {
+        setFeatureToggle(_toggleKeyMap[id], e.target.checked);
+    });
+});
+
+

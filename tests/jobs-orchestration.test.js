@@ -31,6 +31,8 @@ describe('jobs orchestration in background', () => {
         createdTabs = [];
 
         global.importScripts = jest.fn();
+        global.getFeatureToggles = jest.fn(cb => cb({ connectEnabled: true, jobsEnabled: true, companiesEnabled: true }));
+        global.setFeatureToggle = jest.fn((key, value, cb) => { if (cb) cb(null); });
         global.getHourKey = jest.fn(mode => `hour_${mode}`);
         global.getDayKey = jest.fn(mode => `day_${mode}`);
         global.getWeekKey = jest.fn(() => 'week_2026_11');
