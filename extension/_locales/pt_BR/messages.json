@@ -59,9 +59,6 @@
   "common_expectedResults": {
     "message": "Resultados esperados"
   },
-  "common_feed": {
-    "message": "Feed"
-  },
   "common_fullName": {
     "message": "Nome completo"
   },
@@ -139,18 +136,6 @@
   },
   "notification_companyScheduledQuery": {
     "message": "Seguir empresas agendado: busca \"$1\""
-  },
-  "notification_feedScheduledEngage": {
-    "message": "Engajamento agendado no feed: $1 posts$2"
-  },
-  "notification_feedScheduledEngageCommentSuffix": {
-    "message": " (reagir+comentar)"
-  },
-  "notification_feedScheduledEngageReactSuffix": {
-    "message": " (apenas reagir)"
-  },
-  "notification_feedScheduledWarmup": {
-    "message": "Warmup agendado do feed $1/$2: apenas reagir + aprender"
   },
   "notification_loginRequired": {
     "message": "Login no LinkedIn necessário. Faça login e reinicie a automação."
@@ -242,12 +227,6 @@
   "options_card_engagedSub": {
     "message": "visitas de perfil + perfis seguidos"
   },
-  "options_card_feed": {
-    "message": "Feed"
-  },
-  "options_card_feedSub": {
-    "message": "posts com reação/comentário"
-  },
   "options_card_followed": {
     "message": "Seguidos"
   },
@@ -293,21 +272,6 @@
   "options_exportCsv": {
     "message": "Exportar CSV"
   },
-  "options_feed_commentRateCount": {
-    "message": "$1 de $2 posts"
-  },
-  "options_feed_commentRateSub": {
-    "message": "dos posts engajados"
-  },
-  "options_feed_skippedSub": {
-    "message": "filtro de palavra-chave/duplicado"
-  },
-  "options_feed_timesUsed": {
-    "message": "$1 vezes"
-  },
-  "options_feed_topReactionSub": {
-    "message": "mais usada"
-  },
   "options_nurture_entryMeta": {
     "message": "$1/3 engajamentos · adicionado há $2d"
   },
@@ -316,9 +280,6 @@
   },
   "options_schedule_connectEvery": {
     "message": "Conexões: a cada $1h"
-  },
-  "options_schedule_feedEvery": {
-    "message": "Feed: a cada $1h"
   },
   "options_schedule_notScheduled": {
     "message": "Sem agendamento"
@@ -352,9 +313,6 @@
   },
   "options_tab_activity": {
     "message": "Atividade"
-  },
-  "options_tab_feed": {
-    "message": "Feed"
   },
   "options_tab_logs": {
     "message": "Logs"
@@ -577,114 +535,6 @@
   },
   "popup_connect_warningWeeklyLimitAdjusted": {
     "message": "Restam apenas $1 convites nesta semana ($2/$3). O limite foi ajustado para $1."
-  },
-  "popup_feed_aiApiKey": {
-    "message": "Chave da API de IA (Groq — grátis)"
-  },
-  "popup_feed_checkEveryHours": {
-    "message": "Verificar a cada (horas)"
-  },
-  "popup_feed_comment": {
-    "message": "Comentar em posts"
-  },
-  "popup_feed_commentSettings": {
-    "message": "Configurações de comentários"
-  },
-  "popup_feed_enableWarmup": {
-    "message": "Ativar aprendizado de warmup"
-  },
-  "popup_feed_errorEnableReactOrComment": {
-    "message": "Ative pelo menos uma opção: reagir ou comentar."
-  },
-  "popup_feed_fallbackTemplates": {
-    "message": "Templates de fallback (um por linha)"
-  },
-  "popup_feed_nurtureConnections": {
-    "message": "Nutrir novas conexões"
-  },
-  "popup_feed_openingFeed": {
-    "message": "Abrindo o feed..."
-  },
-  "popup_feed_postsPerVisit": {
-    "message": "Posts por visita"
-  },
-  "popup_feed_react": {
-    "message": "Reagir a posts"
-  },
-  "popup_feed_resetLearningProgress": {
-    "message": "Resetar progresso de aprendizado"
-  },
-  "popup_feed_resetWarmupFailed": {
-    "message": "Falha ao resetar o progresso do warmup."
-  },
-  "popup_feed_resetWarmupSuccess": {
-    "message": "Progresso do warmup resetado."
-  },
-  "popup_feed_scheduleRecurring": {
-    "message": "Agendar engajamento recorrente no feed"
-  },
-  "popup_feed_section": {
-    "message": "Engajamento no feed"
-  },
-  "popup_feed_skipKeywords": {
-    "message": "Pular posts com palavras-chave (uma por linha)"
-  },
-  "popup_feed_skipTemplateApplied": {
-    "message": "Template de palavras-chave aplicado."
-  },
-  "popup_feed_skipTemplateAppend": {
-    "message": "Adicionar lista"
-  },
-  "popup_feed_skipTemplateAppended": {
-    "message": "Template de palavras-chave adicionado."
-  },
-  "popup_feed_skipTemplateChoose": {
-    "message": "Escolher template"
-  },
-  "popup_feed_skipTemplateCryptoHype": {
-    "message": "Hype de Crypto / Web3"
-  },
-  "popup_feed_skipTemplateControversy": {
-    "message": "Controvérsia / bait de raiva"
-  },
-  "popup_feed_skipTemplateEngagementBait": {
-    "message": "Isca de engajamento"
-  },
-  "popup_feed_skipTemplateHelp": {
-    "message": "Use um template como ponto de partida e depois personalize a lista."
-  },
-  "popup_feed_skipTemplateLabel": {
-    "message": "Template de palavras-chave"
-  },
-  "popup_feed_skipTemplateJobSpam": {
-    "message": "Spam de vagas / contratação em massa"
-  },
-  "popup_feed_skipTemplatePolitics": {
-    "message": "Temas políticos"
-  },
-  "popup_feed_skipTemplateReplace": {
-    "message": "Substituir lista"
-  },
-  "popup_feed_skipTemplateSelectFirst": {
-    "message": "Escolha um template de palavras-chave primeiro."
-  },
-  "popup_feed_skipTemplateSponsored": {
-    "message": "Patrocinados e anúncios"
-  },
-  "popup_feed_warmupDisabled": {
-    "message": "Warmup de aprendizado desativado. Comentários liberados."
-  },
-  "popup_feed_warmupProgress": {
-    "message": "Progresso do aprendizado: $1 / $2 execuções · Comentários liberam na execução #$3"
-  },
-  "popup_feed_warmupRunning": {
-    "message": "Modo warmup: reagindo + aprendendo..."
-  },
-  "popup_feed_warmupRunsRequired": {
-    "message": "Execuções de warmup necessárias"
-  },
-  "popup_feed_warmupStarted": {
-    "message": "Execução de warmup $1/$2: reações + aprendizado, sem comentários."
   },
   "popup_footer_safeRun": {
     "message": "Executa com segurança no seu navegador"
@@ -1042,9 +892,6 @@
   },
   "status_email": {
     "message": "e-mail"
-  },
-  "status_feedEngaged": {
-    "message": "Feed engajado"
   },
   "status_followed": {
     "message": "Seguido"

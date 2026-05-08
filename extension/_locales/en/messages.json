@@ -59,9 +59,6 @@
   "common_expectedResults": {
     "message": "Expected Results"
   },
-  "common_feed": {
-    "message": "Feed"
-  },
   "common_fullName": {
     "message": "Full name"
   },
@@ -139,18 +136,6 @@
   },
   "notification_companyScheduledQuery": {
     "message": "Scheduled company follow: query \"$1\""
-  },
-  "notification_feedScheduledEngage": {
-    "message": "Scheduled feed engagement: $1 posts$2"
-  },
-  "notification_feedScheduledEngageCommentSuffix": {
-    "message": " (react+comment)"
-  },
-  "notification_feedScheduledEngageReactSuffix": {
-    "message": " (react only)"
-  },
-  "notification_feedScheduledWarmup": {
-    "message": "Scheduled feed warmup run $1/$2: react + learn only"
   },
   "notification_loginRequired": {
     "message": "LinkedIn login required. Please log in and restart the automation."
@@ -242,12 +227,6 @@
   "options_card_engagedSub": {
     "message": "profile visits + follows"
   },
-  "options_card_feed": {
-    "message": "Feed"
-  },
-  "options_card_feedSub": {
-    "message": "posts reacted/commented"
-  },
   "options_card_followed": {
     "message": "Followed"
   },
@@ -293,21 +272,6 @@
   "options_exportCsv": {
     "message": "Export CSV"
   },
-  "options_feed_commentRateCount": {
-    "message": "$1 of $2 posts"
-  },
-  "options_feed_commentRateSub": {
-    "message": "of posts engaged"
-  },
-  "options_feed_skippedSub": {
-    "message": "keyword/duplicate filter"
-  },
-  "options_feed_timesUsed": {
-    "message": "$1 times"
-  },
-  "options_feed_topReactionSub": {
-    "message": "most used"
-  },
   "options_nurture_entryMeta": {
     "message": "$1/3 engagements · added $2d ago"
   },
@@ -316,9 +280,6 @@
   },
   "options_schedule_connectEvery": {
     "message": "Connect: every $1h"
-  },
-  "options_schedule_feedEvery": {
-    "message": "Feed: every $1h"
   },
   "options_schedule_notScheduled": {
     "message": "Not scheduled"
@@ -352,9 +313,6 @@
   },
   "options_tab_activity": {
     "message": "Activity"
-  },
-  "options_tab_feed": {
-    "message": "Feed"
   },
   "options_tab_logs": {
     "message": "Logs"
@@ -577,114 +535,6 @@
   },
   "popup_connect_warningWeeklyLimitAdjusted": {
     "message": "Only $1 invites left this week ($2/$3). Limit auto-adjusted to $1."
-  },
-  "popup_feed_aiApiKey": {
-    "message": "AI API Key (Groq — free)"
-  },
-  "popup_feed_checkEveryHours": {
-    "message": "Check every (hours)"
-  },
-  "popup_feed_comment": {
-    "message": "Comment on posts"
-  },
-  "popup_feed_commentSettings": {
-    "message": "Comment Settings"
-  },
-  "popup_feed_enableWarmup": {
-    "message": "Enable Warmup Learning"
-  },
-  "popup_feed_errorEnableReactOrComment": {
-    "message": "Enable at least one: react or comment."
-  },
-  "popup_feed_fallbackTemplates": {
-    "message": "Fallback templates (one per line)"
-  },
-  "popup_feed_nurtureConnections": {
-    "message": "Nurture new connections"
-  },
-  "popup_feed_openingFeed": {
-    "message": "Navigating to feed..."
-  },
-  "popup_feed_postsPerVisit": {
-    "message": "Posts per visit"
-  },
-  "popup_feed_react": {
-    "message": "React to posts"
-  },
-  "popup_feed_resetLearningProgress": {
-    "message": "Reset Learning Progress"
-  },
-  "popup_feed_resetWarmupFailed": {
-    "message": "Failed to reset warmup progress."
-  },
-  "popup_feed_resetWarmupSuccess": {
-    "message": "Warmup learning progress reset."
-  },
-  "popup_feed_scheduleRecurring": {
-    "message": "Schedule recurring feed engagement"
-  },
-  "popup_feed_section": {
-    "message": "Feed Engagement"
-  },
-  "popup_feed_skipKeywords": {
-    "message": "Skip posts with keywords (one per line)"
-  },
-  "popup_feed_skipTemplateApplied": {
-    "message": "Keyword template applied."
-  },
-  "popup_feed_skipTemplateAppend": {
-    "message": "Append list"
-  },
-  "popup_feed_skipTemplateAppended": {
-    "message": "Keyword template appended."
-  },
-  "popup_feed_skipTemplateChoose": {
-    "message": "Choose template"
-  },
-  "popup_feed_skipTemplateCryptoHype": {
-    "message": "Crypto / Web3 hype"
-  },
-  "popup_feed_skipTemplateControversy": {
-    "message": "Controversy / rage-bait"
-  },
-  "popup_feed_skipTemplateEngagementBait": {
-    "message": "Engagement bait"
-  },
-  "popup_feed_skipTemplateHelp": {
-    "message": "Use a template as a starting point, then customize the list."
-  },
-  "popup_feed_skipTemplateLabel": {
-    "message": "Keyword template"
-  },
-  "popup_feed_skipTemplateJobSpam": {
-    "message": "Job spam / mass hiring"
-  },
-  "popup_feed_skipTemplatePolitics": {
-    "message": "Politics-heavy"
-  },
-  "popup_feed_skipTemplateReplace": {
-    "message": "Replace list"
-  },
-  "popup_feed_skipTemplateSelectFirst": {
-    "message": "Choose a keyword template first."
-  },
-  "popup_feed_skipTemplateSponsored": {
-    "message": "Sponsored & Ads"
-  },
-  "popup_feed_warmupDisabled": {
-    "message": "Learning warmup disabled. Comments are unlocked."
-  },
-  "popup_feed_warmupProgress": {
-    "message": "Learning progress: $1 / $2 runs · Comments unlock on run #$3"
-  },
-  "popup_feed_warmupRunning": {
-    "message": "Warmup mode: reacting + learning..."
-  },
-  "popup_feed_warmupRunsRequired": {
-    "message": "Warmup Runs Required"
-  },
-  "popup_feed_warmupStarted": {
-    "message": "Warmup run $1/$2: reactions + learning, no comments."
   },
   "popup_footer_safeRun": {
     "message": "Runs safely in your browser"
@@ -1042,9 +892,6 @@
   },
   "status_email": {
     "message": "email"
-  },
-  "status_feedEngaged": {
-    "message": "Feed engaged"
   },
   "status_followed": {
     "message": "Followed"
