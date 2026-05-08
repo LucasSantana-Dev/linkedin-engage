@@ -135,12 +135,16 @@ jobs:
             -T extension.zip)
           echo "Upload response: $(echo "$RESPONSE" | jq 'del(.kind)')"
           UPLOAD_STATE=$(echo "$RESPONSE" | jq -r '.uploadState')
-          if [ "$UPLOAD_STATE" != "SUCCESS" ]; then
+          ERROR_CODE=$(echo "$RESPONSE" | jq -r '.itemError[0].error_code // empty')
+          if [ "$UPLOAD_STATE" = "SUCCESS" ]; then
+            echo "Upload succeeded for ${{ secrets.CHROME_EXTENSION_ID }}"
+          elif [ "$ERROR_CODE" = "ITEM_NOT_UPDATABLE" ]; then
+            echo "Item is already in pending review or published — skipping re-upload."
+          else
             echo "Upload failed. uploadState: $UPLOAD_STATE"
             echo "$RESPONSE" | jq '.itemError // empty'
             exit 1
           fi
-          echo "Upload succeeded for ${{ secrets.CHROME_EXTENSION_ID }}"
 
       - name: Publish to Chrome Web Store
         if: steps.secrets-check.outputs.skip == 'false'
