@@ -1,0 +1,79 @@
+name: Backlog item
+description: Feature, refactor, test coverage, chore, or improvement
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Title format:** `<type>(<scope>): <imperative description in lowercase> [<backlog-id>]`
+        - **type:** `feat` | `fix` | `refactor` | `test` | `chore` | `docs` | `perf` | `security`
+        - **scope:** optional module/area, e.g. `deps`, `E-11`, `background`, `popup`, `connect`
+        - **backlog-id:** optional ref to `.claude/plans/backlog-linkedin-engage.md`, e.g. `[E-11]`, `[B-2]`
+
+        **Label selection guide:**
+        | Dimension | Pick one |
+        |-----------|----------|
+        | Type | `bug` `enhancement` `refactor` `testing` `chore` `documentation` `performance` `security` |
+        | Area | `area: connect` `area: jobs` `area: feed` `area: companies` `area: popup` `area: background` `area: playwright` `area: ci` |
+        | Risk | `breaking-change` `dependencies` |
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences. What changes and why.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background, motivation, or link to related issues/PRs.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Bullet list of conditions that define "done."
+      placeholder: |
+        - [ ] ...
+        - [ ] `npm test` passes with coverage thresholds met
+        - [ ] `npm run lint` and `npm run typecheck` pass
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Affected files
+      description: Key files likely to change. Helps estimate effort and assign reviewers.
+      placeholder: |
+        - `extension/lib/foo.js`
+        - `tests/foo.test.js`
+    validations:
+      required: false
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort estimate
+      description: Rough size — used on the project board.
+      options:
+        - "XS — < 2 h"
+        - "S — 2–8 h"
+        - "M — 1–2 d"
+        - "L — 3–5 d"
+        - "XL — 1 w+"
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Gotchas, constraints, open questions, or links to prior discussion.
+    validations:
+      required: false
