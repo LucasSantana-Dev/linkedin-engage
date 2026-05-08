@@ -1,7 +1,8 @@
 {
   "name": "linkedin-engage",
   "version": "1.37.0",
-  "description": "",
+  "description": "Chrome extension for automating LinkedIn networking — connection requests, company follows, feed engagement, and job applications.",
+  "homepage": "https://chromewebstore.google.com/detail/linkedin-engage/naofclbmkhogidppkccoojdjhllmfcbh",
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
