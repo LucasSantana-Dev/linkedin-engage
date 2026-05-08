@@ -4705,6 +4705,52 @@ if (typeof hydrateAllChips === 'function' && typeof AREA_PRESETS === 'object') {
 }
 refreshTemplateControls();
 loadState();
+
+// Load and initialize feature toggles
+if (typeof getFeatureToggles === 'function') {
+    getFeatureToggles((toggles) => {
+        const connectToggle = document.getElementById('connectToggle');
+        const jobsToggle = document.getElementById('jobsToggle');
+        const companiesToggle = document.getElementById('companiesToggle');
+        if (connectToggle) connectToggle.checked = toggles.connectEnabled;
+        if (jobsToggle) jobsToggle.checked = toggles.jobsEnabled;
+        if (companiesToggle) companiesToggle.checked = toggles.companiesEnabled;
+    });
+    
+    // Wire up feature toggle change listeners
+    const connectToggle = document.getElementById('connectToggle');
+    if (connectToggle) {
+        connectToggle.addEventListener('change', () => {
+            setFeatureToggle(
+                FEATURE_KEYS.CONNECT,
+                connectToggle.checked,
+                () => {}
+            );
+        });
+    }
+    
+    const jobsToggle = document.getElementById('jobsToggle');
+    if (jobsToggle) {
+        jobsToggle.addEventListener('change', () => {
+            setFeatureToggle(
+                FEATURE_KEYS.JOBS,
+                jobsToggle.checked,
+                () => {}
+            );
+        });
+    }
+    
+    const companiesToggle = document.getElementById('companiesToggle');
+    if (companiesToggle) {
+        companiesToggle.addEventListener('change', () => {
+            setFeatureToggle(
+                FEATURE_KEYS.COMPANIES,
+                companiesToggle.checked,
+                () => {}
+            );
+        });
+    }
+}
 updateWeeklyDisplay();
 loadRecentProfiles();
 loadRateLimitStatus();

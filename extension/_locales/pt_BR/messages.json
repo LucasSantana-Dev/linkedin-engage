@@ -1168,5 +1168,17 @@
   },
   "popup_connect_selectedCount": {
     "message": "$1 selecionados"
+  },
+  "popup_settings_featureToggles": {
+    "message": "Alternadores de Recursos"
+  },
+  "popup_settings_connectEnabled": {
+    "message": "Ativar automação de Conectar"
+  },
+  "popup_settings_jobsEnabled": {
+    "message": "Ativar automação de Vagas"
+  },
+  "popup_settings_companiesEnabled": {
+    "message": "Ativar automação de Empresas"
   }
 }

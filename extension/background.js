@@ -52,6 +52,7 @@ importScripts('lib/run-outcome.js');
 importScripts('lib/profile-visitor.js');
 importScripts('lib/storage-key-sweeper.js');
 
+importScripts('lib/feature-toggles.js');
 let lkdDebug = false;
 try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
 // eslint-disable-next-line no-console

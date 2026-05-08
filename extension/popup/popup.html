@@ -2055,6 +2055,24 @@
         </div>
 
         <div class="accordion"
+        <div class="section" style="margin-bottom:12px; margin-top:12px;">
+            <div class="section-label" data-i18n="popup.settings.featureToggles">Feature Toggles</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
+                    <input type="checkbox" id="connectToggle" checked />
+                    <span data-i18n="popup.settings.connectEnabled">Enable Connect automation</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
+                    <input type="checkbox" id="jobsToggle" checked />
+                    <span data-i18n="popup.settings.jobsEnabled">Enable Jobs automation</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
+                    <input type="checkbox" id="companiesToggle" checked />
+                    <span data-i18n="popup.settings.companiesEnabled">Enable Companies automation</span>
+                </label>
+            </div>
+        </div>
+
             id="toolsAccordion"
             data-mode="tools"
             data-panel="extras">
@@ -2115,6 +2133,7 @@
     <script src="../vendor/mammoth.browser.min.js"></script>
     <script src="../lib/jobs-career-parser.js"></script>
     <script src="../lib/chip-hydrator.js"></script>
+    <script src="../lib/feature-toggles.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>
