@@ -2,6 +2,8 @@
 
 A Chrome Extension for automating LinkedIn networking — connection requests, company follows, feed engagement, and job applications.
 
+[<img src="https://storage.googleapis.com/web-dev-uploads/image/WlD8wC6g8khYWPJUsQceQkhXSlv1/UV4C4ybeBTsZt43U4xis.png" alt="Available in the Chrome Web Store" height="58"/>](https://chromewebstore.google.com/detail/linkedin-engage/naofclbmkhogidppkccoojdjhllmfcbh)
+
 ---
 
 ## Screenshots
@@ -37,6 +39,12 @@ Key features across all modes: Boolean search builder with EN/PT-BR locale suppo
 ## Installation
 
 > **Requirements:** Google Chrome or Brave (desktop). No build step.
+
+### Option A — Chrome Web Store (recommended)
+
+[Install directly from the Chrome Web Store](https://chromewebstore.google.com/detail/linkedin-engage/naofclbmkhogidppkccoojdjhllmfcbh) — one click, automatic updates.
+
+### Option B — Manual (load unpacked from a release zip)
 
 ### Step 1 — Download the extension
 
