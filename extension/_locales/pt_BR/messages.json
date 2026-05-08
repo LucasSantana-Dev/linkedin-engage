@@ -92,9 +92,6 @@
   "common_remove": {
     "message": "Remover"
   },
-  "common_runEveryHours": {
-    "message": "Executar a cada (horas)"
-  },
   "common_searchLanguage": {
     "message": "Idioma da busca"
   },
@@ -126,16 +123,10 @@
     "message": "Objetivo de uso"
   },
   "extensionDescription": {
-    "message": "Expanda sua rede no LinkedIn com automação inteligente de conexões, engajamento no feed e comentários com IA."
+    "message": "Expanda sua rede no LinkedIn com solicitações de conexão, seguir empresas e candidaturas com IA."
   },
   "extensionName": {
     "message": "LinkedIn Engage"
-  },
-  "notification_companyScheduledBatch": {
-    "message": "Seguir empresas agendado: lote de $1 ($2...)"
-  },
-  "notification_companyScheduledQuery": {
-    "message": "Seguir empresas agendado: busca \"$1\""
   },
   "notification_loginRequired": {
     "message": "Login no LinkedIn necessário. Faça login e reinicie a automação."
@@ -275,18 +266,6 @@
   "options_nurture_entryMeta": {
     "message": "$1/3 engajamentos · adicionado há $2d"
   },
-  "options_schedule_companiesEvery": {
-    "message": "Empresas: a cada $1h (lote $2)"
-  },
-  "options_schedule_connectEvery": {
-    "message": "Conexões: a cada $1h"
-  },
-  "options_schedule_notScheduled": {
-    "message": "Sem agendamento"
-  },
-  "options_schedule_quotaRetry": {
-    "message": "Limite de cota atingido — nova tentativa automática em $1"
-  },
   "options_section_activity": {
     "message": "Atividade (últimos 14 dias)"
   },
@@ -304,9 +283,6 @@
   },
   "options_section_reactionBreakdown": {
     "message": "Distribuição de reações"
-  },
-  "options_section_schedule": {
-    "message": "Agendamento"
   },
   "options_section_templateAcceptance": {
     "message": "Aceite por template de nota"
@@ -376,9 +352,6 @@
   },
   "popup_company_query": {
     "message": "Busca"
-  },
-  "popup_company_scheduleRecurring": {
-    "message": "Agendar execuções recorrentes de seguir empresas"
   },
   "popup_company_section": {
     "message": "Busca de empresas"
@@ -502,9 +475,6 @@
   },
   "popup_connect_roleTermsLimit": {
     "message": "Limite de termos de cargo"
-  },
-  "popup_connect_scheduleRecurring": {
-    "message": "Agendar execuções recorrentes"
   },
   "popup_connect_section": {
     "message": "Construtor de busca"
@@ -850,9 +820,6 @@
   },
   "popup_start_errorFailed": {
     "message": "Falha ao iniciar: $1"
-  },
-  "popup_start_feed": {
-    "message": "Engajar no feed"
   },
   "popup_start_jobs": {
     "message": "Assistir candidatura"

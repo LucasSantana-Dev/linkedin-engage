@@ -15,7 +15,6 @@
     "storage",
     "tabs",
     "scripting",
-    "alarms",
     "notifications"
   ],
   "host_permissions": ["https://www.linkedin.com/*"],

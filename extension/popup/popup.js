@@ -137,8 +137,6 @@ const UI_LABEL_KEYS = Object.freeze({
     skipOpenToWorkRecruitersCheckbox: 'popup.connect.skipOpenToWork',
     skipJobSeekingSignalsCheckbox: 'popup.connect.skipJobSeeking',
     sendNoteCheckbox: 'popup.connect.sendNote',
-    scheduleCheckbox: 'popup.connect.scheduleRecurring',
-    scheduleInterval: 'common.runEveryHours',
     savedQueries: 'popup.connect.queryRotation',
     tagSearchInput: 'popup.connect.filterTags'
 });
@@ -2059,10 +2057,6 @@ function saveState() {
         customNote: TEMPLATES.custom,
         customQuery: document.getElementById('customQueryInput').value,
         useCustomQuery,
-        scheduleEnabled: document.getElementById(
-            'scheduleCheckbox').checked,
-        scheduleInterval: document.getElementById(
-            'scheduleInterval').value,
         savedQueries: document.getElementById(
             'savedQueries').value,
         companyAreaPreset: getSelectedCompanyAreaPreset(),
@@ -2116,8 +2110,6 @@ function saveState() {
             'companyScheduleInterval').value,
         companyBatchSize: document.getElementById(
             'companyBatchSize').value,
-        smartMode: document.getElementById(
-            'smartModeCheckbox').checked
     };
 
     popupUiState = normalizePopupUi(popupUiState);
