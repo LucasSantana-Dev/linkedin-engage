@@ -133,78 +133,24 @@ describe('templates', () => {
             });
         });
 
-        it('matches React/Angular/Vue to frontend development', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'frontend development');
-            expect(entry).toBeDefined();
-            expect('React').toMatch(entry.pattern);
-            expect('Angular').toMatch(entry.pattern);
-            expect('Vue').toMatch(entry.pattern);
-            expect('Next.js').toMatch(entry.pattern);
-        });
-
-        it('matches Docker/Kubernetes to containerization', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'containerization');
-            expect(entry).toBeDefined();
-            expect('docker').toMatch(entry.pattern);
-            expect('kubernetes').toMatch(entry.pattern);
-        });
-
-        it('matches AI/GPT/LLM to AI', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'AI');
-            expect(entry).toBeDefined();
-            expect('artificial intelligence').toMatch(entry.pattern);
-            expect('LLM').toMatch(entry.pattern);
-            expect('GPT').toMatch(entry.pattern);
-        });
-
-        it('matches AWS/Azure/GCP to cloud infrastructure', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'cloud infrastructure');
-            expect(entry).toBeDefined();
-            expect('AWS').toMatch(entry.pattern);
-            expect('cloud').toMatch(entry.pattern);
-        });
-
-        it('matches design patterns to software architecture', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'software architecture');
-            expect(entry).toBeDefined();
-            expect('clean architecture').toMatch(entry.pattern);
-            expect('SOLID').toMatch(entry.pattern);
-        });
-
-        it('matches TypeScript/JavaScript to TypeScript label', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'TypeScript');
-            expect(entry).toBeDefined();
-            expect('TypeScript').toMatch(entry.pattern);
-            expect('JavaScript').toMatch(entry.pattern);
-        });
-
-        it('matches data engineer/Kafka to data engineering', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'data engineering');
-            expect(entry).toBeDefined();
-            expect('data engineer').toMatch(entry.pattern);
-            expect('kafka').toMatch(entry.pattern);
-        });
-
-        it('matches microservice/event-driven to distributed systems', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'distributed systems');
-            expect(entry).toBeDefined();
-            expect('microservice').toMatch(entry.pattern);
-            expect('event-driven').toMatch(entry.pattern);
-        });
-
-        it('matches mobile/iOS/Android', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'mobile development');
-            expect(entry).toBeDefined();
-            expect('mobile').toMatch(entry.pattern);
-            expect('ios').toMatch(entry.pattern);
-            expect('android').toMatch(entry.pattern);
-        });
-
-        it('matches refactor/tech debt to code quality', () => {
-            const entry = TOPIC_MAP.find(e => e.label === 'code quality');
-            expect(entry).toBeDefined();
-            expect('refactor').toMatch(entry.pattern);
-            expect('tech debt').toMatch(entry.pattern);
+        it('maps representative keywords to expected labels', () => {
+            const cases = [
+                ['frontend development', ['React', 'Angular', 'Vue', 'Next.js']],
+                ['containerization', ['docker', 'kubernetes']],
+                ['AI', ['artificial intelligence', 'LLM', 'GPT']],
+                ['cloud infrastructure', ['AWS', 'cloud']],
+                ['software architecture', ['clean architecture', 'SOLID']],
+                ['TypeScript', ['TypeScript', 'JavaScript']],
+                ['data engineering', ['data engineer', 'kafka']],
+                ['distributed systems', ['microservice', 'event-driven']],
+                ['mobile development', ['mobile', 'ios', 'android']],
+                ['code quality', ['refactor', 'tech debt']],
+            ];
+            cases.forEach(([label, keywords]) => {
+                const entry = TOPIC_MAP.find(e => e.label === label);
+                expect(entry).toBeDefined();
+                keywords.forEach(k => expect(k).toMatch(entry.pattern));
+            });
         });
     });
 
@@ -233,73 +179,24 @@ describe('templates', () => {
             });
         });
 
-        it('matches design pattern terms', () => {
-            const text = 'The Adapter Pattern solves interface mismatch';
-            const matches = CONCEPT_PATTERNS.some(p => p.test(text));
-            expect(matches).toBe(true);
-        });
-
-        it('matches tech acronyms like TDD, SOLID, REST', () => {
-            const text = 'We practice TDD and SOLID principles with REST APIs';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
+        it('matches representative concept text across categories', () => {
+            const samples = [
+                'The Adapter Pattern solves interface mismatch',
+                'We practice TDD and SOLID principles with REST APIs',
+                'Built with React and Next.js, deployed on Vercel',
+                'We use TypeScript and Python in our stack',
+                'Deployed via Docker on AWS with Terraform',
+                'We store data in PostgreSQL and cache with Redis',
+                'Looking for a Staff Engineer or Tech Lead',
+                'Our event-driven microservices use message queues',
+            ];
+            samples.forEach(text => {
+                const matches = CONCEPT_PATTERNS.some(p => {
+                    p.lastIndex = 0;
+                    return p.test(text);
+                });
+                expect(matches).toBe(true);
             });
-            expect(matches).toBe(true);
-        });
-
-        it('matches popular framework names', () => {
-            const text = 'Built with React and Next.js, deployed on Vercel';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
-        });
-
-        it('matches programming languages', () => {
-            const text = 'We use TypeScript and Python in our stack';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
-        });
-
-        it('matches infrastructure tools', () => {
-            const text = 'Deployed via Docker on AWS with Terraform';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
-        });
-
-        it('matches databases', () => {
-            const text = 'We store data in PostgreSQL and cache with Redis';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
-        });
-
-        it('matches seniority/leadership terms', () => {
-            const text = 'Looking for a Staff Engineer or Tech Lead';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
-        });
-
-        it('matches distributed system patterns', () => {
-            const text = 'Our event-driven microservices use message queues';
-            const matches = CONCEPT_PATTERNS.some(p => {
-                p.lastIndex = 0;
-                return p.test(text);
-            });
-            expect(matches).toBe(true);
         });
     });
 
