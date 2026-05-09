@@ -81,9 +81,8 @@ describe('tokenizeCopyGuard', () => {
         expect(tokenizeCopyGuard('')).toEqual([]);
     });
     test('handles PT-BR text and filters stop words', () => {
-        // 'Ação rápida de' -> 'acao rapida de', acao is not a stop word, de is        const tokens = tokenizeCopyGuard('Ação rápida de');        expect(tokens).toEqual(['acao', 'rapida']);
-        // 'Ação rápida de' -> 'acao rapida de', acao is not a stop word, de is        const tokens = tokenizeCopyGuard('Ação rápida de');        expect(tokens).toEqual(['acao', 'rapida']);
-        // 'Ação rápida de' -> 'acao rapida de', acao is not a stop word, de is        const tokens = tokenizeCopyGuard('Ação rápida de');        expect(tokens).toEqual(['acao', 'rapida']);
+        const tokens = tokenizeCopyGuard('Ação rápida de');
+        expect(tokens).toEqual(['acao', 'rapida']);
     });
     test('returns array of strings', () => {
         const tokens = tokenizeCopyGuard('amazing opportunity here');
@@ -139,11 +138,12 @@ describe('buildCharTrigramSet', () => {
         const trigrams = buildCharTrigramSet('');
         expect(trigrams.size).toBe(0);
     });
-    test('builds trigrams including space characters', () => {        const trigrams = buildCharTrigramSet('foo bar');        expect(trigrams.has('foo')).toBe(true);        expect(trigrams.has('bar')).toBe(true);        expect(trigrams.size).toBeGreaterThan(2);    });
-    test('builds trigrams including space characters', () => {        const trigrams = buildCharTrigramSet('foo bar');        expect(trigrams.has('foo')).toBe(true);        expect(trigrams.has('bar')).toBe(true);        expect(trigrams.size).toBeGreaterThan(2);    });
-    test('builds trigrams including space characters', () => {        const trigrams = buildCharTrigramSet('foo bar');        expect(trigrams.has('foo')).toBe(true);        expect(trigrams.has('bar')).toBe(true);        expect(trigrams.size).toBeGreaterThan(2);    });
-    test('builds trigrams including space characters', () => {        const trigrams = buildCharTrigramSet('foo bar');        expect(trigrams.has('foo')).toBe(true);        expect(trigrams.has('bar')).toBe(true);        expect(trigrams.size).toBeGreaterThan(2);    });
-    test('builds trigrams including space characters', () => {        const trigrams = buildCharTrigramSet('foo bar');        expect(trigrams.has('foo')).toBe(true);        expect(trigrams.has('bar')).toBe(true);        expect(trigrams.size).toBeGreaterThan(2);    });
+    test('builds trigrams including space characters', () => {
+        const trigrams = buildCharTrigramSet('foo bar');
+        expect(trigrams.has('foo')).toBe(true);
+        expect(trigrams.has('bar')).toBe(true);
+        expect(trigrams.size).toBeGreaterThan(2);
+    });
 });
 
 describe('roundCopyMetric', () => {

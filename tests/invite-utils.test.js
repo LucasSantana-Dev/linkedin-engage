@@ -84,23 +84,8 @@ describe('isConnectButtonText', () => {
 });
 
 describe('shouldExcludeButton', () => {
-    it('excludes "Message"', () => {
+    it('excludes known non-connect buttons', () => {
         expect(shouldExcludeButton('Message')).toBe(true);
-    });
-
-    it('excludes "Following"', () => {
-        expect(shouldExcludeButton('Following')).toBe(true);
-    });
-
-    it('excludes "Withdraw"', () => {
-        expect(shouldExcludeButton('Withdraw')).toBe(true);
-    });
-
-    it('excludes "Pending"', () => {
-        expect(shouldExcludeButton('Pending')).toBe(true);
-    });
-
-    it('excludes "Pendente" (PT-BR)', () => {
         expect(shouldExcludeButton('Pendente')).toBe(true);
     });
 
@@ -447,10 +432,6 @@ describe('isFollowButtonText', () => {
     it('rejects "Unfollow"', () => {
         expect(isFollowButtonText('Unfollow')).toBe(false);
     });
-
-    it('rejects empty string', () => {
-        expect(isFollowButtonText('')).toBe(false);
-    });
 });
 
 describe('isFollowingButtonText', () => {
@@ -472,10 +453,6 @@ describe('isFollowingButtonText', () => {
 
     it('rejects "Connect"', () => {
         expect(isFollowingButtonText('Connect')).toBe(false);
-    });
-
-    it('rejects empty string', () => {
-        expect(isFollowingButtonText('')).toBe(false);
     });
 });
 

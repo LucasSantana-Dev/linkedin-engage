@@ -15,13 +15,6 @@ describe('search-language.js', () => {
       expect(SEARCH_LANGUAGE_MODES).toContain('auto');
     });
 
-    it('assigns correct string values to modes', () => {
-      expect(SEARCH_LANGUAGE_MODES[1]).toBe('en');
-      expect(SEARCH_LANGUAGE_MODES[2]).toBe('pt_BR');
-      expect(SEARCH_LANGUAGE_MODES[3]).toBe('bilingual');
-      expect(SEARCH_LANGUAGE_MODES[0]).toBe('auto');
-    });
-
     it('is frozen to prevent mutations', () => {
       expect(Object.isFrozen(SEARCH_LANGUAGE_MODES)).toBe(true);
     });

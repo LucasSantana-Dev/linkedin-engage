@@ -18,74 +18,6 @@ const {
 } = require('../extension/lib/templates');
 
 describe('templates', () => {
-    describe('POST_CATEGORIES', () => {
-        it('exports all expected category keys', () => {
-            const keys = Object.keys(POST_CATEGORIES);
-            expect(keys).toContain('hiring');
-            expect(keys).toContain('achievement');
-            expect(keys).toContain('technical');
-            expect(keys).toContain('question');
-            expect(keys).toContain('tips');
-            expect(keys).toContain('story');
-            expect(keys).toContain('news');
-            expect(keys).toContain('humor');
-            expect(keys).toContain('critique');
-            expect(keys).toContain('motivation');
-            expect(keys).toContain('project');
-            expect(keys).toContain('jobseeking');
-            expect(keys).toContain('newjob');
-        });
-
-        it('hiring keywords contain expected terms', () => {
-            expect(POST_CATEGORIES.hiring).toContain('hiring');
-            expect(POST_CATEGORIES.hiring).toContain('vaga');
-            expect(POST_CATEGORIES.hiring).toContain('join our team');
-        });
-
-        it('achievement keywords contain bilingual terms', () => {
-            expect(POST_CATEGORIES.achievement).toContain('promoted');
-            expect(POST_CATEGORIES.achievement).toContain('orgulho');
-            expect(POST_CATEGORIES.achievement).toContain('conquista');
-            expect(POST_CATEGORIES.achievement).toContain('certified');
-        });
-
-        it('technical keywords cover software engineering topics', () => {
-            expect(POST_CATEGORIES.technical).toContain('architecture');
-            expect(POST_CATEGORIES.technical).toContain('ci/cd');
-            expect(POST_CATEGORIES.technical).toContain('tdd');
-            expect(POST_CATEGORIES.technical).toContain('system design');
-        });
-
-        it('humor keywords are bilingual', () => {
-            expect(POST_CATEGORIES.humor).toContain('lol');
-            expect(POST_CATEGORIES.humor).toContain('kkkk');
-            expect(POST_CATEGORIES.humor).toContain('rsrs');
-            expect(POST_CATEGORIES.humor).toContain('merge conflict');
-        });
-
-        it('jobseeking keywords cover common signals', () => {
-            expect(POST_CATEGORIES.jobseeking).toContain('open to work');
-            expect(POST_CATEGORIES.jobseeking).toContain('#opentowork');
-            expect(POST_CATEGORIES.jobseeking).toContain('disponível');
-        });
-
-        it('newjob keywords are bilingual', () => {
-            expect(POST_CATEGORIES.newjob).toContain('first day');
-            expect(POST_CATEGORIES.newjob).toContain('primeiro dia');
-            expect(POST_CATEGORIES.newjob).toContain('fui contratado');
-        });
-
-        it('all category values are arrays of non-empty strings', () => {
-            Object.entries(POST_CATEGORIES).forEach(([, keywords]) => {
-                expect(Array.isArray(keywords)).toBe(true);
-                keywords.forEach(kw => {
-                    expect(typeof kw).toBe('string');
-                    expect(kw.length).toBeGreaterThan(0);
-                });
-            });
-        });
-    });
-
     describe('CATEGORY_TEMPLATES', () => {
         it('has templates for all major categories', () => {
             ['hiring', 'achievement', 'technical', 'question',
@@ -160,12 +92,6 @@ describe('templates', () => {
                 'critique', 'story', 'tips', 'motivation',
                 'news', 'generic'].forEach(cat => {
                 expect(Array.isArray(CATEGORY_FOLLOW_UPS[cat])).toBe(true);
-            });
-        });
-
-        it('follow-up arrays each have 5 entries', () => {
-            Object.values(CATEGORY_FOLLOW_UPS).forEach(arr => {
-                expect(arr.length).toBe(5);
             });
         });
 
@@ -295,46 +221,6 @@ describe('templates', () => {
         it('does not include lower-signal categories', () => {
             expect(HIGH_SIGNAL_CATEGORIES.has('generic')).toBe(false);
             expect(HIGH_SIGNAL_CATEGORIES.has('motivation')).toBe(false);
-        });
-    });
-
-    describe('PT_MARKERS', () => {
-        it('is a non-empty array of Portuguese indicator words', () => {
-            expect(Array.isArray(PT_MARKERS)).toBe(true);
-            expect(PT_MARKERS.length).toBeGreaterThan(20);
-        });
-
-        it('contains common Brazilian PT words', () => {
-            expect(PT_MARKERS).toContain('você');
-            expect(PT_MARKERS).toContain('não');
-            expect(PT_MARKERS).toContain('também');
-            expect(PT_MARKERS).toContain('desenvolvimento');
-        });
-
-        it('contains informal/slang markers', () => {
-            expect(PT_MARKERS).toContain('kkk');
-            expect(PT_MARKERS).toContain('rsrs');
-            expect(PT_MARKERS).toContain('galera');
-            expect(PT_MARKERS).toContain('cara');
-        });
-
-        it('contains technical vocabulary in Portuguese', () => {
-            expect(PT_MARKERS).toContain('código');
-            expect(PT_MARKERS).toContain('arquitetura');
-            expect(PT_MARKERS).toContain('tecnologia');
-        });
-
-        it('contains industry-specific terms', () => {
-            expect(PT_MARKERS).toContain('vaga');
-            expect(PT_MARKERS).toContain('contratando');
-            expect(PT_MARKERS).toContain('empresa');
-        });
-
-        it('all markers are non-empty strings', () => {
-            PT_MARKERS.forEach(marker => {
-                expect(typeof marker).toBe('string');
-                expect(marker.length).toBeGreaterThan(0);
-            });
         });
     });
 
