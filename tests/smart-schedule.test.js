@@ -185,6 +185,14 @@ describe('getNextOptimalSlot', () => {
         const result = getNextOptimalSlot(null, null);
         expect(result.hoursUntil).toBeGreaterThan(0);
     });
+
+    test('wraps to next day when all windows are past', () => {
+        const spy = jest.spyOn(Date.prototype, 'getUTCHours').mockReturnValue(20);
+        const result = getNextOptimalSlot(null, null);
+        spy.mockRestore();
+        expect(result.hoursUntil).toBeGreaterThan(0);
+        expect(result.window).toBeDefined();
+    });
 });
 
 describe('computeScheduleRecommendation', () => {

@@ -2203,6 +2203,13 @@ chrome.runtime.onMessage.addListener(
                 chrome.storage.local.set({
                     [JOBS_PROFILE_CACHE_KEY]: envelope
                 }, () => {
+                    if (chrome.runtime.lastError) {
+                        sendResponse({
+                            status: 'error',
+                            error: chrome.runtime.lastError.message || 'Storage write failed.'
+                        });
+                        return;
+                    }
                     sendResponse({
                         status: 'saved',
                         updatedAt: envelope.updatedAt,
@@ -2304,6 +2311,13 @@ chrome.runtime.onMessage.addListener(
                 chrome.storage.local.set({
                     [JOBS_CAREER_INTEL_KEY]: envelope
                 }, () => {
+                    if (chrome.runtime.lastError) {
+                        sendResponse({
+                            status: 'error',
+                            error: chrome.runtime.lastError.message || 'Storage write failed.'
+                        });
+                        return;
+                    }
                     sendResponse({
                         status: 'saved',
                         updatedAt: envelope.updatedAt,
@@ -2385,6 +2399,13 @@ chrome.runtime.onMessage.addListener(
             chrome.storage.local.remove(
                 JOBS_CAREER_INTEL_KEY,
                 () => {
+                    if (chrome.runtime.lastError) {
+                        sendResponse({
+                            status: 'error',
+                            error: chrome.runtime.lastError.message || 'Storage remove failed.'
+                        });
+                        return;
+                    }
                     sendResponse({ status: 'cleared' });
                 }
             );
