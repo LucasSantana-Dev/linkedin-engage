@@ -1,0 +1,22 @@
+# Calls the org-wide reusable quality + security workflow.
+# Source: LucasSantana-Dev/.github/.github/workflows/quality.yml
+name: quality
+
+on:
+  pull_request:
+  push:
+    branches: [main, "release/**", dev]
+
+jobs:
+  call:
+    uses: LucasSantana-Dev/.github/.github/workflows/quality.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    with:
+      node-version: "22"
+      has-dockerfile: false
+      package-manager: npm
+      lint-script: "lint"
+      run-deadcode: false
