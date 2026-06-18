@@ -949,6 +949,19 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                         type: 'LINKEDIN_BOT_COMPANY_STEP_DONE',
                         result: runtimeResult
                     }, '*');
+                })
+                .catch(err => {
+                    // Never leave the popup frozen on an uncaught run error:
+                    // always post a terminal STEP_DONE with a failure (#170).
+                    window.postMessage({
+                        type: 'LINKEDIN_BOT_COMPANY_STEP_DONE',
+                        result: {
+                            error: (err && err.message) ||
+                                'Unknown error',
+                            runStatus: 'failed',
+                            reason: 'runtime-error'
+                        }
+                    }, '*');
                 });
         }
     });
