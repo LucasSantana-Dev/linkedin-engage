@@ -91,8 +91,11 @@ function inferReason(runStatus, result) {
     return 'unknown';
 }
 
-function hasCompanyNoResultsSignal(result, mode) {
-    if (mode !== 'company') return false;
+function hasNoResultsSignal(result, mode) {
+    // Company and Connect both treat "query ran, zero matches" as a successful
+    // run (not a failure). Connect support added so an empty search page isn't
+    // misreported as FAILED.
+    if (mode !== 'company' && mode !== 'connect') return false;
     var reason = String(result?.reason || '').trim().toLowerCase();
     var stepCode = String(result?.stepCode || '').trim().toLowerCase();
     if (reason === 'no-results' || stepCode === 'no-results') {
@@ -108,7 +111,7 @@ function inferRunStatus(result, stoppedByUser, processedCount, mode) {
     if (stoppedByUser) return RUN_STATUS_CANCELED;
     if (String(result?.error || '').trim()) return RUN_STATUS_FAILED;
     if (processedCount === 0) {
-        if (hasCompanyNoResultsSignal(result, mode)) {
+        if (hasNoResultsSignal(result, mode)) {
             return RUN_STATUS_SUCCESS;
         }
         return RUN_STATUS_FAILED;

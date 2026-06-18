@@ -1098,6 +1098,23 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     }
                 }
 
+                // Query mounted but matched nobody: if there are no action
+                // targets AND LinkedIn shows its explicit empty-search state,
+                // stop instead of paginating into the void. Reported as a
+                // successful run with reason 'no-results' (run-outcome treats
+                // connect no-results as success, not failure).
+                if (actionTargets.length === 0 &&
+                    typeof detectNoSearchResults === 'function' &&
+                    detectNoSearchResults()) {
+                    return buildConnectResult({
+                        runStatus: 'success',
+                        reason: 'no-results',
+                        stepCode: 'no-results',
+                        message: 'Search returned no results ' +
+                            'for this query.'
+                    }, connectionLog);
+                }
+
                 function getCardInfo(btn) {
                     const card = btn.closest(
                         '.entity-result, ' +

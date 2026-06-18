@@ -23,8 +23,64 @@ const {
     matchExcludedCompany,
     isRecruiterProfile,
     isOpenToWorkCard,
-    isJobSeekingProfile
+    isJobSeekingProfile,
+    detectNoSearchResults
 } = require('../extension/lib/invite-utils');
+
+describe('detectNoSearchResults', () => {
+    afterEach(() => { document.body.innerHTML = ''; });
+
+    it('detects EN "No results found" empty state', () => {
+        document.body.innerHTML =
+            '<div class="artdeco-empty-state"><h2>No results found</h2>' +
+            '<p>Try removing filters or rephrasing your search.</p></div>';
+        expect(detectNoSearchResults(document)).toBe(true);
+    });
+
+    it('detects PT-BR "Nenhum resultado encontrado"', () => {
+        document.body.innerHTML =
+            '<main>Nenhum resultado encontrado</main>';
+        expect(detectNoSearchResults(document)).toBe(true);
+    });
+
+    it('detects "0 results" / "0 resultados" count text', () => {
+        document.body.innerHTML = '<main>0 results</main>';
+        expect(detectNoSearchResults(document)).toBe(true);
+    });
+
+    it('returns false when results are present', () => {
+        document.body.innerHTML =
+            '<main><div class="entity-result">Jane Doe</div></main>';
+        expect(detectNoSearchResults(document)).toBe(false);
+    });
+
+    it('defaults to the document when no root is given', () => {
+        document.body.innerHTML =
+            '<div class="artdeco-empty-state">No results found</div>';
+        expect(detectNoSearchResults()).toBe(true);
+    });
+
+    it('detects a results-count header parsed to 0 (outside empty-state scope)', () => {
+        document.body.innerHTML =
+            '<header><div class="search-results__total">0 results</div>' +
+            '</header>';
+        expect(detectNoSearchResults(document)).toBe(true);
+    });
+
+    it('does not fire when the count header shows a non-zero count', () => {
+        document.body.innerHTML =
+            '<header><div class="search-results__total">' +
+            'About 132 results</div></header>';
+        expect(detectNoSearchResults(document)).toBe(false);
+    });
+
+    it('does not misfire on "0 X" phrases that are not result counts', () => {
+        document.body.innerHTML =
+            '<header><div class="search-results__total">' +
+            '0 endorsements</div></header>';
+        expect(detectNoSearchResults(document)).toBe(false);
+    });
+});
 
 describe('isButtonClickable', () => {
     it('returns true for enabled button', () => {
