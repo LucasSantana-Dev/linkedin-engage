@@ -368,12 +368,55 @@
             return url.toString();
         }
 
+        // jobs-assist runs in the MAIN world (no chrome.i18n), so notification
+        // text is resolved inline here — mirroring the file's existing inline
+        // EN/PT detection idiom. Locale follows LinkedIn's page language (what
+        // the user actually sees the notification over).
+        function resolveJobsLocale(docLang, navLang) {
+            const probe = String(docLang || navLang || '').toLowerCase();
+            return probe.startsWith('pt') ? 'pt' : 'en';
+        }
+
+        const JOBS_NOTIFICATIONS = {
+            securityChallenge: {
+                en: 'LinkedIn security challenge detected — job assist ' +
+                    'stopped. Please solve the CAPTCHA and retry.',
+                pt: 'Desafio de seguranca do LinkedIn detectado — ' +
+                    'assistente de vagas interrompido. Resolva o CAPTCHA ' +
+                    'e tente novamente.'
+            },
+            securityChallengeMidRun: {
+                en: 'LinkedIn security challenge detected mid-run — job ' +
+                    'assist stopped.',
+                pt: 'Desafio de seguranca do LinkedIn detectado durante a ' +
+                    'execucao — assistente de vagas interrompido.'
+            },
+            manualInput: {
+                en: 'Manual input required — complete the current ' +
+                    'application form and restart Jobs Assist.',
+                pt: 'Entrada manual necessaria — preencha o formulario de ' +
+                    'candidatura atual e reinicie o Assistente de Vagas.'
+            },
+            failedPrefix: {
+                en: 'Jobs assist failed: ',
+                pt: 'Falha no assistente de vagas: '
+            }
+        };
+
+        function jobsNotificationText(key, locale) {
+            const entry = JOBS_NOTIFICATIONS[key];
+            if (!entry) return '';
+            return entry[locale] || entry.en;
+        }
+
         return {
             normalizeText,
             matchesExcludedJobCompany,
             evaluateJobCandidate,
             rankJobsForApply,
-            buildLinkedInJobsSearchUrl
+            buildLinkedInJobsSearchUrl,
+            resolveJobsLocale,
+            jobsNotificationText
         };
     }
 );
