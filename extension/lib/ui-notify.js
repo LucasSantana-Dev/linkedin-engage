@@ -132,6 +132,37 @@ function showTopNotification(message, type, options) {
 
   bar.appendChild(iconSpan);
   bar.appendChild(textSpan);
+
+  // Optional action button (e.g. an in-page "Stop" control during a run).
+  if (opts.action && typeof opts.action.onClick === "function") {
+    var actionBtn = document.createElement("button");
+    actionBtn.setAttribute("data-le-action", "1");
+    actionBtn.setAttribute(
+      "style",
+      [
+        "flex-shrink:0",
+        "cursor:pointer",
+        "border:1px solid " + palette.border,
+        "background:rgba(255,255,255,0.08)",
+        "color:#fff",
+        "font-size:12px",
+        "font-weight:600",
+        "padding:3px 10px",
+        "border-radius:6px",
+        "line-height:1.2",
+      ].join(";"),
+    );
+    actionBtn.textContent = String(opts.action.label || "Action");
+    actionBtn.addEventListener("click", function () {
+      try {
+        opts.action.onClick();
+      } finally {
+        dismissTopNotification(bar);
+      }
+    });
+    bar.appendChild(actionBtn);
+  }
+
   bar.appendChild(closeBtn);
   container.appendChild(bar);
 
