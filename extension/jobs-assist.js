@@ -88,12 +88,25 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     return "";
   }
 
+  // Pick the job title by selector PRIORITY (most stable first), not DOM order.
+  // A comma-list querySelector returns the first match in document order, which
+  // could grab a footer/secondary element; query each candidate in order and
+  // take the first whose first line is a plausible title (length guard).
+  function pickCardTitle(card) {
+    const selectors = [
+      'a[href*="/jobs/view/"]',
+      ".job-card-list__title",
+      ".job-card-container__link",
+    ];
+    for (const sel of selectors) {
+      const el = card.querySelector(sel);
+      const text = String(el?.innerText || "").split("\n")[0].trim();
+      if (text.length >= 3) return text;
+    }
+    return "";
+  }
+
   function extractJobFromCard(card, idx) {
-    const titleEl = card.querySelector(
-      ".job-card-list__title, " +
-        ".job-card-container__link, " +
-        'a[href*="/jobs/view/"]',
-    );
     const companyEl = card.querySelector(
       ".job-card-container__company-name, " +
         ".artdeco-entity-lockup__subtitle, " +
@@ -106,9 +119,7 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     const timeEl = card.querySelector("time, .job-card-list__footer-wrapper");
     const linkEl = card.querySelector('a[href*="/jobs/view/"]');
 
-    const title = String(titleEl?.innerText || "")
-      .split("\n")[0]
-      .trim();
+    const title = pickCardTitle(card);
     const company = String(companyEl?.innerText || "")
       .split("\n")[0]
       .trim();
@@ -476,11 +487,30 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       )
       .filter(Boolean);
     const required = countRequiredMissingFields(modal).count;
+    // Fingerprint the form fields too: consecutive steps can share the same
+    // buttons, required-count and headline yet present entirely different
+    // fields. Without this, getModalSignature collides across steps and
+    // waitForModalStepChange reports "no change" → premature manual abort (#146).
+    const fields = Array.from(
+      modal.querySelectorAll("input, select, textarea"),
+    )
+      .map((f) =>
+        normalized(
+          f.getAttribute("aria-label") ||
+            f.getAttribute("name") ||
+            f.getAttribute("id") ||
+            f.getAttribute("placeholder") ||
+            f.type ||
+            "",
+        ),
+      )
+      .filter(Boolean)
+      .join(",");
     const headline = normalized(
       modal.querySelector("h1, h2, h3, .artdeco-modal__header")?.innerText ||
         modal.innerText,
     ).slice(0, 120);
-    return `${enabledButtons.join("|")}::${required}::${headline}`;
+    return `${enabledButtons.join("|")}::${required}::${fields}::${headline}`;
   }
 
   async function waitForModalDialog(options) {
@@ -1061,6 +1091,7 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
 
   const jobsAssistTestApi = {
     detectChallenge,
+    getModalSignature,
     extractJobFromCard,
     findJobCards,
     fillKnownFields,

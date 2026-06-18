@@ -651,8 +651,8 @@ describe('jobs-utils matching and ranking', () => {
     });
 
     describe('getOffshoreCompatibility empty text path', () => {
-        it('returns allowed=true score=0.2 when job has no text fields and offshore is enabled', () => {
-            // Job with no detailText, location, or workType → text is empty → returns {allowed:true, score:0.2}
+        it('returns allowed=true neutral score=0.5 when job has no text fields and offshore is enabled', () => {
+            // Job with no detailText/location/workType → undeterminable → neutral 0.5 (not a 0.2 penalty)
             const decision = evaluateJobCandidate(
                 {
                     id: 'job-empty', title: 'Developer', company: 'Co',
@@ -667,7 +667,7 @@ describe('jobs-utils matching and ranking', () => {
             );
             // Should not skip (offshore allowed=true)
             expect(decision.skipReason).toBeNull();
-            expect(decision.offshoreCompatibility).toBe(0.2);
+            expect(decision.offshoreCompatibility).toBe(0.5);
         });
     });
 
