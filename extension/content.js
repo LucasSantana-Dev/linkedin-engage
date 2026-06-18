@@ -1772,6 +1772,17 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     type: 'LINKEDIN_BOT_DONE',
                     result: runtimeResult
                 }, '*');
+            }).catch(err => {
+                // Never leave the popup frozen on an uncaught run error:
+                // always post a terminal DONE with a failure result (#170).
+                window.postMessage({
+                    type: 'LINKEDIN_BOT_DONE',
+                    result: {
+                        error: (err && err.message) || 'Unknown error',
+                        runStatus: 'failed',
+                        reason: 'runtime-error'
+                    }
+                }, '*');
             });
         }
     });
