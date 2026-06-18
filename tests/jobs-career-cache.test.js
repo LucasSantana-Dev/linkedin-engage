@@ -259,6 +259,18 @@ describe('jobs career intelligence cache', () => {
             ).rejects.toThrow('Invalid career intelligence passphrase');
         });
 
+        it('rejects an envelope written by a newer (unsupported) version', async () => {
+            const envelope = await encryptJobsCareerIntelState(
+                state, 'career-passphrase'
+            );
+            await expect(
+                decryptJobsCareerIntelState(
+                    { ...envelope, version: CAREER_INTEL_CACHE_VERSION + 1 },
+                    'career-passphrase'
+                )
+            ).rejects.toThrow(/unsupported.*version/i);
+        });
+
         it('does not expose plaintext in the envelope', async () => {
             const envelope = await encryptJobsCareerIntelState(
                 state, 'career-passphrase'
