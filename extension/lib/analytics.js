@@ -241,12 +241,23 @@ function topKey(obj) {
     return best;
 }
 
+// Dedicated résumé-parse demand counter. Kept OUT of analyticsLog so it never
+// pollutes engagement stats (computeStats counts any non-run entry as an
+// engagement). Records type × outcome only — no filename, text, or hash.
+function tallyResumeParse(stats, event) {
+    const next = { ...(stats || {}) };
+    const key = `${event.fileType}_${event.outcome}`;
+    next[key] = (next[key] || 0) + 1;
+    return next;
+}
+
 return Object.freeze({
     recordEngagement,
     computeStats,
     computeAcceptanceByTemplate,
     computeAcceptanceByHour,
-    topKey
+    topKey,
+    tallyResumeParse
 });
 
 });

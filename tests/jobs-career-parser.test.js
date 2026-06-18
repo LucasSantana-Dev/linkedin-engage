@@ -335,4 +335,182 @@ describe('jobs career parser', () => {
             globalThis.FileReader = originalFileReader;
         }
     });
+
+    describe('parse telemetry', () => {
+        function docxFile(name = 'resume.docx') {
+            return new File([new Uint8Array([1, 2, 3, 4])], name, {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            });
+        }
+
+        it('emits a PII-safe event on successful parse (type + outcome only)', async () => {
+            const { parseResumeFile, _setParseTelemetry } = loadParser();
+            global.mammoth = {
+                extractRawText: jest.fn(async () => ({ value: 'Senior Engineer' }))
+            };
+            const events = [];
+            _setParseTelemetry((e) => events.push(e));
+
+            await parseResumeFile(docxFile('jane-doe-cv.docx'));
+
+            expect(events).toHaveLength(1);
+            expect(events[0]).toEqual({
+                action: 'resumeParse',
+                fileType: 'docx',
+                outcome: 'ok'
+            });
+            // PII guard: filename, extracted text, and hash must NOT leak.
+            expect(Object.keys(events[0]).sort()).toEqual([
+                'action', 'fileType', 'outcome'
+            ]);
+        });
+
+        it('emits a failed event when extraction throws, then rethrows', async () => {
+            const { parseResumeFile, _setParseTelemetry } = loadParser();
+            // no global.mammoth, no chrome → docx extraction fails
+            const events = [];
+            _setParseTelemetry((e) => events.push(e));
+
+            await expect(parseResumeFile(docxFile())).rejects.toThrow();
+            expect(events).toEqual([
+                { action: 'resumeParse', fileType: 'docx', outcome: 'failed' }
+            ]);
+        });
+
+        it('does not emit for pre-parse validation failures', async () => {
+            const { parseResumeFile, _setParseTelemetry } = loadParser();
+            const events = [];
+            _setParseTelemetry((e) => events.push(e));
+
+            const file = new File(['x'], 'resume.txt', { type: 'text/plain' });
+            await expect(parseResumeFile(file)).rejects.toThrow();
+            expect(events).toEqual([]);
+        });
+
+        it('a throwing telemetry hook never breaks parsing', async () => {
+            const { parseResumeFile, _setParseTelemetry } = loadParser();
+            global.mammoth = {
+                extractRawText: jest.fn(async () => ({ value: 'Engineer' }))
+            };
+            _setParseTelemetry(() => { throw new Error('telemetry boom'); });
+
+            const parsed = await parseResumeFile(docxFile());
+            expect(parsed.extractedText).toBe('Engineer');
+        });
+
+        it('parses normally when no telemetry hook is set', async () => {
+            const { parseResumeFile } = loadParser();
+            global.mammoth = {
+                extractRawText: jest.fn(async () => ({ value: 'X' }))
+            };
+            const parsed = await parseResumeFile(docxFile());
+            expect(parsed.extractedText).toBe('X');
+        });
+    });
+
+    describe('lazy mammoth loading', () => {
+        it('lazily loads mammoth via the injected loader when no global is set', async () => {
+            const { extractTextFromDocx, _setMammothLoader } = loadParser();
+            // No global.mammoth — must come from the lazy loader.
+            const fakeMammoth = {
+                extractRawText: jest.fn(async () => ({ value: '  Lazy  Loaded  ' }))
+            };
+            _setMammothLoader(() => fakeMammoth);
+
+            const text = await extractTextFromDocx(new Uint8Array([1]).buffer);
+            expect(text).toBe('Lazy Loaded');
+            expect(fakeMammoth.extractRawText).toHaveBeenCalledTimes(1);
+        });
+
+        it('caches the loaded mammoth across extractions (loader runs once)', async () => {
+            const { extractTextFromDocx, _setMammothLoader } = loadParser();
+            let loaderCalls = 0;
+            const fakeMammoth = {
+                extractRawText: jest.fn(async () => ({ value: 'x' }))
+            };
+            _setMammothLoader(() => { loaderCalls++; return fakeMammoth; });
+
+            await extractTextFromDocx(new Uint8Array([1]).buffer);
+            await extractTextFromDocx(new Uint8Array([2]).buffer);
+            expect(loaderCalls).toBe(1);
+        });
+
+        it('de-dupes concurrent docx extractions (loader runs once)', async () => {
+            const { extractTextFromDocx, _setMammothLoader } = loadParser();
+            let loaderCalls = 0;
+            const fakeMammoth = {
+                extractRawText: jest.fn(async ({ arrayBuffer }) => ({
+                    value: `text${new Uint8Array(arrayBuffer)[0]}`
+                }))
+            };
+            _setMammothLoader(() => { loaderCalls++; return fakeMammoth; });
+
+            const [r1, r2] = await Promise.all([
+                extractTextFromDocx(new Uint8Array([1]).buffer),
+                extractTextFromDocx(new Uint8Array([2]).buffer)
+            ]);
+            expect(loaderCalls).toBe(1);
+            expect(r1).toBe('text1');
+            expect(r2).toBe('text2');
+        });
+
+        it('uses an already-present global.mammoth without invoking the loader', async () => {
+            const { extractTextFromDocx, _setMammothLoader } = loadParser();
+            global.mammoth = {
+                extractRawText: jest.fn(async () => ({ value: 'from global' }))
+            };
+            const loader = jest.fn();
+            _setMammothLoader(loader);
+
+            const text = await extractTextFromDocx(new Uint8Array([1]).buffer);
+            expect(text).toBe('from global');
+            expect(loader).not.toHaveBeenCalled();
+        });
+
+        it('injects a vendor <script> and resolves once it sets the global', async () => {
+            const { extractTextFromDocx } = loadParser();
+            global.chrome = {
+                runtime: { getURL: (p) => `chrome-extension://fake/${p}` }
+            };
+            const realCreate = document.createElement.bind(document);
+            jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+                const el = realCreate(tag);
+                if (tag === 'script') {
+                    // Simulate the browser loading the UMD bundle: it sets the
+                    // global, then fires onload.
+                    Promise.resolve().then(() => {
+                        global.mammoth = {
+                            extractRawText: async () => ({ value: 'injected' })
+                        };
+                        el.onload();
+                    });
+                }
+                return el;
+            });
+
+            const text = await extractTextFromDocx(new Uint8Array([1]).buffer);
+            expect(text).toBe('injected');
+            document.createElement.mockRestore();
+        });
+
+        it('rejects with DOCX parser unavailable when the script fails to load', async () => {
+            const { extractTextFromDocx } = loadParser();
+            global.chrome = {
+                runtime: { getURL: (p) => `chrome-extension://fake/${p}` }
+            };
+            const realCreate = document.createElement.bind(document);
+            jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+                const el = realCreate(tag);
+                if (tag === 'script') {
+                    Promise.resolve().then(() => el.onerror());
+                }
+                return el;
+            });
+
+            await expect(
+                extractTextFromDocx(new Uint8Array([1]).buffer)
+            ).rejects.toThrow('DOCX parser unavailable');
+            document.createElement.mockRestore();
+        });
+    });
 });

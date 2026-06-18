@@ -4338,6 +4338,32 @@ document.getElementById('uploadJobsResumesBtn')
     .addEventListener('click', () => {
         document.getElementById('jobsResumeUploadInput')?.click();
     });
+// Record résumé-parse demand (type × outcome only — no PII). Best-effort:
+// telemetry must never block an upload. Kept in its own storage key so it
+// does not pollute engagement analytics. Guarded so popup.js stays load-safe
+// if the parser/analytics globals are absent (e.g. isolated test harness).
+// Note: concurrent multi-file uploads can race the get/set and under-count by
+// up to N-1 of N simultaneous parses. Tolerated — this is an advisory demand
+// counter (ADR-0001 gates on a 30-day / 50-parse window, not exact totals).
+// If exact counts are later needed, mirror bridge.js's serializedStorageUpdate
+// per-key promise queue (#114).
+if (typeof _setParseTelemetry === 'function') {
+    _setParseTelemetry((parseEvent) => {
+        try {
+            if (!chrome?.storage?.local
+                || typeof tallyResumeParse !== 'function') return;
+            chrome.storage.local.get('resumeParseStats', (data) => {
+                chrome.storage.local.set({
+                    resumeParseStats: tallyResumeParse(
+                        data.resumeParseStats, parseEvent
+                    )
+                });
+            });
+        } catch (_err) {
+            // best-effort telemetry
+        }
+    });
+}
 document.getElementById('jobsResumeUploadInput')
     .addEventListener('change', async (event) => {
         const files = Array.from(event.target.files || []);
