@@ -2,6 +2,21 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
   window.linkedInJobsAssistInjected = true;
 
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Notification locale follows LinkedIn's page language (MAIN world has no
+  // chrome.i18n). Falls back to EN. Strings live in jobs-utils.jobsNotificationText.
+  const JOBS_LOCALE =
+    typeof resolveJobsLocale === "function"
+      ? resolveJobsLocale(
+          typeof document !== "undefined" && document.documentElement
+            ? document.documentElement.lang
+            : "",
+          typeof navigator !== "undefined" ? navigator.language : ""
+        )
+      : "en";
+  const jobsMsg = (key, fallback) =>
+    typeof jobsNotificationText === "function"
+      ? jobsNotificationText(key, JOBS_LOCALE) || fallback
+      : fallback;
   let stopRequested = false;
   let running = false;
   const jobsLog = [];
@@ -764,7 +779,10 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     if (detectChallenge()) {
       if (typeof showTopNotification === "function") {
         showTopNotification(
-          "LinkedIn security challenge detected — job assist stopped. Please solve the CAPTCHA and retry.",
+          jobsMsg(
+            "securityChallenge",
+            "LinkedIn security challenge detected — job assist stopped. Please solve the CAPTCHA and retry."
+          ),
           "error",
         );
       }
@@ -820,7 +838,10 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       if (detectChallenge()) {
         if (typeof showTopNotification === "function") {
           showTopNotification(
-            "LinkedIn security challenge detected mid-run — job assist stopped.",
+            jobsMsg(
+              "securityChallengeMidRun",
+              "LinkedIn security challenge detected mid-run — job assist stopped."
+            ),
             "error",
           );
         }
@@ -897,7 +918,10 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       if (prepared.status === "needs-manual-input") {
         if (typeof showTopNotification === "function") {
           showTopNotification(
-            "Manual input required — complete the current application form and restart Jobs Assist.",
+            jobsMsg(
+              "manualInput",
+              "Manual input required — complete the current application form and restart Jobs Assist."
+            ),
             "warning",
           );
         }
@@ -978,7 +1002,8 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     } catch (err) {
       if (typeof showTopNotification === "function") {
         showTopNotification(
-          "Jobs assist failed: " + (err?.message || "Unknown error"),
+          jobsMsg("failedPrefix", "Jobs assist failed: ") +
+            (err?.message || "Unknown error"),
           "error",
         );
       }

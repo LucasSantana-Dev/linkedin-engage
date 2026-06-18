@@ -3,8 +3,52 @@ const {
     matchesExcludedJobCompany,
     evaluateJobCandidate,
     rankJobsForApply,
-    buildLinkedInJobsSearchUrl
+    buildLinkedInJobsSearchUrl,
+    resolveJobsLocale,
+    jobsNotificationText
 } = require('../extension/lib/jobs-utils');
+
+describe('resolveJobsLocale', () => {
+    it('returns pt for pt-BR page or navigator language', () => {
+        expect(resolveJobsLocale('pt-BR', 'en-US')).toBe('pt');
+        expect(resolveJobsLocale('', 'pt-BR')).toBe('pt');
+        expect(resolveJobsLocale('PT', '')).toBe('pt');
+    });
+    it('returns en for English or unknown', () => {
+        expect(resolveJobsLocale('en-US', 'en')).toBe('en');
+        expect(resolveJobsLocale('', '')).toBe('en');
+        expect(resolveJobsLocale(null, undefined)).toBe('en');
+        expect(resolveJobsLocale('fr-FR', 'fr')).toBe('en');
+    });
+});
+
+describe('jobsNotificationText', () => {
+    it('returns the EN string for a known key', () => {
+        expect(jobsNotificationText('securityChallenge', 'en'))
+            .toMatch(/security challenge/i);
+    });
+    it('returns a distinct PT string for the same key', () => {
+        const en = jobsNotificationText('manualInput', 'en');
+        const pt = jobsNotificationText('manualInput', 'pt');
+        expect(pt).not.toBe(en);
+        expect(pt).toMatch(/manual/i);
+    });
+    it('falls back to EN for an unknown locale', () => {
+        expect(jobsNotificationText('manualInput', 'fr'))
+            .toBe(jobsNotificationText('manualInput', 'en'));
+    });
+    it('returns empty string for an unknown key', () => {
+        expect(jobsNotificationText('nope', 'en')).toBe('');
+    });
+    it('covers every notification key in both locales', () => {
+        const keys = ['securityChallenge', 'securityChallengeMidRun',
+            'manualInput', 'failedPrefix'];
+        keys.forEach((k) => {
+            expect(jobsNotificationText(k, 'en')).toBeTruthy();
+            expect(jobsNotificationText(k, 'pt')).toBeTruthy();
+        });
+    });
+});
 
 describe('jobs-utils matching and ranking', () => {
     it('matches excluded company with case/accent-insensitive comparison', () => {
