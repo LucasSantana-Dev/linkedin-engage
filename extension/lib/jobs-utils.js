@@ -409,6 +409,29 @@
             return entry[locale] || entry.en;
         }
 
+        // Pick the <select> option value matching a target string, so the
+        // Easy-Apply filler can populate dropdowns without corrupting them
+        // (returns null when nothing matches -> caller leaves the select alone).
+        function findMatchingOptionValue(options, value) {
+            const target = normalizeText(value);
+            if (!target || !Array.isArray(options)) return null;
+            // Exact value match first (skip empty-value placeholders).
+            for (const opt of options) {
+                if (!opt || !opt.value) continue;
+                if (normalizeText(opt.value) === target) return opt.value;
+            }
+            // Then fuzzy text containment either direction.
+            for (const opt of options) {
+                if (!opt || !opt.value) continue;
+                const text = normalizeText(opt.text);
+                if (!text) continue;
+                if (text.includes(target) || target.includes(text)) {
+                    return opt.value;
+                }
+            }
+            return null;
+        }
+
         return {
             normalizeText,
             matchesExcludedJobCompany,
@@ -416,7 +439,8 @@
             rankJobsForApply,
             buildLinkedInJobsSearchUrl,
             resolveJobsLocale,
-            jobsNotificationText
+            jobsNotificationText,
+            findMatchingOptionValue
         };
     }
 );
