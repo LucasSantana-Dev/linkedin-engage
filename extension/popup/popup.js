@@ -3115,7 +3115,14 @@ function fetchScheduleInsight() {
     );
 }
 
+let lastStartClickAt = 0;
 document.getElementById('startBtn').addEventListener('click', async () => {
+    // Debounce rapid double-clicks so one intent can't launch two runs (and two
+    // tabs) before the first start registers (#125). Time-based -> self-clears,
+    // can never wedge the button disabled.
+    const now = Date.now();
+    if (now - lastStartClickAt < 1500) return;
+    lastStartClickAt = now;
     if (currentMode === 'companies') {
         return startCompanyFollow();
     }
