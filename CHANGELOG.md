@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.38.1] - 2026-06-18
+
+### Fixed
+- **Popup no longer freezes on a run error** (#170): Connect and Company-Follow runs awaited the automation with no `.catch()`, so an uncaught error never posted a completion message and the popup hung indefinitely. Both now post a terminal failure result. Matches the Jobs assistant's existing handling.
+- **Double-launch guard** (#125): a 1.5s debounce on the Start button prevents a rapid double-click from launching two runs (and two tabs).
+- **Jobs notifications localized** (#145): the Easy Apply assistant's notifications (security challenge, manual-input, failure) now respect EN / PT-BR instead of always showing English.
+- **Jobs Easy Apply auto-fills `<select>` dropdowns** (#148): dropdowns (e.g. location) are now populated by option-matching instead of being silently skipped.
+- **Jobs modal step detection** (#146): consecutive application steps that share buttons/headline but differ in fields are now detected as a step change, instead of timing out into "needs manual input".
+- **Jobs offshore ranking** (#150): jobs whose detail text hasn't loaded yet get a neutral score instead of being unfairly down-ranked.
+- **Jobs résumé cache hardening** (#151, #152): consistent passphrase normalization across vault/cache, and a version guard so a cache written by a newer version fails clearly instead of being mis-parsed.
+- **Job-card title extraction** (#157): prefers the stable job link selector with a length guard, reducing mis-read titles.
+
+### Internal
+- Dedupe redundant résumé hashing (#155); record testing-strategy and PR-disposition decisions (ADR-0003 correction, ADR-0004).
+
+### Security / deps
+- **express-rate-limit** bumped to clear GHSA-v2v4-37r5-5v8g (#118); jest 30.2 → 30.4 (#127).
+- Enabled **Dependabot alerts + automated security updates + secret scanning**, added `dependabot.yml` (#119).
+
 ## [1.38.0] - 2026-06-18
 
 ### Added
