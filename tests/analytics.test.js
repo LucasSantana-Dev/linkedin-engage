@@ -3,8 +3,35 @@ const {
     computeStats,
     computeAcceptanceByTemplate,
     computeAcceptanceByHour,
-    topKey
+    topKey,
+    tallyResumeParse
 } = require('../extension/lib/analytics');
+
+describe('tallyResumeParse', () => {
+    test('increments a fresh counter from undefined stats', () => {
+        const next = tallyResumeParse(undefined, {
+            fileType: 'docx', outcome: 'ok'
+        });
+        expect(next).toEqual({ docx_ok: 1 });
+    });
+
+    test('accumulates across file types and outcomes', () => {
+        let s;
+        s = tallyResumeParse(s, { fileType: 'pdf', outcome: 'ok' });
+        s = tallyResumeParse(s, { fileType: 'pdf', outcome: 'ok' });
+        s = tallyResumeParse(s, { fileType: 'docx', outcome: 'failed' });
+        expect(s).toEqual({ pdf_ok: 2, docx_failed: 1 });
+    });
+
+    test('does not mutate the input stats object', () => {
+        const prev = { pdf_ok: 1 };
+        const next = tallyResumeParse(prev, {
+            fileType: 'pdf', outcome: 'ok'
+        });
+        expect(prev).toEqual({ pdf_ok: 1 });
+        expect(next).toEqual({ pdf_ok: 2 });
+    });
+});
 
 describe('topKey', () => {
     test('returns key with highest value', () => {

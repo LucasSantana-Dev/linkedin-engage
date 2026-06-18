@@ -19,6 +19,25 @@
         let _pdfJsLoader = null;
         function _setPdfJsLoader(fn) { _pdfJsLoader = fn; pdfJsPromise = null; }
 
+        let _parseTelemetry = null;
+        function _setParseTelemetry(fn) { _parseTelemetry = fn; }
+
+        // PII-safe by construction: only the file type and outcome are ever
+        // emitted — never the filename, extracted text, or hash. A throwing
+        // hook must never break parsing.
+        function emitParseEvent(fileType, outcome) {
+            if (!_parseTelemetry) return;
+            try {
+                _parseTelemetry({
+                    action: 'resumeParse',
+                    fileType,
+                    outcome
+                });
+            } catch (_err) {
+                // telemetry must not affect the parse result
+            }
+        }
+
         function sanitizeText(value) {
             return String(value || '')
                 .replace(/\s+/g, ' ')
@@ -62,13 +81,53 @@
             return parts.join('\n\n').trim();
         }
 
-        async function extractTextFromDocx(arrayBuffer) {
-            if (!globalThis.mammoth?.extractRawText) {
-                throw new Error('DOCX parser unavailable');
+        let mammothPromise = null;
+        let _mammothLoader = null;
+        function _setMammothLoader(fn) { _mammothLoader = fn; mammothPromise = null; }
+
+        // mammoth ships as a UMD bundle that assigns globalThis.mammoth as a
+        // side-effect — it is NOT an ES module, so it cannot be loaded with the
+        // dynamic import() used for pdf.min.mjs. Load it on demand by injecting a
+        // classic <script> from the packaged vendor file, guarding against a
+        // global that is already present (idempotent re-entry).
+        function loadMammoth() {
+            if (globalThis.mammoth?.extractRawText) {
+                return Promise.resolve(globalThis.mammoth);
             }
-            const result = await globalThis.mammoth.extractRawText({
-                arrayBuffer
+            if (mammothPromise) return mammothPromise;
+            if (_mammothLoader) {
+                mammothPromise = Promise.resolve(_mammothLoader());
+                return mammothPromise;
+            }
+            if (typeof document === 'undefined'
+                || typeof chrome === 'undefined'
+                || !chrome.runtime?.getURL) {
+                return Promise.reject(new Error('DOCX parser unavailable'));
+            }
+            mammothPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = chrome.runtime.getURL(
+                    'vendor/mammoth.browser.min.js'
+                );
+                script.onload = () => {
+                    if (globalThis.mammoth?.extractRawText) {
+                        resolve(globalThis.mammoth);
+                    } else {
+                        reject(new Error('DOCX parser unavailable'));
+                    }
+                };
+                script.onerror = () => reject(
+                    new Error('DOCX parser unavailable')
+                );
+                (document.head || document.documentElement)
+                    .appendChild(script);
             });
+            return mammothPromise;
+        }
+
+        async function extractTextFromDocx(arrayBuffer) {
+            const mammoth = await loadMammoth();
+            const result = await mammoth.extractRawText({ arrayBuffer });
             return sanitizeText(result?.value || '');
         }
 
@@ -91,9 +150,16 @@
             }
             const arrayBuffer = await readFileBuffer(file);
             const extension = validation.extension;
-            const extractedText = extension === 'pdf'
-                ? await extractTextFromPdf(arrayBuffer)
-                : await extractTextFromDocx(arrayBuffer);
+            let extractedText;
+            try {
+                extractedText = extension === 'pdf'
+                    ? await extractTextFromPdf(arrayBuffer)
+                    : await extractTextFromDocx(arrayBuffer);
+            } catch (err) {
+                emitParseEvent(extension, 'failed');
+                throw err;
+            }
+            emitParseEvent(extension, 'ok');
             return {
                 id: await careerVault.sha256Hex(arrayBuffer),
                 fileName: String(file.name || ''),
@@ -109,7 +175,9 @@
             parseResumeFile,
             extractTextFromPdf,
             extractTextFromDocx,
-            _setPdfJsLoader
+            _setPdfJsLoader,
+            _setMammothLoader,
+            _setParseTelemetry
         };
     }
 );
