@@ -85,6 +85,38 @@ describe('normalizeRunOutcome', () => {
         expect(result.success).toBe(true);
     });
 
+    test('keeps connect no-results as success via reason signal (no skip-log)', () => {
+        // Empty search page: zero cards, nothing skipped/sent. content.js sets
+        // reason/stepCode 'no-results'. Must be SUCCESS, not FAILED.
+        const result = normalizeRunOutcome({
+            mode: 'connect',
+            reason: 'no-results',
+            stepCode: 'no-results',
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            log: []
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
+        expect(result.reason).toBe('no-results');
+        expect(result.success).toBe(true);
+    });
+
+    test('keeps zero-processed connect runs as failed without a no-results signal', () => {
+        const result = normalizeRunOutcome({
+            mode: 'connect',
+            reason: 'unknown',
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            log: []
+        });
+
+        expect(result.runStatus).toBe(RUN_STATUS_FAILED);
+        expect(result.success).toBe(false);
+    });
+
     test('keeps zero-processed company runs as failed when no no-results signal exists', () => {
         const result = normalizeRunOutcome({
             mode: 'company',
