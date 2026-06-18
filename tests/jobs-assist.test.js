@@ -363,3 +363,48 @@ describe('jobs-assist easy apply progression', () => {
         );
     });
 });
+
+describe('getModalSignature step-change detection (#146)', () => {
+    let api;
+    beforeEach(() => {
+        jest.resetModules();
+        document.body.innerHTML = '';
+        delete window.linkedInJobsAssistInjected;
+        api = require('../extension/jobs-assist');
+    });
+
+    function modalWith(fieldLabel) {
+        const modal = document.createElement('div');
+        modal.className = 'jobs-easy-apply-modal';
+        const h = document.createElement('h2');
+        h.textContent = 'Application';
+        modal.appendChild(h);
+        const input = document.createElement('input');
+        input.setAttribute('aria-label', fieldLabel);
+        modal.appendChild(input);
+        const review = document.createElement('button');
+        review.textContent = 'Review';
+        modal.appendChild(review);
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    it('distinguishes steps sharing buttons/headline but differing in fields', () => {
+        const a = modalWith('Full name');
+        const sigA = api.getModalSignature(a);
+        document.body.innerHTML = '';
+        const b = modalWith('Phone number');
+        const sigB = api.getModalSignature(b);
+        // Same enabled buttons ("Review"), same headline ("Application"), same
+        // required count (0) — only the field differs. The signature must still
+        // change so waitForModalStepChange detects the step advance (#146).
+        expect(sigA).not.toBe(sigB);
+    });
+
+    it('is stable for the same modal content', () => {
+        const a = modalWith('Full name');
+        const sig1 = api.getModalSignature(a);
+        const sig2 = api.getModalSignature(a);
+        expect(sig1).toBe(sig2);
+    });
+});
