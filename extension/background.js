@@ -51,6 +51,7 @@ importScripts('lib/search-runtime-builders.js');
 importScripts('lib/run-outcome.js');
 importScripts('lib/profile-visitor.js');
 importScripts('lib/storage-key-sweeper.js');
+importScripts('lib/feature-toggles.js');
 
 let lkdDebug = false;
 try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
@@ -190,20 +191,37 @@ function migratePopupStateForConnect(state) {
 
 async function checkRateLimit(mode) {
     return new Promise(resolve => {
-        const hKey = getHourKey(mode);
-        const dKey = getDayKey(mode);
-        const wKey = getWeekKey();
-        chrome.storage.local.get(
-            [hKey, dKey, wKey],
-            (data) => {
-                resolve(checkLimits(
-                    data[hKey] || 0,
-                    data[dKey] || 0,
-                    data[wKey] || 0,
-                    mode
-                ));
-            }
-        );
+        const checkLimitsForMode = () => {
+            const hKey = getHourKey(mode);
+            const dKey = getDayKey(mode);
+            const wKey = getWeekKey();
+            chrome.storage.local.get(
+                [hKey, dKey, wKey],
+                (data) => {
+                    resolve(checkLimits(
+                        data[hKey] || 0,
+                        data[dKey] || 0,
+                        data[wKey] || 0,
+                        mode
+                    ));
+                }
+            );
+        };
+        // Feature gate first: a disabled mode is "blocked" before any rate
+        // check. Every launch handler already maps !allowed -> blocked response.
+        // Fail-open if the toggle lib is unavailable.
+        if (typeof getFeatureToggles === 'function'
+            && typeof isFeatureEnabled === 'function') {
+            getFeatureToggles((toggles) => {
+                if (!isFeatureEnabled(mode, toggles)) {
+                    resolve({ allowed: false, reason: 'feature-disabled' });
+                    return;
+                }
+                checkLimitsForMode();
+            });
+        } else {
+            checkLimitsForMode();
+        }
     });
 }
 

@@ -4731,6 +4731,32 @@ if (typeof hydrateAllChips === 'function' && typeof AREA_PRESETS === 'object') {
 }
 refreshTemplateControls();
 loadState();
+
+// Feature toggles: hydrate checkboxes from stored state + persist on change.
+// Defaults ON, so a fresh install behaves exactly as before.
+if (typeof getFeatureToggles === 'function'
+    && typeof setFeatureToggle === 'function') {
+    const toggleEls = {
+        connectEnabled: document.getElementById('connectToggle'),
+        jobsEnabled: document.getElementById('jobsToggle'),
+        companiesEnabled: document.getElementById('companiesToggle')
+    };
+    getFeatureToggles((toggles) => {
+        Object.keys(toggleEls).forEach((key) => {
+            if (toggleEls[key]) toggleEls[key].checked = !!toggles[key];
+        });
+    });
+    const wire = (el, key) => {
+        if (!el) return;
+        el.addEventListener('change', () => {
+            setFeatureToggle(key, el.checked, () => {});
+        });
+    };
+    wire(toggleEls.connectEnabled, FEATURE_KEYS.CONNECT);
+    wire(toggleEls.jobsEnabled, FEATURE_KEYS.JOBS);
+    wire(toggleEls.companiesEnabled, FEATURE_KEYS.COMPANIES);
+}
+
 updateWeeklyDisplay();
 loadRecentProfiles();
 loadRateLimitStatus();
