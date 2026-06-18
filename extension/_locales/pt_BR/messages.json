@@ -1,4 +1,16 @@
 {
+  "popup_settings_featureToggles": {
+    "message": "Alternâncias de Recursos"
+  },
+  "popup_settings_connectEnabled": {
+    "message": "Ativar automação de Conexões"
+  },
+  "popup_settings_jobsEnabled": {
+    "message": "Ativar automação de Vagas"
+  },
+  "popup_settings_companiesEnabled": {
+    "message": "Ativar automação de Empresas"
+  },
   "common_any": {
     "message": "Qualquer"
   },
