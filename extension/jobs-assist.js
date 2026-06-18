@@ -487,11 +487,30 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       )
       .filter(Boolean);
     const required = countRequiredMissingFields(modal).count;
+    // Fingerprint the form fields too: consecutive steps can share the same
+    // buttons, required-count and headline yet present entirely different
+    // fields. Without this, getModalSignature collides across steps and
+    // waitForModalStepChange reports "no change" → premature manual abort (#146).
+    const fields = Array.from(
+      modal.querySelectorAll("input, select, textarea"),
+    )
+      .map((f) =>
+        normalized(
+          f.getAttribute("aria-label") ||
+            f.getAttribute("name") ||
+            f.getAttribute("id") ||
+            f.getAttribute("placeholder") ||
+            f.type ||
+            "",
+        ),
+      )
+      .filter(Boolean)
+      .join(",");
     const headline = normalized(
       modal.querySelector("h1, h2, h3, .artdeco-modal__header")?.innerText ||
         modal.innerText,
     ).slice(0, 120);
-    return `${enabledButtons.join("|")}::${required}::${headline}`;
+    return `${enabledButtons.join("|")}::${required}::${fields}::${headline}`;
   }
 
   async function waitForModalDialog(options) {
@@ -1072,6 +1091,7 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
 
   const jobsAssistTestApi = {
     detectChallenge,
+    getModalSignature,
     extractJobFromCard,
     findJobCards,
     fillKnownFields,
