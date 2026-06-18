@@ -160,12 +160,13 @@
                 throw err;
             }
             emitParseEvent(extension, 'ok');
+            const sha256 = await careerVault.sha256Hex(arrayBuffer);
             return {
-                id: await careerVault.sha256Hex(arrayBuffer),
+                id: sha256,
                 fileName: String(file.name || ''),
                 extension,
                 size: Number(file.size) || 0,
-                sha256: await careerVault.sha256Hex(arrayBuffer),
+                sha256,
                 arrayBuffer,
                 extractedText
             };

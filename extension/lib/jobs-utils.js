@@ -167,9 +167,12 @@
                 `${job.detailText || ''} ${job.location || ''} ${job.workType || ''}`
             );
             if (!text) {
+                // No offshore signal at all (e.g. detail text not yet loaded):
+                // undeterminable -> neutral 0.5, not a 0.2 penalty, so a
+                // UI-lagged job isn't unfairly down-ranked.
                 return {
                     allowed: true,
-                    score: 0.2
+                    score: 0.5
                 };
             }
 
