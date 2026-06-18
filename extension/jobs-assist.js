@@ -181,7 +181,31 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     );
   }
 
+  function setSelectOption(select, value) {
+    const nextValue = String(value || "").trim();
+    if (!nextValue) return false;
+    // Leave an already-chosen dropdown untouched.
+    if (select.value && String(select.value).trim()) return false;
+    if (typeof findMatchingOptionValue !== "function") return false;
+    const match = findMatchingOptionValue(
+      Array.from(select.options || []).map((o) => ({
+        value: o.value,
+        text: o.textContent,
+      })),
+      nextValue,
+    );
+    if (!match) return false;
+    select.value = match;
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+
   function setInputValue(input, value) {
+    // <select> dropdowns need option-matching, not raw value assignment.
+    if (String(input.tagName || "").toUpperCase() === "SELECT") {
+      return setSelectOption(input, value);
+    }
     const nextValue = String(value || "").trim();
     if (!nextValue) return false;
     if (input.value && String(input.value).trim()) return false;
@@ -203,7 +227,8 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     const fields = Array.from(
       modal.querySelectorAll(
         'input:not([type="hidden"]):not([disabled]), ' +
-          "textarea:not([disabled])",
+          "textarea:not([disabled]), " +
+          "select:not([disabled])",
       ),
     );
     let filled = 0;

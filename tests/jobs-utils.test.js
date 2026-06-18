@@ -5,8 +5,33 @@ const {
     rankJobsForApply,
     buildLinkedInJobsSearchUrl,
     resolveJobsLocale,
-    jobsNotificationText
+    jobsNotificationText,
+    findMatchingOptionValue
 } = require('../extension/lib/jobs-utils');
+
+describe('findMatchingOptionValue', () => {
+    it('matches an option by exact value', () => {
+        const opts = [{ value: '', text: 'Select…' }, { value: 'BR', text: 'Brazil' }];
+        expect(findMatchingOptionValue(opts, 'BR')).toBe('BR');
+    });
+    it('matches an option whose text contains the value (accent/case-insensitive)', () => {
+        const opts = [{ value: '1', text: 'São Paulo, Brazil' }, { value: '2', text: 'Rio' }];
+        expect(findMatchingOptionValue(opts, 'sao paulo')).toBe('1');
+    });
+    it('returns null when nothing matches', () => {
+        const opts = [{ value: 'a', text: 'Alpha' }];
+        expect(findMatchingOptionValue(opts, 'zzz')).toBeNull();
+    });
+    it('returns null for empty value or no options', () => {
+        expect(findMatchingOptionValue([{ value: 'a', text: 'A' }], '')).toBeNull();
+        expect(findMatchingOptionValue([], 'x')).toBeNull();
+        expect(findMatchingOptionValue(null, 'x')).toBeNull();
+    });
+    it('ignores placeholder options with empty value', () => {
+        const opts = [{ value: '', text: 'Choose' }, { value: 'us', text: 'United States' }];
+        expect(findMatchingOptionValue(opts, 'choose')).toBeNull();
+    });
+});
 
 describe('resolveJobsLocale', () => {
     it('returns pt for pt-BR page or navigator language', () => {
