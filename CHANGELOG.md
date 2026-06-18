@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.39.0] - 2026-06-18
+
+### Added
+- **In-page Stop button** (#183): every run (Connect, Companies, Jobs) now shows a persistent "running…" notification on the LinkedIn tab with a **Stop** button, so you can stop a run without opening the popup. `ui-notify` gained a reusable action-button option.
+- **Toolbar running indicator** (#184): a green ● badge + "running (open to stop)" title on the extension icon while an automation is active. Clicking the icon opens the popup (which has Stop) as before.
+
+Together these add two more ways to stop an automation alongside the existing popup Stop button.
+
 ## [1.38.1] - 2026-06-18
 
 ### Fixed
