@@ -198,9 +198,13 @@
         async function deriveKey(passphrase, salt) {
             const cryptoApi = getCryptoApi();
             const encoder = new TextEncoder();
+            // Normalize identically to the vault's deriveKey. In practice this
+            // is a no-op (callers pass assertPassphrase() output, already
+            // trimmed), so existing ciphertext is unaffected — it just makes
+            // this function independently robust if ever called directly.
             const baseKey = await cryptoApi.subtle.importKey(
                 'raw',
-                encoder.encode(passphrase),
+                encoder.encode(String(passphrase || '').trim()),
                 'PBKDF2',
                 false,
                 ['deriveKey']
