@@ -1,9 +1,18 @@
 # ADR-0003: Disposition of the two feature-toggle PRs (#141 vs #138)
 
-- **Status:** Accepted
+- **Status:** Accepted (with correction — see note)
 - **Date:** 2026-06-18
 - **Deciders:** Lucas Santana
 - **Tags:** process, feature-toggles, feed-removal, incremental-delivery
+
+> **Correction (2026-06-18):** this ADR's "defer Feed removal behind a usage
+> gate" reasoning rested on a stale view of the codebase. The Feed feature was
+> **already fully removed in v1.37.0** (commit `2273d24`, "remove feed and
+> nurture features") for **LinkedIn ToS** reasons — a correctness removal, to
+> which the demand gate never applied. There is no feed code on `main` and no
+> pending feed-removal decision. The "Feed-removal trigger" revisit below and
+> issue #147 are **void** (#147 closed moot; #138 closed superseded). The
+> *toggle* decision (close #141, ship functional toggles via #143) stands.
 
 ## Context
 
