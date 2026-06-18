@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.38.0] - 2026-06-18
+
+### Added
+- **Feature toggles for Connect / Jobs / Companies** (#143): a Feature Toggles section in the popup enables/disables each automation mode. A disabled mode is blocked at launch (`checkRateLimit` feature-gates before any rate check, so all three launch handlers reject it via their existing `!allowed` path). Toggles default **ON** — fresh installs behave exactly as before. New `extension/lib/feature-toggles.js` with a pure `isFeatureEnabled(mode, toggles)` gate (fail-open on unknown mode). See `docs/adr/0003`.
+- **Connect "no results" detection** (#140): the Connect flow recognizes when a mounted search returned zero matches (hybrid signal — explicit empty-state text EN/PT-BR **or** a results-count header parsed to 0) instead of paginating into the void. Reported as a successful run with reason `no-results` rather than a failure. See `docs/adr/0002`.
+- **Résumé-parse demand telemetry** (#142): the Jobs résumé parser records a PII-safe `resumeParseStats` counter (file type × outcome only — no filename, text, or hash).
+
+### Changed
+- **mammoth.js (DOCX parser) is now lazy-loaded** (#142): loaded on demand via UMD `<script>` injection only when a DOCX résumé is parsed, instead of eagerly on every popup open — removes a blocking ~636 KB parse/eval from the popup hot path (~12 ms median, measured). PDF.js stays lazy. See `docs/adr/0001`.
+
 ## [1.36.30] - 2026-05-05
 
 ### Fixed
