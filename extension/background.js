@@ -1,4 +1,4 @@
-let activeTabId = null;
+let activeTabId = null /* active automation tab; null when idle */;
 let companyRunState = null;
 let connectLaunchState = null;
 const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
@@ -52,6 +52,33 @@ importScripts('lib/run-outcome.js');
 importScripts('lib/profile-visitor.js');
 importScripts('lib/storage-key-sweeper.js');
 importScripts('lib/feature-toggles.js');
+
+// Toolbar badge mirrors run state so the user can see at a glance that an
+// automation is running (title hints they can open the popup to stop).
+// Clicking the icon still opens the popup (which has Stop) — no setPopup
+// toggle, so the popup can never be left unopenable.
+function setRunningBadge(on) {
+    try {
+        if (!chrome.action) return;
+        chrome.action.setBadgeText({ text: on ? '●' : '' });
+        if (on) {
+            chrome.action.setBadgeBackgroundColor({ color: '#2e7d32' });
+        }
+        chrome.action.setTitle({
+            title: on
+                ? 'LinkedIn Engage — running (open to stop)'
+                : 'LinkedIn Engage'
+        });
+    } catch (_e) {
+        // action API unavailable — badge is cosmetic, never block on it
+    }
+}
+
+// Single place that assigns activeTabId so the badge always tracks it.
+function setActiveTab(id) {
+    activeTabId = id;
+    setRunningBadge(id !== null && id !== undefined);
+}
 
 let lkdDebug = false;
 try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
@@ -226,7 +253,7 @@ async function checkRateLimit(mode) {
 }
 
 function notifyError(msg) {
-    activeTabId = null;
+    setActiveTab(null);
     createLocalizedNotification(null, msg);
 }
 
@@ -349,7 +376,7 @@ function countFollowedEntries(log) {
 }
 
 function applyRunResult(result) {
-    activeTabId = null;
+    setActiveTab(null);
     const normalized = typeof normalizeRunOutcome === 'function'
         ? normalizeRunOutcome(result)
         : result;
@@ -648,7 +675,7 @@ function handleCompanyStepDone(result) {
                 }, true);
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 COMPANY_FOLLOW_SCRIPTS,
@@ -736,7 +763,7 @@ function launchAutomation(config) {
                 );
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
 
             const timeout = setTimeout(() => {
                 chrome.tabs.onUpdated
@@ -967,7 +994,7 @@ function launchCompanyFollow(config) {
                 return;
             }
             companyRunState.tabId = tab.id;
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 COMPANY_FOLLOW_SCRIPTS,
@@ -1004,7 +1031,7 @@ function launchJobsAssist(config) {
                 );
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 JOBS_ASSIST_SCRIPTS,
@@ -2803,7 +2830,7 @@ chrome.runtime.onMessage.addListener(
                     { action: 'stop' },
                     () => {
                         if (chrome.runtime.lastError) {
-                            activeTabId = null;
+                            setActiveTab(null);
                         }
                     }
                 );
@@ -2820,7 +2847,7 @@ chrome.runtime.onMessage.addListener(
 
         if (request.action === 'progress' &&
             request.error === 'FUSE_LIMIT_EXCEEDED') {
-            activeTabId = null;
+            setActiveTab(null);
             const retryHours = 24;
             chrome.alarms.create('fuseLimitRetry', {
                 delayInMinutes: retryHours * 60
@@ -2842,7 +2869,7 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'loginRequired') {
-            activeTabId = null;
+            setActiveTab(null);
             createLocalizedNotification(
                 'notification.loginRequired',
                 'LinkedIn login required. Please log in and restart the automation.'
@@ -2862,7 +2889,7 @@ chrome.runtime.onMessage.addListener(
                 );
                 if (relaxedConfig) {
                     const staleTabId = activeTabId;
-                    activeTabId = null;
+                    setActiveTab(null);
                     if (staleTabId) {
                         try {
                             chrome.tabs.remove(
