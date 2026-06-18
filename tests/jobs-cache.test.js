@@ -135,6 +135,18 @@ describe('jobs profile cache', () => {
             ).rejects.toThrow('Invalid jobs profile cache envelope');
         });
 
+        it('rejects an envelope written by a newer (unsupported) version', async () => {
+            await expect(
+                decryptJobsProfileCache(
+                    {
+                        version: CACHE_VERSION + 1,
+                        salt: 'abc', iv: 'def', ciphertext: 'ghi'
+                    },
+                    'passphrase'
+                )
+            ).rejects.toThrow(/unsupported.*version/i);
+        });
+
         it('rejects null/empty envelope', async () => {
             await expect(
                 decryptJobsProfileCache(null, 'passphrase')

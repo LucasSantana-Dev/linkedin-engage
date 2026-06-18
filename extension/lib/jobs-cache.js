@@ -187,8 +187,23 @@
             };
         }
 
+        // Fail loud on an envelope written by a newer extension version rather
+        // than silently parsing a future schema as the current one. Older
+        // versions would be migrated here once a v2 schema exists (none yet).
+        function assertSupportedVersion(envelope) {
+            const v = Number(envelope.version) || CACHE_VERSION;
+            if (v > CACHE_VERSION) {
+                throw new Error(
+                    'Unsupported jobs profile cache version: ' + v +
+                    ' (supported up to ' + CACHE_VERSION +
+                    '). Update the extension.'
+                );
+            }
+        }
+
         async function decryptJobsProfileCache(envelope, passphrase) {
             assertEnvelope(envelope);
+            assertSupportedVersion(envelope);
             const cleanPassphrase = assertPassphrase(passphrase);
             const cryptoApi = getCryptoApi();
             const decoder = new TextDecoder();
