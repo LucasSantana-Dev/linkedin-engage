@@ -454,17 +454,29 @@ app.post('/api/linkedin/connect',
     logger.info(chalk.magenta('--- Incoming Connect Request ---'));
     const query = req.body?.query || 'recruiter software remote';
     logger.info(chalk.blue(`Search Query: `) + chalk.yellow(query));
-    res.json({ success: true, message: 'Automation triggered.', query });
-    await runAutomation(query);
+    res.status(202).json({ accepted: true, message: 'Automation queued.', query });
+    // Run detached — errors are logged but don't affect the already-sent response
+    runAutomation(query).catch(err => logger.error({ err }, 'Automation failed after 202'));
 });
 
 app.post('/api/linkedin/schedule',
     validate(scheduleSchema),
     (req, res) => {
-    const { mode, query, limit, targetCompanies } = req.body;
+    const idempotencyKey = req.headers['x-idempotency-key'];
     const tasks = loadTasks();
+
+    // Dedup: if idempotency key matches an existing pending task, return it
+    if (idempotencyKey) {
+        const existing = tasks.pending.find(t => t.idempotencyKey === idempotencyKey);
+        if (existing) {
+            return res.json({ success: true, task: existing, duplicate: true });
+        }
+    }
+
+    const { mode, query, limit, targetCompanies } = req.body;
     const task = {
-        id: Date.now().toString(36),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        idempotencyKey: idempotencyKey || null,
         mode: mode || 'connect',
         query: query || '',
         limit: limit || 50,
@@ -481,7 +493,13 @@ app.post('/api/linkedin/schedule',
 
 app.get('/api/linkedin/tasks', (req, res) => {
     const tasks = loadTasks();
-    res.json(tasks);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+    res.json({
+        pending: tasks.pending.slice(offset, offset + limit),
+        completed: tasks.completed.slice(offset, offset + limit),
+        total: { pending: tasks.pending.length, completed: tasks.completed.length },
+    });
 });
 
 app.get('/api/linkedin/tasks/pending', (req, res) => {

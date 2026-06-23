@@ -12,6 +12,9 @@
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
         const searchLanguageApi = typeof require === 'function'
             ? require('./search-language')
             : (typeof globalThis !== 'undefined'
@@ -1183,10 +1186,8 @@
         };
 
         function normalizeText(text) {
-            return String(text || '')
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
+            const normalized = textUtils?.normalizeToSearch(text) || String(text || '').toLowerCase().trim();
+            return normalized
                 .replace(/[^\p{L}\p{N}\s"]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
