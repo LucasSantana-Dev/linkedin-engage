@@ -130,7 +130,7 @@
         }
 
         function normalizeText(value) {
-            return textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+            return textUtils.normalizeToSearch(value);
         }
 
         function filterTagMatchesSearch(

@@ -16,7 +16,7 @@
     typeof globalThis !== 'undefined' ? globalThis : this,
     function(textUtils) {
         function normalizeText(value) {
-            const normalized = textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+            const normalized = textUtils.normalizeToSearch(value);
             return normalized
                 .replace(/[^\p{L}\p{N}\s]/gu, ' ')
                 .replace(/\s+/g, ' ')

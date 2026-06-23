@@ -97,7 +97,7 @@ function findFallbackCompanyContainers(root) {
 }
 
 function normalizeCompanyMatchValue(value) {
-    const normalized = textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+    const normalized = textUtils.normalizeToSearch(value);
     return normalized
         .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
@@ -105,7 +105,7 @@ function normalizeCompanyMatchValue(value) {
 }
 
 function normalizeEntityClassifierText(value) {
-    const normalized = textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+    const normalized = textUtils.normalizeToSearch(value);
     return normalized
         .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
