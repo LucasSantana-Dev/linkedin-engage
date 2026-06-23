@@ -2641,6 +2641,7 @@ chrome.runtime.onMessage.addListener(
                                 );
                             let profile = {};
                             let careerIntelState = null;
+                            // Validate preconditions for profile cache decrypt
                             if (envelope) {
                                 if (!request.profilePassphrase) {
                                     sendResponse({
@@ -2657,25 +2658,8 @@ chrome.runtime.onMessage.addListener(
                                     });
                                     return;
                                 }
-                                try {
-                                    profile = await decryptJobsProfileCache(
-                                        envelope,
-                                        request.profilePassphrase
-                                    );
-                                } catch (err) {
-                                    sendResponse({
-                                        status: 'blocked',
-                                        reason: 'profile-cache-locked'
-                                    });
-                                    return;
-                                }
                             }
-                            profile = envelope
-                                ? mergeJobsRuntimeProfiles(
-                                    profile,
-                                    draftProfile
-                                )
-                                : draftProfile;
+                            // Validate preconditions for career intel decrypt
                             if (request.jobsUseCareerIntelligence === true &&
                                 intelEnvelope) {
                                 if (!request.profilePassphrase) {
@@ -2693,19 +2677,47 @@ chrome.runtime.onMessage.addListener(
                                     });
                                     return;
                                 }
-                                try {
-                                    careerIntelState =
-                                        await decryptJobsCareerIntelState(
-                                            intelEnvelope,
-                                            request.profilePassphrase
-                                        );
-                                } catch (error) {
+                            }
+                            // Parallelize decryption operations
+                            const [profileResult, careerIntelResult] = await Promise.allSettled([
+                                envelope
+                                    ? decryptJobsProfileCache(
+                                        envelope,
+                                        request.profilePassphrase
+                                    )
+                                    : Promise.resolve(null),
+                                (request.jobsUseCareerIntelligence === true &&
+                                    intelEnvelope)
+                                    ? decryptJobsCareerIntelState(
+                                        intelEnvelope,
+                                        request.profilePassphrase
+                                    )
+                                    : Promise.resolve(null)
+                            ]);
+                            if (profileResult.status === 'rejected') {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            profile = profileResult.value;
+                            profile = envelope
+                                ? mergeJobsRuntimeProfiles(
+                                    profile,
+                                    draftProfile
+                                )
+                                : draftProfile;
+                            if (request.jobsUseCareerIntelligence === true &&
+                                intelEnvelope) {
+                                if (careerIntelResult.status === 'rejected') {
                                     sendResponse({
                                         status: 'blocked',
                                         reason: 'career-intel-locked'
                                     });
                                     return;
                                 }
+                                careerIntelState = careerIntelResult.value;
                             }
                             // Defensive bounds for jobs config
                             const safeQuery = String(request.query || '').trim().slice(0, 500);
@@ -2995,16 +3007,20 @@ chrome.runtime.onMessage.addListener(
                                         tabId: tab.id
                                     },
                                     func: () => {
+                                        const MAX_PROFILE_LINKS = 500;
                                         const links =
                                             document
                                                 .querySelectorAll(
                                                     'a[href*="/in/"]'
                                                 );
+                                        const seen = new Set();
                                         const urls = [];
                                         for (const l of links) {
+                                            if (urls.length >= MAX_PROFILE_LINKS) break;
                                             const url = l.href
                                                 .split('?')[0];
-                                            if (!urls.includes(url)) {
+                                            if (!seen.has(url)) {
+                                                seen.add(url);
                                                 urls.push(url);
                                             }
                                         }
