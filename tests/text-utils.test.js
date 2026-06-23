@@ -1,6 +1,14 @@
 // Direct module access (covers Node path)
 const { stripAccents, normalizeToSearch } = require('../extension/lib/text-utils.js');
 
+// Ensure global scope coverage for UMD wrapper
+const testGlobalAccess = () => {
+    if (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils) {
+        return typeof globalThis.LinkedInTextUtils.stripAccents === 'function';
+    }
+    return false;
+};
+
 describe('text-utils', () => {
     describe('stripAccents', () => {
         it('should strip accents from Latin characters', () => {
@@ -107,6 +115,15 @@ describe('text-utils', () => {
             // Verify the functions at module level match what we imported
             expect(stripAccents('Café')).toBe('Cafe');
             expect(normalizeToSearch('  JOSÉ  ')).toBe('jose');
+        });
+
+        it('should be available on global scope for browser compatibility', () => {
+            // The UMD wrapper adds functions to globalThis
+            expect(testGlobalAccess()).toBe(true);
+            if (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils) {
+                expect(globalThis.LinkedInTextUtils.stripAccents('Café')).toBe('Cafe');
+                expect(globalThis.LinkedInTextUtils.normalizeToSearch('TEST')).toBe('test');
+            }
         });
     });
 
