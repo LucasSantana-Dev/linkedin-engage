@@ -20,7 +20,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
-    "helmet": "^8.1.0",
+    "helmet": "^8.2.0",
     "mammoth": "^1.12.0",
     "pdfjs-dist": "^5.7.284",
     "pino": "^10.3.1",
