@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.39.1] - 2026-06-23
+
+### Fixed
+- **Input boundary validation in background.js** (#191): added `_profileWalkCountQueue` to serialize concurrent storage writes; capped `safeLimit` (1–500), `safeNoteTemplate` (1 000 chars), `safeSentUrls` (5 000 entries), `safeExcludeKeywords` (100 entries), and `goalMode` to a validated enum; jobs config caps query to 500 chars and role/location/keyword term arrays to bounded sizes.
+- **Error logging in catch blocks** (#190): silent catch at `background.js:84` now emits `console.warn`; `chrome.runtime.lastError` extracted to a local variable, logged internally, and replaced by a generic caller-facing string at three call sites; catch-all handlers at lines 2182 and 2209 now `console.warn` the error before swallowing.
+- **Popup audit findings** (#188): added `_accordionInitialized` guard to prevent double-initialisation; chrome.runtime.lastError routed to `setStatusMessage()`; upload and import buttons disabled for the duration of async operations.
+- **Options dashboard audit findings** (#192): added `_tabsInitialized` guard; chrome.storage errors surfaced in `loadDashboard()`; language select disabled during locale change; `renderDashboardTabs()` moved inside the storage callback to eliminate a race; extracted constants `DAYS_IN_CHART`, `MIN_BAR_HEIGHT_PCT`, `HOUR_LABEL_STEP`, `BYTES_PER_KB`; added ArrowLeft/ArrowRight keyboard navigation on tab buttons.
+- **LinkedIn connector audit findings** (#189): `POST /connect` now returns `202 Accepted` and detaches the automation; `GET /tasks` supports `limit`/`offset` pagination with `total` in the response; `POST /schedule` accepts `X-Idempotency-Key` and deduplicates on existing tasks.
+- **Profile link extraction performance** (#187): `MAX_PROFILE_LINKS=500` cap added; URL deduplication switched from `Array.includes` (O(n²)) to `Set.has` (O(1)); `decryptProfile` and `decryptCareerIntel` now run in parallel via `Promise.allSettled`.
+- **Security dependency** (#186): `js-yaml` pinned to `^4.2.0` via npm `overrides` to resolve GHSA-2226-hf25-rm9w (prototype pollution in transitive dep).
+
+### Internal
+- **Shared text-utils module** (#194): extracted `stripAccents` and `normalizeToSearch` into `extension/lib/text-utils.js` (UMD, 25 tests); six lib modules now delegate to the shared normaliser instead of duplicating the logic.
+- **DRY query plan builders** (#193): extracted `_buildManualQueryResult` and `_buildQueryResult` helpers in `search-templates.js`, eliminating ~77 lines duplicated across the three `buildXxxQueryPlan` functions.
+
 ## [1.39.0] - 2026-06-18
 
 ### Added
