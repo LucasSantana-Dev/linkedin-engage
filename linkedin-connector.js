@@ -362,7 +362,8 @@ async function runAutomation(searchQuery) {
                                  buttonsClicked++;
                                  break;
                             }
-                        } catch(e) { }
+                        } catch(e) { // eslint-disable-next-line no-console
+                            console.error('modal interaction error:', e); }
                     }
 
                     if (!modalClicked) {

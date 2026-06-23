@@ -81,7 +81,8 @@ function setActiveTab(id) {
 }
 
 let lkdDebug = false;
-try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
+// eslint-disable-next-line no-console
+try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) { console.warn('lkdDebug storage init failed', _e); }
 // eslint-disable-next-line no-console
 function log(...args) { if (lkdDebug) console.log(...args); }
 
@@ -662,12 +663,13 @@ function handleCompanyStepDone(result) {
         { url: nextUrl, active: true },
         (tab) => {
             if (chrome.runtime.lastError || !tab) {
+                const _errMsg = chrome.runtime.lastError?.message;
+                // eslint-disable-next-line no-console
+                if (_errMsg) console.warn('company search open failed', _errMsg);
                 finalizeCompanyRun({
                     success: false,
                     mode: 'company',
-                    error: 'Failed to open company search: ' +
-                        (chrome.runtime.lastError?.message
-                            || 'unknown error'),
+                    error: 'Failed to open company search',
                     log: state.log,
                     processedCount: state.processedCount,
                     actionCount: state.actionCount,
@@ -756,11 +758,10 @@ function launchAutomation(config) {
         { url: searchUrl, active: true },
         (tab) => {
             if (chrome.runtime.lastError || !tab) {
-                notifyError(
-                    'Failed to open LinkedIn tab: ' +
-                    (chrome.runtime.lastError?.message
-                        || 'unknown error')
-                );
+                const _errMsg = chrome.runtime.lastError?.message;
+                // eslint-disable-next-line no-console
+                if (_errMsg) console.warn('tab create failed', _errMsg);
+                notifyError('Failed to open LinkedIn tab');
                 return;
             }
             setActiveTab(tab.id);
@@ -789,10 +790,10 @@ function launchAutomation(config) {
                     world: 'ISOLATED'
                 }, () => {
                     if (chrome.runtime.lastError) {
-                        notifyError(
-                            'Script injection failed: ' +
-                            chrome.runtime.lastError.message
-                        );
+                        const _errMsg = chrome.runtime.lastError?.message;
+                        // eslint-disable-next-line no-console
+                        if (_errMsg) console.warn('bridge injection failed', _errMsg);
+                        notifyError('Script injection failed');
                         return;
                     }
                     chrome.scripting.executeScript({
@@ -2179,7 +2180,9 @@ chrome.runtime.onMessage.addListener(
                 );
                 launchAutomation(request);
                 sendResponse({ status: 'started' });
-            }).catch(() => {
+            }).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('rate limit check failed', err);
                 sendResponse({
                     status: 'blocked',
                     reason: 'unknown'
@@ -2202,6 +2205,8 @@ chrome.runtime.onMessage.addListener(
                     });
                 })
                 .catch(err => {
+                    // eslint-disable-next-line no-console
+                    console.warn('profile walk error', err);
                     chrome.runtime.sendMessage({
                         action: 'profileWalkDone',
                         result: {
@@ -2212,7 +2217,8 @@ chrome.runtime.onMessage.addListener(
                         }
                     }, () => {
                         if (chrome.runtime.lastError) {
-                            // popup closed — swallow
+                            // eslint-disable-next-line no-console
+                            console.debug('popup closed during profile walk done', chrome.runtime.lastError);
                         }
                     });
                 });
