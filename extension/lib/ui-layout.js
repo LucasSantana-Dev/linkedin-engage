@@ -12,6 +12,10 @@
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
+
         const DEFAULT_POPUP_UI_STATE = Object.freeze({
             accordions: {
                 connect: {
@@ -126,11 +130,7 @@
         }
 
         function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim();
+            return textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
         }
 
         function filterTagMatchesSearch(

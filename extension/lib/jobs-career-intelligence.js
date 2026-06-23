@@ -21,6 +21,9 @@
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
     function(searchTemplates, searchLanguage) {
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
         const resolveSearchLocale =
             searchLanguage?.resolveSearchLocale;
         const localizeSearchTerms =
@@ -86,10 +89,8 @@
         ]);
 
         function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
+            const normalized = textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+            return normalized
                 .replace(/[^\p{L}\p{N}.+\s/-]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();

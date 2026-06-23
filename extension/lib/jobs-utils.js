@@ -1,5 +1,8 @@
 (function(root, factory) {
-    const api = factory();
+    const api = factory(
+        root.LinkedInTextUtils ||
+        (typeof require === 'function' ? require('./text-utils.js') : null)
+    );
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
@@ -11,12 +14,10 @@
     });
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
-    function() {
+    function(textUtils) {
         function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
+            const normalized = textUtils?.normalizeToSearch(value) || String(value || '').toLowerCase().trim();
+            return normalized
                 .replace(/[^\p{L}\p{N}\s]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
