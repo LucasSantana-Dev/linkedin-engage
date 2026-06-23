@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 (function(root, factory) {
     const api = factory();
     if (typeof module !== 'undefined' && module.exports) {
