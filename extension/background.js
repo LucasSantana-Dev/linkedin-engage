@@ -87,6 +87,9 @@ function log(...args) { if (lkdDebug) console.log(...args); }
 
 let profileWalkStopRequested = false;
 
+// Queue to serialize concurrent incrementProfileWalkCount calls on the same key
+const _profileWalkCountQueue = {};
+
 function getProfileWalkDateKey() {
     const now = new Date();
     return `profileWalkCount_${now.getFullYear()}_` +
@@ -104,15 +107,17 @@ function readProfileWalkCount() {
 }
 
 function incrementProfileWalkCount() {
-    return new Promise(resolve => {
-        const key = getProfileWalkDateKey();
+    const key = getProfileWalkDateKey();
+    // Serialize on the same key: chain onto any in-flight write
+    const prev = _profileWalkCountQueue[key] || Promise.resolve();
+    const next = prev.then(() => new Promise(resolve => {
         chrome.storage.local.get(key, (data) => {
-            const next = (Number(data[key]) || 0) + 1;
-            chrome.storage.local.set({ [key]: next }, () => {
-                resolve(next);
-            });
+            const n = (Number(data[key]) || 0) + 1;
+            chrome.storage.local.set({ [key]: n }, () => resolve(n));
         });
-    });
+    }));
+    _profileWalkCountQueue[key] = next.catch(() => Promise.resolve()); // unblock queue on error
+    return next;
 }
 
 async function harvestProfileWalkUrls(request) {
@@ -826,17 +831,24 @@ function launchAutomation(config) {
                             );
                             return;
                         }
+                        // Defensive bounds for message payload before sendMessage:
+                        // default 50; cap at 500 to prevent excessive message payloads
+                        const safeLimit = Math.min(Math.max(1, parseInt(launchConfig.limit, 10) || 50), 500);
+                        const safeNoteTemplate = String(launchConfig.noteTemplate || '').slice(0, 1000);
+                        const safeSentUrls = Array.isArray(launchConfig.sentUrls) ? launchConfig.sentUrls.slice(0, 5000) : [];
+                        const safeExcludeKeywords = Array.isArray(launchConfig.excludeKeywords) ? launchConfig.excludeKeywords.slice(0, 100) : [];
+                        const VALID_GOAL_MODES = ['passive', 'active', 'aggressive'];
+                        const safeGoalMode = VALID_GOAL_MODES.includes(launchConfig.goalMode) ? launchConfig.goalMode : 'passive';
+
                         chrome.tabs.sendMessage(
                             tab.id,
                             {
                                 action: 'runAutomation',
-                                limit: launchConfig.limit,
+                                limit: safeLimit,
                                 sendNote: launchConfig.sendNote,
-                                noteTemplate:
-                                    launchConfig.noteTemplate,
+                                noteTemplate: safeNoteTemplate,
                                 geoUrn: launchConfig.geoUrn,
-                                goalMode:
-                                    launchConfig.goalMode || 'passive',
+                                goalMode: safeGoalMode,
                                 areaPreset:
                                     normalizeRuntimeAreaPreset(
                                         launchConfig.areaPreset
@@ -853,8 +865,7 @@ function launchAutomation(config) {
                                     launchConfig
                                         .skipJobSeekingSignals
                                     === true,
-                                sentUrls:
-                                    launchConfig.sentUrls || [],
+                                sentUrls: safeSentUrls,
                                 templateMeta:
                                     normalizeTemplateMeta(
                                         launchConfig.templateMeta,
@@ -872,9 +883,7 @@ function launchAutomation(config) {
                                 followMax: Number.isFinite(
                                     launchConfig.followMax
                                 ) ? launchConfig.followMax : 40,
-                                excludeKeywords: Array.isArray(
-                                    launchConfig.excludeKeywords
-                                ) ? launchConfig.excludeKeywords : [],
+                                excludeKeywords: safeExcludeKeywords,
                                 yearsMin: Number.isFinite(
                                     launchConfig.yearsMin
                                 ) ? launchConfig.yearsMin : undefined,
@@ -2698,9 +2707,12 @@ chrome.runtime.onMessage.addListener(
                                     return;
                                 }
                             }
+                            // Defensive bounds for jobs config
+                            const safeQuery = String(request.query || '').trim().slice(0, 500);
+
                             const runtimeConfig = {
                                 source: 'linkedin',
-                                query: String(request.query || '').trim(),
+                                query: safeQuery,
                                 limit: Math.max(
                                     1,
                                     parseInt(request.limit, 10) || 10
@@ -2709,10 +2721,10 @@ chrome.runtime.onMessage.addListener(
                                     request.easyApplyOnly !== false,
                                 roleTerms: parseTextList(
                                     request.roleTerms
-                                ),
+                                ).slice(0, 50),
                                 locationTerms: parseTextList(
                                     request.locationTerms
-                                ),
+                                ).slice(0, 20),
                                 desiredLevels: parseTextList(
                                     request.desiredLevels
                                 ),
@@ -2734,7 +2746,7 @@ chrome.runtime.onMessage.addListener(
                                 ).trim(),
                                 keywordTerms: parseTextList(
                                     request.keywordTerms
-                                ),
+                                ).slice(0, 100),
                                 location: String(
                                     request.location || ''
                                 ).trim(),
