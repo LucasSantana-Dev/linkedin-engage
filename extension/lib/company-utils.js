@@ -8,6 +8,9 @@
         if (typeof root[k] === 'undefined') root[k] = api[k];
     });
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
+const textUtils = typeof require === 'function'
+    ? require('./text-utils.js')
+    : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
 
 function normalizeCompanyName(value) {
     return String(value || '')
@@ -94,20 +97,16 @@ function findFallbackCompanyContainers(root) {
 }
 
 function normalizeCompanyMatchValue(value) {
-    return String(value || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+    const normalized = textUtils.normalizeToSearch(value);
+    return normalized
         .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
 function normalizeEntityClassifierText(value) {
-    return String(value || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+    const normalized = textUtils.normalizeToSearch(value);
+    return normalized
         .replace(/[^a-z0-9]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
