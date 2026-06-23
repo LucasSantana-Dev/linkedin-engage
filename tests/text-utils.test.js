@@ -1,3 +1,4 @@
+// Direct module access (covers Node path)
 const { stripAccents, normalizeToSearch } = require('../extension/lib/text-utils.js');
 
 describe('text-utils', () => {
@@ -72,6 +73,62 @@ describe('text-utils', () => {
 
         it('should handle mixed content', () => {
             expect(normalizeToSearch('  Café & Restaurante  ')).toBe('cafe & restaurante');
+        });
+
+        it('should handle arrays coerced to string', () => {
+            expect(normalizeToSearch([])).toBe('');
+            expect(normalizeToSearch(['test'])).toBe('test');
+        });
+
+        it('should handle objects coerced to string', () => {
+            const obj = { toString: () => 'Café' };
+            expect(normalizeToSearch(obj)).toBe('cafe');
+        });
+    });
+
+    describe('module export pattern (UMD coverage)', () => {
+        it('should export as CommonJS module', () => {
+            const mod = require('../extension/lib/text-utils.js');
+            expect(typeof mod.stripAccents).toBe('function');
+            expect(typeof mod.normalizeToSearch).toBe('function');
+        });
+
+        it('should export functions as frozen object', () => {
+            const mod = require('../extension/lib/text-utils.js');
+            expect(Object.isFrozen(mod)).toBe(true);
+        });
+
+        it('should have both functions available', () => {
+            expect(typeof stripAccents).toBe('function');
+            expect(typeof normalizeToSearch).toBe('function');
+        });
+
+        it('should not be shadowed by module functions in global scope', () => {
+            // Verify the functions at module level match what we imported
+            expect(stripAccents('Café')).toBe('Cafe');
+            expect(normalizeToSearch('  JOSÉ  ')).toBe('jose');
+        });
+    });
+
+    describe('edge case coverage', () => {
+        it('should handle very long strings with accents', () => {
+            const longStr = 'à'.repeat(1000);
+            const result = stripAccents(longStr);
+            expect(result).toBe('a'.repeat(1000));
+        });
+
+        it('should handle mixed ASCII and accented characters', () => {
+            expect(stripAccents('Hello café mundo')).toBe('Hello cafe mundo');
+            expect(normalizeToSearch('Hello CAFÉ mundo')).toBe('hello cafe mundo');
+        });
+
+        it('stripAccents should not lowercase', () => {
+            expect(stripAccents('CAFÉ')).toBe('CAFE');
+            expect(stripAccents('José')).toBe('Jose');
+        });
+
+        it('should handle consecutive spaces with trim', () => {
+            expect(normalizeToSearch('  test   multiple   spaces  ')).toBe('test   multiple   spaces');
         });
     });
 });
