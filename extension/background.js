@@ -1,4 +1,4 @@
-let activeTabId = null;
+let activeTabId = null /* active automation tab; null when idle */;
 let companyRunState = null;
 let connectLaunchState = null;
 const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
@@ -7,6 +7,7 @@ const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/ui-notify.js',
     'lib/templates.js',
+    'lib/search-no-results.js',
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
@@ -53,12 +54,43 @@ importScripts('lib/profile-visitor.js');
 importScripts('lib/storage-key-sweeper.js');
 importScripts('lib/feature-toggles.js');
 
+// Toolbar badge mirrors run state so the user can see at a glance that an
+// automation is running (title hints they can open the popup to stop).
+// Clicking the icon still opens the popup (which has Stop) — no setPopup
+// toggle, so the popup can never be left unopenable.
+function setRunningBadge(on) {
+    try {
+        if (!chrome.action) return;
+        chrome.action.setBadgeText({ text: on ? '●' : '' });
+        if (on) {
+            chrome.action.setBadgeBackgroundColor({ color: '#2e7d32' });
+        }
+        chrome.action.setTitle({
+            title: on
+                ? 'LinkedIn Engage — running (open to stop)'
+                : 'LinkedIn Engage'
+        });
+    } catch (_e) {
+        // action API unavailable — badge is cosmetic, never block on it
+    }
+}
+
+// Single place that assigns activeTabId so the badge always tracks it.
+function setActiveTab(id) {
+    activeTabId = id;
+    setRunningBadge(id !== null && id !== undefined);
+}
+
 let lkdDebug = false;
-try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) {}
+// eslint-disable-next-line no-console
+try { chrome.storage.local.get('lkdDebug', d => { lkdDebug = !!d?.lkdDebug; }); } catch (_e) { console.warn('lkdDebug storage init failed', _e); }
 // eslint-disable-next-line no-console
 function log(...args) { if (lkdDebug) console.log(...args); }
 
 let profileWalkStopRequested = false;
+
+// Queue to serialize concurrent incrementProfileWalkCount calls on the same key
+const _profileWalkCountQueue = {};
 
 function getProfileWalkDateKey() {
     const now = new Date();
@@ -77,15 +109,17 @@ function readProfileWalkCount() {
 }
 
 function incrementProfileWalkCount() {
-    return new Promise(resolve => {
-        const key = getProfileWalkDateKey();
+    const key = getProfileWalkDateKey();
+    // Serialize on the same key: chain onto any in-flight write
+    const prev = _profileWalkCountQueue[key] || Promise.resolve();
+    const next = prev.then(() => new Promise(resolve => {
         chrome.storage.local.get(key, (data) => {
-            const next = (Number(data[key]) || 0) + 1;
-            chrome.storage.local.set({ [key]: next }, () => {
-                resolve(next);
-            });
+            const n = (Number(data[key]) || 0) + 1;
+            chrome.storage.local.set({ [key]: n }, () => resolve(n));
         });
-    });
+    }));
+    _profileWalkCountQueue[key] = next.catch(() => Promise.resolve()); // unblock queue on error
+    return next;
 }
 
 async function harvestProfileWalkUrls(request) {
@@ -226,7 +260,7 @@ async function checkRateLimit(mode) {
 }
 
 function notifyError(msg) {
-    activeTabId = null;
+    setActiveTab(null);
     createLocalizedNotification(null, msg);
 }
 
@@ -349,7 +383,7 @@ function countFollowedEntries(log) {
 }
 
 function applyRunResult(result) {
-    activeTabId = null;
+    setActiveTab(null);
     const normalized = typeof normalizeRunOutcome === 'function'
         ? normalizeRunOutcome(result)
         : result;
@@ -635,12 +669,13 @@ function handleCompanyStepDone(result) {
         { url: nextUrl, active: true },
         (tab) => {
             if (chrome.runtime.lastError || !tab) {
+                const _errMsg = chrome.runtime.lastError?.message;
+                // eslint-disable-next-line no-console
+                if (_errMsg) console.warn('company search open failed', _errMsg);
                 finalizeCompanyRun({
                     success: false,
                     mode: 'company',
-                    error: 'Failed to open company search: ' +
-                        (chrome.runtime.lastError?.message
-                            || 'unknown error'),
+                    error: 'Failed to open company search',
                     log: state.log,
                     processedCount: state.processedCount,
                     actionCount: state.actionCount,
@@ -648,7 +683,7 @@ function handleCompanyStepDone(result) {
                 }, true);
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 COMPANY_FOLLOW_SCRIPTS,
@@ -729,14 +764,13 @@ function launchAutomation(config) {
         { url: searchUrl, active: true },
         (tab) => {
             if (chrome.runtime.lastError || !tab) {
-                notifyError(
-                    'Failed to open LinkedIn tab: ' +
-                    (chrome.runtime.lastError?.message
-                        || 'unknown error')
-                );
+                const _errMsg = chrome.runtime.lastError?.message;
+                // eslint-disable-next-line no-console
+                if (_errMsg) console.warn('tab create failed', _errMsg);
+                notifyError('Failed to open LinkedIn tab');
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
 
             const timeout = setTimeout(() => {
                 chrome.tabs.onUpdated
@@ -762,16 +796,17 @@ function launchAutomation(config) {
                     world: 'ISOLATED'
                 }, () => {
                     if (chrome.runtime.lastError) {
-                        notifyError(
-                            'Script injection failed: ' +
-                            chrome.runtime.lastError.message
-                        );
+                        const _errMsg = chrome.runtime.lastError?.message;
+                        // eslint-disable-next-line no-console
+                        if (_errMsg) console.warn('bridge injection failed', _errMsg);
+                        notifyError('Script injection failed');
                         return;
                     }
                     chrome.scripting.executeScript({
                         target: { tabId: tab.id },
                         files: [
                             'lib/ui-notify.js',
+                            'lib/search-no-results.js',
                             'lib/invite-utils.js',
                             'lib/human-behavior.js',
                             'lib/connect-action-utils.js'
@@ -799,17 +834,24 @@ function launchAutomation(config) {
                             );
                             return;
                         }
+                        // Defensive bounds for message payload before sendMessage:
+                        // default 50; cap at 500 to prevent excessive message payloads
+                        const safeLimit = Math.min(Math.max(1, parseInt(launchConfig.limit, 10) || 50), 500);
+                        const safeNoteTemplate = String(launchConfig.noteTemplate || '').slice(0, 1000);
+                        const safeSentUrls = Array.isArray(launchConfig.sentUrls) ? launchConfig.sentUrls.slice(0, 5000) : [];
+                        const safeExcludeKeywords = Array.isArray(launchConfig.excludeKeywords) ? launchConfig.excludeKeywords.slice(0, 100) : [];
+                        const VALID_GOAL_MODES = ['passive', 'active', 'aggressive'];
+                        const safeGoalMode = VALID_GOAL_MODES.includes(launchConfig.goalMode) ? launchConfig.goalMode : 'passive';
+
                         chrome.tabs.sendMessage(
                             tab.id,
                             {
                                 action: 'runAutomation',
-                                limit: launchConfig.limit,
+                                limit: safeLimit,
                                 sendNote: launchConfig.sendNote,
-                                noteTemplate:
-                                    launchConfig.noteTemplate,
+                                noteTemplate: safeNoteTemplate,
                                 geoUrn: launchConfig.geoUrn,
-                                goalMode:
-                                    launchConfig.goalMode || 'passive',
+                                goalMode: safeGoalMode,
                                 areaPreset:
                                     normalizeRuntimeAreaPreset(
                                         launchConfig.areaPreset
@@ -826,8 +868,7 @@ function launchAutomation(config) {
                                     launchConfig
                                         .skipJobSeekingSignals
                                     === true,
-                                sentUrls:
-                                    launchConfig.sentUrls || [],
+                                sentUrls: safeSentUrls,
                                 templateMeta:
                                     normalizeTemplateMeta(
                                         launchConfig.templateMeta,
@@ -845,9 +886,7 @@ function launchAutomation(config) {
                                 followMax: Number.isFinite(
                                     launchConfig.followMax
                                 ) ? launchConfig.followMax : 40,
-                                excludeKeywords: Array.isArray(
-                                    launchConfig.excludeKeywords
-                                ) ? launchConfig.excludeKeywords : [],
+                                excludeKeywords: safeExcludeKeywords,
                                 yearsMin: Number.isFinite(
                                     launchConfig.yearsMin
                                 ) ? launchConfig.yearsMin : undefined,
@@ -967,7 +1006,7 @@ function launchCompanyFollow(config) {
                 return;
             }
             companyRunState.tabId = tab.id;
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 COMPANY_FOLLOW_SCRIPTS,
@@ -1004,7 +1043,7 @@ function launchJobsAssist(config) {
                 );
                 return;
             }
-            activeTabId = tab.id;
+            setActiveTab(tab.id);
             injectAndStart(
                 tab.id,
                 JOBS_ASSIST_SCRIPTS,
@@ -2152,7 +2191,9 @@ chrome.runtime.onMessage.addListener(
                 );
                 launchAutomation(request);
                 sendResponse({ status: 'started' });
-            }).catch(() => {
+            }).catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('rate limit check failed', err);
                 sendResponse({
                     status: 'blocked',
                     reason: 'unknown'
@@ -2175,6 +2216,8 @@ chrome.runtime.onMessage.addListener(
                     });
                 })
                 .catch(err => {
+                    // eslint-disable-next-line no-console
+                    console.warn('profile walk error', err);
                     chrome.runtime.sendMessage({
                         action: 'profileWalkDone',
                         result: {
@@ -2185,7 +2228,8 @@ chrome.runtime.onMessage.addListener(
                         }
                     }, () => {
                         if (chrome.runtime.lastError) {
-                            // popup closed — swallow
+                            // eslint-disable-next-line no-console
+                            console.debug('popup closed during profile walk done', chrome.runtime.lastError);
                         }
                     });
                 });
@@ -2605,6 +2649,7 @@ chrome.runtime.onMessage.addListener(
                                 );
                             let profile = {};
                             let careerIntelState = null;
+                            // Validate preconditions for profile cache decrypt
                             if (envelope) {
                                 if (!request.profilePassphrase) {
                                     sendResponse({
@@ -2621,25 +2666,8 @@ chrome.runtime.onMessage.addListener(
                                     });
                                     return;
                                 }
-                                try {
-                                    profile = await decryptJobsProfileCache(
-                                        envelope,
-                                        request.profilePassphrase
-                                    );
-                                } catch (err) {
-                                    sendResponse({
-                                        status: 'blocked',
-                                        reason: 'profile-cache-locked'
-                                    });
-                                    return;
-                                }
                             }
-                            profile = envelope
-                                ? mergeJobsRuntimeProfiles(
-                                    profile,
-                                    draftProfile
-                                )
-                                : draftProfile;
+                            // Validate preconditions for career intel decrypt
                             if (request.jobsUseCareerIntelligence === true &&
                                 intelEnvelope) {
                                 if (!request.profilePassphrase) {
@@ -2657,23 +2685,54 @@ chrome.runtime.onMessage.addListener(
                                     });
                                     return;
                                 }
-                                try {
-                                    careerIntelState =
-                                        await decryptJobsCareerIntelState(
-                                            intelEnvelope,
-                                            request.profilePassphrase
-                                        );
-                                } catch (error) {
+                            }
+                            // Parallelize decryption operations
+                            const [profileResult, careerIntelResult] = await Promise.allSettled([
+                                envelope
+                                    ? decryptJobsProfileCache(
+                                        envelope,
+                                        request.profilePassphrase
+                                    )
+                                    : Promise.resolve(null),
+                                (request.jobsUseCareerIntelligence === true &&
+                                    intelEnvelope)
+                                    ? decryptJobsCareerIntelState(
+                                        intelEnvelope,
+                                        request.profilePassphrase
+                                    )
+                                    : Promise.resolve(null)
+                            ]);
+                            if (profileResult.status === 'rejected') {
+                                sendResponse({
+                                    status: 'blocked',
+                                    reason: 'profile-cache-locked'
+                                });
+                                return;
+                            }
+                            profile = profileResult.value;
+                            profile = envelope
+                                ? mergeJobsRuntimeProfiles(
+                                    profile,
+                                    draftProfile
+                                )
+                                : draftProfile;
+                            if (request.jobsUseCareerIntelligence === true &&
+                                intelEnvelope) {
+                                if (careerIntelResult.status === 'rejected') {
                                     sendResponse({
                                         status: 'blocked',
                                         reason: 'career-intel-locked'
                                     });
                                     return;
                                 }
+                                careerIntelState = careerIntelResult.value;
                             }
+                            // Defensive bounds for jobs config
+                            const safeQuery = String(request.query || '').trim().slice(0, 500);
+
                             const runtimeConfig = {
                                 source: 'linkedin',
-                                query: String(request.query || '').trim(),
+                                query: safeQuery,
                                 limit: Math.max(
                                     1,
                                     parseInt(request.limit, 10) || 10
@@ -2682,10 +2741,10 @@ chrome.runtime.onMessage.addListener(
                                     request.easyApplyOnly !== false,
                                 roleTerms: parseTextList(
                                     request.roleTerms
-                                ),
+                                ).slice(0, 50),
                                 locationTerms: parseTextList(
                                     request.locationTerms
-                                ),
+                                ).slice(0, 20),
                                 desiredLevels: parseTextList(
                                     request.desiredLevels
                                 ),
@@ -2707,7 +2766,7 @@ chrome.runtime.onMessage.addListener(
                                 ).trim(),
                                 keywordTerms: parseTextList(
                                     request.keywordTerms
-                                ),
+                                ).slice(0, 100),
                                 location: String(
                                     request.location || ''
                                 ).trim(),
@@ -2736,6 +2795,21 @@ chrome.runtime.onMessage.addListener(
                                     ?.length) {
                                 runtimeConfig.keywordTerms =
                                     careerIntelState.analysisSnapshot.keywordTerms;
+                            }
+                            const histData = await new Promise(resolve =>
+                                chrome.storage.local.get(
+                                    'jobsAssistHistory', resolve
+                                )
+                            );
+                            const histIds = (histData.jobsAssistHistory || [])
+                                .map(e => e?.id)
+                                .filter(Boolean);
+                            if (histIds.length > 0) {
+                                runtimeConfig.appliedJobIds = Array.from(
+                                    new Set(
+                                        runtimeConfig.appliedJobIds.concat(histIds)
+                                    )
+                                );
                             }
                             launchJobsAssist(runtimeConfig);
                             sendResponse({ status: 'started' });
@@ -2803,7 +2877,7 @@ chrome.runtime.onMessage.addListener(
                     { action: 'stop' },
                     () => {
                         if (chrome.runtime.lastError) {
-                            activeTabId = null;
+                            setActiveTab(null);
                         }
                     }
                 );
@@ -2820,7 +2894,7 @@ chrome.runtime.onMessage.addListener(
 
         if (request.action === 'progress' &&
             request.error === 'FUSE_LIMIT_EXCEEDED') {
-            activeTabId = null;
+            setActiveTab(null);
             const retryHours = 24;
             chrome.alarms.create('fuseLimitRetry', {
                 delayInMinutes: retryHours * 60
@@ -2842,7 +2916,7 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.action === 'loginRequired') {
-            activeTabId = null;
+            setActiveTab(null);
             createLocalizedNotification(
                 'notification.loginRequired',
                 'LinkedIn login required. Please log in and restart the automation.'
@@ -2862,7 +2936,7 @@ chrome.runtime.onMessage.addListener(
                 );
                 if (relaxedConfig) {
                     const staleTabId = activeTabId;
-                    activeTabId = null;
+                    setActiveTab(null);
                     if (staleTabId) {
                         try {
                             chrome.tabs.remove(
@@ -2956,16 +3030,20 @@ chrome.runtime.onMessage.addListener(
                                         tabId: tab.id
                                     },
                                     func: () => {
+                                        const MAX_PROFILE_LINKS = 500;
                                         const links =
                                             document
                                                 .querySelectorAll(
                                                     'a[href*="/in/"]'
                                                 );
+                                        const seen = new Set();
                                         const urls = [];
                                         for (const l of links) {
+                                            if (urls.length >= MAX_PROFILE_LINKS) break;
                                             const url = l.href
                                                 .split('?')[0];
-                                            if (!urls.includes(url)) {
+                                            if (!seen.has(url)) {
+                                                seen.add(url);
                                                 urls.push(url);
                                             }
                                         }

@@ -1,4 +1,8 @@
 const WEEKLY_LIMIT = 150;
+const DAYS_IN_CHART = 14;
+const MIN_BAR_HEIGHT_PCT = 5;
+const HOUR_LABEL_STEP = 3;
+const BYTES_PER_KB = 1024;
 const DEFAULT_DASHBOARD_STATE = {
     activeTab: 'overview'
 };
@@ -7,6 +11,7 @@ let dashboardUiLanguageMode = 'auto';
 let dashboardCatalog = {};
 let dashboardFallbackCatalog = {};
 let dashboardUiLocale = 'en';
+let _tabsInitialized = false;
 
 function dt(key, substitutions, fallback) {
     if (typeof getMessage !== 'function') {
@@ -306,6 +311,9 @@ function setDashboardTab(tab, shouldSave) {
 }
 
 function initializeDashboardTabs() {
+    if (_tabsInitialized) return;
+    _tabsInitialized = true;
+
     document.querySelectorAll('[data-dashboard-tab]')
         .forEach(btn => {
             btn.addEventListener('click', () => {
@@ -314,16 +322,24 @@ function initializeDashboardTabs() {
                     true
                 );
             });
+            btn.addEventListener('keydown', (e) => {
+                const tabs = [...document.querySelectorAll('[data-dashboard-tab]')];
+                const idx = tabs.indexOf(e.currentTarget);
+                if (e.key === 'ArrowRight') tabs[(idx + 1) % tabs.length]?.click();
+                if (e.key === 'ArrowLeft') tabs[(idx - 1 + tabs.length) % tabs.length]?.click();
+            });
         });
 
     dashboardState = normalizeDashboardUiState(
         dashboardState
     );
-    renderDashboardTabs();
 
     chrome.storage.local.get(
         'dashboardState',
         ({ dashboardState: stored }) => {
+            if (chrome.runtime.lastError) {
+                return;
+            }
             dashboardState = normalizeDashboardUiState(
                 stored
             );
@@ -358,6 +374,9 @@ function loadDashboard() {
             'companyFollowHistory'
         ],
         (data) => {
+            if (chrome.runtime.lastError) {
+                return;
+            }
             const weekCount = data[weekKey] || 0;
             const sentUrls = data.sentProfileUrls || [];
             const accepted = data.acceptedUrls || [];
@@ -642,7 +661,7 @@ function renderChart(history) {
 
     const today = new Date();
     const days = [];
-    for (let i = 13; i >= 0; i--) {
+    for (let i = DAYS_IN_CHART - 1; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const key = d.toISOString().substring(0, 10);
@@ -661,7 +680,7 @@ function renderChart(history) {
         const bar = document.createElement('div');
         bar.className = 'chart-bar';
         bar.style.height = day.count > 0
-            ? `${Math.max(pct, 5)}%` : '2px';
+            ? `${Math.max(pct, MIN_BAR_HEIGHT_PCT)}%` : '2px';
         if (day.count === 0) bar.style.opacity = '0.2';
         bar.title = dt(
             'options.activity.chartTooltip',
@@ -981,7 +1000,7 @@ function renderHourAcceptance(history, accepted) {
         const bar = document.createElement('div');
         bar.style.cssText =
             `width:100%; border-radius:2px 2px 0 0;` +
-            `height:${Math.max(pct, 3)}%;` +
+            `height:${Math.max(pct, MIN_BAR_HEIGHT_PCT)}%;` +
             `background:${rate > 30
                 ? 'var(--success)'
                 : rate > 0
@@ -995,7 +1014,7 @@ function renderHourAcceptance(history, accepted) {
         );
 
         const label = document.createElement('span');
-        label.textContent = h % 3 === 0 ? h : '';
+        label.textContent = h % HOUR_LABEL_STEP === 0 ? h : '';
         label.style.cssText =
             'font-size:8px; color:var(--muted);';
 
@@ -1017,12 +1036,15 @@ initializeDashboardLocalization().then(() => {
         languageSelect.value = dashboardUiLanguageMode;
         languageSelect.addEventListener('change', () => {
             dashboardUiLanguageMode = languageSelect.value || 'auto';
+            languageSelect.disabled = true;
             chrome.storage.local.set({
                 uiLanguageMode: dashboardUiLanguageMode
             }, () => {
                 initializeDashboardLocalization().then(() => {
                     loadDashboard();
                     renderAnalytics();
+                }).finally(() => {
+                    languageSelect.disabled = false;
                 });
             });
         });

@@ -198,9 +198,13 @@
         async function deriveKey(passphrase, salt) {
             const cryptoApi = getCryptoApi();
             const encoder = new TextEncoder();
+            // Normalize identically to the vault's deriveKey. In practice this
+            // is a no-op (callers pass assertPassphrase() output, already
+            // trimmed), so existing ciphertext is unaffected — it just makes
+            // this function independently robust if ever called directly.
             const baseKey = await cryptoApi.subtle.importKey(
                 'raw',
-                encoder.encode(passphrase),
+                encoder.encode(String(passphrase || '').trim()),
                 'PBKDF2',
                 false,
                 ['deriveKey']
@@ -255,8 +259,23 @@
             };
         }
 
+        // Fail loud on an envelope written by a newer extension version rather
+        // than silently parsing a future schema as the current one. Older
+        // versions would be migrated here once a v2 schema exists (none yet).
+        function assertSupportedVersion(envelope) {
+            const v = Number(envelope.version) || CAREER_INTEL_CACHE_VERSION;
+            if (v > CAREER_INTEL_CACHE_VERSION) {
+                throw new Error(
+                    'Unsupported career intelligence cache version: ' + v +
+                    ' (supported up to ' + CAREER_INTEL_CACHE_VERSION +
+                    '). Update the extension.'
+                );
+            }
+        }
+
         async function decryptJobsCareerIntelState(envelope, passphrase) {
             assertEnvelope(envelope);
+            assertSupportedVersion(envelope);
             const cleanPassphrase = assertPassphrase(passphrase);
             const cryptoApi = getCryptoApi();
             const decoder = new TextDecoder();

@@ -155,6 +155,38 @@ describe('jobs career intelligence', () => {
         expect(plan.experienceLevel).toBe('4');
     });
 
+    it('J4: only top-2 keyword terms are AND-required; 3rd+ are OR (should)', () => {
+        // Current code: must = location + keywords.slice(0,4) → aws/node.js required.
+        // After J4:    must = location + keywords.slice(0,2) → only react/typescript required;
+        //              aws, node.js, postgresql go to should (OR block).
+        const plan = buildJobsCareerSearchPlan({
+            areaPreset: 'tech',
+            inferredRoles: ['software engineer'],
+            keywordTerms: ['react', 'typescript', 'aws', 'node.js', 'postgresql'],
+            locationTerms: ['remote'],
+            workType: '2',
+            experienceLevel: '4'
+        }, { searchLanguageMode: 'en' });
+
+        // Top-2 are required: appear after AND
+        expect(plan.query).toMatch(/AND react/i);
+        expect(plan.query).toMatch(/AND typescript/i);
+        // 3rd keyword (aws) must NOT be a standalone AND-required term
+        expect(plan.query).not.toMatch(/AND aws/i);
+    });
+
+    it('J4: with fewer than 2 keywords all go into must', () => {
+        const plan = buildJobsCareerSearchPlan({
+            areaPreset: 'tech',
+            inferredRoles: ['designer'],
+            keywordTerms: ['figma'],
+            locationTerms: ['remote'],
+            workType: '2',
+            experienceLevel: '4'
+        }, { searchLanguageMode: 'en' });
+        expect(plan.query).toMatch(/AND figma/i);
+    });
+
     it('prefers portuguese auto locale for brazil-local plans when offshore is off', () => {
         const plan = buildJobsCareerSearchPlan({
             areaPreset: 'tech',
@@ -452,6 +484,26 @@ describe('jobs career intelligence', () => {
             });
             // inferredRoles is capped at 5 (detectMatches called with limit=5)
             expect(result.inferredRoles.length).toBeLessThanOrEqual(5);
+        });
+    });
+
+    describe('branch coverage: null/absent inputs (L120, L140, L142, L223, L290, L305, L346, L365, L372)', () => {
+        it('buildJobsCareerSearchPlan(null) covers L305 null-snapshot, L120 undefined values, L290/L346/L365/L372 absent fields', () => {
+            const plan = buildJobsCareerSearchPlan(null);
+            expect(plan.areaPreset).toBe('custom');
+            expect(plan.workType).toBe('');
+            expect(plan.experienceLevel).toBe('');
+            expect(typeof plan.query).toBe('string');
+        });
+
+        it('validateResumeVaultFileMeta with null name covers L140 arm=1 and L142 empty-ext arm=1', () => {
+            const result = validateResumeVaultFileMeta({ name: null, size: 1024 });
+            expect(result).toEqual({ ok: false, reason: 'unsupported-file-type', extension: '' });
+        });
+
+        it('analyzeJobsCareerInputs with doc missing extractedText covers L223 arm=1', () => {
+            const result = analyzeJobsCareerInputs({ resumeDocuments: [{ id: 'doc1' }] });
+            expect(result).toHaveProperty('inferredRoles');
         });
     });
 });

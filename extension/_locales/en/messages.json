@@ -765,10 +765,13 @@
     "message": "Career intelligence: locked (v$1) · updated $2"
   },
   "popup_jobs_careerNotConfigured": {
-    "message": "Career intelligence: not configured."
+    "message": "Career intelligence: not configured — import your LinkedIn profile or upload a resume to get started."
   },
   "popup_jobs_careerStatusUnavailable": {
     "message": "Career intelligence status unavailable."
+  },
+  "popup_jobs_careerNoData": {
+    "message": "No career data yet — import your LinkedIn profile or upload a resume first."
   },
   "popup_jobs_careerUnavailableOrLocked": {
     "message": "Career intelligence is unavailable or locked."

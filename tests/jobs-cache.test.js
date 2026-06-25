@@ -135,6 +135,18 @@ describe('jobs profile cache', () => {
             ).rejects.toThrow('Invalid jobs profile cache envelope');
         });
 
+        it('rejects an envelope written by a newer (unsupported) version', async () => {
+            await expect(
+                decryptJobsProfileCache(
+                    {
+                        version: CACHE_VERSION + 1,
+                        salt: 'abc', iv: 'def', ciphertext: 'ghi'
+                    },
+                    'passphrase'
+                )
+            ).rejects.toThrow(/unsupported.*version/i);
+        });
+
         it('rejects null/empty envelope', async () => {
             await expect(
                 decryptJobsProfileCache(null, 'passphrase')
@@ -318,6 +330,23 @@ describe('jobs profile cache', () => {
             };
             await expect(decryptJobsProfileCache(corruptEnvelope, 'pass'))
                 .rejects.toThrow('Invalid jobs profile cache payload');
+        });
+    });
+
+    describe('branch coverage: toIsoDate null-value and version=0 fallback (L79, L194)', () => {
+        it('getJobsProfileCacheStatus with no updatedAt uses current date (L79 arm=1)', () => {
+            const status = getJobsProfileCacheStatus({ salt: 'x', iv: 'y', ciphertext: 'z' });
+            expect(status.exists).toBe(true);
+            expect(new Date(status.updatedAt).getTime()).not.toBeNaN();
+        });
+
+        it('decryptJobsProfileCache with version=0 falls back to CACHE_VERSION without throwing (L194 arm=1)', async () => {
+            await expect(
+                decryptJobsProfileCache(
+                    { salt: 'YQ==', iv: 'YQ==', ciphertext: 'YQ==', version: 0 },
+                    'passphrase-test'
+                )
+            ).rejects.toThrow('Invalid profile cache passphrase');
         });
     });
 

@@ -14,6 +14,32 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     const FOLLOW_CONFIRM_TIMEOUT_MS = 1600;
     const MAX_COMPANY_PAGES_PER_QUERY = 8;
     let stopRequested = false;
+    let runningNotifyBar = null;
+    // In-page "Running… [Stop]" control so the user can stop from the LinkedIn
+    // tab without the popup. Stop posts LINKEDIN_BOT_STOP (same as popup Stop).
+    function showRunningNotification() {
+        if (typeof showTopNotification !== 'function') return;
+        runningNotifyBar = showTopNotification(
+            'LinkedIn Engage: following companies…',
+            'info',
+            {
+                duration: 0,
+                action: {
+                    label: 'Stop',
+                    onClick: () => window.postMessage(
+                        { type: 'LINKEDIN_BOT_STOP' }, '*'
+                    )
+                }
+            }
+        );
+    }
+    function dismissRunningNotification() {
+        if (runningNotifyBar &&
+            typeof dismissTopNotification === 'function') {
+            dismissTopNotification(runningNotifyBar);
+        }
+        runningNotifyBar = null;
+    }
     const followLog = [];
     let consecutiveFails = 0;
     let backoffMultiplier = 1;
@@ -531,6 +557,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
         let totalFollowed = progressOffset;
         stopRequested = false;
         followLog.length = 0;
+        showRunningNotification();
 
         try {
             let page = 1;
@@ -932,6 +959,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
             'LINKEDIN_COMPANY_FOLLOW_START') {
             runCompanyFollow(event.data.config)
                 .then(result => {
+                    dismissRunningNotification();
                     const runtimeResult = result &&
                         typeof result === 'object'
                         ? { ...result }
@@ -948,6 +976,20 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     window.postMessage({
                         type: 'LINKEDIN_BOT_COMPANY_STEP_DONE',
                         result: runtimeResult
+                    }, '*');
+                })
+                .catch(err => {
+                    dismissRunningNotification();
+                    // Never leave the popup frozen on an uncaught run error:
+                    // always post a terminal STEP_DONE with a failure (#170).
+                    window.postMessage({
+                        type: 'LINKEDIN_BOT_COMPANY_STEP_DONE',
+                        result: {
+                            error: (err && err.message) ||
+                                'Unknown error',
+                            runStatus: 'failed',
+                            reason: 'runtime-error'
+                        }
                     }, '*');
                 });
         }

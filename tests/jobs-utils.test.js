@@ -671,6 +671,21 @@ describe('jobs-utils matching and ranking', () => {
         });
     });
 
+    describe('branch coverage: empty excluded entry and inferSeniority null text (L65, L93, L118)', () => {
+        it('skips empty string entries in excluded companies list (L65 arm=0)', () => {
+            expect(matchesExcludedJobCompany('Stripe', [''])).toBeNull();
+        });
+
+        it('returns unknown and short-circuits scoreSeniority for empty title (L93 arm=0, L118 arm=0)', () => {
+            const ranked = rankJobsForApply(
+                [{ id: 'empty-title', title: '', easyApply: true, company: 'Co', location: 'Remote', postedHoursAgo: 5 }],
+                { roleTerms: [], keywordTerms: [], desiredLevels: ['senior'], excludedCompanies: [], appliedJobIds: [] }
+            );
+            expect(ranked[0].id).toBe('empty-title');
+            expect(ranked[0].score).toBeGreaterThanOrEqual(0);
+        });
+    });
+
     afterAll(() => {
         delete global.matchesExcludedJobCompany;
         delete global.evaluateJobCandidate;
