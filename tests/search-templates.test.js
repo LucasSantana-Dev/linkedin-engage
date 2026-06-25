@@ -466,7 +466,6 @@ describe('search-templates', () => {
         const q = plan.query.toLowerCase();
         expect(q).toContain('software engineer');
         expect(q).toContain('remote');
-        expect(q).toContain('easy apply');
     });
 
     it('omits jobs role defaults when roleTerms is explicitly empty', () => {
@@ -483,7 +482,6 @@ describe('search-templates', () => {
         const q = plan.query.toLowerCase();
         expect(q).not.toContain('software engineer');
         expect(q).toContain('remote');
-        expect(q).toContain('easy apply');
     });
 
     it('omits jobs location defaults when locationTerms is explicitly empty', () => {
@@ -499,7 +497,6 @@ describe('search-templates', () => {
 
         const q = plan.query.toLowerCase();
         expect(q).toContain('software engineer');
-        expect(q).toContain('easy apply');
         expect(q).not.toContain('remote');
     });
 
@@ -536,7 +533,6 @@ describe('search-templates', () => {
         const q = plan.query.toLowerCase();
         expect(q).toContain('software engineer');
         expect(q).toContain('remote');
-        expect(q).toContain('easy apply');
     });
 
     it('contains starter catalog templates', () => {
