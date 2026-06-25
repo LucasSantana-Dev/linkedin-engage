@@ -422,4 +422,55 @@ describe('connect-config', () => {
             expect(migrated.excludedCompanies).toContain('Acme Corp');
         });
     });
+
+    describe('branch coverage: null inputs and limit/migration edge cases', () => {
+        it('does not overwrite already-defined keys on globalThis (UMD L8 arm=1)', () => {
+            const saved = globalThis.STATE_TAG_VERSION;
+            globalThis.STATE_TAG_VERSION = 'already-set';
+            jest.resetModules();
+            require('../extension/lib/connect-config');
+            expect(globalThis.STATE_TAG_VERSION).toBe('already-set');
+            globalThis.STATE_TAG_VERSION = saved;
+            jest.resetModules();
+        });
+
+        it('parseExcludedCompanies skips null entry in array (L1267 arm=1, L1268 arm=0)', () => {
+            const result = parseExcludedCompanies([null, 'Beta', '']);
+            expect(result).toEqual(['Beta']);
+        });
+
+        it('applyAreaPresetToTags treats null tags as empty object (L1283 arm=1)', () => {
+            const out = applyAreaPresetToTags(null, 'tech');
+            expect(Array.isArray(out.role)).toBe(true);
+            expect(out.role.length).toBeGreaterThan(0);
+        });
+
+        it('buildConnectQueryFromTags with limit=0 falls back to 6 (L1305 arm=1)', () => {
+            const roles = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+            const query = buildConnectQueryFromTags({ role: roles }, 0, 'en');
+            expect(typeof query).toBe('string');
+            const termCount = query.split(' OR ').length;
+            expect(termCount).toBeLessThanOrEqual(6);
+        });
+
+        it('buildConnectQueryFromTags with null tags treats as empty (L1349 arm=1)', () => {
+            expect(buildConnectQueryFromTags(null)).toBe('');
+        });
+
+        it('migrateConnectPopupState with null input treats as empty object (L1432 arm=1)', () => {
+            const { state, changed } = migrateConnectPopupState(null);
+            expect(state.tagVersion).toBe(8);
+            expect(typeof changed).toBe('boolean');
+        });
+
+        it('migrateConnectPopupState returns changed=false when state is already current (L1438 arm=1, L1455 arm=1)', () => {
+            const { state, changed } = migrateConnectPopupState({
+                tagVersion: 8,
+                areaPreset: 'tech',
+                companyAreaPreset: 'tech'
+            });
+            expect(changed).toBe(false);
+            expect(state.tagVersion).toBe(8);
+        });
+    });
 });

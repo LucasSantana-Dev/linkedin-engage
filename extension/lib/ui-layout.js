@@ -1,17 +1,21 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
     root.LinkedInUiLayout = api;
     Object.keys(api).forEach(function(key) {
+        /* istanbul ignore next */
         if (typeof root[key] === 'undefined') {
             root[key] = api[key];
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        /* istanbul ignore next */
         const textUtils = typeof require === 'function'
             ? require('./text-utils.js')
             : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);

@@ -1945,7 +1945,7 @@ function refreshJobsCareerIntelStatus() {
                 statusEl.textContent = tr(
                     'popup.jobs.careerNotConfigured',
                     null,
-                    'Career intelligence: not configured.'
+                    'Career intelligence: not configured — import your LinkedIn profile or upload a resume to get started.'
                 );
                 return;
             }
@@ -4348,6 +4348,30 @@ document.getElementById('clearJobsProfileCacheBtn')
             refreshJobsCacheStatus();
         });
     });
+document.getElementById('openJobsSearchBtn')
+    ?.addEventListener('click', () => {
+        const plan = buildJobsSearchPlan();
+        const query = plan.query || '';
+        const filterSpec = plan.filterSpec || {};
+        const url = new URL('https://www.linkedin.com/jobs/search/');
+        if (query) url.searchParams.set('keywords', query);
+        if (filterSpec.easyApplyOnly !== false) {
+            url.searchParams.set('f_AL', 'true');
+        }
+        const experienceLevel = document.getElementById(
+            'jobsExperienceLevelSelect'
+        )?.value;
+        if (experienceLevel) url.searchParams.set('f_E', experienceLevel);
+        const workType = document.getElementById(
+            'jobsWorkTypeSelect'
+        )?.value;
+        if (workType) url.searchParams.set('f_WT', workType);
+        const location = document.getElementById(
+            'jobsLocationInput'
+        )?.value.trim();
+        if (location) url.searchParams.set('location', location);
+        chrome.tabs.create({ url: url.toString() });
+    });
 document.getElementById('uploadJobsResumesBtn')
     .addEventListener('click', () => {
         document.getElementById('jobsResumeUploadInput')?.click();
@@ -4504,6 +4528,14 @@ document.getElementById('analyzeJobsCareerBtn')
                 'jobsBrazilOffshoreFriendlyCheckbox'
             ).checked
         }, (response) => {
+            if (response?.status === 'missing') {
+                setStatusMessageKey(
+                    'popup.jobs.careerNoData',
+                    'warning',
+                    'No career data yet — import your LinkedIn profile or upload a resume first.'
+                );
+                return;
+            }
             if (chrome.runtime.lastError ||
                 response?.status !== 'generated') {
                 setStatusMessageKey(
