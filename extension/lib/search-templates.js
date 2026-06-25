@@ -1309,7 +1309,7 @@
                         'product engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1335,7 +1335,7 @@
                         'ui engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1364,7 +1364,7 @@
                         'platform engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1393,7 +1393,7 @@
                         'product engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1422,7 +1422,7 @@
                         'infrastructure engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1451,7 +1451,7 @@
                         'machine learning engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1480,7 +1480,7 @@
                         'infrastructure engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1509,7 +1509,7 @@
                         'security architect'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1538,7 +1538,7 @@
                         'react native developer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1567,7 +1567,7 @@
                         'nlp engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1646,7 +1646,7 @@
                 querySpec: {
                     roleTerms: ['graphic designer', 'visual designer', 'designer grafico', 'creative designer'],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1663,7 +1663,7 @@
                 querySpec: {
                     roleTerms: ['art director', 'creative director', 'associate art director', 'diretor de arte'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '4' },
                 defaults: {
@@ -1680,7 +1680,7 @@
                 querySpec: {
                     roleTerms: ['brand strategist', 'brand designer', 'branding specialist', 'estrategista de marca'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '3' },
                 defaults: {
@@ -1714,7 +1714,7 @@
                 querySpec: {
                     roleTerms: ['motion designer', 'motion graphics designer', 'animator', 'motion artist'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1731,7 +1731,7 @@
                 querySpec: {
                     roleTerms: ['video editor', 'post production editor', 'editor de video', 'editor audiovisual'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1748,7 +1748,7 @@
                 querySpec: {
                     roleTerms: ['videomaker', 'video producer', 'content creator', 'produtor audiovisual', 'filmmaker'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '2' },
                 defaults: {
@@ -1765,7 +1765,7 @@
                 querySpec: {
                     roleTerms: ['software engineer', 'developer'],
                     locationTerms: ['remote'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true
