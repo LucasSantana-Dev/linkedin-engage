@@ -2,6 +2,10 @@
 // content.js uses these inline (no module imports in MAIN world).
 // Keep logic in sync — this is the source of truth for tests.
 
+const _searchNoResults = typeof require === 'function'
+    ? require('./search-no-results')
+    : null;
+
 function isButtonClickable(el) {
     if (el.disabled || el.hasAttribute('disabled')) {
         return false;
@@ -310,59 +314,9 @@ function isJobSeekingProfile(profile, card) {
 
 // Generic LinkedIn "empty search" detector (EN + PT-BR). Lets the Connect
 // flow recognize when the mounted query returned zero matches instead of
-// blindly retrying/paginating. Mirrors company-utils.detectExplicitNoResults
-// but lives here because the Connect path injects invite-utils, not
-// company-utils.
-function detectNoSearchResults(root) {
-    const el = root ||
-        (typeof document !== 'undefined' ? document : null);
-    if (!el || !el.querySelectorAll) return false;
-    // Match "no results" without requiring the trailing "found": adjacent block
-    // elements (h2 + p) concatenate without whitespace in textContent, which
-    // would break a "\bfound\b" anchor.
-    const patterns =
-        /\bno results\b|nenhum resultado(?: encontrado)?|\b0\s*results?\b|\b0\s*resultados?\b/i;
-    const selectors = [
-        '.search-no-results',
-        '.search-reusables__no-results',
-        '.artdeco-empty-state',
-        'main'
-    ];
-    for (const selector of selectors) {
-        const nodes = el.querySelectorAll(selector);
-        for (const node of nodes) {
-            const text = (node.innerText || node.textContent || '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (patterns.test(text)) return true;
-        }
-    }
-    // Second, independent signal: a dedicated results-count header that
-    // parses to exactly 0. Catches layouts where the count lives outside the
-    // empty-state/main scope. The "results"/"resultados" word is required, so
-    // unrelated "0 X" phrases (e.g. "0 endorsements") never count as zero.
-    const countSelectors = [
-        '[data-test-search-results-count]',
-        '.search-results__total',
-        '.search-results-container__text',
-        'h2 span',
-        'h2'
-    ];
-    const countPattern = /([\d][\d.,]*)\s*(?:results?|resultados?)/i;
-    for (const selector of countSelectors) {
-        const nodes = el.querySelectorAll(selector);
-        for (const node of nodes) {
-            const text = (node.innerText || node.textContent || '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            const match = text.match(countPattern);
-            if (!match) continue;
-            const digits = match[1].replace(/[^\d]/g, '');
-            if (digits && parseInt(digits, 10) === 0) return true;
-        }
-    }
-    return false;
-}
+// Delegates to the shared search-no-results module (loaded before this
+// file in both the Connect injection array and the Node test require chain).
+// Kept as a named export so existing callers and tests are unchanged.
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -388,6 +342,8 @@ if (typeof module !== 'undefined' && module.exports) {
         isRecruiterProfile,
         isOpenToWorkCard,
         isJobSeekingProfile,
-        detectNoSearchResults
+        detectNoSearchResults: _searchNoResults
+            ? _searchNoResults.detectNoSearchResults
+            : detectNoSearchResults
     };
 }

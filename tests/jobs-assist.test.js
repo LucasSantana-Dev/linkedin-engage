@@ -408,3 +408,166 @@ describe('getModalSignature step-change detection (#146)', () => {
         expect(sig1).toBe(sig2);
     });
 });
+
+describe('fillKnownFields — J1 years-of-experience and J2 name-split', () => {
+    let fill;
+
+    function makeSelect(ariaLabel, options) {
+        const sel = document.createElement('select');
+        sel.setAttribute('aria-label', ariaLabel);
+        options.forEach(({ value, text }) => {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = text;
+            sel.appendChild(opt);
+        });
+        return sel;
+    }
+
+    function makeInput(ariaLabel) {
+        const inp = document.createElement('input');
+        inp.setAttribute('aria-label', ariaLabel);
+        return inp;
+    }
+
+    function makeModal(...elements) {
+        const modal = document.createElement('div');
+        elements.forEach(el => modal.appendChild(el));
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    // Values are string IDs (as LinkedIn uses), NOT year numbers,
+    // so findMatchingOptionValue falls through to text fuzzy match.
+    // Placeholder with empty value mimics LinkedIn's actual select markup;
+    // without it jsdom auto-selects the first option and the "already filled"
+    // guard in setSelectOption returns false prematurely.
+    const YOE_OPTIONS = [
+        { value: '', text: 'Select an option' },
+        { value: 'ENTRY', text: '0-1 years' },
+        { value: 'JUNIOR', text: '2-4 years' },
+        { value: 'MID', text: '5-7 years' },
+        { value: 'SENIOR', text: '8-10 years' },
+        { value: 'LEAD', text: '11+ years' }
+    ];
+
+    beforeEach(() => {
+        jest.resetModules();
+        document.body.innerHTML = '';
+        delete window.linkedInJobsAssistInjected;
+        require('../extension/lib/text-utils');
+        require('../extension/lib/jobs-utils');
+        require('../extension/jobs-assist');
+        fill = window.__LINKEDIN_JOBS_ASSIST_TEST_API__.fillKnownFields;
+    });
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+        delete window.linkedInJobsAssistInjected;
+    });
+
+    // J1 — years-of-experience select filling
+
+    it('J1: fills years-of-experience select for senior title', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Senior Software Engineer' });
+        // senior → hint "5" → fuzzy: "5-7 years".includes("5") → 'MID'
+        expect(sel.value).toBe('MID');
+    });
+
+    it('J1: fills years-of-experience select for junior title', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Junior Developer' });
+        // junior → hint "1" → fuzzy: "0-1 years".includes("1") → 'ENTRY'
+        expect(sel.value).toBe('ENTRY');
+    });
+
+    it('J1: fills years-of-experience select for lead/staff title', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Staff Engineer' });
+        // staff → hint "8" → fuzzy: "8-10 years".includes("8") → 'SENIOR'
+        expect(sel.value).toBe('SENIOR');
+    });
+
+    it('J1: fills years-of-experience with mid default when no seniority signal', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Software Engineer' });
+        // no signal → hint "4" → fuzzy: "2-4 years".includes("4") → 'JUNIOR'
+        expect(sel.value).toBe('JUNIOR');
+    });
+
+    it('J1: also matches PT-BR anos de experiencia label', () => {
+        const sel = makeSelect('Anos de experiencia', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Senior Engineer' });
+        // anos.*experiencia pattern → senior → 'MID'
+        expect(sel.value).toBe('MID');
+    });
+
+    it('J1: fills years-of-experience select for PT-BR intern title (estagiario)', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Estagiário de Software' });
+        // estagiario → hint "0" → fuzzy: "0-1 years".includes("0") → 'ENTRY'
+        expect(sel.value).toBe('ENTRY');
+    });
+
+    it('J1: does not fill years-of-experience text input (only selects)', () => {
+        const inp = makeInput('Years of experience');
+        const modal = makeModal(inp);
+        fill(modal, { currentTitle: 'Senior Software Engineer' });
+        expect(inp.value).toBe('');
+    });
+
+    // J2 — first / last name split
+
+    it('J2: fills first-name input from fullName', () => {
+        const inp = makeInput('First name');
+        const modal = makeModal(inp);
+        fill(modal, { fullName: 'Lucas Santana' });
+        expect(inp.value).toBe('Lucas');
+    });
+
+    it('J2: fills last-name input from fullName', () => {
+        const inp = makeInput('Last name');
+        const modal = makeModal(inp);
+        fill(modal, { fullName: 'Lucas Santana' });
+        expect(inp.value).toBe('Santana');
+    });
+
+    it('J2: preserves multi-part last names', () => {
+        const first = makeInput('First name');
+        const last = makeInput('Last name');
+        const modal = makeModal(first, last);
+        fill(modal, { fullName: 'Lucas Santos Silva' });
+        expect(first.value).toBe('Lucas');
+        expect(last.value).toBe('Santos Silva');
+    });
+
+    it('J2: does not fill last-name when fullName has single word', () => {
+        const inp = makeInput('Last name');
+        const modal = makeModal(inp);
+        fill(modal, { fullName: 'Lucas' });
+        expect(inp.value).toBe('');
+    });
+
+    it('J2: fills PT-BR sobrenome field', () => {
+        const inp = makeInput('Sobrenome');
+        const modal = makeModal(inp);
+        fill(modal, { fullName: 'Lucas Santana' });
+        expect(inp.value).toBe('Santana');
+    });
+
+    it('J2: does not treat "first and last name" as a first-name-only field', () => {
+        // This is handled by the existing full-name pattern — should remain filled with fullName
+        const inp = makeInput('First and last name');
+        const modal = makeModal(inp);
+        fill(modal, { fullName: 'Lucas Santana' });
+        // The existing full-name pattern fires first; value is the full name, not split
+        expect(inp.value).toBe('Lucas Santana');
+    });
+});

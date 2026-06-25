@@ -765,10 +765,13 @@
     "message": "Career Intelligence: bloqueado (v$1) · atualizado em $2"
   },
   "popup_jobs_careerNotConfigured": {
-    "message": "Career Intelligence: não configurado."
+    "message": "Career Intelligence: não configurado — importe seu perfil do LinkedIn ou envie um currículo para começar."
   },
   "popup_jobs_careerStatusUnavailable": {
     "message": "Status do Career Intelligence indisponível."
+  },
+  "popup_jobs_careerNoData": {
+    "message": "Sem dados de carreira ainda — importe seu perfil do LinkedIn ou envie um currículo primeiro."
   },
   "popup_jobs_careerUnavailableOrLocked": {
     "message": "O Career Intelligence está indisponível ou bloqueado."
