@@ -328,6 +328,54 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
         setInputValue(field, source.resumeSummary)
       ) {
         filled++;
+        continue;
+      }
+      // J1 — years-of-experience select: infer from title seniority
+      if (
+        /years.*experience|experiencia.*anos|anos.*experiencia/.test(hint) &&
+        String(field.tagName || "").toUpperCase() === "SELECT"
+      ) {
+        const title = normalized(source.currentTitle || source.headline || "");
+        let yearsHint;
+        if (/\b(staff|principal|lead|head|director|vp)\b/.test(title)) {
+          yearsHint = "8";
+        } else if (/\b(senior|sr)\b/.test(title)) {
+          yearsHint = "5";
+        } else if (/\b(junior|jr|entry)\b/.test(title)) {
+          yearsHint = "1";
+        } else if (/\b(intern|trainee|estagio)\b/.test(title)) {
+          yearsHint = "0";
+        } else {
+          yearsHint = "4";
+        }
+        if (setInputValue(field, yearsHint)) {
+          filled++;
+          continue;
+        }
+      }
+      // J2 — first name only field
+      if (
+        /\bfirst name\b|\bprimeiro nome\b|\bgiven name\b/.test(hint) &&
+        !/\blast\b|\bsurname\b|\bsobrenome\b/.test(hint) &&
+        !/company|school|employer|organization/.test(hint)
+      ) {
+        const firstName = String(source.fullName || "").trim().split(/\s+/)[0] || "";
+        if (firstName && setInputValue(field, firstName)) {
+          filled++;
+          continue;
+        }
+      }
+      // J2 — last name / surname field
+      if (
+        /\blast name\b|\bsurname\b|\bsobrenome\b|\bfamily name\b|\bapelido\b/.test(hint) &&
+        !/company|school|employer|organization/.test(hint)
+      ) {
+        const parts = String(source.fullName || "").trim().split(/\s+/);
+        const lastName = parts.length > 1 ? parts.slice(1).join(" ") : "";
+        if (lastName && setInputValue(field, lastName)) {
+          filled++;
+          continue;
+        }
       }
     }
 
