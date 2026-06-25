@@ -106,4 +106,29 @@ describe('ui-layout', () => {
         expect(DEFAULT_POPUP_UI_STATE.accordions.connect.refine)
             .toBe(false);
     });
+
+    describe('setPopupAccordionOpen early-return branches (L119)', () => {
+        it('returns unchanged state when mode has no accordions (L116 arm=0)', () => {
+            const base = normalizePopupUiState();
+            const next = setPopupAccordionOpen(base, 'nonexistent-mode', 'refine', true);
+            expect(next.accordions.connect.refine).toBe(false);
+        });
+
+        it('returns unchanged state when panel is not a boolean key (L117 arm=0)', () => {
+            const base = normalizePopupUiState();
+            const next = setPopupAccordionOpen(base, 'connect', 'invalid-panel', true);
+            expect(next.accordions.connect.refine).toBe(false);
+            expect(next.accordions.connect.message).toBe(false);
+        });
+
+        it('does not update lastOpenSubpanel when isOpen is false (L122 && arm=1)', () => {
+            const base = normalizePopupUiState({
+                accordions: { connect: { refine: true, message: false, automation: false } },
+                lastOpenSubpanel: { connect: 'refine', companies: null, jobs: null }
+            });
+            const next = setPopupAccordionOpen(base, 'connect', 'refine', false);
+            expect(next.accordions.connect.refine).toBe(false);
+            expect(next.lastOpenSubpanel.connect).toBe('refine');
+        });
+    });
 });

@@ -69,6 +69,23 @@ describe('findStaleDailyKeys', () => {
     it('exports DEFAULT_TTL_DAYS = 90', () => {
         expect(DEFAULT_TTL_DAYS).toBe(90);
     });
+
+    it('uses default TTL and current date when options omitted (L40/L44 arm=1)', () => {
+        const stale = findStaleDailyKeys(['profileWalkCount_2020_01_01']);
+        expect(stale).toEqual(['profileWalkCount_2020_01_01']);
+    });
+
+    describe('UMD global registration', () => {
+        afterEach(() => { jest.resetModules(); });
+        it('does not overwrite already-defined keys on globalThis (L8 arm=1)', () => {
+            const saved = globalThis.DEFAULT_TTL_DAYS;
+            globalThis.DEFAULT_TTL_DAYS = 'already-set';
+            jest.resetModules();
+            require('../extension/lib/storage-key-sweeper');
+            expect(globalThis.DEFAULT_TTL_DAYS).toBe('already-set');
+            globalThis.DEFAULT_TTL_DAYS = saved;
+        });
+    });
 });
 
 describe('sweepStaleDailyKeys', () => {
@@ -133,5 +150,16 @@ describe('sweepStaleDailyKeys', () => {
             removed: 0,
             keys: []
         });
+    });
+
+    it('handles storage.get callback receiving null (L72 || {} arm=1)', async () => {
+        const nullCallbackStorage = {
+            get(query, cb) { cb(null); },
+            remove(keys, cb) { cb && cb(); }
+        };
+        const result = await sweepStaleDailyKeys(nullCallbackStorage, {
+            now: new Date(Date.UTC(2026, 3, 25))
+        });
+        expect(result).toEqual({ removed: 0, keys: [] });
     });
 });

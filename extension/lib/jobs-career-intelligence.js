@@ -21,6 +21,9 @@
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
     function(searchTemplates, searchLanguage) {
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
         const resolveSearchLocale =
             searchLanguage?.resolveSearchLocale;
         const localizeSearchTerms =
@@ -40,7 +43,25 @@
             'global',
             'products',
             'product',
-            'distributed'
+            'distributed',
+            'engineer',
+            'developer',
+            'software',
+            'backend',
+            'frontend',
+            'fullstack',
+            'senior',
+            'junior',
+            'lead',
+            'staff',
+            'principal',
+            'manager',
+            'specialist',
+            'architect',
+            'analyst',
+            'consultant',
+            'contractor',
+            'designer'
         ]);
         const BRAZIL_OFFSHORE_SIGNALS = Object.freeze([
             'remote',
@@ -86,10 +107,8 @@
         ]);
 
         function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
+            const normalized = textUtils.normalizeToSearch(value);
+            return normalized
                 .replace(/[^\p{L}\p{N}.+\s/-]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -236,9 +255,16 @@
             const seniority = detectSeniority(sourceText);
             const locationTerms = inferLocationTerms(sourceText);
             const remotePreferred = inferRemotePreference(sourceText);
+
+            const roleNorm = inferredRoles.map(r => normalizeText(r).toLowerCase());
+            const filteredKeywords = keywordTerms.filter(kw => {
+                const kwNorm = normalizeText(kw).toLowerCase();
+                return !roleNorm.some(r => r.split(' ').includes(kwNorm));
+            });
+
             const areaPreset = inferAreaPreset(
                 inferredRoles,
-                keywordTerms
+                filteredKeywords
             );
 
             return {
@@ -251,7 +277,7 @@
                         : ['software engineer'],
                     5
                 ),
-                keywordTerms: uniqueList(keywordTerms, 12),
+                keywordTerms: uniqueList(filteredKeywords, 12),
                 locationTerms: uniqueList(locationTerms, 4),
                 workType: remotePreferred ? '2' : '',
                 experienceLevel: mapExperienceLevel(seniority),
@@ -322,8 +348,8 @@
             );
             const compiled = searchTemplates?.compileBooleanQuery
                 ? searchTemplates.compileBooleanQuery({
-                    should: roleTerms,
-                    must: locationTerms.concat(keywordTerms.slice(0, 4)),
+                    should: roleTerms.concat(keywordTerms.slice(2)),
+                    must: locationTerms.concat(keywordTerms.slice(0, 2)),
                     mustNot: [],
                     budget: 12,
                     explicitAnd: true,

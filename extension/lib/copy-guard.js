@@ -12,6 +12,10 @@
 })(
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
+
         /**
          * Normalize text for comparison by lowercasing, removing punctuation, collapsing whitespace.
          * @param {string} text - The text to normalize
@@ -45,10 +49,8 @@
          * @returns {string} The normalized text
          */
         function normalizeCopyGuardText(text) {
-            return (text || '')
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[̀-ͯ]/g, '')
+            const normalized = textUtils?.normalizeToSearch(text) || (text || '').toLowerCase().trim();
+            return normalized
                 .replace(/[^\p{L}\p{N}\s]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();

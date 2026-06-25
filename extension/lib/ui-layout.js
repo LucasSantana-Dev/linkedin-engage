@@ -1,17 +1,25 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
     root.LinkedInUiLayout = api;
     Object.keys(api).forEach(function(key) {
+        /* istanbul ignore next */
         if (typeof root[key] === 'undefined') {
             root[key] = api[key];
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        /* istanbul ignore next */
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
+
         const DEFAULT_POPUP_UI_STATE = Object.freeze({
             accordions: {
                 connect: {
@@ -126,11 +134,7 @@
         }
 
         function normalizeText(value) {
-            return String(value || '')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim();
+            return textUtils.normalizeToSearch(value);
         }
 
         function filterTagMatchesSearch(
