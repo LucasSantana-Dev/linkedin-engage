@@ -4,6 +4,48 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.39.1] - 2026-06-23
+
+### Fixed
+- **Input boundary validation in background.js** (#191): added `_profileWalkCountQueue` to serialize concurrent storage writes; capped `safeLimit` (1–500), `safeNoteTemplate` (1 000 chars), `safeSentUrls` (5 000 entries), `safeExcludeKeywords` (100 entries), and `goalMode` to a validated enum; jobs config caps query to 500 chars and role/location/keyword term arrays to bounded sizes.
+- **Error logging in catch blocks** (#190): silent catch at `background.js:84` now emits `console.warn`; `chrome.runtime.lastError` extracted to a local variable, logged internally, and replaced by a generic caller-facing string at three call sites; catch-all handlers at lines 2182 and 2209 now `console.warn` the error before swallowing.
+- **Popup audit findings** (#188): added `_accordionInitialized` guard to prevent double-initialisation; chrome.runtime.lastError routed to `setStatusMessage()`; upload and import buttons disabled for the duration of async operations.
+- **Options dashboard audit findings** (#192): added `_tabsInitialized` guard; chrome.storage errors surfaced in `loadDashboard()`; language select disabled during locale change; `renderDashboardTabs()` moved inside the storage callback to eliminate a race; extracted constants `DAYS_IN_CHART`, `MIN_BAR_HEIGHT_PCT`, `HOUR_LABEL_STEP`, `BYTES_PER_KB`; added ArrowLeft/ArrowRight keyboard navigation on tab buttons.
+- **LinkedIn connector audit findings** (#189): `POST /connect` now returns `202 Accepted` and detaches the automation; `GET /tasks` supports `limit`/`offset` pagination with `total` in the response; `POST /schedule` accepts `X-Idempotency-Key` and deduplicates on existing tasks.
+- **Profile link extraction performance** (#187): `MAX_PROFILE_LINKS=500` cap added; URL deduplication switched from `Array.includes` (O(n²)) to `Set.has` (O(1)); `decryptProfile` and `decryptCareerIntel` now run in parallel via `Promise.allSettled`.
+- **Security dependency** (#186): `js-yaml` pinned to `^4.2.0` via npm `overrides` to resolve GHSA-2226-hf25-rm9w (prototype pollution in transitive dep).
+
+### Internal
+- **Shared text-utils module** (#194): extracted `stripAccents` and `normalizeToSearch` into `extension/lib/text-utils.js` (UMD, 25 tests); six lib modules now delegate to the shared normaliser instead of duplicating the logic.
+- **DRY query plan builders** (#193): extracted `_buildManualQueryResult` and `_buildQueryResult` helpers in `search-templates.js`, eliminating ~77 lines duplicated across the three `buildXxxQueryPlan` functions.
+
+## [1.39.0] - 2026-06-18
+
+### Added
+- **In-page Stop button** (#183): every run (Connect, Companies, Jobs) now shows a persistent "running…" notification on the LinkedIn tab with a **Stop** button, so you can stop a run without opening the popup. `ui-notify` gained a reusable action-button option.
+- **Toolbar running indicator** (#184): a green ● badge + "running (open to stop)" title on the extension icon while an automation is active. Clicking the icon opens the popup (which has Stop) as before.
+
+Together these add two more ways to stop an automation alongside the existing popup Stop button.
+
+## [1.38.1] - 2026-06-18
+
+### Fixed
+- **Popup no longer freezes on a run error** (#170): Connect and Company-Follow runs awaited the automation with no `.catch()`, so an uncaught error never posted a completion message and the popup hung indefinitely. Both now post a terminal failure result. Matches the Jobs assistant's existing handling.
+- **Double-launch guard** (#125): a 1.5s debounce on the Start button prevents a rapid double-click from launching two runs (and two tabs).
+- **Jobs notifications localized** (#145): the Easy Apply assistant's notifications (security challenge, manual-input, failure) now respect EN / PT-BR instead of always showing English.
+- **Jobs Easy Apply auto-fills `<select>` dropdowns** (#148): dropdowns (e.g. location) are now populated by option-matching instead of being silently skipped.
+- **Jobs modal step detection** (#146): consecutive application steps that share buttons/headline but differ in fields are now detected as a step change, instead of timing out into "needs manual input".
+- **Jobs offshore ranking** (#150): jobs whose detail text hasn't loaded yet get a neutral score instead of being unfairly down-ranked.
+- **Jobs résumé cache hardening** (#151, #152): consistent passphrase normalization across vault/cache, and a version guard so a cache written by a newer version fails clearly instead of being mis-parsed.
+- **Job-card title extraction** (#157): prefers the stable job link selector with a length guard, reducing mis-read titles.
+
+### Internal
+- Dedupe redundant résumé hashing (#155); record testing-strategy and PR-disposition decisions (ADR-0003 correction, ADR-0004).
+
+### Security / deps
+- **express-rate-limit** bumped to clear GHSA-v2v4-37r5-5v8g (#118); jest 30.2 → 30.4 (#127).
+- Enabled **Dependabot alerts + automated security updates + secret scanning**, added `dependabot.yml` (#119).
+
 ## [1.38.0] - 2026-06-18
 
 ### Added

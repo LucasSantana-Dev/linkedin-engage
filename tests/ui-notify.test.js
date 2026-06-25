@@ -416,4 +416,35 @@ describe("timer-driven paths", () => {
       writable: true,
     });
   });
+
+  describe("action button", () => {
+    afterEach(() => clearAllTopNotifications());
+
+    it("renders an action button that fires onClick", () => {
+      let clicked = 0;
+      const bar = showTopNotification("Running", "info", {
+        duration: 0,
+        action: { label: "Stop", onClick: () => { clicked++; } },
+      });
+      const btn = bar.querySelector("button[data-le-action]");
+      expect(btn).not.toBeNull();
+      expect(btn.textContent).toBe("Stop");
+      btn.click();
+      expect(clicked).toBe(1);
+    });
+
+    it("renders no action button when no action option given", () => {
+      const bar = showTopNotification("Plain", "info", { duration: 0 });
+      expect(bar.querySelector("button[data-le-action]")).toBeNull();
+    });
+
+    it("dismisses the notification after the action fires", () => {
+      const bar = showTopNotification("Running", "info", {
+        duration: 0,
+        action: { label: "Stop", onClick: () => {} },
+      });
+      bar.querySelector("button[data-le-action]").click();
+      expect(bar.style.opacity).toBe("0");
+    });
+  });
 });

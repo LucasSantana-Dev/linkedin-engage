@@ -125,6 +125,11 @@ describe('chip-hydrator', () => {
             expect(container.querySelectorAll('.tag').length).toBe(0);
         });
 
+        it('does nothing for unknown group type (else-if FALSE arm)', () => {
+            hydrateChipsForGroup(container, 'unknown', AREA_PRESETS);
+            expect(container.querySelectorAll('.tag').length).toBe(0);
+        });
+
         it('accepts custom level chips', () => {
             const customLevels = {
                 entry: 'Entry Level',
@@ -220,6 +225,18 @@ describe('chip-hydrator', () => {
             expect(() => {
                 hydrateAllChips(minimalRoot, { AREA_PRESETS });
             }).not.toThrow();
+        });
+
+        it('handles omitted config argument (L200/L201 || {} arms)', () => {
+            expect(() => { hydrateAllChips(root); }).not.toThrow();
+            expect(root.querySelectorAll('.tag[data-group="role"]').length).toBe(0);
+        });
+
+        it('skips tag-group with label but no scroll-area (L224 false arm)', () => {
+            const noScrollRoot = document.createElement('div');
+            noScrollRoot.innerHTML = '<div class="tag-group"><div class="tag-group-label">Role</div></div>';
+            expect(() => { hydrateAllChips(noScrollRoot, { AREA_PRESETS }); }).not.toThrow();
+            expect(noScrollRoot.querySelectorAll('.tag').length).toBe(0);
         });
 
         it('accepts custom chip data', () => {

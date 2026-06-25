@@ -1309,7 +1309,7 @@
                         'product engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1335,7 +1335,7 @@
                         'ui engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1364,7 +1364,7 @@
                         'platform engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1393,7 +1393,7 @@
                         'product engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1422,7 +1422,7 @@
                         'infrastructure engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1451,7 +1451,7 @@
                         'machine learning engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1480,7 +1480,7 @@
                         'infrastructure engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1509,7 +1509,7 @@
                         'security architect'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1538,7 +1538,7 @@
                         'react native developer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1567,7 +1567,7 @@
                         'nlp engineer'
                     ],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true,
@@ -1646,7 +1646,7 @@
                 querySpec: {
                     roleTerms: ['graphic designer', 'visual designer', 'designer grafico', 'creative designer'],
                     locationTerms: ['remote', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1663,7 +1663,7 @@
                 querySpec: {
                     roleTerms: ['art director', 'creative director', 'associate art director', 'diretor de arte'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '4' },
                 defaults: {
@@ -1680,7 +1680,7 @@
                 querySpec: {
                     roleTerms: ['brand strategist', 'brand designer', 'branding specialist', 'estrategista de marca'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '3', experienceLevel: '3' },
                 defaults: {
@@ -1714,7 +1714,7 @@
                 querySpec: {
                     roleTerms: ['motion designer', 'motion graphics designer', 'animator', 'motion artist'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1731,7 +1731,7 @@
                 querySpec: {
                     roleTerms: ['video editor', 'post production editor', 'editor de video', 'editor audiovisual'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '3' },
                 defaults: {
@@ -1748,7 +1748,7 @@
                 querySpec: {
                     roleTerms: ['videomaker', 'video producer', 'content creator', 'produtor audiovisual', 'filmmaker'],
                     locationTerms: ['remote', 'hybrid', 'brazil'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: { easyApplyOnly: true, workType: '2', experienceLevel: '2' },
                 defaults: {
@@ -1765,7 +1765,7 @@
                 querySpec: {
                     roleTerms: ['software engineer', 'developer'],
                     locationTerms: ['remote'],
-                    keywords: ['easy apply']
+                    keywords: []
                 },
                 filterSpec: {
                     easyApplyOnly: true
@@ -2089,6 +2089,44 @@
             return localizeTerms(merged, locale);
         }
 
+        function _buildManualQueryResult(template, manualQuery, searchLocale, mode) {
+            return {
+                query: manualQuery,
+                filterSpec: { ...(template.filterSpec || {}) },
+                defaults: { ...(template.defaults || {}) },
+                meta: {
+                    templateId: template.id,
+                    usageGoal: template.usageGoal,
+                    expectedResultsBucket: template.expectedResultsBucket,
+                    operatorCount: countBooleanOperators(manualQuery),
+                    compiledQueryLength: manualQuery.length,
+                    resolvedSearchLocale: searchLocale,
+                    mode: mode,
+                    manualQuery: true
+                },
+                diagnostics: {}
+            };
+        }
+
+        function _buildQueryResult(template, compiled, searchLocale, mode, extraMeta, extraDiagnostics) {
+            return {
+                query: compiled.query,
+                filterSpec: { ...(template.filterSpec || {}) },
+                defaults: { ...(template.defaults || {}) },
+                meta: {
+                    templateId: template.id,
+                    usageGoal: template.usageGoal,
+                    expectedResultsBucket: template.expectedResultsBucket,
+                    operatorCount: compiled.operatorCount,
+                    compiledQueryLength: compiled.query.length,
+                    resolvedSearchLocale: searchLocale,
+                    mode: mode,
+                    ...extraMeta
+                },
+                diagnostics: extraDiagnostics || {}
+            };
+        }
+
         function buildConnectQueryPlan(template, options) {
             const selectedTags = options?.selectedTags || {};
             const hasSelectedKey = (key) => Object.prototype.hasOwnProperty
@@ -2110,6 +2148,12 @@
                         template.expectedResultsBucket
                 })
                 : 'en';
+
+            const manualQuery = String(options?.manualQuery || '').trim();
+            if (manualQuery) {
+                return _buildManualQueryResult(template, manualQuery, searchLocale, 'connect');
+            }
+
             const expectedResultsBucket = normalizeExpectedResultsBucket(
                 template.expectedResultsBucket
             );
@@ -2174,26 +2218,20 @@
                 wrapShould: false
             });
 
-            return {
-                query: compiled.query,
-                filterSpec: { ...(template.filterSpec || {}) },
-                defaults: { ...(template.defaults || {}) },
-                meta: {
-                    templateId: template.id,
-                    usageGoal: template.usageGoal,
-                    expectedResultsBucket: template.expectedResultsBucket,
-                    operatorCount: compiled.operatorCount,
-                    compiledQueryLength: compiled.query.length,
-                    resolvedSearchLocale: searchLocale,
+            return _buildQueryResult(
+                template,
+                compiled,
+                searchLocale,
+                'connect',
+                {
                     roleTermsUsed: roles.length,
-                    excludeKeywordsCount: excludeKeywords.length,
-                    mode: 'connect'
+                    excludeKeywordsCount: excludeKeywords.length
                 },
-                diagnostics: {
+                {
                     groupTerms,
                     roleLimit
                 }
-            };
+            );
         }
 
         function buildCompaniesQueryPlan(template, options) {
@@ -2207,24 +2245,10 @@
                     query: options?.manualQuery
                 })
                 : 'en';
+
             const manualQuery = String(options?.manualQuery || '').trim();
             if (manualQuery) {
-                return {
-                    query: manualQuery,
-                    filterSpec: { ...(template.filterSpec || {}) },
-                    defaults: { ...(template.defaults || {}) },
-                    meta: {
-                        templateId: template.id,
-                        usageGoal: template.usageGoal,
-                        expectedResultsBucket: template.expectedResultsBucket,
-                        operatorCount: countBooleanOperators(manualQuery),
-                        compiledQueryLength: manualQuery.length,
-                        resolvedSearchLocale: searchLocale,
-                        mode: 'companies',
-                        manualQuery: true
-                    },
-                    diagnostics: {}
-                };
+                return _buildManualQueryResult(template, manualQuery, searchLocale, 'companies');
             }
 
             const selectedTags = options?.selectedTags || {};
@@ -2303,24 +2327,17 @@
                 explicitAnd: true,
                 wrapShould: true
             });
-            return {
-                query: compiled.query,
-                filterSpec: { ...(template.filterSpec || {}) },
-                defaults: { ...(template.defaults || {}) },
-                meta: {
-                    templateId: template.id,
-                    usageGoal: template.usageGoal,
-                    expectedResultsBucket: template.expectedResultsBucket,
-                    operatorCount: compiled.operatorCount,
-                    compiledQueryLength: compiled.query.length,
-                    resolvedSearchLocale: searchLocale,
-                    mode: 'companies'
-                },
-                diagnostics: {
+            return _buildQueryResult(
+                template,
+                compiled,
+                searchLocale,
+                'companies',
+                {},
+                {
                     keywords: compiled.should,
                     excludeKeywords: compiled.mustNot
                 }
-            };
+            );
         }
 
         function buildJobsQueryPlan(template, options) {
@@ -2337,24 +2354,10 @@
                         options?.jobsBrazilOffshoreFriendly === true
                 })
                 : 'en';
+
             const manualQuery = String(options?.manualQuery || '').trim();
             if (manualQuery) {
-                return {
-                    query: manualQuery,
-                    filterSpec: { ...(template.filterSpec || {}) },
-                    defaults: { ...(template.defaults || {}) },
-                    meta: {
-                        templateId: template.id,
-                        usageGoal: template.usageGoal,
-                        expectedResultsBucket: template.expectedResultsBucket,
-                        operatorCount: countBooleanOperators(manualQuery),
-                        compiledQueryLength: manualQuery.length,
-                        resolvedSearchLocale: searchLocale,
-                        mode: 'jobs',
-                        manualQuery: true
-                    },
-                    diagnostics: {}
-                };
+                return _buildManualQueryResult(template, manualQuery, searchLocale, 'jobs');
             }
 
             const roleTerms = uniqueNormalized(
@@ -2391,25 +2394,18 @@
                 wrapShould: true
             });
 
-            return {
-                query: compiled.query,
-                filterSpec: { ...(template.filterSpec || {}) },
-                defaults: { ...(template.defaults || {}) },
-                meta: {
-                    templateId: template.id,
-                    usageGoal: template.usageGoal,
-                    expectedResultsBucket: template.expectedResultsBucket,
-                    operatorCount: compiled.operatorCount,
-                    compiledQueryLength: compiled.query.length,
-                    resolvedSearchLocale: searchLocale,
-                    mode: 'jobs'
-                },
-                diagnostics: {
+            return _buildQueryResult(
+                template,
+                compiled,
+                searchLocale,
+                'jobs',
+                {},
+                {
                     roleTerms: compiled.should,
                     locationTerms,
                     keywords
                 }
-            };
+            );
         }
 
         function buildSearchTemplatePlan(options) {

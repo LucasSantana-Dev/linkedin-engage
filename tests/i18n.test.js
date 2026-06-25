@@ -304,5 +304,46 @@ describe('i18n', () => {
 
             expect(document.querySelector('span').textContent).toBe('Updated');
         });
+
+        it('skips placeholder setAttribute when key is missing from both catalogs (L132 arm=1)', () => {
+            document.body.innerHTML = `
+                <input data-i18n-placeholder="missing_key" placeholder="original">
+            `;
+            applyTranslations(document, {}, {});
+            expect(document.querySelector('input').getAttribute('placeholder')).toBe('original');
+        });
+
+        it('skips title setAttribute when key is missing from both catalogs (L140 arm=1)', () => {
+            document.body.innerHTML = `
+                <button data-i18n-title="missing_key" title="original">X</button>
+            `;
+            applyTranslations(document, {}, {});
+            expect(document.querySelector('button').getAttribute('title')).toBe('original');
+        });
+
+        it('skips aria-label setAttribute when key is missing from both catalogs (L149 arm=1)', () => {
+            document.body.innerHTML = `
+                <button data-i18n-aria-label="missing_key" aria-label="original">X</button>
+            `;
+            applyTranslations(document, {}, {});
+            expect(document.querySelector('button').getAttribute('aria-label')).toBe('original');
+        });
+    });
+
+    describe('UMD global registration', () => {
+        afterEach(() => {
+            delete globalThis.UI_LANGUAGE_MODES;
+            delete globalThis.LinkedInI18n;
+        });
+
+        it('does not overwrite already-defined keys on globalThis (L8 arm=1)', () => {
+            const saved = globalThis.getMessage;
+            globalThis.getMessage = 'already-set';
+            jest.resetModules();
+            require('../extension/lib/i18n');
+            expect(globalThis.getMessage).toBe('already-set');
+            globalThis.getMessage = saved;
+            jest.resetModules();
+        });
     });
 });
