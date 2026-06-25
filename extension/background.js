@@ -1041,6 +1041,7 @@ function launchJobsAssist(config) {
             () => { if (chrome.runtime.lastError) { /* tab already gone */ } }
         );
         setActiveTab(null);
+        connectLaunchState = null;
     }
     const query = String(config?.query || '').trim();
     if (!query) {
