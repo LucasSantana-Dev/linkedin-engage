@@ -984,5 +984,15 @@ describe('templates', () => {
         it('generic fn[1] without concept uses isso', () => {
             expect(COMPOSED_PT.generic[1]([])).toContain('isso');
         });
+
+        it('PT hiring fn[0] with no concepts falls back to tech (L608 arm=1)', () => {
+            const result = COMPOSED_PT.hiring[0]([]);
+            expect(result).toContain('tech');
+        });
+
+        it('PT project fn[0] with no concepts falls back to isso (L674 arm=1)', () => {
+            const result = COMPOSED_PT.project[0]([]);
+            expect(result).toContain('isso');
+        });
     });
 });

@@ -142,6 +142,16 @@ describe('jobs profile import', () => {
         expect(result.skills).toEqual(['React', 'Node.js']);
     });
 
+    it('does not overwrite already-defined globals on re-require (L8 arm=1)', () => {
+        const saved = globalThis.extractLinkedInProfileForJobs;
+        globalThis.extractLinkedInProfileForJobs = 'already-set';
+        jest.resetModules();
+        require('../extension/lib/jobs-profile-import');
+        expect(globalThis.extractLinkedInProfileForJobs).toBe('already-set');
+        globalThis.extractLinkedInProfileForJobs = saved;
+        jest.resetModules();
+    });
+
     it('skips empty or whitespace-only text nodes', () => {
         const root = document.createElement('div');
         root.innerHTML = `

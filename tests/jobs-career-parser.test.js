@@ -513,4 +513,70 @@ describe('jobs career parser', () => {
             document.createElement.mockRestore();
         });
     });
+
+    describe('branch coverage: PDF path, null reader error, null file.name/size (L138, L155, L166, L168)', () => {
+        it('parses a PDF file via parseResumeFile end-to-end (L155 arm=0)', async () => {
+            const { parseResumeFile, _setPdfJsLoader } = loadParser();
+            const fakePdfJs = require('./fixtures/fake-pdfjs.cjs');
+            _setPdfJsLoader(() => fakePdfJs);
+            const file = new File([new Uint8Array([1, 2, 3, 4])], 'resume.pdf', { type: 'application/pdf' });
+            const result = await parseResumeFile(file);
+            expect(result.extension).toBe('pdf');
+            expect(result.extractedText).toContain('Hello from page 1');
+            expect(result.sha256).toMatch(/^[0-9a-f]{64}$/);
+        });
+
+        it('readFileBuffer rejects with fallback message when reader.error is null (L138 arm=1)', async () => {
+            const { parseResumeFile } = loadParser();
+            const origFileReader = globalThis.FileReader;
+            globalThis.FileReader = class {
+                readAsArrayBuffer() {
+                    queueMicrotask(() => {
+                        this.error = null;
+                        this.onerror();
+                    });
+                }
+            };
+            const file = new File(
+                [new Uint8Array([1])],
+                'resume.docx',
+                { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+            );
+            try {
+                await expect(parseResumeFile(file)).rejects.toThrow('Failed to read file');
+            } finally {
+                globalThis.FileReader = origFileReader;
+            }
+        });
+
+        it('returns empty fileName and zero size when file.name is null and file.size is 0 (L166, L168)', async () => {
+            jest.resetModules();
+            global.crypto = require('crypto').webcrypto;
+            global.LinkedInJobsCareerVault = require('../extension/lib/jobs-career-vault');
+            global.LinkedInJobsCareerIntelligence = {
+                validateResumeVaultFileMeta: () => ({ ok: true, extension: 'docx' }),
+                MAX_RESUME_BYTES: 5 * 1024 * 1024
+            };
+            const realBuf = new Uint8Array([1, 2, 3]).buffer;
+            const origFileReader = globalThis.FileReader;
+            globalThis.FileReader = class {
+                readAsArrayBuffer() {
+                    queueMicrotask(() => {
+                        this.result = realBuf;
+                        this.onload();
+                    });
+                }
+            };
+            global.mammoth = { extractRawText: async () => ({ value: 'text' }) };
+            const { parseResumeFile } = require('../extension/lib/jobs-career-parser');
+            try {
+                const result = await parseResumeFile({ name: null, size: 0 });
+                expect(result.fileName).toBe('');
+                expect(result.size).toBe(0);
+            } finally {
+                globalThis.FileReader = origFileReader;
+                delete global.mammoth;
+            }
+        });
+    });
 });

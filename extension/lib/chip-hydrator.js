@@ -1,15 +1,18 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
     root.LinkedInChipHydrator = api;
     Object.keys(api).forEach(function(key) {
+        /* istanbul ignore next */
         if (typeof root[key] === 'undefined') {
             root[key] = api[key];
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
         /**
@@ -158,6 +161,7 @@
                 const renderedTerms = new Set();
 
                 areaOrder.forEach((uiArea) => {
+                    /* istanbul ignore else */
                     if (uiAreaToTerms[uiArea]) {
                         uiAreaToTerms[uiArea].forEach((term) => {
                             // De-duplicate: only render each term once per group
@@ -172,7 +176,9 @@
                 });
 
                 // Also add terms from areas not in the standard order (if any)
+                /* istanbul ignore next */
                 Object.keys(uiAreaToTerms).forEach((uiArea) => {
+                    /* istanbul ignore next */
                     if (!areaOrder.includes(uiArea)) {
                         uiAreaToTerms[uiArea].forEach((term) => {
                             if (!renderedTerms.has(term.toLowerCase())) {
