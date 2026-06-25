@@ -486,4 +486,24 @@ describe('jobs career intelligence', () => {
             expect(result.inferredRoles.length).toBeLessThanOrEqual(5);
         });
     });
+
+    describe('branch coverage: null/absent inputs (L120, L140, L142, L223, L290, L305, L346, L365, L372)', () => {
+        it('buildJobsCareerSearchPlan(null) covers L305 null-snapshot, L120 undefined values, L290/L346/L365/L372 absent fields', () => {
+            const plan = buildJobsCareerSearchPlan(null);
+            expect(plan.areaPreset).toBe('custom');
+            expect(plan.workType).toBe('');
+            expect(plan.experienceLevel).toBe('');
+            expect(typeof plan.query).toBe('string');
+        });
+
+        it('validateResumeVaultFileMeta with null name covers L140 arm=1 and L142 empty-ext arm=1', () => {
+            const result = validateResumeVaultFileMeta({ name: null, size: 1024 });
+            expect(result).toEqual({ ok: false, reason: 'unsupported-file-type', extension: '' });
+        });
+
+        it('analyzeJobsCareerInputs with doc missing extractedText covers L223 arm=1', () => {
+            const result = analyzeJobsCareerInputs({ resumeDocuments: [{ id: 'doc1' }] });
+            expect(result).toHaveProperty('inferredRoles');
+        });
+    });
 });
