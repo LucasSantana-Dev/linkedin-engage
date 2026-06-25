@@ -702,6 +702,15 @@ function handleCompanyStepDone(result) {
 }
 
 function launchAutomation(config) {
+    if (activeTabId !== null) {
+        chrome.tabs.sendMessage(
+            activeTabId,
+            { action: 'stop' },
+            () => { if (chrome.runtime.lastError) { /* tab already gone */ } }
+        );
+        setActiveTab(null);
+        connectLaunchState = null;
+    }
     const launchConfig = config && typeof config === 'object'
         ? config
         : {};
@@ -1025,6 +1034,14 @@ function launchCompanyFollow(config) {
 }
 
 function launchJobsAssist(config) {
+    if (activeTabId !== null) {
+        chrome.tabs.sendMessage(
+            activeTabId,
+            { action: 'stop' },
+            () => { if (chrome.runtime.lastError) { /* tab already gone */ } }
+        );
+        setActiveTab(null);
+    }
     const query = String(config?.query || '').trim();
     if (!query) {
         notifyError('No jobs query provided.');
