@@ -343,7 +343,7 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
           yearsHint = "5";
         } else if (/\b(junior|jr|entry)\b/.test(title)) {
           yearsHint = "1";
-        } else if (/\b(intern|trainee|estagio)\b/.test(title)) {
+        } else if (/\b(intern|trainee|estagio|estagiario)\b/.test(title)) {
           yearsHint = "0";
         } else {
           yearsHint = "4";
@@ -367,7 +367,7 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       }
       // J2 — last name / surname field
       if (
-        /\blast name\b|\bsurname\b|\bsobrenome\b|\bfamily name\b|\bapelido\b/.test(hint) &&
+        /\blast name\b|\bsurname\b|\bsobrenome\b|\bfamily name\b/.test(hint) &&
         !/company|school|employer|organization/.test(hint)
       ) {
         const parts = String(source.fullName || "").trim().split(/\s+/);

@@ -508,6 +508,14 @@ describe('fillKnownFields — J1 years-of-experience and J2 name-split', () => {
         expect(sel.value).toBe('MID');
     });
 
+    it('J1: fills years-of-experience select for PT-BR intern title (estagiario)', () => {
+        const sel = makeSelect('Years of experience', YOE_OPTIONS);
+        const modal = makeModal(sel);
+        fill(modal, { currentTitle: 'Estagiário de Software' });
+        // estagiario → hint "0" → fuzzy: "0-1 years".includes("0") → 'ENTRY'
+        expect(sel.value).toBe('ENTRY');
+    });
+
     it('J1: does not fill years-of-experience text input (only selects)', () => {
         const inp = makeInput('Years of experience');
         const modal = makeModal(inp);
