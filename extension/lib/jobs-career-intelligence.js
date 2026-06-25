@@ -43,7 +43,25 @@
             'global',
             'products',
             'product',
-            'distributed'
+            'distributed',
+            'engineer',
+            'developer',
+            'software',
+            'backend',
+            'frontend',
+            'fullstack',
+            'senior',
+            'junior',
+            'lead',
+            'staff',
+            'principal',
+            'manager',
+            'specialist',
+            'architect',
+            'analyst',
+            'consultant',
+            'contractor',
+            'designer'
         ]);
         const BRAZIL_OFFSHORE_SIGNALS = Object.freeze([
             'remote',
@@ -237,9 +255,16 @@
             const seniority = detectSeniority(sourceText);
             const locationTerms = inferLocationTerms(sourceText);
             const remotePreferred = inferRemotePreference(sourceText);
+
+            const roleNorm = inferredRoles.map(r => normalizeText(r).toLowerCase());
+            const filteredKeywords = keywordTerms.filter(kw => {
+                const kwNorm = normalizeText(kw).toLowerCase();
+                return !roleNorm.some(r => r.split(' ').includes(kwNorm));
+            });
+
             const areaPreset = inferAreaPreset(
                 inferredRoles,
-                keywordTerms
+                filteredKeywords
             );
 
             return {
@@ -252,7 +277,7 @@
                         : ['software engineer'],
                     5
                 ),
-                keywordTerms: uniqueList(keywordTerms, 12),
+                keywordTerms: uniqueList(filteredKeywords, 12),
                 locationTerms: uniqueList(locationTerms, 4),
                 workType: remotePreferred ? '2' : '',
                 experienceLevel: mapExperienceLevel(seniority),
