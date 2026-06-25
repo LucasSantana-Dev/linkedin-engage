@@ -251,6 +251,100 @@ describe('jobs career vault', () => {
         }
     });
 
+    describe('branch coverage: fallback and null-result paths (L95, L98, L102, L206)', () => {
+        it('falls back to globalThis.indexedDB when no API arg is passed (L95 arm=1)', async () => {
+            const savedDb = globalThis.indexedDB;
+            globalThis.indexedDB = createIndexedDbMock();
+            try {
+                const result = await listJobsCareerVaultDocuments();
+                expect(Array.isArray(result)).toBe(true);
+            } finally {
+                globalThis.indexedDB = savedDb;
+            }
+        });
+
+        it('rejects with fallback message when request.onerror fires with null error (L98 arm=1)', async () => {
+            const errorApi = {
+                open() {
+                    const req = { error: null };
+                    queueMicrotask(() => req.onerror?.());
+                    return req;
+                }
+            };
+            await expect(listJobsCareerVaultDocuments(errorApi)).rejects.toThrow('Failed to open jobs vault');
+        });
+
+        it('skips createObjectStore when store already exists (L102 arm=1)', async () => {
+            const preExistingApi = {
+                open() {
+                    const db = {
+                        objectStoreNames: { contains: () => true },
+                        createObjectStore: jest.fn(),
+                        transaction() {
+                            const tx = { onerror: null, oncomplete: null };
+                            tx.objectStore = () => ({
+                                getAll() {
+                                    const r = {};
+                                    queueMicrotask(() => {
+                                        r.result = [];
+                                        r.onsuccess?.({ target: r });
+                                        queueMicrotask(() => tx.oncomplete?.());
+                                    });
+                                    return r;
+                                }
+                            });
+                            return tx;
+                        },
+                        close() {}
+                    };
+                    const req = {};
+                    queueMicrotask(() => {
+                        req.result = db;
+                        req.onupgradeneeded?.();
+                        req.onsuccess?.();
+                    });
+                    return req;
+                }
+            };
+            const result = await listJobsCareerVaultDocuments(preExistingApi);
+            expect(result).toEqual([]);
+        });
+
+        it('resolves to [] when getAll result is null (L206 arm=1)', async () => {
+            const nullResultApi = {
+                open() {
+                    const db = {
+                        objectStoreNames: { contains: () => true },
+                        transaction() {
+                            const tx = { onerror: null, oncomplete: null };
+                            tx.objectStore = () => ({
+                                getAll() {
+                                    const r = {};
+                                    queueMicrotask(() => {
+                                        r.result = null;
+                                        r.onsuccess?.({ target: r });
+                                        queueMicrotask(() => tx.oncomplete?.());
+                                    });
+                                    return r;
+                                }
+                            });
+                            return tx;
+                        },
+                        close() {}
+                    };
+                    const req = {};
+                    queueMicrotask(() => {
+                        req.result = db;
+                        req.onsuccess?.();
+                    });
+                    return req;
+                }
+            };
+            const result = await listJobsCareerVaultDocuments(nullResultApi);
+            expect(result).toEqual([]);
+        });
+    });
+
     it('getCryptoApi throws when crypto is unavailable', async () => {
         const origCrypto = globalThis.crypto;
         const origSubtle = globalThis.crypto?.subtle;

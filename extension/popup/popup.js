@@ -56,6 +56,7 @@ let jobsManualResumePending = false;
 let activeUiCatalog = {};
 let fallbackUiCatalog = {};
 let currentUiLocale = 'en';
+let _accordionInitialized = false;
 
 const DEFAULT_LATAM_COMPANIES = [
     'Hotjar', 'Doist', 'Toggl', 'Pipefy', 'VTEX',
@@ -1280,6 +1281,8 @@ function logAccordionBreadcrumb(label, payload) {
 }
 
 function initializeAccordionInteractions() {
+    if (_accordionInitialized) return;
+    _accordionInitialized = true;
     const buttons = document.querySelectorAll(
         '[data-accordion-toggle]'
     );
@@ -1878,6 +1881,8 @@ function refreshJobsCacheStatus() {
         { action: 'getJobsProfileCacheStatus' },
         (response) => {
             if (chrome.runtime.lastError || !response) {
+                const errorMsg = chrome.runtime.lastError?.message || 'Encrypted cache status unavailable.';
+                setStatusMessage(errorMsg, 'error');
                 statusEl.textContent = tr(
                     'popup.jobs.cacheStatusUnavailable',
                     null,
@@ -1923,6 +1928,8 @@ function refreshJobsCareerIntelStatus() {
         { action: 'getJobsCareerIntelStatus' },
         (response) => {
             if (chrome.runtime.lastError || !response) {
+                const errorMsg = chrome.runtime.lastError?.message || 'Career intelligence status unavailable.';
+                setStatusMessage(errorMsg, 'error');
                 statusEl.textContent = tr(
                     'popup.jobs.careerStatusUnavailable',
                     null,
@@ -1938,7 +1945,7 @@ function refreshJobsCareerIntelStatus() {
                 statusEl.textContent = tr(
                     'popup.jobs.careerNotConfigured',
                     null,
-                    'Career intelligence: not configured.'
+                    'Career intelligence: not configured — import your LinkedIn profile or upload a resume to get started.'
                 );
                 return;
             }
@@ -4341,6 +4348,30 @@ document.getElementById('clearJobsProfileCacheBtn')
             refreshJobsCacheStatus();
         });
     });
+document.getElementById('openJobsSearchBtn')
+    ?.addEventListener('click', () => {
+        const plan = buildJobsSearchPlan();
+        const query = plan.query || '';
+        const filterSpec = plan.filterSpec || {};
+        const url = new URL('https://www.linkedin.com/jobs/search/');
+        if (query) url.searchParams.set('keywords', query);
+        if (filterSpec.easyApplyOnly !== false) {
+            url.searchParams.set('f_AL', 'true');
+        }
+        const experienceLevel = document.getElementById(
+            'jobsExperienceLevelSelect'
+        )?.value;
+        if (experienceLevel) url.searchParams.set('f_E', experienceLevel);
+        const workType = document.getElementById(
+            'jobsWorkTypeSelect'
+        )?.value;
+        if (workType) url.searchParams.set('f_WT', workType);
+        const location = document.getElementById(
+            'jobsLocationInput'
+        )?.value.trim();
+        if (location) url.searchParams.set('location', location);
+        chrome.tabs.create({ url: url.toString() });
+    });
 document.getElementById('uploadJobsResumesBtn')
     .addEventListener('click', () => {
         document.getElementById('jobsResumeUploadInput')?.click();
@@ -4373,6 +4404,7 @@ if (typeof _setParseTelemetry === 'function') {
 }
 document.getElementById('jobsResumeUploadInput')
     .addEventListener('change', async (event) => {
+        const uploadBtn = document.getElementById('uploadJobsResumesBtn');
         const files = Array.from(event.target.files || []);
         event.target.value = '';
         if (!files.length) return;
@@ -4385,6 +4417,7 @@ document.getElementById('jobsResumeUploadInput')
             );
             return;
         }
+        uploadBtn.disabled = true;
         try {
             const currentState = await loadJobsCareerIntelState(passphrase);
             const currentDocs = currentState?.documents || [];
@@ -4422,10 +4455,13 @@ document.getElementById('jobsResumeUploadInput')
                 getJobsCareerIntelErrorMessage(error),
                 'error'
             );
+        } finally {
+            uploadBtn.disabled = false;
         }
     });
 document.getElementById('importJobsLinkedInProfileBtn')
     .addEventListener('click', () => {
+        const importBtn = document.getElementById('importJobsLinkedInProfileBtn');
         const passphrase = getJobsCareerPassphrase();
         if (passphrase.length < 4) {
             setStatusMessageKey(
@@ -4435,23 +4471,24 @@ document.getElementById('importJobsLinkedInProfileBtn')
             );
             return;
         }
+        importBtn.disabled = true;
         chrome.runtime.sendMessage({
             action: 'importJobsLinkedInProfile'
         }, async (response) => {
-            if (chrome.runtime.lastError ||
-                response?.status !== 'loaded') {
-                setStatusMessage(
-                    response?.error ||
-                        tr(
-                            'popup.jobs.importProfileOpenLinkedIn',
-                            null,
-                            'Open your LinkedIn profile page before importing.'
-                        ),
-                    'warning'
-                );
-                return;
-            }
             try {
+                if (chrome.runtime.lastError ||
+                    response?.status !== 'loaded') {
+                    setStatusMessage(
+                        response?.error ||
+                            tr(
+                                'popup.jobs.importProfileOpenLinkedIn',
+                                null,
+                                'Open your LinkedIn profile page before importing.'
+                            ),
+                        'warning'
+                    );
+                    return;
+                }
                 await rebuildAndPersistJobsCareerIntel({
                     importedProfile: response.profile
                 }, passphrase);
@@ -4466,6 +4503,8 @@ document.getElementById('importJobsLinkedInProfileBtn')
                     getJobsCareerIntelErrorMessage(error),
                     'error'
                 );
+            } finally {
+                importBtn.disabled = false;
             }
         });
     });
@@ -4489,6 +4528,14 @@ document.getElementById('analyzeJobsCareerBtn')
                 'jobsBrazilOffshoreFriendlyCheckbox'
             ).checked
         }, (response) => {
+            if (response?.status === 'missing') {
+                setStatusMessageKey(
+                    'popup.jobs.careerNoData',
+                    'warning',
+                    'No career data yet — import your LinkedIn profile or upload a resume first.'
+                );
+                return;
+            }
             if (chrome.runtime.lastError ||
                 response?.status !== 'generated') {
                 setStatusMessageKey(

@@ -8,6 +8,33 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
     const delay = ms => new Promise(r => setTimeout(r, ms));
     let stopRequested = false;
+    let runningNotifyBar = null;
+    // In-page "Running… [Stop]" control so the user can stop the run from the
+    // LinkedIn tab without opening the popup. Stop posts LINKEDIN_BOT_STOP,
+    // the same signal the popup Stop button triggers.
+    function showRunningNotification() {
+        if (typeof showTopNotification !== 'function') return;
+        runningNotifyBar = showTopNotification(
+            'LinkedIn Engage: automation running…',
+            'info',
+            {
+                duration: 0,
+                action: {
+                    label: 'Stop',
+                    onClick: () => window.postMessage(
+                        { type: 'LINKEDIN_BOT_STOP' }, '*'
+                    )
+                }
+            }
+        );
+    }
+    function dismissRunningNotification() {
+        if (runningNotifyBar &&
+            typeof dismissTopNotification === 'function') {
+            dismissTopNotification(runningNotifyBar);
+        }
+        runningNotifyBar = null;
+    }
     const connectionLog = [];
     let lastInviteStatus = null;
     let fuseLimitHit = false;
@@ -875,6 +902,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         const MAX_BACKOFF_MS = 300000;
         stopRequested = false;
         connectionLog.length = 0;
+        showRunningNotification();
         const sentUrls = new Set(config?.sentUrls || []);
 
         try {
@@ -1756,6 +1784,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         if (event.source !== window) return;
         if (event.data?.type === 'LINKEDIN_BOT_START') {
             runAutomation(event.data.config).then(result => {
+                dismissRunningNotification();
                 const runtimeResult = result &&
                     typeof result === 'object'
                     ? { ...result }
@@ -1773,6 +1802,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     result: runtimeResult
                 }, '*');
             }).catch(err => {
+                dismissRunningNotification();
                 // Never leave the popup frozen on an uncaught run error:
                 // always post a terminal DONE with a failure result (#170).
                 window.postMessage({

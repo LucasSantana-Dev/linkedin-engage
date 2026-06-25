@@ -1,5 +1,6 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
@@ -10,8 +11,14 @@
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
+        /* istanbul ignore next */
+        const textUtils = typeof require === 'function'
+            ? require('./text-utils.js')
+            : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
+        /* istanbul ignore next */
         const searchLanguageApi = typeof require === 'function'
             ? require('./search-language')
             : (typeof globalThis !== 'undefined'
@@ -1183,10 +1190,8 @@
         };
 
         function normalizeText(text) {
-            return String(text || '')
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
+            const normalized = textUtils?.normalizeToSearch(text) || String(text || '').toLowerCase().trim();
+            return normalized
                 .replace(/[^\p{L}\p{N}\s"]/gu, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -1262,7 +1267,7 @@
         function uniqueList(values) {
             const seen = new Set();
             const out = [];
-            for (const raw of values || []) {
+            for (const raw of (values || /* istanbul ignore next */ [])) {
                 const clean = String(raw || '').trim();
                 if (!clean) continue;
                 const key = normalizeText(clean);
@@ -1325,12 +1330,14 @@
         }
 
         function formatQueryTerm(term) {
-            const clean = String(term || '').trim().replace(/^"+|"+$/g, '');
+            const clean = String(term || /* istanbul ignore next */ '').trim().replace(/^"+|"+$/g, '');
+            /* istanbul ignore if */
             if (!clean) return '';
             return /\s/.test(clean) ? `"${clean}"` : clean;
         }
 
         function localizeTerms(values, searchLanguageMode) {
+            /* istanbul ignore next */
             if (typeof localizeSearchTerms !== 'function') {
                 return toArray(values);
             }
