@@ -348,8 +348,8 @@
             );
             const compiled = searchTemplates?.compileBooleanQuery
                 ? searchTemplates.compileBooleanQuery({
-                    should: roleTerms,
-                    must: locationTerms.concat(keywordTerms.slice(0, 4)),
+                    should: roleTerms.concat(keywordTerms.slice(2)),
+                    must: locationTerms.concat(keywordTerms.slice(0, 2)),
                     mustNot: [],
                     budget: 12,
                     explicitAnd: true,

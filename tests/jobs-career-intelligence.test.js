@@ -155,6 +155,38 @@ describe('jobs career intelligence', () => {
         expect(plan.experienceLevel).toBe('4');
     });
 
+    it('J4: only top-2 keyword terms are AND-required; 3rd+ are OR (should)', () => {
+        // Current code: must = location + keywords.slice(0,4) → aws/node.js required.
+        // After J4:    must = location + keywords.slice(0,2) → only react/typescript required;
+        //              aws, node.js, postgresql go to should (OR block).
+        const plan = buildJobsCareerSearchPlan({
+            areaPreset: 'tech',
+            inferredRoles: ['software engineer'],
+            keywordTerms: ['react', 'typescript', 'aws', 'node.js', 'postgresql'],
+            locationTerms: ['remote'],
+            workType: '2',
+            experienceLevel: '4'
+        }, { searchLanguageMode: 'en' });
+
+        // Top-2 are required: appear after AND
+        expect(plan.query).toMatch(/AND react/i);
+        expect(plan.query).toMatch(/AND typescript/i);
+        // 3rd keyword (aws) must NOT be a standalone AND-required term
+        expect(plan.query).not.toMatch(/AND aws/i);
+    });
+
+    it('J4: with fewer than 2 keywords all go into must', () => {
+        const plan = buildJobsCareerSearchPlan({
+            areaPreset: 'tech',
+            inferredRoles: ['designer'],
+            keywordTerms: ['figma'],
+            locationTerms: ['remote'],
+            workType: '2',
+            experienceLevel: '4'
+        }, { searchLanguageMode: 'en' });
+        expect(plan.query).toMatch(/AND figma/i);
+    });
+
     it('prefers portuguese auto locale for brazil-local plans when offshore is off', () => {
         const plan = buildJobsCareerSearchPlan({
             areaPreset: 'tech',
