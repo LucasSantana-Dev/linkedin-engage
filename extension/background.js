@@ -2794,6 +2794,21 @@ chrome.runtime.onMessage.addListener(
                                 runtimeConfig.keywordTerms =
                                     careerIntelState.analysisSnapshot.keywordTerms;
                             }
+                            const histData = await new Promise(resolve =>
+                                chrome.storage.local.get(
+                                    'jobsAssistHistory', resolve
+                                )
+                            );
+                            const histIds = (histData.jobsAssistHistory || [])
+                                .map(e => e?.id)
+                                .filter(Boolean);
+                            if (histIds.length > 0) {
+                                runtimeConfig.appliedJobIds = Array.from(
+                                    new Set(
+                                        runtimeConfig.appliedJobIds.concat(histIds)
+                                    )
+                                );
+                            }
                             launchJobsAssist(runtimeConfig);
                             sendResponse({ status: 'started' });
                         } catch (error) {
