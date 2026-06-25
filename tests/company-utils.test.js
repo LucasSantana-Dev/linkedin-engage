@@ -11,7 +11,9 @@ const {
     isCompanyFollowConfirmed,
     getCompanyFollowConfirmationSignals,
     isNextPageButton,
-    isCompanyFollowText
+    isCompanyFollowText,
+    findFollowBtnInCard,
+    buildBatchFromRotation
 } = require('../extension/lib/company-utils');
 
 function createCard({ name, subtitle, companyUrl }) {
@@ -808,5 +810,159 @@ describe('getCompanySearchPageState resultsCountHint + detectExplicit via body (
         const state = getCompanySearchPageState(doc);
         expect(state.isExplicitNoResults).toBe(false);
         expect(state.resultsCountHint).toBe(150);
+    });
+});
+
+describe('isLowFitCompanyEntity empty haystack (L122-124)', () => {
+    it('returns isLowFit=false for entity with no name or subtitle', () => {
+        const result = isLowFitCompanyEntity({});
+        expect(result.isLowFit).toBe(false);
+        expect(result.reason).toBe('');
+        expect(result.match).toBe('');
+    });
+
+    it('returns isLowFit=false for null input', () => {
+        const result = isLowFitCompanyEntity(null);
+        expect(result.isLowFit).toBe(false);
+    });
+});
+
+describe('findFollowBtnInCard (L309-318)', () => {
+    it('returns the enabled Follow button when found', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        card.appendChild(btn);
+        expect(findFollowBtnInCard(card)).toBe(btn);
+    });
+
+    it('returns null when no Follow button exists', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Connect';
+        card.appendChild(btn);
+        expect(findFollowBtnInCard(card)).toBeNull();
+    });
+
+    it('skips disabled Follow buttons', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        btn.disabled = true;
+        card.appendChild(btn);
+        expect(findFollowBtnInCard(card)).toBeNull();
+    });
+
+    it('skips Following buttons (already following)', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Following';
+        card.appendChild(btn);
+        expect(findFollowBtnInCard(card)).toBeNull();
+    });
+});
+
+describe('buildBatchFromRotation (L411-416)', () => {
+    it('returns empty array for null input (L414 arm=0)', () => {
+        expect(buildBatchFromRotation(null, 0, 5)).toEqual([]);
+    });
+
+    it('returns empty array for empty companies list (L414 arm=0)', () => {
+        expect(buildBatchFromRotation([], 0, 5)).toEqual([]);
+    });
+
+    it('slices batch from rotation start index', () => {
+        const companies = ['A', 'B', 'C', 'D', 'E'];
+        expect(buildBatchFromRotation(companies, 1, 2)).toEqual(['B', 'C']);
+    });
+
+    it('wraps start index via modulo', () => {
+        const companies = ['A', 'B', 'C'];
+        expect(buildBatchFromRotation(companies, 4, 2)).toEqual(['B', 'C']);
+    });
+});
+
+describe('matchesTargetCompanies empty-target branch (L168)', () => {
+    it('returns false when normalized target is empty string', () => {
+        expect(matchesTargetCompanies('Acme Corp', [''])).toBe(false);
+    });
+
+    it('returns false when all targets normalize to empty', () => {
+        expect(matchesTargetCompanies('Acme Corp', ['   ', ''])).toBe(false);
+    });
+});
+
+describe('getCompanyFollowConfirmationSignals root=null branch (L189)', () => {
+    beforeEach(() => { document.body.innerHTML = ''; });
+
+    it('uses document when root is null', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Following';
+        card.appendChild(btn);
+        document.body.appendChild(card);
+        const signals = getCompanyFollowConfirmationSignals(card, null);
+        expect(signals).toContain('button-text-following');
+    });
+
+    it('returns false from hasFollowSuccessToast when root has no querySelectorAll (L190 arm=1)', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Follow';
+        card.appendChild(btn);
+        document.body.appendChild(card);
+        const signals = getCompanyFollowConfirmationSignals(card, { noQuerySelectorAll: true });
+        expect(signals).not.toContain('toast-follow-success');
+    });
+
+    it('skips toast node with empty text content (L208 continue arm)', () => {
+        const card = document.createElement('div');
+        card.appendChild(document.createElement('button'));
+        const emptyToast = document.createElement('div');
+        emptyToast.className = 'artdeco-toast-item__message';
+        const root = document.createElement('div');
+        root.appendChild(emptyToast);
+        const signals = getCompanyFollowConfirmationSignals(card, root);
+        expect(signals).not.toContain('toast-follow-success');
+    });
+
+    it('detects non-clickable-following via descriptor when text is not Following (L249 inner || arm=1)', () => {
+        const card = document.createElement('div');
+        const btn = document.createElement('button');
+        btn.textContent = 'Click';
+        btn.disabled = true;
+        btn.setAttribute('aria-label', 'Unfollow Acme');
+        card.appendChild(btn);
+        const signals = getCompanyFollowConfirmationSignals(card, card);
+        expect(signals).toContain('non-clickable-following');
+    });
+});
+
+describe('isNextPageButton aria-label fallback (L274)', () => {
+    it('returns false when enabled btn has no aria-label (|| "" arm=1)', () => {
+        const btn = document.createElement('button');
+        expect(isNextPageButton(btn)).toBe(false);
+    });
+});
+
+describe('findCompanyCards no-root fallback (L292)', () => {
+    beforeEach(() => { document.body.innerHTML = ''; });
+
+    it('uses document when root is undefined', () => {
+        const card = document.createElement('div');
+        card.className = 'entity-result';
+        document.body.appendChild(card);
+        const cards = findCompanyCards();
+        expect(cards.length).toBeGreaterThanOrEqual(1);
+    });
+});
+
+describe('getCompanySearchPageState no-root fallback (L329/L380)', () => {
+    beforeEach(() => { document.body.innerHTML = ''; });
+
+    it('uses document when called with no argument', () => {
+        document.body.textContent = 'About 42 results found';
+        const state = getCompanySearchPageState();
+        expect(state.resultsCountHint).toBe(42);
     });
 });
