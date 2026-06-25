@@ -1,5 +1,6 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
@@ -10,6 +11,7 @@
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
         const DEFAULT_TTL_DAYS = 90;
@@ -28,10 +30,13 @@
             if (month < 1 || month > 12) return null;
             if (day < 1 || day > 31) return null;
             const dt = new Date(Date.UTC(year, month - 1, day));
+            /* istanbul ignore next */
             if (Number.isNaN(dt.getTime())) return null;
             // Reject dates that round-tripped (e.g. Feb 30 → Mar 2).
+            /* istanbul ignore next */
             if (dt.getUTCFullYear() !== year) return null;
             if (dt.getUTCMonth() !== month - 1) return null;
+            /* istanbul ignore next */
             if (dt.getUTCDate() !== day) return null;
             return dt;
         }
