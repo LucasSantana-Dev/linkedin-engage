@@ -1,5 +1,6 @@
 (function(root, factory) {
     const api = factory();
+    /* istanbul ignore next */
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
     }
@@ -10,6 +11,7 @@
         }
     });
 })(
+    /* istanbul ignore next */
     typeof globalThis !== 'undefined' ? globalThis : this,
     function() {
         const fs = typeof require === 'function'
@@ -84,6 +86,7 @@
             }
 
             const filePath = getLocaleFilePath(normalizedLocale);
+            /* istanbul ignore else */
             if (fs && path && typeof __dirname === 'string') {
                 const absolutePath = path.resolve(
                     __dirname,

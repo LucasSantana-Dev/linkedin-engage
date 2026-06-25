@@ -177,4 +177,19 @@ describe('normalizeRunOutcome', () => {
         expect(company.processedCount).toBe(2);
         expect(company.runStatus).toBe(RUN_STATUS_SUCCESS);
     });
+
+    test('returns reason=unknown when processedPosts>0 but no actionable output (L91)', () => {
+        const result = normalizeRunOutcome({ mode: 'connect', processedPosts: 2 });
+        expect(result.runStatus).toBe(RUN_STATUS_FAILED);
+        expect(result.reason).toBe('unknown');
+    });
+
+    test('covers || fallback for null status in log entries (L106 arm=1)', () => {
+        const result = normalizeRunOutcome({
+            mode: 'company',
+            log: [{ status: null }]
+        });
+        expect(result.runStatus).toBe(RUN_STATUS_FAILED);
+        expect(result.reason).toBe('no-items-processed');
+    });
 });

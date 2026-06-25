@@ -333,6 +333,23 @@ describe('jobs profile cache', () => {
         });
     });
 
+    describe('branch coverage: toIsoDate null-value and version=0 fallback (L79, L194)', () => {
+        it('getJobsProfileCacheStatus with no updatedAt uses current date (L79 arm=1)', () => {
+            const status = getJobsProfileCacheStatus({ salt: 'x', iv: 'y', ciphertext: 'z' });
+            expect(status.exists).toBe(true);
+            expect(new Date(status.updatedAt).getTime()).not.toBeNaN();
+        });
+
+        it('decryptJobsProfileCache with version=0 falls back to CACHE_VERSION without throwing (L194 arm=1)', async () => {
+            await expect(
+                decryptJobsProfileCache(
+                    { salt: 'YQ==', iv: 'YQ==', ciphertext: 'YQ==', version: 0 },
+                    'passphrase-test'
+                )
+            ).rejects.toThrow('Invalid profile cache passphrase');
+        });
+    });
+
     afterAll(() => {
         delete global.CACHE_VERSION;
         delete global.PROFILE_FIELDS;

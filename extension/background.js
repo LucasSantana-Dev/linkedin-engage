@@ -7,6 +7,7 @@ const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/ui-notify.js',
     'lib/templates.js',
+    'lib/search-no-results.js',
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
@@ -805,6 +806,7 @@ function launchAutomation(config) {
                         target: { tabId: tab.id },
                         files: [
                             'lib/ui-notify.js',
+                            'lib/search-no-results.js',
                             'lib/invite-utils.js',
                             'lib/human-behavior.js',
                             'lib/connect-action-utils.js'
@@ -2793,6 +2795,21 @@ chrome.runtime.onMessage.addListener(
                                     ?.length) {
                                 runtimeConfig.keywordTerms =
                                     careerIntelState.analysisSnapshot.keywordTerms;
+                            }
+                            const histData = await new Promise(resolve =>
+                                chrome.storage.local.get(
+                                    'jobsAssistHistory', resolve
+                                )
+                            );
+                            const histIds = (histData.jobsAssistHistory || [])
+                                .map(e => e?.id)
+                                .filter(Boolean);
+                            if (histIds.length > 0) {
+                                runtimeConfig.appliedJobIds = Array.from(
+                                    new Set(
+                                        runtimeConfig.appliedJobIds.concat(histIds)
+                                    )
+                                );
                             }
                             launchJobsAssist(runtimeConfig);
                             sendResponse({ status: 'started' });
