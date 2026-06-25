@@ -11,6 +11,9 @@
 const textUtils = typeof require === 'function'
     ? require('./text-utils.js')
     : (typeof globalThis !== 'undefined' && globalThis.LinkedInTextUtils ? globalThis.LinkedInTextUtils : null);
+const _snrDetect = typeof require === 'function'
+    ? require('./search-no-results').detectNoSearchResults
+    : (typeof detectNoSearchResults === 'function' ? detectNoSearchResults : null);
 
 function normalizeCompanyName(value) {
     return String(value || '')
@@ -366,30 +369,10 @@ function parseResultsCountHint(text) {
 }
 
 function detectExplicitNoResults(root, resultsCountHint, resultsCountText) {
-    if (resultsCountHint === 0) return true;
-    const el = root || document;
-    const patterns = /\b(?:no results found|nenhum resultado(?: encontrado)?|0\s*results?|0\s*resultados?)\b/i;
-    const selectors = [
-        '.search-no-results',
-        '.search-results-container__no-results-message',
-        '.artdeco-empty-state',
-        'main'
-    ];
-    for (const selector of selectors) {
-        const nodes = el.querySelectorAll(selector);
-        for (const node of nodes) {
-            const text = (node.innerText || node.textContent || '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (patterns.test(text)) return true;
-        }
+    if (_snrDetect) {
+        return _snrDetect(root, { resultsCountHint, resultsCountText });
     }
-    if (patterns.test(resultsCountText || '')) return true;
-    const bodyText = (el.body?.innerText ||
-        el.body?.textContent || '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    return patterns.test(bodyText);
+    return resultsCountHint === 0;
 }
 
 function getCompanySearchPageState(root) {
