@@ -9,3 +9,4 @@ reviews:
   auto_review:
     enabled: true
     drafts: false           # don't review draft PRs
+    ignore_bots: false      # review dependabot PRs so they can pass required checks
