@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.40.0] - 2026-06-26
+
+### Added
+- **Jobs fill quality (J1+J2)** (#205 context): years-of-experience field auto-filled from career intel; first and last name split across separate fields.
+- **Jobs query quality (J4)**: top-2 career intel keywords promoted to must-match (`"keyword"`); remaining keywords use should-match for better recall without over-filtering.
+
+### Fixed
+- **Connect/Jobs in-progress guard** (#205, #207): `launchAutomation` and `launchJobsAssist` now stop the active tab before launching a new one, preventing double-tab race. `connectLaunchState` correctly cleared in `launchJobsAssist` guard so a preempted connect run cannot fire a spurious retry.
+- **Jobs: cross-session duplicate applications** (#200): persisted job IDs auto-injected on session start to prevent re-applying to already-processed jobs.
+- **Jobs: career intel UX** (#199): improved layout; added "open on LinkedIn" button.
+- **Jobs: role-generic keyword filtering** (#198): common role-generic words excluded from career intel keyword extraction.
+- **Jobs: Easy Apply template keywords** (#197): removed 'easy apply' from template keyword querySpec to avoid polluting keyword-driven queries.
+
+### Internal
+- **Dead AI comment cluster removed** (#208): ~3 300 lines of unreachable code deleted (feed-engage.js was removed in v1.37.0, leaving `background.js` infrastructure and two `bridge.js` relay blocks orphaned). `background.js`: 3 524 → 2 510 lines (−29%). Coverage improved on all four thresholds.
+- **No-results detector unified** (#204): shared `search-no-results` module consolidates Connect/Jobs no-results detection, eliminating duplicated logic.
+- **Branch coverage hardened** (#121, #122, #123): all 6 jobs-cluster modules, config/i18n cluster, and UI/util cluster now meet the ≥85.7% branch threshold.
+- **CodeRabbit configured** (#196, #206): `.coderabbit.yaml` added with chill profile; `ignore_bots: false` unblocks automated Dependabot PR reviews.
+
 ## [1.39.1] - 2026-06-23
 
 ### Fixed
