@@ -199,28 +199,44 @@
         return !!a && !!b && (a === b || a.contains(b) || b.contains(a));
     }
 
-    // A per-card withdraw control (aria-label pattern, or anywhere inside a
-    // list item) is never a confirmation, even if a dialog wraps the list.
-    function isCardWithdrawControl(el) {
+    // A per-card withdraw control is never a confirmation: it matches the
+    // per-card aria-label, or sits in a list item that lives inside the dialog
+    // (a list item that merely wraps the dialog does not count).
+    function isCardWithdrawControl(el, dialog) {
         if (isWithdrawAriaLabel(el.getAttribute('aria-label'))) return true;
-        return typeof el.closest === 'function' &&
-            !!el.closest('[role="listitem"]');
+        if (typeof el.closest !== 'function') return false;
+        const item = el.closest('[role="listitem"]');
+        return !!item && (!dialog || dialog.contains(item));
+    }
+
+    const DIALOG_SELECTOR =
+        '[role="dialog"], [role="alertdialog"], dialog, [aria-modal="true"]';
+
+    // Candidate confirmation containers: ARIA dialogs and native <dialog>
+    // elements (which carry no role). Closed native dialogs and hidden
+    // elements are skipped.
+    function findDialogCandidates(root) {
+        return Array.from(new Set(root.querySelectorAll(DIALOG_SELECTOR)))
+            .filter(el => {
+                if (el.tagName === 'DIALOG' && !el.hasAttribute('open')) {
+                    return false;
+                }
+                return !el.hasAttribute('hidden') &&
+                    el.getAttribute('aria-hidden') !== 'true';
+            });
     }
 
     // Confirmation button in a modal dialog, never the original card control.
     function findWithdrawConfirm(root, originalLink) {
         if (!root || typeof root.querySelectorAll !== 'function') return null;
-        const dialogs = Array.from(
-            root.querySelectorAll('[role="dialog"], [role="alertdialog"]')
-        );
-        for (const dialog of dialogs) {
+        for (const dialog of findDialogCandidates(root)) {
             const candidates = Array.from(
                 dialog.querySelectorAll(CONTROL_SELECTOR)
             );
             const hit = candidates.find(el =>
                 isWithdrawLabel(el.textContent) &&
                 !isDescendantOrSame(el, originalLink) &&
-                !isCardWithdrawControl(el)
+                !isCardWithdrawControl(el, dialog)
             );
             if (hit) return hit;
         }
@@ -231,10 +247,7 @@
     // failed attempt.
     function findDialogDismiss(root) {
         if (!root || typeof root.querySelectorAll !== 'function') return null;
-        const dialogs = Array.from(
-            root.querySelectorAll('[role="dialog"], [role="alertdialog"]')
-        );
-        for (const dialog of dialogs) {
+        for (const dialog of findDialogCandidates(root)) {
             const candidates = Array.from(
                 dialog.querySelectorAll(CONTROL_SELECTOR)
             );
