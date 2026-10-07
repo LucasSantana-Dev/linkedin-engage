@@ -69,11 +69,15 @@ function isPendingState(button) {
 
 function isPendingInCard(card) {
     if (!card) return false;
-    const btns = card.querySelectorAll('button');
+    const btns = card.querySelectorAll('button, a[aria-label]');
     for (const b of btns) {
-        const t = (b.innerText || '').trim().toLowerCase();
+        const t = (b.innerText || b.textContent || '').trim()
+            .toLowerCase();
+        const aria = (b.getAttribute('aria-label') || '')
+            .toLowerCase();
         if (t.includes('pending') ||
-            t.includes('pendente')) {
+            t.includes('pendente') ||
+            (b.tagName === 'A' && aria.startsWith('pending'))) {
             return true;
         }
     }

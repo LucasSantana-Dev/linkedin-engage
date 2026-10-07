@@ -7,6 +7,7 @@ const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/ui-notify.js',
     'lib/search-no-results.js',
+    'lib/search-result-card.js',
     'lib/company-utils.js',
     'lib/human-behavior.js',
     'company-follow.js'
@@ -857,6 +858,7 @@ function launchAutomation(config) {
                             'lib/invite-utils.js',
                             'lib/invite-note.js',
                             'lib/human-behavior.js',
+                            'lib/search-result-card.js',
                             'lib/connect-action-utils.js',
                             'lib/run-outcome.js'
                         ],

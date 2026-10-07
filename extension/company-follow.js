@@ -111,6 +111,9 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
     }
 
     function findCompanyCards() {
+        if (typeof findCompanyResultCards === 'function') {
+            return findCompanyResultCards(document);
+        }
         return document.querySelectorAll(
             '.entity-result, ' +
             '[data-chameleon-result-urn], ' +
@@ -381,6 +384,10 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
 
             try {
                 const info = extractCompanyInfo(card);
+                if (!info.subtitle &&
+                    typeof extractCompanyCardSubtitle === 'function') {
+                    info.subtitle = extractCompanyCardSubtitle(card);
+                }
 
                 const lowFitCheck = getLowFitEntityCheck(info);
                 if (lowFitCheck?.isLowFit) {
