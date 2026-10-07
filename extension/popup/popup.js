@@ -136,6 +136,7 @@ const UI_LABEL_KEYS = Object.freeze({
     excludedCompaniesInput: 'popup.connect.excludedCompanies',
     skipOpenToWorkRecruitersCheckbox: 'popup.connect.skipOpenToWork',
     skipJobSeekingSignalsCheckbox: 'popup.connect.skipJobSeeking',
+    warmupCheckbox: 'popup.safety.warmup',
     sendNoteCheckbox: 'popup.connect.sendNote',
     scheduleCheckbox: 'popup.connect.scheduleRecurring',
     scheduleInterval: 'common.runEveryHours',
@@ -614,6 +615,7 @@ async function applyPopupLocalization() {
     Object.entries(UI_LABEL_KEYS).forEach(([id, key]) => {
         setLabelText(id, key);
     });
+    if (typeof refreshConnectSafety === 'function') refreshConnectSafety();
 
     setElementText('#companyAutomationAccordion .accordion-toggle span:first-child',
         'common.automation',
@@ -1360,12 +1362,91 @@ function updateWeeklyDisplay() {
         const el = document.getElementById('weeklyCounter');
         if (count >= WEEKLY_LIMIT) {
             el.style.color = '#d32f2f';
-        } else if (count >= WEEKLY_LIMIT - 30) {
+        } else if (count >= Math.floor(WEEKLY_LIMIT * 0.8)) {
             el.style.color = 'var(--warning)';
         } else {
             el.style.color = 'var(--text-muted)';
         }
     });
+}
+
+function loadConnectSafety() {
+    return new Promise(resolve => {
+        const dKey = getDayKey('connect');
+        chrome.storage.local.get(
+            ['sentProfileUrls', 'acceptedUrls', 'warmupEnabledAt', dKey],
+            (data) => {
+                const safety = resolveConnectSafety({
+                    baseDaily: DAILY_LIMITS.connect,
+                    acceptedCount: (data.acceptedUrls || []).length,
+                    sentCount: (data.sentProfileUrls || []).length,
+                    warmupEnabledAt: data.warmupEnabledAt,
+                    now: Date.now()
+                });
+                resolve({
+                    ...safety,
+                    warmupEnabledAt: data.warmupEnabledAt,
+                    dayCount: data[dKey] || 0
+                });
+            }
+        );
+    });
+}
+
+function refreshConnectSafety() {
+    return loadConnectSafety().then(safety => {
+        const toggle = document.getElementById('warmupCheckbox');
+        const status = document.getElementById('warmupStatus');
+        const warning = document.getElementById('acceptanceWarning');
+        if (toggle) {
+            toggle.checked = Number(safety.warmupEnabledAt) > 0;
+        }
+        if (status) {
+            if (safety.warmup.active) {
+                status.textContent = tr(
+                    'popup.safety.warmupActive',
+                    [safety.warmup.week, safety.warmup.dailyLimit],
+                    `Warm-up: week ${safety.warmup.week}, ${safety.warmup.dailyLimit}/day`
+                );
+            } else if (safety.warmup.completed) {
+                status.textContent = tr(
+                    'popup.safety.warmupCompleted',
+                    null,
+                    'Warm-up completed. Normal limits apply.'
+                );
+            } else {
+                status.textContent = '';
+            }
+        }
+        if (warning) {
+            if (safety.acceptance.low) {
+                const pct = Math.round(safety.acceptance.rate * 100);
+                warning.textContent = tr(
+                    'popup.safety.lowAcceptance',
+                    [pct, safety.acceptance.sample, safety.limit],
+                    `Low acceptance rate (${pct}% of ${safety.acceptance.sample} invites). Daily limit reduced to ${safety.limit} until it is back to 20%.`
+                );
+                warning.style.display = 'block';
+            } else {
+                warning.textContent = '';
+                warning.style.display = 'none';
+            }
+        }
+        return safety;
+    });
+}
+
+function onWarmupToggle(enabled) {
+    const done = () => {
+        refreshConnectSafety();
+        loadRateLimitStatus();
+        saveState();
+    };
+    if (enabled) {
+        chrome.storage.local.set({ warmupEnabledAt: Date.now() }, done);
+    } else {
+        chrome.storage.local.remove('warmupEnabledAt', done);
+    }
 }
 
 function getSelectedTags(group) {
@@ -2051,6 +2132,9 @@ function saveState() {
             document.getElementById(
                 'skipJobSeekingSignalsCheckbox'
             ).checked,
+        warmupEnabled: document.getElementById(
+            'warmupCheckbox'
+        )?.checked === true,
         limit: document.getElementById('limitInput').value,
         region: document.getElementById('regionSelect').value,
         activelyHiring: document.getElementById('activelyHiringCheckbox').checked,
@@ -2979,6 +3063,8 @@ document.getElementById(
 document.getElementById(
     'skipJobSeekingSignalsCheckbox'
 ).addEventListener('change', saveState);
+document.getElementById('warmupCheckbox')
+    ?.addEventListener('change', (e) => onWarmupToggle(e.target.checked));
 
 document.getElementById('scheduleCheckbox').addEventListener(
     'change', (e) => {
@@ -3203,6 +3289,28 @@ async function startConnect() {
             [remaining, weeklyCount, WEEKLY_LIMIT]
         );
         document.getElementById('limitInput').value = remaining;
+    }
+    if (!engagementOnly) {
+        const safety = await loadConnectSafety();
+        if (safety.dayCount >= safety.limit) {
+            setStatusMessageKey(
+                'popup.safety.errorDailyLimitReached',
+                'error',
+                `Daily limit reached (${safety.dayCount}/${safety.limit}). Try again tomorrow.`,
+                [safety.dayCount, safety.limit]
+            );
+            return;
+        }
+        if (safety.dayCount + limit > safety.limit) {
+            const left = safety.limit - safety.dayCount;
+            setStatusMessageKey(
+                'popup.safety.warningDailyLimitAdjusted',
+                'warning',
+                `Only ${left} invites left today (${safety.dayCount}/${safety.limit}). Limit auto-adjusted to ${left}.`,
+                [left, safety.dayCount, safety.limit]
+            );
+            document.getElementById('limitInput').value = left;
+        }
     }
     const geoUrn = getSelectedRegionGeoUrn();
     const activelyHiring = document.getElementById(
@@ -3555,7 +3663,7 @@ function handleLaunchResponse(response) {
             weekly: tr(
                 'popup.start.blockedWeekly',
                 null,
-                'Weekly limit reached (150). Try next week.'
+                'Weekly limit reached (100). Try next week.'
             ),
             'profile-cache-locked':
                 tr(
@@ -3777,6 +3885,7 @@ chrome.runtime.onMessage.addListener((request) => {
         startBtn.style.display = 'flex';
 
         updateWeeklyDisplay();
+        refreshConnectSafety();
 
         if (response?.log?.length && response?.mode !== 'jobs') {
             lastConnectionLog = response.log;
@@ -4718,11 +4827,22 @@ function loadRateLimitStatus() {
         companyFollow: { hourly: 10, daily: 30 },
         jobsAssist: { hourly: 8, daily: 20 }
     };
-    const lim = limits[normalizedMode] || { hourly: 12, daily: 40 };
+    const lim = { ...(limits[normalizedMode] || { hourly: 12, daily: 40 }) };
 
-    chrome.storage.local.get([hKey, dKey], (data) => {
+    chrome.storage.local.get([
+        hKey, dKey, 'sentProfileUrls', 'acceptedUrls', 'warmupEnabledAt'
+    ], (data) => {
         const hourCount = data[hKey] || 0;
         const dayCount = data[dKey] || 0;
+        if (normalizedMode === 'connect') {
+            lim.daily = resolveConnectSafety({
+                baseDaily: lim.daily,
+                acceptedCount: (data.acceptedUrls || []).length,
+                sentCount: (data.sentProfileUrls || []).length,
+                warmupEnabledAt: data.warmupEnabledAt,
+                now: Date.now()
+            }).limit;
+        }
         const bar = document.getElementById(
             'rateLimitBar');
         const text = document.getElementById(
@@ -4785,6 +4905,7 @@ if (typeof getFeatureToggles === 'function'
 }
 
 updateWeeklyDisplay();
+refreshConnectSafety();
 loadRecentProfiles();
 loadRateLimitStatus();
 

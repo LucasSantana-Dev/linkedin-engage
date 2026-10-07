@@ -24,8 +24,8 @@ describe('constants', () => {
         expect(HOURLY_LIMITS.jobsAssist).toBe(8);
     });
 
-    test('weekly limit is 150', () => {
-        expect(WEEKLY_LIMIT).toBe(150);
+    test('weekly limit is 100', () => {
+        expect(WEEKLY_LIMIT).toBe(100);
     });
 });
 
@@ -81,7 +81,7 @@ describe('checkLimits', () => {
 
     test('blocks on weekly limit for connect', () => {
         const result = checkLimits(
-            5, 20, 150, 'connect'
+            5, 20, 100, 'connect'
         );
         expect(result.allowed).toBe(false);
         expect(result.reason).toBe('weekly');
@@ -89,14 +89,14 @@ describe('checkLimits', () => {
 
     test('weekly limit only applies to connect', () => {
         const result = checkLimits(
-            5, 20, 150, 'companyFollow'
+            5, 20, 100, 'companyFollow'
         );
         expect(result.allowed).toBe(true);
     });
 
     test('remaining is min of all limits', () => {
         const result = checkLimits(
-            10, 35, 145, 'connect'
+            10, 35, 95, 'connect'
         );
         expect(result.allowed).toBe(true);
         expect(result.remaining).toBe(2);
@@ -150,7 +150,7 @@ describe('getLimitStatus', () => {
             get: (keys, cb) => cb({
                 [hKey]: 11,
                 [dKey]: 30,
-                [wKey]: 100
+                [wKey]: 70
             })
         };
         const result = await getLimitStatus(
@@ -238,6 +238,24 @@ describe('rate-limiter UMD exposure', () => {
             expect(globalThis[name]).toBe(limiter[name]);
         });
         expect(globalThis.LinkedInRateLimiter).toBe(limiter);
+    });
+});
+
+describe('checkLimits daily override', () => {
+    test('override lowers the daily limit', () => {
+        const r = checkLimits(0, 20, 0, 'connect', 20);
+        expect(r).toMatchObject({ allowed: false, reason: 'daily', limit: 20 });
+        expect(checkLimits(0, 19, 0, 'connect', 20).remaining).toBe(1);
+    });
+    test('override cannot raise the limit', () => {
+        expect(checkLimits(0, 40, 0, 'connect', 999).limit).toBe(40);
+    });
+    test('negative override clamps to zero', () => {
+        expect(checkLimits(0, 0, 0, 'connect', -5).allowed).toBe(false);
+    });
+    test('non-numeric override is ignored', () => {
+        expect(checkLimits(0, 39, 0, 'connect', undefined).allowed).toBe(true);
+        expect(checkLimits(0, 40, 0, 'connect', 'x').limit).toBe(40);
     });
 });
 

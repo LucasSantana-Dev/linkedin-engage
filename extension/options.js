@@ -458,6 +458,36 @@ function loadDashboard() {
             totalFollowedNode.textContent = followedCount;
             totalCompaniesNode.textContent = companyCount;
 
+            const acceptance = computeAcceptance({
+                acceptedCount: accepted.length,
+                sentCount: sentUrls.length
+            });
+            const warnNode = document.getElementById(
+                'acceptanceWarning'
+            );
+            if (warnNode) {
+                if (acceptance.low) {
+                    const halved = Math.floor(DAILY_LIMITS.connect / 2);
+                    warnNode.textContent = dt(
+                        'options.safety.lowAcceptance',
+                        [
+                            Math.round(acceptance.rate * 100),
+                            acceptance.sample,
+                            halved
+                        ],
+                        'Low acceptance rate: ' +
+                        Math.round(acceptance.rate * 100) + '% of ' +
+                        acceptance.sample + ' verified invites were accepted. ' +
+                        'The Connect daily limit is reduced to ' + halved +
+                        ' until the rate is back to 20% or more.'
+                    );
+                    warnNode.style.display = 'block';
+                } else {
+                    warnNode.textContent = '';
+                    warnNode.style.display = 'none';
+                }
+            }
+
             if (sentUrls.length > 0) {
                 const pct = Math.round(
                     (accepted.length / sentUrls.length) *
@@ -765,7 +795,12 @@ function renderAnalytics() {
 
             analyticsSectionNode.style.display = 'block';
 
-            const stats = computeAnalyticsStats(log);
+            // Run summary entries (entryType 'run') were always counted here;
+            // neutralize the marker so lib computeStats keeps these numbers.
+            const stats = computeStats(log.map(
+                e => (e.entryType === 'run'
+                    ? { ...e, entryType: undefined } : e)
+            ));
 
             analyticsAvgDayNode.textContent = stats.avgPerDay;
             analyticsActiveDaysNode.textContent = dt(
@@ -789,65 +824,6 @@ function renderAnalytics() {
             applyDashboardLocalization();
         }
     );
-}
-
-function computeAnalyticsStats(log) {
-    const byHour = {};
-    const byDayOfWeek = {};
-    const byCategory = {};
-    const dayNames = [
-        'Sun', 'Mon', 'Tue', 'Wed',
-        'Thu', 'Fri', 'Sat'
-    ];
-    const days = new Set();
-    let commentCount = 0;
-    let engagedCount = 0;
-
-    for (const e of log) {
-        if (e.category) {
-            byCategory[e.category] =
-                (byCategory[e.category] || 0) + 1;
-        }
-        if (e.timestamp) {
-            const d = new Date(e.timestamp);
-            const hour = d.getUTCHours();
-            byHour[hour] = (byHour[hour] || 0) + 1;
-            const day = dayNames[d.getDay()];
-            byDayOfWeek[day] =
-                (byDayOfWeek[day] || 0) + 1;
-            days.add(e.timestamp.substring(0, 10));
-        }
-        if (e.commented) commentCount++;
-        if (!e.status?.startsWith('skipped')) {
-            engagedCount++;
-        }
-    }
-
-    const topKey = (obj) => {
-        let best = null, bestVal = -1;
-        for (const [k, v] of Object.entries(obj)) {
-            if (v > bestVal) { bestVal = v; best = k; }
-        }
-        return best;
-    };
-
-    const activeDays = days.size;
-    return {
-        total: log.length,
-        avgPerDay: activeDays > 0
-            ? Math.round(
-                log.length / activeDays * 10
-            ) / 10 : 0,
-        activeDays,
-        bestHour: topKey(byHour) !== null
-            ? parseInt(topKey(byHour)) : null,
-        bestDay: topKey(byDayOfWeek),
-        topCategory: topKey(byCategory),
-        commentRate: engagedCount > 0
-            ? Math.round(
-                (commentCount / engagedCount) * 100
-            ) : 0
-    };
 }
 
 function renderTemplateAcceptance(history, accepted) {

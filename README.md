@@ -18,7 +18,7 @@ Personal use only. It is distributed as a GitHub release zip, not through the Ch
 | **Jobs** | Rank Easy Apply listings by fit score, pre-fill forms from an encrypted local resume cache, never submits for you |
 | **Withdraw stale invites** | Opt-in (off by default, enable it under Feature Toggles). Opens your Sent invitations and withdraws pending ones older than N weeks (default 3), up to 20 per run and 40 per day |
 
-Also built in: scheduled recurring runs, rate limits (hourly, daily, weekly cap of 150 invites), CAPTCHA/security-challenge detection that stops the run, background task management, and an activity dashboard with stats, history and logs.
+Also built in: scheduled recurring runs, rate limits (hourly, daily, weekly cap of 100 invites), CAPTCHA/security-challenge detection that stops the run, background task management, and an activity dashboard with stats, history and logs.
 
 ---
 
@@ -72,7 +72,9 @@ Download the new zip (or `git pull`), then click the reload button on the Linked
 ## Responsible use
 
 - Built-in delays and human-like timing apply automatically; keep daily volume modest.
-- The weekly invite cap is 150. The extension stops and notifies you when it is reached.
+- The weekly invite cap is 100 (daily 40, hourly 12). The extension stops and notifies you when it is reached.
+- Low acceptance throttle: once at least 30 invites are verified sent and fewer than 20% were accepted (use "check accepted" on the dashboard to refresh), the Connect daily limit is halved until the rate is back to 20%. A warning shows in the popup and on the dashboard.
+- Warm-up preset (opt-in, popup toggle): Connect is limited to 10 invites per day in week 1, 20 in week 2 and 30 in week 3, counted from when you enable it. After three weeks the normal limits apply.
 - Jobs mode never submits an application. You review and submit each one yourself.
 - A CAPTCHA or security challenge stops the run so you can solve it manually.
 

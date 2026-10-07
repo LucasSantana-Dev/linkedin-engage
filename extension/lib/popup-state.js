@@ -30,6 +30,7 @@
             yearsMax: '',
             skipOpenToWorkRecruiters: false,
             skipJobSeekingSignals: false,
+            warmupEnabled: false,
             limit: 150,
             region: '',
             activelyHiring: false,

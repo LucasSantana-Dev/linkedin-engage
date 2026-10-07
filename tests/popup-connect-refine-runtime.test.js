@@ -146,6 +146,9 @@ describe('popup connect refine runtime', () => {
                 '../extension/lib/rate-limiter'
             ));
             Object.assign(global, require(
+                '../extension/lib/connect-safety'
+            ));
+            Object.assign(global, require(
                 '../extension/lib/status-labels'
             ));
             require('../extension/popup/popup.js');
@@ -160,6 +163,25 @@ describe('popup connect refine runtime', () => {
         delete global.alert;
         delete global.confirm;
         delete global.prompt;
+    });
+
+    test('warm-up toggle stores and clears warmupEnabledAt and shows status', async () => {
+        const toggle = document.getElementById('warmupCheckbox');
+        toggle.checked = true;
+        toggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+        const setCall = chromeMock.storage.local.set.mock.calls
+            .find(([data]) => data && data.warmupEnabledAt);
+        expect(setCall).toBeTruthy();
+        for (let i = 0; i < 4; i++) await Promise.resolve();
+        expect(document.getElementById('warmupStatus').textContent)
+            .toMatch(/week 1/);
+
+        toggle.checked = false;
+        toggle.dispatchEvent(new window.Event('change', { bubbles: true }));
+        expect(chromeMock.storage.local.remove)
+            .toHaveBeenCalledWith('warmupEnabledAt', expect.any(Function));
+        for (let i = 0; i < 4; i++) await Promise.resolve();
+        expect(document.getElementById('warmupStatus').textContent).toBe('');
     });
 
     test('applies area pills per target group without cross-group side effects', () => {
@@ -283,8 +305,7 @@ describe('popup connect refine runtime', () => {
         document.getElementById('activelyHiringCheckbox').checked = false;
 
         click(document.getElementById('startBtn'));
-        await Promise.resolve();
-        await Promise.resolve();
+        for (let i = 0; i < 8; i++) await Promise.resolve();
 
         const launchCall = chromeMock.runtime.sendMessage.mock.calls.find(
             ([message]) => message && message.action === 'start'

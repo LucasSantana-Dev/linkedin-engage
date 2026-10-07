@@ -18,7 +18,7 @@
         withdrawInvites: 20
     };
 
-    const WEEKLY_LIMIT = 150;
+    const WEEKLY_LIMIT = 100;
 
     function getHourKey(mode) {
         const now = new Date();
@@ -41,11 +41,14 @@
         return `week_${now.getFullYear()}_${week}`;
     }
 
-    function checkLimits(hourCount, dayCount, weekCount, mode) {
+    function checkLimits(hourCount, dayCount, weekCount, mode, dailyLimitOverride) {
         const hourLimit = HOURLY_LIMITS[mode] ||
             HOURLY_LIMITS.connect;
-        const dayLimit = DAILY_LIMITS[mode] ||
+        const baseDayLimit = DAILY_LIMITS[mode] ||
             DAILY_LIMITS.connect;
+        const dayLimit = Number.isFinite(dailyLimitOverride)
+            ? Math.min(baseDayLimit, Math.max(0, dailyLimitOverride))
+            : baseDayLimit;
 
         if (mode === 'connect' && weekCount >= WEEKLY_LIMIT) {
             return {
