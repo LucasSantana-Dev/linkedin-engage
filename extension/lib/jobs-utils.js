@@ -436,6 +436,86 @@
             return null;
         }
 
+        // Loose normalizer used by the Easy Apply helpers: strips accents,
+        // lowercases and collapses whitespace but keeps punctuation (unlike
+        // normalizeText), so behavior matches the original jobs-assist.js.
+        function normalizeLoose(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function parsePostedHours(text) {
+            const raw = normalizeLoose(text);
+            if (!raw) return null;
+            const minuteMatch = raw.match(/(\d+)\s*(minute|minuto)/);
+            if (minuteMatch) return 1;
+            const hourMatch = raw.match(/(\d+)\s*(hour|hora)/);
+            if (hourMatch) return parseInt(hourMatch[1], 10);
+            const dayMatch = raw.match(/(\d+)\s*(day|dia)/);
+            if (dayMatch) return parseInt(dayMatch[1], 10) * 24;
+            const weekMatch = raw.match(/(\d+)\s*(week|semana)/);
+            if (weekMatch) return parseInt(weekMatch[1], 10) * 24 * 7;
+            return null;
+        }
+
+        function inferWorkType(text) {
+            const raw = normalizeLoose(text);
+            if (!raw) return '';
+            if (/remote|remoto/.test(raw)) return 'remote';
+            if (/hybrid|hibrido|híbrido/.test(raw)) return 'hybrid';
+            if (/on site|onsite|presencial/.test(raw)) return 'onsite';
+            return '';
+        }
+
+        function toNonNegativeInt(value, fallback) {
+            const parsed = Number(value);
+            if (!Number.isFinite(parsed) || parsed < 0) {
+                return fallback;
+            }
+            return Math.floor(parsed);
+        }
+
+        function resolveJobsRuntimeOptions(options, defaults) {
+            const source = options && typeof options === 'object'
+                ? options
+                : {};
+            const pick = key => toNonNegativeInt(source[key], defaults[key]);
+            return {
+                openCardScrollMs: pick('openCardScrollMs'),
+                openCardOpenMs: pick('openCardOpenMs'),
+                afterApplyClickMs: pick('afterApplyClickMs'),
+                afterStepClickMs: pick('afterStepClickMs'),
+                modalPollTimeoutMs: pick('modalPollTimeoutMs'),
+                modalPollIntervalMs: Math.max(1, pick('modalPollIntervalMs')),
+                stepPollTimeoutMs: pick('stepPollTimeoutMs'),
+                stepPollIntervalMs: Math.max(1, pick('stepPollIntervalMs')),
+                maxModalSteps: Math.max(1, pick('maxModalSteps'))
+            };
+        }
+
+        function isRequiredField(field) {
+            return (
+                field.required ||
+                normalizeLoose(field.getAttribute('aria-required')) === 'true'
+            );
+        }
+
+        function fieldHint(field, fallbackIndex) {
+            const parts = [
+                field.getAttribute('aria-label') || '',
+                field.getAttribute('name') || '',
+                field.getAttribute('id') || '',
+                field.getAttribute('placeholder') || ''
+            ]
+                .map(normalizeLoose)
+                .filter(Boolean);
+            return parts[0] || `field-${fallbackIndex + 1}`;
+        }
+
         return {
             normalizeText,
             matchesExcludedJobCompany,
@@ -444,7 +524,12 @@
             buildLinkedInJobsSearchUrl,
             resolveJobsLocale,
             jobsNotificationText,
-            findMatchingOptionValue
+            findMatchingOptionValue,
+            parsePostedHours,
+            inferWorkType,
+            resolveJobsRuntimeOptions,
+            isRequiredField,
+            fieldHint
         };
     }
 );
