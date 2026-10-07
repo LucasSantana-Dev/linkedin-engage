@@ -242,6 +242,9 @@
   "options_card_skipBreakdownFallback": {
     "message": "duplicado, e-mail, não verificado"
   },
+  "options_safety_lowAcceptance": {
+    "message": "Taxa de aceitação baixa: $1% de $2 convites verificados foram aceitos. O limite diário do Connect caiu para $3 até a taxa voltar a 20% ou mais."
+  },
   "options_card_skipped": {
     "message": "Pulados"
   },
@@ -403,6 +406,24 @@
   },
   "popup_connect_errorWeeklyLimitReached": {
     "message": "Limite semanal atingido ($1/$2). Aguarde a próxima semana ou use o modo de engajamento."
+  },
+  "popup_safety_warmup": {
+    "message": "Modo aquecimento (10/20/30 por dia)"
+  },
+  "popup_safety_warmupActive": {
+    "message": "Aquecimento: semana $1, $2/dia"
+  },
+  "popup_safety_warmupCompleted": {
+    "message": "Aquecimento concluído. Valem os limites normais."
+  },
+  "popup_safety_lowAcceptance": {
+    "message": "Taxa de aceitação baixa ($1% de $2 convites). O limite diário caiu para $3 até a taxa voltar a 20%."
+  },
+  "popup_safety_errorDailyLimitReached": {
+    "message": "Limite diário atingido ($1/$2). Tente novamente amanhã."
+  },
+  "popup_safety_warningDailyLimitAdjusted": {
+    "message": "Só restam $1 convites hoje ($2/$3). Limite ajustado automaticamente para $1."
   },
   "popup_connect_excludedCompanies": {
     "message": "Empresas excluídas (uma por linha)"
@@ -819,7 +840,7 @@
     "message": "O cache de perfil criptografado está bloqueado. Informe a senha desta sessão."
   },
   "popup_start_blockedWeekly": {
-    "message": "Limite semanal atingido (150). Tente novamente na próxima semana."
+    "message": "Limite semanal atingido (100). Tente novamente na próxima semana."
   },
   "popup_start_companies": {
     "message": "Seguir empresas"

@@ -242,6 +242,9 @@
   "options_card_skipBreakdownFallback": {
     "message": "duplicate, email, unverified"
   },
+  "options_safety_lowAcceptance": {
+    "message": "Low acceptance rate: $1% of $2 verified invites were accepted. The Connect daily limit is reduced to $3 until the rate is back to 20% or more."
+  },
   "options_card_skipped": {
     "message": "Skipped"
   },
@@ -403,6 +406,24 @@
   },
   "popup_connect_errorWeeklyLimitReached": {
     "message": "Weekly limit reached ($1/$2). Wait until next week or use Engagement mode."
+  },
+  "popup_safety_warmup": {
+    "message": "Warm-up preset (10/20/30 per day)"
+  },
+  "popup_safety_warmupActive": {
+    "message": "Warm-up: week $1, $2/day"
+  },
+  "popup_safety_warmupCompleted": {
+    "message": "Warm-up completed. Normal limits apply."
+  },
+  "popup_safety_lowAcceptance": {
+    "message": "Low acceptance rate ($1% of $2 invites). Daily limit reduced to $3 until it is back to 20%."
+  },
+  "popup_safety_errorDailyLimitReached": {
+    "message": "Daily limit reached ($1/$2). Try again tomorrow."
+  },
+  "popup_safety_warningDailyLimitAdjusted": {
+    "message": "Only $1 invites left today ($2/$3). Limit auto-adjusted to $1."
   },
   "popup_connect_excludedCompanies": {
     "message": "Excluded Companies (one per line)"
@@ -819,7 +840,7 @@
     "message": "Encrypted profile cache is locked. Enter the passphrase for this session."
   },
   "popup_start_blockedWeekly": {
-    "message": "Weekly limit reached (150). Try next week."
+    "message": "Weekly limit reached (100). Try next week."
   },
   "popup_start_companies": {
     "message": "Follow Companies"

@@ -57,6 +57,8 @@ describe('background connect runtime config', () => {
         global.recordNurtureEngagement = jest.fn();
         global.cleanExpiredNurtures = jest.fn();
 
+        global.DAILY_LIMITS = { connect: 40 };
+        Object.assign(global, require('../extension/lib/connect-safety'));
         const connectConfig = require('../extension/lib/connect-config');
         Object.assign(global, connectConfig);
         const runOutcome = require('../extension/lib/run-outcome');
@@ -213,6 +215,8 @@ describe('background connect runtime config', () => {
         delete global.getDayKey;
         delete global.getWeekKey;
         delete global.checkLimits;
+        delete global.DAILY_LIMITS;
+        delete global.resolveConnectSafety;
         delete global.incrementCount;
         delete global.cleanupOldKeys;
         delete global.computeStats;
@@ -302,6 +306,21 @@ describe('background connect runtime config', () => {
             usageGoal: 'decision_makers',
             expectedResultsBucket: 'balanced'
         });
+    });
+
+    it('passes the effective daily limit to checkLimits for connect', async () => {
+        storageData.sentProfileUrls = Array.from({ length: 40 }, (_, i) => `u${i}`);
+        storageData.acceptedUrls = ['u1'];
+        await sendRequest({ action: 'start', query: 'recruiter', limit: 5, sendNote: false });
+        await tick();
+        expect(global.checkLimits).toHaveBeenCalledWith(0, 0, 0, 'connect', 20);
+
+        global.checkLimits.mockClear();
+        storageData.acceptedUrls = Array.from({ length: 20 }, (_, i) => `u${i}`);
+        storageData.warmupEnabledAt = Date.now();
+        await sendRequest({ action: 'start', query: 'recruiter', limit: 5, sendNote: false });
+        await tick();
+        expect(global.checkLimits).toHaveBeenCalledWith(0, 0, 0, 'connect', 10);
     });
 
     it('forwards follow-config flags to content on start', async () => {

@@ -356,12 +356,17 @@
         </button>
     </div>
 
+    <div id="acceptanceWarning" role="alert"
+        data-tab-section="overview"
+        style="display:none; margin-bottom:16px; padding:12px 16px;
+        border-radius:8px; color:var(--warning);
+        border:1px solid var(--warning);"></div>
     <div class="grid" data-tab-section="overview">
         <div class="card">
             <div class="card-label">This Week</div>
             <div class="card-value" id="weekSent">0</div>
             <div class="card-sub">
-                of <span id="weekLimit">150</span> invites
+                of <span id="weekLimit">100</span> invites
             </div>
         </div>
         <div class="card">
@@ -538,6 +543,8 @@
     <script src="lib/i18n.js"></script>
     <script src="lib/ui-layout.js"></script>
     <script src="lib/rate-limiter.js"></script>
+    <script src="lib/analytics.js"></script>
+    <script src="lib/connect-safety.js"></script>
     <script src="lib/status-labels.js"></script>
     <script src="options.js"></script>
 </body>

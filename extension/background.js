@@ -31,6 +31,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 });
 
 importScripts('lib/rate-limiter.js');
+importScripts('lib/connect-safety.js');
 importScripts('lib/analytics.js');
 importScripts('lib/smart-schedule.js');
 importScripts('lib/i18n.js');
@@ -226,14 +227,29 @@ async function checkRateLimit(mode) {
             const hKey = getHourKey(mode);
             const dKey = getDayKey(mode);
             const wKey = getWeekKey();
+            const safetyKeys = mode === 'connect'
+                ? ['sentProfileUrls', 'acceptedUrls', 'warmupEnabledAt']
+                : [];
             chrome.storage.local.get(
-                [hKey, dKey, wKey],
+                [hKey, dKey, wKey, ...safetyKeys],
                 (data) => {
+                    // Connect only: low acceptance and warm-up lower the
+                    // daily limit (see lib/connect-safety.js).
+                    const dailyOverride = mode === 'connect'
+                        ? resolveConnectSafety({
+                            baseDaily: DAILY_LIMITS.connect,
+                            acceptedCount: (data.acceptedUrls || []).length,
+                            sentCount: (data.sentProfileUrls || []).length,
+                            warmupEnabledAt: data.warmupEnabledAt,
+                            now: Date.now()
+                        }).limit
+                        : undefined;
                     resolve(checkLimits(
                         data[hKey] || 0,
                         data[dKey] || 0,
                         data[wKey] || 0,
-                        mode
+                        mode,
+                        dailyOverride
                     ));
                 }
             );

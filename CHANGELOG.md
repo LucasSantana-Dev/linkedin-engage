@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Connect safety: low acceptance warning with halved daily limit below 20%, and an opt-in warm-up preset (10/20/30 per day over three weeks) (#237)
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
 ### Fixed
 - Profile walker panel and run result messages are now localized in PT-BR (#234)
 
 ### Changed
+- Weekly invite cap lowered from 150 to 100 (#237)
 - Shared getWeekKey and status labels between popup and dashboard; rate-limiter is now a UMD module (#235)
 
 ### Security
