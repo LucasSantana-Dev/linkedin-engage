@@ -140,7 +140,9 @@ const UI_LABEL_KEYS = Object.freeze({
     scheduleCheckbox: 'popup.connect.scheduleRecurring',
     scheduleInterval: 'common.runEveryHours',
     savedQueries: 'popup.connect.queryRotation',
-    tagSearchInput: 'popup.connect.filterTags'
+    tagSearchInput: 'popup.connect.filterTags',
+    enableProfileWalkCheckbox: 'popup.passive.enableWalker',
+    profileWalkDailyTargetInput: 'popup.passive.dailyTarget'
 });
 
 const POPUP_SELECT_OPTION_KEYS = Object.freeze({
@@ -307,63 +309,6 @@ function parseMultilineList(raw) {
         .filter(Boolean);
 }
 
-function getSkipKeywordsTemplateId() {
-    return getValueOrDefault('skipKeywordsTemplateSelect', '');
-}
-
-function getSkipKeywordsTemplateTerms(templateId) {
-    const terms = SKIP_KEYWORD_TEMPLATES[templateId];
-    return Array.isArray(terms) ? terms.slice() : [];
-}
-
-function mergeUniqueKeywordTerms(baseTerms, extraTerms) {
-    const merged = [];
-    const seen = new Set();
-
-    [...baseTerms, ...extraTerms].forEach((term) => {
-        const value = String(term || '').trim();
-        if (!value) return;
-        const normalized = value.toLowerCase();
-        if (seen.has(normalized)) return;
-        seen.add(normalized);
-        merged.push(value);
-    });
-
-    return merged;
-}
-
-function applySkipKeywordsTemplate(mode) {
-    const templateId = getSkipKeywordsTemplateId();
-    if (!templateId) {
-        setStatusMessageKey(
-            'popup.feed.skipTemplateSelectFirst',
-            'warning',
-            'Choose a keyword template first.'
-        );
-        return;
-    }
-
-    const templateTerms = getSkipKeywordsTemplateTerms(templateId);
-    if (!templateTerms.length) return;
-
-    const textarea = document.getElementById('skipKeywordsInput');
-    const currentTerms = parseMultilineList(textarea.value);
-    const nextTerms = mode === 'append'
-        ? mergeUniqueKeywordTerms(currentTerms, templateTerms)
-        : templateTerms;
-
-    textarea.value = nextTerms.join('\n');
-    saveState();
-
-    const messageKey = mode === 'append'
-        ? 'popup.feed.skipTemplateAppended'
-        : 'popup.feed.skipTemplateApplied';
-    const fallback = mode === 'append'
-        ? 'Keyword template appended.'
-        : 'Keyword template applied.';
-    setStatusMessageKey(messageKey, 'success', fallback);
-}
-
 function getJobsPresetTerms(preset) {
     if (!preset || preset === 'custom') {
         return { role: [], industry: [] };
@@ -443,6 +388,13 @@ function formatUiDateTime(value) {
     } catch (_) {
         return String(value || '');
     }
+}
+
+function resultText(response, fallbackText) {
+    if (typeof resolveResultText !== 'function') {
+        return fallbackText || '';
+    }
+    return resolveResultText(response, fallbackText, tr);
 }
 
 function setStatusMessageKey(key, type, fallback, substitutions) {
@@ -678,6 +630,15 @@ async function applyPopupLocalization() {
     setElementText('#connectRefineAccordion .accordion-toggle > span:first-child',
         'popup.connect.refineFilters',
         'Refine Filters');
+    setElementText('#connectPassiveAccordion .accordion-toggle span:first-child',
+        'popup.passive.title',
+        'Passive visibility');
+    setElementText('#profileWalkStartBtn',
+        'popup.passive.startWalk',
+        'Start walk');
+    setElementText('#profileWalkStopBtn',
+        'common.stop',
+        'Stop');
     setElementText('#connectAudienceAccordion .accordion-toggle span:first-child',
         'popup.connect.audienceFilters',
         'Audience filters');
@@ -887,10 +848,6 @@ async function applyPopupLocalization() {
     translateSelectOptions(
         'jobsWorkTypeSelect',
         POPUP_SELECT_OPTION_KEYS.jobsWorkTypeSelect
-    );
-    translateSelectOptions(
-        'skipKeywordsTemplateSelect',
-        POPUP_SELECT_OPTION_KEYS.skipKeywordsTemplateSelect
     );
     translateAreaPresetOptions('areaPresetSelect');
     translateAreaPresetOptions('companyAreaPresetSelect');
@@ -2265,11 +2222,6 @@ function loadState() {
                 DEFAULT_EXPECTED_RESULTS,
                 DEFAULT_EXPECTED_RESULTS
             );
-            setSelectValue(
-                'skipKeywordsTemplateSelect',
-                '',
-                ''
-            );
             refreshTemplatesForArea();
             refreshTemplateControls();
             setActiveTemplate(DEFAULT_TEMPLATE_KEY);
@@ -2628,11 +2580,6 @@ function loadState() {
             ).checked =
                 popupState.jobsBrazilOffshoreFriendly === true;
         }
-        setSelectValue(
-            'skipKeywordsTemplateSelect',
-            popupState.skipKeywordsTemplate || '',
-            ''
-        );
         if (popupState.companyScheduleEnabled) {
             document.getElementById(
                 'companyScheduleCheckbox'
@@ -2979,15 +2926,21 @@ document.getElementById('excludedCompaniesInput').addEventListener(
     startBtn.addEventListener('click', () => {
         if (!enableEl?.checked) {
             if (statusEl) {
-                statusEl.textContent =
-                    'Enable the profile walker first.';
+                statusEl.textContent = tr(
+                    'popup.passive.enableFirst',
+                    null,
+                    'Enable the profile walker first.'
+                );
             }
             return;
         }
         const dailyTarget = Number(targetEl?.value) || 25;
         if (statusEl) {
-            statusEl.textContent =
-                `Starting profile walk (target ${dailyTarget})...`;
+            statusEl.textContent = tr(
+                'popup.passive.starting',
+                [dailyTarget],
+                `Starting profile walk (target ${dailyTarget})...`
+            );
         }
         chrome.runtime.sendMessage({
             action: 'startProfileWalk',
@@ -2995,9 +2948,12 @@ document.getElementById('excludedCompaniesInput').addEventListener(
         }, () => {
             if (chrome.runtime.lastError) {
                 if (statusEl) {
-                    statusEl.textContent =
-                        'Failed to start walk: ' +
-                        chrome.runtime.lastError.message;
+                    const reason = chrome.runtime.lastError.message;
+                    statusEl.textContent = tr(
+                        'popup.passive.startFailed',
+                        [reason],
+                        'Failed to start walk: ' + reason
+                    );
                 }
             }
         });
@@ -3007,7 +2963,11 @@ document.getElementById('excludedCompaniesInput').addEventListener(
             action: 'stopProfileWalk'
         }, () => {
             if (statusEl) {
-                statusEl.textContent = 'Stop requested.';
+                statusEl.textContent = tr(
+                    'popup.passive.stopRequested',
+                    null,
+                    'Stop requested.'
+                );
             }
         });
     });
@@ -3719,7 +3679,9 @@ function getDoneFailureMessage(response) {
     if (isCompaniesMode && stepCode === 'cards-timeout') {
         return reasonMessages['cards-timeout'];
     }
-    return response?.error || response?.message || tr(
+    const rawText = response?.error || response?.message;
+    if (rawText) return resultText(response, rawText);
+    return tr(
         'popup.runNoItemsProcessed',
         null,
         'No items processed.'
@@ -3753,11 +3715,17 @@ chrome.runtime.onMessage.addListener((request) => {
         );
         const r = request.result || {};
         if (statusEl) {
-            statusEl.textContent =
-                `Walk done — visited ${r.visited || 0}` +
-                ` (today ${r.dayCount || 0}/` +
-                `${r.dailyCap || '?'}) ` +
-                `reason=${r.reason || 'n/a'}`;
+            const walkReason = r.reason || 'n/a';
+            const walkVisited = r.visited || 0;
+            const walkDay = r.dayCount || 0;
+            const walkCap = r.dailyCap || '?';
+            statusEl.textContent = tr(
+                'popup.passive.done',
+                [walkVisited, walkDay, walkCap, walkReason],
+                `Walk done: visited ${walkVisited}` +
+                ` (today ${walkDay}/${walkCap}) ` +
+                `reason ${walkReason}`
+            );
         }
         return;
     }
@@ -3855,7 +3823,7 @@ chrome.runtime.onMessage.addListener((request) => {
         if (isJobsManualRequired) {
             jobsManualResumePending = true;
             setStatusMessage(
-                response?.message ||
+                resultText(response, response?.message) ||
                     tr(
                         'popup.jobs.manualInputRequired',
                         null,
@@ -3885,7 +3853,7 @@ chrome.runtime.onMessage.addListener((request) => {
                 : '';
             setStatusMessage(
                 tr('common.successPrefix', null, 'Success! ') +
-                    (response.message || '') + quotaNotice,
+                    resultText(response, response.message) + quotaNotice,
                 'success'
             );
             startBtn.textContent = tr('common.doneBang', null, 'Done!');
@@ -3894,7 +3862,7 @@ chrome.runtime.onMessage.addListener((request) => {
                 jobsManualResumePending = false;
             }
             setStatusMessage(
-                response?.message ||
+                resultText(response, response?.message) ||
                     tr(
                         'popup.runCanceled',
                         null,

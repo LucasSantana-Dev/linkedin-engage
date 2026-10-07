@@ -6,7 +6,6 @@ const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 
 const COMPANY_FOLLOW_SCRIPTS = [
     'lib/ui-notify.js',
-    'lib/templates.js',
     'lib/search-no-results.js',
     'lib/company-utils.js',
     'lib/human-behavior.js',
@@ -603,6 +602,12 @@ function handleCompanyStepDone(result) {
                     ? 'No company cards detected ' +
                         'within timeout.'
                     : 'Unknown error'),
+            messageKey: stepResult.error
+                ? stepResult.messageKey
+                : undefined,
+            messageArgs: stepResult.error
+                ? stepResult.messageArgs
+                : undefined,
             runStatus: 'failed',
             reason: stepResult.reason || (
                 stepCode === 'cards-timeout'
@@ -620,6 +625,12 @@ function handleCompanyStepDone(result) {
             mode: 'company',
             message: stepResult.message ||
                 'Run canceled by user.',
+            messageKey: stepResult.message
+                ? stepResult.messageKey
+                : 'popup.runCanceled',
+            messageArgs: stepResult.message
+                ? stepResult.messageArgs
+                : undefined,
             runStatus: 'canceled',
             reason: 'stopped-by-user',
             stoppedByUser: true,
@@ -650,6 +661,8 @@ function handleCompanyStepDone(result) {
             success: true,
             mode: 'company',
             message: `Followed ${state.totalFollowed} companies.`,
+            messageKey: 'popup.result.companyFollowedTotal',
+            messageArgs: [state.totalFollowed],
             log: state.log,
             processedCount: state.processedCount,
             actionCount: state.actionCount,
@@ -674,6 +687,7 @@ function handleCompanyStepDone(result) {
                     success: false,
                     mode: 'company',
                     error: 'Failed to open company search',
+                    messageKey: 'popup.result.companyOpenSearchFailed',
                     log: state.log,
                     processedCount: state.processedCount,
                     actionCount: state.actionCount,
@@ -948,6 +962,7 @@ function launchCompanyFollow(config) {
             success: false,
             mode: 'company',
             message: 'Previous run canceled by new company run.',
+            messageKey: 'popup.result.previousRunCanceled',
             runStatus: 'canceled',
             reason: 'stopped-by-user',
             stoppedByUser: true,
@@ -1862,6 +1877,7 @@ chrome.runtime.onMessage.addListener(
                     success: false,
                     mode: 'company',
                     message: 'Run canceled by user.',
+                    messageKey: 'popup.runCanceled',
                     reason: 'stopped-by-user',
                     runStatus: 'canceled',
                     stoppedByUser: true,

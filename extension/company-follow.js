@@ -634,6 +634,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                             mode: 'company',
                             stepCode: 'no-results',
                             message: 'No results for current query.',
+                            messageKey: 'popup.result.companyNoResults',
                             runStatus: 'success',
                             reason: 'no-results',
                             followedThisStep: 0,
@@ -679,6 +680,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                             stepCode: 'cards-timeout',
                             error: 'No company cards detected ' +
                                 'within timeout.',
+                            messageKey: 'popup.company.cardsTimeout',
                             runStatus: 'failed',
                             reason: 'runtime-error',
                             followedThisStep: 0,
@@ -753,6 +755,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                         stepCode: 'challenge',
                         error: 'CAPTCHA or security ' +
                             'challenge detected',
+                        messageKey: 'popup.result.securityChallenge',
                         runStatus: 'failed',
                         reason: 'challenge',
                         followedThisStep: countFollowedEntries(
@@ -824,6 +827,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     reason: 'stopped-by-user',
                     stoppedByUser: true,
                     message: 'Run canceled by user.',
+                    messageKey: 'popup.runCanceled',
                     followedThisStep: countFollowedEntries(
                         followLog
                     ),
@@ -852,6 +856,7 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     mode: 'company',
                     stepCode: 'no-results',
                     message: 'No additional results for current query.',
+                    messageKey: 'popup.result.companyNoMoreResults',
                     runStatus: 'success',
                     reason: 'no-results',
                     followedThisStep: 0,
@@ -903,6 +908,8 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                 stepCode: 'ok',
                 message: `Followed ${followedThisStep} ` +
                     `companies in this search.`,
+                messageKey: 'popup.result.companyFollowedStep',
+                messageArgs: [followedThisStep],
                 runStatus: 'success',
                 reason: 'unknown',
                 followedThisStep,
