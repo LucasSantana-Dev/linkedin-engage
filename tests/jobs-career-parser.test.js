@@ -305,6 +305,33 @@ describe('jobs career parser', () => {
         expect(loaderCallCount).toBe(1);
     });
 
+    it('extractTextFromPdf loads pdfjs through dynamic import and sets the worker source', async () => {
+        jest.resetModules();
+        global.crypto = require('crypto').webcrypto;
+        global.LinkedInJobsCareerIntelligence = require(
+            '../extension/lib/jobs-career-intelligence'
+        );
+        global.LinkedInJobsCareerVault = require(
+            '../extension/lib/jobs-career-vault'
+        );
+        const source = 'export const GlobalWorkerOptions = {};'
+            + 'export const getDocument = () => ({ promise: Promise.resolve({'
+            + ' numPages: 1, getPage: async () => ({'
+            + ' getTextContent: async () => ({ items: [{ str: "Dynamic text" }] })'
+            + ' }) }) });';
+        const dataUrl = `data:text/javascript,${encodeURIComponent(source)}`;
+        const getURL = jest.fn((path) => (
+            path === 'vendor/pdf.min.mjs' ? dataUrl : `chrome-extension://fake/${path}`
+        ));
+        global.chrome = { runtime: { getURL } };
+
+        const { extractTextFromPdf } = require('../extension/lib/jobs-career-parser');
+        const text = await extractTextFromPdf(new Uint8Array([1, 2, 3]).buffer);
+
+        expect(text).toContain('Dynamic text');
+        expect(getURL).toHaveBeenCalledWith('vendor/pdf.worker.min.mjs');
+    });
+
     it('readFileBuffer rejects when the FileReader fires an error event', async () => {
         const { parseResumeFile } = loadParser();
 
