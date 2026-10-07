@@ -393,7 +393,7 @@
     "message": "$1 / $2"
   },
   "popup_connect_editQueryManually": {
-    "message": "Editar busca manualmente"
+    "message": "Editar"
   },
   "popup_connect_engagementOnly": {
     "message": "Apenas engajamento (visitar + seguir, sem conectar)"
@@ -534,7 +534,7 @@
     "message": "Abordagem de recrutadores"
   },
   "popup_connect_useTagBuilder": {
-    "message": "Usar construtor por tags"
+    "message": "Concluir"
   },
   "popup_connect_warningWeeklyLimitAdjusted": {
     "message": "Restam apenas $1 convites nesta semana ($2/$3). O limite foi ajustado para $1."
@@ -846,13 +846,13 @@
     "message": "Seguir empresas"
   },
   "popup_start_connect": {
-    "message": "Iniciar automação"
+    "message": "Iniciar conexões"
   },
   "popup_start_errorFailed": {
     "message": "Falha ao iniciar: $1"
   },
   "popup_start_jobs": {
-    "message": "Assistir candidatura"
+    "message": "Assistir candidaturas"
   },
   "popup_statusStopping": {
     "message": "Parando a automação..."
@@ -1116,7 +1116,7 @@
     "message": "Por execução (máx. 20)"
   },
   "popup_withdraw_start": {
-    "message": "Retirar convites antigos"
+    "message": "Retirar convites"
   },
   "popup_withdraw_opening": {
     "message": "Abrindo os convites enviados..."
@@ -1144,5 +1144,107 @@
   },
   "status_withdrawn": {
     "message": "Retirado"
+  },
+  "popup_nav_settings": {
+    "message": "Configurações"
+  },
+  "popup_nav_back": {
+    "message": "Voltar"
+  },
+  "common_withdraw": {
+    "message": "Retirar"
+  },
+  "popup_filters_more": {
+    "message": "Mais filtros"
+  },
+  "popup_group_search": {
+    "message": "Busca"
+  },
+  "popup_group_targets": {
+    "message": "Empresas-alvo"
+  },
+  "popup_connect_presetIntent": {
+    "message": "Intenção predefinida"
+  },
+  "popup_connect_compiledQuery": {
+    "message": "Busca compilada"
+  },
+  "popup_connect_queryPlaceholder": {
+    "message": "Digite sua busca..."
+  },
+  "popup_connect_degree": {
+    "message": "Grau de conexão"
+  },
+  "popup_connect_yearsOfExperience": {
+    "message": "Anos de experiência"
+  },
+  "popup_connect_exclusionsSection": {
+    "message": "Exclusões"
+  },
+  "popup_connect_excludeKeywords": {
+    "message": "Excluir palavras-chave (separadas por vírgula, vira NOT)"
+  },
+  "popup_connect_automationSection": {
+    "message": "Comportamento da automação"
+  },
+  "popup_connect_followFallback": {
+    "message": "Seguir pessoas quando Conectar não estiver disponível"
+  },
+  "popup_connect_followFirst": {
+    "message": "Preferir Seguir a Conectar quando ambos aparecem (avançado)"
+  },
+  "popup_connect_followMax": {
+    "message": "Máximo de seguidos por execução"
+  },
+  "popup_connect_messageLabel": {
+    "message": "Mensagem"
+  },
+  "popup_connect_messageNameHint": {
+    "message": "{name} = primeiro nome"
+  },
+  "popup_connect_rotationHelp": {
+    "message": "Alterna entre as buscas a cada execução. Deixe vazio para usar a busca atual. O Chrome precisa estar aberto."
+  },
+  "popup_connect_smartTiming": {
+    "message": "Horário inteligente (pular horas ruins)"
+  },
+  "popup_company_batchHelp": {
+    "message": "Percorre sua lista de empresas em lotes. O Chrome precisa estar aberto."
+  },
+  "popup_jobs_openOnLinkedIn": {
+    "message": "Abrir no LinkedIn"
+  },
+  "popup_jobs_removeDoc": {
+    "message": "Remover"
+  },
+  "popup_footer_decrease": {
+    "message": "Diminuir limite"
+  },
+  "popup_footer_increase": {
+    "message": "Aumentar limite"
+  },
+  "popup_settings_groupLanguage": {
+    "message": "Idioma"
+  },
+  "popup_settings_groupLimits": {
+    "message": "Limites e aquecimento"
+  },
+  "popup_settings_weeklyInvites": {
+    "message": "Convites nesta semana"
+  },
+  "popup_settings_groupData": {
+    "message": "Dados"
+  },
+  "popup_settings_openDashboard": {
+    "message": "Abrir painel"
+  },
+  "popup_withdraw_gateTitle": {
+    "message": "Retirar convites está desligado"
+  },
+  "popup_withdraw_gateBody": {
+    "message": "Ative Retirar convites antigos em Configurações para usar este modo."
+  },
+  "popup_withdraw_gateAction": {
+    "message": "Abrir configurações"
   }
 }

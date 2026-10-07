@@ -4,370 +4,518 @@
     <meta charset="UTF-8">
     <title>LinkedIn Engage</title>
     <style>
-        /* ========== DESIGN SYSTEM: COLOR TOKENS ========== */
+        /* ==========================================================
+           DESIGN.md tokens (locked 2026-10-07). Dark is primary,
+           light mirrors the same roles. OKLCH only.
+           ========================================================== */
         :root {
-            /* Semantic colors — designed for dark mode */
-            --primary: #5eb3f6;
-            --primary-hover: #7ec4f8;
-            --primary-light: rgba(94, 179, 246, 0.12);
-            --accent: #5eb3f6;
+            color-scheme: dark light;
+            --bg: oklch(0.17 0.008 275);
+            --surface: oklch(0.205 0.009 275);
+            --surface-2: oklch(0.235 0.010 275);
+            --border: oklch(0.29 0.012 275);
+            --fg: oklch(0.95 0.004 275);
+            --muted: oklch(0.70 0.014 275);
+            --accent: oklch(0.56 0.16 277);
+            --accent-fg: oklch(0.985 0.004 277);
+            --accent-text: oklch(0.76 0.11 277);
+            --success: oklch(0.74 0.15 150);
+            --warning: oklch(0.81 0.14 80);
+            --danger: oklch(0.67 0.19 25);
+            --footer-shadow: 0 -1px 0 var(--border), 0 -8px 16px oklch(0 0 0 / 0.25);
 
-            /* Background & surface */
-            --bg-color: #0f172a;
-            --surface-1: #192038;
-            --surface-2: #21294a;
-            --surface-3: #2a3758;
+            --s1: 4px;
+            --s2: 8px;
+            --s3: 12px;
+            --s4: 16px;
+            --s5: 24px;
+            --r-sm: 6px;
+            --r-md: 10px;
+            --r-pill: 999px;
+            --t-fast: 120ms;
+            --t-mid: 200ms;
+            --ease: cubic-bezier(0.2, 0, 0, 1);
 
-            /* Text */
-            --text-main: #e8eef7;
-            --text-secondary: #c5cfe8;
-            --text-muted: #8f9ab5;
-
-            /* Borders & dividers */
-            --border: #2a3758;
-            --border-light: #3a4768;
-
-            /* Component surfaces */
-            --card-bg: #192038;
-            --input-bg: #0f172a;
-            --status-bg: #21294a;
-            --preview-bg: #0a0f1a;
-
-            /* Spacing scale */
-            --space-1: 4px;
-            --space-2: 8px;
-            --space-3: 12px;
-            --space-4: 16px;
-            --space-5: 20px;
-            --space-6: 24px;
-
-            /* Border radius */
-            --radius-sm: 6px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-            --radius-xl: 16px;
-
-            /* Shadows */
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
-            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.6);
-
-            /* Status colors */
-            --success: #3fb950;
-            --success-light: rgba(63, 185, 80, 0.12);
-            --warning: #d29922;
-            --warning-light: rgba(210, 153, 34, 0.12);
-            --error: #f85149;
-            --error-light: rgba(248, 81, 73, 0.12);
-
-            /* Animation timing */
-            --transition-fast: 0.12s ease;
-            --transition-norm: 0.2s ease;
-            --transition-slow: 0.35s ease;
+            --font-ui: -apple-system, "SF Pro Text", system-ui;
+            --font-mono: ui-monospace, "SF Mono", Menlo;
         }
 
         @media (prefers-color-scheme: light) {
             :root {
-                --primary: #0a66c2;
-                --primary-hover: #004182;
-                --primary-light: rgba(10, 102, 194, 0.08);
-                --accent: #0a66c2;
-
-                --bg-color: #ffffff;
-                --surface-1: #f5f7fa;
-                --surface-2: #eef1f6;
-                --surface-3: #e6eaf2;
-
-                --text-main: #1a1f38;
-                --text-secondary: #3a4557;
-                --text-muted: #667085;
-
-                --border: #d0d7e0;
-                --border-light: #e0e5ef;
-
-                --card-bg: #f5f7fa;
-                --input-bg: #ffffff;
-                --status-bg: #eef1f6;
-                --preview-bg: #f9fafb;
-
-                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-                --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
-                --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.16);
+                --bg: oklch(0.985 0.003 275);
+                --surface: oklch(1 0 0);
+                --surface-2: oklch(0.965 0.004 275);
+                --border: oklch(0.90 0.006 275);
+                --fg: oklch(0.22 0.010 275);
+                --muted: oklch(0.50 0.014 275);
+                --accent: oklch(0.52 0.17 277);
+                --accent-fg: oklch(0.99 0.003 277);
+                --accent-text: oklch(0.48 0.17 277);
+                --success: oklch(0.52 0.14 150);
+                --warning: oklch(0.58 0.13 70);
+                --danger: oklch(0.55 0.20 25);
+                --footer-shadow: 0 -1px 0 var(--border), 0 -8px 16px oklch(0 0 0 / 0.06);
             }
         }
 
-        /* ========== BASE RESET & TYPOGRAPHY ========== */
+        /* ========== BASE ========== */
         * { box-sizing: border-box; }
 
+        [hidden] { display: none !important; }
+
+        html, body { margin: 0; padding: 0; }
+
         body {
-            font-family: "Outfit", "Inter", -apple-system, system-ui, BlinkMacSystemFont,
-                "Segoe UI", sans-serif;
-            width: 400px;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            width: 380px;
+            height: 600px;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--fg);
+            font: 400 13px/1.45 var(--font-ui);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            line-height: 1.5;
         }
 
-        /* ========== HEADER ========== */
-        .header {
-            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
-            padding: var(--space-4) var(--space-5) var(--space-3);
-            color: white;
-            border-bottom-left-radius: var(--radius-lg);
-            border-bottom-right-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            text-align: center;
+        h1, h2, h3, p { margin: 0; }
+
+        button, input, select, textarea { font: inherit; color: inherit; }
+
+        button { cursor: pointer; }
+
+        :focus-visible {
+            outline: 2px solid var(--accent-text);
+            outline-offset: 2px;
         }
 
-        .header h2 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-2);
-            letter-spacing: -0.5px;
+        .mono, .num {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
         }
 
-        .header p {
-            margin: var(--space-1) 0 0;
-            font-size: 12px;
-            font-weight: 400;
-            opacity: 0.75;
+        /* ========== HEADER + MODE TABS ========== */
+        .app-header {
+            grid-row: 1;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
         }
 
-        /* ========== CONTENT AREA ========== */
-        .content {
-            padding: var(--space-4) var(--space-5);
-            background-color: var(--bg-color);
-            overflow-y: auto;
-            max-height: calc(100vh - 120px);
-        }
-
-        .section {
-            margin-bottom: var(--space-4);
-        }
-
-        .section-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: var(--space-2);
-            display: block;
-        }
-
-        /* ========== FORM ELEMENTS ========== */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-1);
-            margin-bottom: var(--space-3);
-        }
-
-        .row {
-            display: flex;
-            gap: var(--space-3);
-            margin-bottom: var(--space-3);
-        }
-
-        .row .input-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-main);
-            display: block;
-        }
-
-        select,
-        input[type="number"],
-        input[type="text"],
-        input[type="password"],
-        .compact-input {
-            width: 100%;
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            background-color: var(--input-bg);
-            color: var(--text-main);
-            font-size: 11px;
-            outline: none;
-            transition: all var(--transition-norm);
-            font-family: inherit;
-        }
-
-        select:focus,
-        input[type="number"]:focus,
-        input[type="text"]:focus,
-        input[type="password"]:focus,
-        .compact-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-            background-color: var(--input-bg);
-        }
-
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238f9ab5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right var(--space-2) center;
-            background-size: 16px auto;
-            cursor: pointer;
-            padding-right: 28px;
-        }
-
-        /* ========== CHECKBOXES ========== */
-        input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: var(--primary);
-            cursor: pointer;
-            margin: 0;
-            flex-shrink: 0;
-        }
-
-        .checkbox-group {
+        .bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: var(--space-2);
-            gap: var(--space-2);
+            height: 48px;
+            padding: 0 var(--s3) 0 var(--s4);
         }
 
-        .checkbox-group label {
-            margin-bottom: 0;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        /* ========== HINT TEXT ========== */
-        .hint {
-            display: inline-block;
-            font-size: 10px;
-            color: var(--text-muted);
-            font-weight: 500;
-            margin-left: var(--space-1);
-        }
-
-        /* ========== TEXTAREA & NOTE AREA ========== */
-        .note-area {
-            width: 100%;
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            background-color: var(--input-bg);
-            color: var(--text-main);
-            font-size: 11px;
-            font-family: inherit;
-            resize: vertical;
-            outline: none;
-            transition: all var(--transition-norm);
-            line-height: 1.4;
-            min-height: 60px;
-        }
-
-        .note-area:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-            background-color: var(--input-bg);
-        }
-
-        .char-counter {
-            font-size: 10px;
-            text-align: right;
-            margin-top: var(--space-1);
-            color: var(--text-muted);
-            transition: color var(--transition-norm);
-        }
-
-        .char-counter.warn {
-            color: var(--warning);
-            font-weight: 600;
-        }
-
-        .char-counter.over {
-            color: var(--error);
+        .wordmark {
+            font-size: 14px;
             font-weight: 700;
+            letter-spacing: -0.01em;
         }
 
-        /* ========== CHIP/TAG SYSTEM ========== */
-        .tag-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            margin-bottom: var(--space-3);
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid transparent;
+            border-radius: var(--r-sm);
+            background: transparent;
+            color: var(--muted);
+            transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
         }
+
+        .icon-btn:hover { background: var(--surface-2); color: var(--fg); }
+        .icon-btn:active { background: var(--border); }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            margin: 0 var(--s3) var(--s3);
+            padding: 2px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-pill);
+        }
+
+        .mode-btn {
+            height: 28px;
+            padding: 0 var(--s2);
+            border: 0;
+            border-radius: var(--r-pill);
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            transition: background-color var(--t-mid) var(--ease), color var(--t-mid) var(--ease);
+        }
+
+        .mode-btn:hover { color: var(--fg); }
+
+        .mode-btn.active {
+            background: var(--accent);
+            color: var(--accent-fg);
+        }
+
+        .mode-btn:focus-visible { outline-offset: 1px; }
+
+        /* ========== SCROLL REGION ========== */
+        .main {
+            grid-row: 2;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: var(--s3);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .panel > * + * { margin-top: var(--s4); }
+
+        /* ========== CARD + FIELDS ========== */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: var(--s3);
+        }
+
+        .card > * + * { margin-top: var(--s2); }
+
+        .field { display: grid; gap: var(--s1); }
+
+        .field > label,
+        .line > label,
+        .line-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .field > label { color: var(--muted); }
+
+        input[type="text"], input[type="number"], input[type="password"],
+        select, textarea {
+            width: 100%;
+            min-height: 32px;
+            padding: 0 var(--s2);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            color: var(--fg);
+            font-size: 13px;
+            transition: border-color var(--t-fast) var(--ease);
+        }
+
+        textarea {
+            padding: var(--s2);
+            resize: vertical;
+            line-height: 1.4;
+        }
+
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+
+        input:hover, select:hover, textarea:hover { border-color: color-mix(in oklch, var(--muted) 45%, var(--border)); }
+
+        input:disabled, select:disabled, textarea:disabled, button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .is-dimmed { opacity: 0.4; }
+
+        .hint, .note {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        .field-error {
+            font-size: 11px;
+            color: var(--danger);
+        }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--s2);
+            height: 28px;
+            padding: 0 var(--s3);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            background: var(--surface-2);
+            color: var(--fg);
+            font-size: 12px;
+            font-weight: 500;
+            transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+        }
+
+        .btn:hover:not(:disabled) { border-color: var(--muted); }
+        .btn:active:not(:disabled) { background: var(--border); }
+        .btn-danger { color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { border-color: var(--danger); }
+        .btn-row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+        .btn-primary, .btn-stop {
+            flex: 1;
+            min-width: 0;
+            height: 36px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-primary {
+            border-color: transparent;
+            background: var(--accent);
+            color: var(--accent-fg);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            border-color: transparent;
+            background: color-mix(in oklch, var(--accent) 88%, var(--accent-fg));
+        }
+
+        .btn-primary:active:not(:disabled) {
+            background: color-mix(in oklch, var(--accent) 80%, oklch(0.1 0.01 277));
+        }
+
+        .btn-stop {
+            border-color: var(--danger);
+            background: transparent;
+            color: var(--danger);
+        }
+
+        .btn-stop:hover:not(:disabled) { background: color-mix(in oklch, var(--danger) 12%, transparent); border-color: var(--danger); }
+
+        .btn.is-loading::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 700ms linear infinite;
+        }
+
+        .text-btn {
+            padding: 2px var(--s1);
+            border: 0;
+            border-radius: var(--r-sm);
+            background: transparent;
+            color: var(--accent-text);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .text-btn:hover { text-decoration: underline; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== LIST ROWS (1Password style groups) ========== */
+        .group-title {
+            padding: var(--s3) var(--s3) var(--s1);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .group-title .meta { font-weight: 500; margin-left: var(--s1); }
+
+        .rows { border-top: 1px solid var(--border); }
+
+        .rows > * { border-bottom: 1px solid var(--border); }
+        .rows > :last-child { border-bottom: 0; }
+
+        .line {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--s3);
+            min-height: 40px;
+            padding: var(--s1) var(--s3);
+        }
+
+        .line > label, .line > .line-label { flex: 1; min-width: 0; }
+        .line select { width: 188px; flex: none; }
+        .line input[type="number"] { width: 72px; flex: none; text-align: right; font-family: var(--font-mono); }
+        .line input[type="text"] { width: 168px; flex: none; }
+
+        .stack {
+            display: grid;
+            gap: var(--s1);
+            padding: var(--s2) var(--s3) var(--s3);
+        }
+
+        .stack > label { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+        .inline-checks { display: flex; gap: var(--s3); font-size: 12px; }
+        .inline-checks label { display: inline-flex; align-items: center; gap: var(--s1); }
+        .range { display: flex; gap: var(--s2); }
+        .range input { width: 72px; }
+
+        input[type="checkbox"] { accent-color: var(--accent); margin: 0; }
+
+        input[type="checkbox"][role="switch"] {
+            appearance: none;
+            -webkit-appearance: none;
+            position: relative;
+            flex: none;
+            width: 30px;
+            height: 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--r-pill);
+            background: var(--surface-2);
+            transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+        }
+
+        input[type="checkbox"][role="switch"]::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: transform var(--t-mid) var(--ease), background-color var(--t-fast) var(--ease);
+        }
+
+        input[type="checkbox"][role="switch"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        input[type="checkbox"][role="switch"]:checked::after {
+            background: var(--accent-fg);
+            transform: translateX(12px);
+        }
+
+        /* ========== DISCLOSURE ("More filters") ========== */
+        .accordion {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            overflow: hidden;
+        }
+
+        .accordion-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 40px;
+            padding: 0 var(--s3);
+            border: 0;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: left;
+            transition: background-color var(--t-fast) var(--ease);
+        }
+
+        .accordion-toggle:hover { background: var(--surface-2); }
+        .accordion-toggle:focus-visible { outline-offset: -2px; }
+
+        .chev {
+            color: var(--muted);
+            transition: transform var(--t-mid) var(--ease);
+        }
+
+        .accordion.open .chev { transform: rotate(180deg); }
+
+        .accordion-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            visibility: hidden;
+            transition: grid-template-rows var(--t-mid) var(--ease), visibility 0s linear var(--t-mid);
+        }
+
+        .accordion.open .accordion-body {
+            grid-template-rows: 1fr;
+            visibility: visible;
+            transition-delay: 0s;
+            border-top: 1px solid var(--border);
+        }
+
+        .accordion-inner { min-height: 0; overflow: hidden; }
+
+        .accordion-inner > .group:last-child { padding-bottom: var(--s1); }
+
+        /* ========== COMPILED QUERY ========== */
+        .query-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .query-head .label { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+        .query-preview {
+            padding: var(--s2);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            font: 400 12px/1.5 var(--font-mono);
+            color: var(--fg);
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 34px;
+        }
+
+        .custom-query-input {
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        /* ========== TAGS ========== */
+        .tag-group { padding: 0 var(--s3) var(--s3); }
 
         .tag-group-label {
-            font-size: 10px;
+            margin-bottom: var(--s1);
+            font-size: 11px;
             font-weight: 600;
-            color: var(--text-muted);
-            width: 100%;
-            margin-bottom: var(--space-1);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            color: var(--muted);
         }
 
         .tag-scroll-area {
             display: flex;
             flex-wrap: wrap;
-            gap: var(--space-1);
-            max-height: 110px;
+            gap: var(--s1);
+            max-height: 104px;
             overflow-y: auto;
-            padding-right: var(--space-1);
-        }
-
-        .tag-scroll-area::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .tag-scroll-area::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .tag-scroll-area::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-            opacity: 0.5;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
         }
 
         .tag {
             display: inline-flex;
             align-items: center;
-            padding: 3px 8px;
-            border-radius: 18px;
+            padding: 2px var(--s2);
             border: 1px solid var(--border);
-            background: var(--surface-1);
-            font-size: 10px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            user-select: none;
-            color: var(--text-main);
+            border-radius: var(--r-sm);
+            background: var(--surface-2);
+            color: var(--fg);
+            font-size: 12px;
             white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
         }
 
-        .tag:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            color: var(--text-main);
-        }
+        .tag:hover { border-color: var(--muted); }
 
         .tag.active {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 2px 6px rgba(94, 179, 246, 0.3);
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--accent-fg);
         }
 
         @keyframes tag-limit-shake {
@@ -376,1100 +524,382 @@
             75% { transform: translateX(3px); }
         }
 
-        .tag-limit-shake {
-            animation: tag-limit-shake var(--transition-slow);
-            opacity: 0.5;
-        }
+        .tag-limit-shake { animation: tag-limit-shake var(--t-mid) var(--ease); opacity: 0.5; }
 
-        /* ========== AREA FILTER PILLS ========== */
         .area-filter-pills {
             display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-1);
-            width: 100%;
-            margin-bottom: var(--space-2);
+            gap: var(--s1);
+            margin-bottom: var(--s2);
+            padding-bottom: var(--s1);
+            overflow-x: auto;
+            scrollbar-width: none;
         }
 
         .area-pill {
-            padding: 2px 8px;
-            border-radius: 14px;
+            flex: none;
+            padding: 1px var(--s2);
             border: 1px solid var(--border);
+            border-radius: var(--r-pill);
             background: transparent;
-            color: var(--text-muted);
-            font-size: 10px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            white-space: nowrap;
+            color: var(--muted);
+            font-size: 11px;
+            transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
         }
 
-        .area-pill:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
+        .area-pill:hover { color: var(--fg); border-color: var(--muted); }
 
         .area-pill.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
+            background: var(--fg);
+            border-color: var(--fg);
+            color: var(--bg);
         }
 
-        /* ========== ACCORDION SYSTEM ========== */
-        .accordion {
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-3);
-            background: var(--card-bg);
-            overflow: hidden;
-            transition: all var(--transition-norm);
+        /* ========== NOTE TEMPLATES ========== */
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--s2);
+            padding: var(--s1) var(--s3) var(--s2);
         }
 
-        .accordion:hover {
-            border-color: var(--border-light);
-        }
-
-        .accordion-toggle {
-            width: 100%;
-            border: none;
-            background: transparent;
-            text-align: left;
-            color: var(--text-main);
-            padding: var(--space-2) var(--space-3);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            gap: var(--space-2);
-        }
-
-        .accordion-toggle:active {
-            background: var(--primary-light);
-        }
-
-        .accordion-chevron {
-            font-size: 10px;
-            color: var(--text-muted);
-            transition: transform var(--transition-norm);
-            flex-shrink: 0;
-            display: inline-block;
-        }
-
-        .accordion.open .accordion-chevron {
-            transform: rotate(180deg);
-        }
-
-        .accordion-meta {
-            margin-left: var(--space-2);
-            font-size: 9px;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .accordion-body {
-            display: none;
-            border-top: 1px solid var(--border);
-            padding: var(--space-3) var(--space-3);
-            background: var(--surface-1);
-            animation: slideDown var(--transition-norm);
-        }
-
-        .accordion.open .accordion-body {
-            display: block;
-        }
-
-        /* ========== ADVANCED DISCLOSURE ========== */
-        .advanced-disclosure {
-            margin-top: var(--space-3);
-            padding: 0;
-            border: none;
-        }
-
-        .advanced-disclosure summary {
-            cursor: pointer;
-            padding: var(--space-2) 0;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            transition: color var(--transition-fast);
-        }
-
-        .advanced-disclosure summary:hover {
-            color: var(--text-secondary);
-        }
-
-        .advanced-disclosure[open] summary {
-            margin-bottom: var(--space-3);
-        }
-
-        .advanced-disclosure > *:not(summary) {
-            margin-bottom: var(--space-2);
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-4px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== QUERY PREVIEW ========== */
-        .query-preview {
-            margin-top: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            background: var(--preview-bg);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            font-size: 10px;
-            font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
-            color: var(--text-secondary);
-            word-break: break-all;
-            line-height: 1.6;
-            max-height: 50px;
-            overflow-y: auto;
-        }
-
-        .custom-query-input {
-            width: 100%;
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
-            background-color: var(--input-bg);
-            color: var(--text-main);
-            font-size: 11px;
-            font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
-            outline: none;
-            transition: all var(--transition-norm);
-            margin-top: var(--space-2);
-            display: none;
-        }
-
-        .custom-query-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
-            background: var(--input-bg);
-        }
-
-        /* ========== BUTTONS ========== */
-        .toggle-custom {
-            font-size: 10px;
-            color: var(--primary);
-            cursor: pointer;
-            margin-top: var(--space-1);
-            display: inline-block;
-            transition: color var(--transition-fast);
-        }
-
-        .toggle-custom:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
-
-        /* ========== PRIMARY CTA ========== */
-        #startBtn,
-        #stopBtn {
-            width: 100%;
-            padding: var(--space-3) var(--space-4);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all var(--transition-norm);
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: var(--space-2);
-            letter-spacing: -0.3px;
-        }
-
-        #startBtn {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            background-size: 200% 200%;
-            background-position: 0% 0%;
-        }
-
-        #startBtn:hover {
-            background-position: 100% 100%;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        #startBtn:active {
-            transform: translateY(0);
-            box-shadow: var(--shadow-sm);
-        }
-
-        #startBtn:disabled {
-            background: linear-gradient(135deg, var(--text-muted) 0%, var(--text-muted) 100%);
-            cursor: not-allowed;
-            transform: none;
-            opacity: 0.5;
-        }
-
-        #stopBtn {
-            background: var(--error);
-            margin-top: var(--space-2);
-        }
-
-        #stopBtn:hover {
-            background: #e63946;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        #stopBtn:active {
-            transform: translateY(0);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* ========== TEMPLATE CARDS ========== */
         .template-card {
-            padding: var(--space-2) var(--space-3);
+            display: grid;
+            gap: 2px;
+            padding: var(--s2);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            background: var(--surface-1);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            margin-bottom: var(--space-1);
+            border-radius: var(--r-sm);
+            background: var(--surface-2);
+            text-align: left;
+            transition: border-color var(--t-fast) var(--ease);
         }
 
-        .template-card:hover {
-            border-color: var(--primary);
-            background: var(--primary-light);
-        }
+        .template-card:hover { border-color: var(--muted); }
+        .template-card.active { border-color: var(--accent-text); background: color-mix(in oklch, var(--accent) 14%, var(--surface-2)); }
+        .template-name { display: block; font-size: 12px; font-weight: 600; }
 
-        .template-card.active {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            box-shadow: 0 0 0 2px rgba(94, 179, 246, 0.2);
-        }
-
-        .template-card .template-name {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-main);
-            margin: 0;
-        }
-
-        .template-card .template-preview {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: var(--space-1);
-            line-height: 1.3;
+        .template-preview {
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-        }
-
-        /* ========== STATUS & ALERTS ========== */
-        .status {
-            margin-top: var(--space-3);
             font-size: 11px;
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            background: var(--status-bg);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--primary);
-            display: none;
-            line-height: 1.5;
-            color: var(--text-secondary);
-            animation: fadeIn var(--transition-norm);
+            color: var(--muted);
+            line-height: 1.35;
         }
 
-        /* ========== PROFILE CARD ========== */
+        .char-counter {
+            font: 400 11px var(--font-mono);
+            color: var(--muted);
+            text-align: right;
+        }
+
+        .char-counter.warn { color: var(--warning); }
+        .char-counter.over { color: var(--danger); }
+
+        .doc-list { display: grid; gap: var(--s2); padding: 0 var(--s3) var(--s3); }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--s2);
+            padding: var(--s2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            background: var(--surface-2);
+        }
+
+        .doc-name { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+        .doc-meta { font-size: 11px; color: var(--muted); }
+        .pad { padding: 0 var(--s3) var(--s3); }
+        .pad-top { padding-top: var(--s2); }
+
+        /* ========== NOTICES + EMPTY STATE ========== */
+        .notice {
+            padding: var(--s2) var(--s3);
+            border: 1px solid var(--warning);
+            border-radius: var(--r-sm);
+            color: var(--warning);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .insight {
+            margin: var(--s2) var(--s3) var(--s3);
+            padding: var(--s2) var(--s3);
+            background: var(--surface-2);
+            border-radius: var(--r-sm);
+            font-size: 12px;
+        }
+
+        .is-warn { color: var(--warning); }
+        .is-danger { color: var(--danger); }
+
+        .empty {
+            display: grid;
+            justify-items: start;
+            gap: var(--s2);
+            padding: var(--s4);
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: var(--r-md);
+        }
+
+        .empty h2 { font-size: 13px; font-weight: 600; }
+        .empty p { font-size: 12px; color: var(--muted); }
+
+        .run-status:empty { display: none; }
+
+        .run-status {
+            min-height: 18px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* ========== FOOTER (sticky) ========== */
+        .app-footer {
+            grid-row: 3;
+            display: grid;
+            gap: var(--s2);
+            padding: var(--s2) var(--s3) var(--s3);
+            background: var(--bg);
+            box-shadow: var(--footer-shadow);
+            position: relative;
+        }
+
+        .status {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--s2);
+            min-height: 18px;
+            max-height: 54px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--muted);
+            overflow-wrap: anywhere;
+        }
+
+        .status::before {
+            content: "";
+            flex: none;
+            width: 6px;
+            height: 6px;
+            margin-top: 6px;
+            border-radius: 50%;
+            background: var(--accent-text);
+        }
+
+        .status[data-type="success"]::before { background: var(--success); }
+        .status[data-type="error"]::before { background: var(--danger); }
+        .status[data-type="warning"]::before { background: var(--warning); }
+        .status[data-type="error"] { color: var(--danger); }
+
+        .progress {
+            display: flex;
+            gap: var(--s2);
+            font: 400 12px var(--font-mono);
+            color: var(--fg);
+        }
+
+        .progress-meta { color: var(--muted); }
+
+        .footer-actions { display: flex; align-items: center; gap: var(--s2); }
+
+        .limit { display: flex; align-items: center; gap: var(--s1); flex: none; }
+        .limit > label { font-size: 12px; font-weight: 500; color: var(--muted); margin-right: var(--s1); }
+
+        .step {
+            width: 28px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .step:hover:not(:disabled) { color: var(--fg); border-color: var(--muted); }
+        .step:first-of-type { border-radius: var(--r-sm) 0 0 var(--r-sm); }
+        .step:last-of-type { border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+
+        .limit input[type="number"] {
+            width: 48px;
+            min-height: 32px;
+            padding: 0;
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            text-align: center;
+            font-family: var(--font-mono);
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        .limit input[type="number"]::-webkit-inner-spin-button,
+        .limit input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        body[data-mode="withdraw"] #startBtn,
+        body[data-mode="withdraw"] #stopBtn,
+        body:not([data-mode="withdraw"]) #withdrawStartBtn,
+        body:not([data-mode="withdraw"]) #withdrawStopBtn { display: none; }
+
+        /* ========== SETTINGS VIEW ========== */
+        .settings-view { display: none; grid-row: 1 / span 2; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+
+        body[data-view="settings"] .app-header,
+        body[data-view="settings"] .main,
+        body[data-view="settings"] .app-footer { display: none; }
+
+        body[data-view="settings"] .settings-view { display: grid; }
+
+        .settings-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--s2);
+            height: 48px;
+            padding: 0 var(--s3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .settings-bar h2 { font-size: 14px; font-weight: 700; }
+
+        .settings-scroll {
+            min-height: 0;
+            overflow-y: auto;
+            padding: var(--s3);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .settings-scroll > section + section { margin-top: var(--s4); }
+
+        .settings-scroll .card { padding: 0; overflow: hidden; }
+        .settings-scroll .rows { border-top: 0; }
+        .stack:empty { display: none; }
+        .settings-scroll .card > * + * { margin-top: 0; }
+        .section-title { padding: 0 var(--s1) var(--s1); font-size: 11px; font-weight: 600; color: var(--muted); }
+
+        .link-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 40px;
+            padding: var(--s1) var(--s3);
+            color: var(--accent-text);
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .link-row:hover { background: var(--surface-2); }
+
         .profile-card {
             display: flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-radius: var(--radius-md);
-            background: var(--status-bg);
-            border: 1px solid var(--border);
+            gap: var(--s2);
+            padding: var(--s2) var(--s3);
         }
 
         .profile-avatar {
+            flex: none;
+            display: grid;
+            place-items: center;
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .profile-info {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .profile-name {
+            background: var(--surface-2);
+            color: var(--muted);
             font-size: 11px;
             font-weight: 600;
-            color: var(--text-main);
+        }
+
+        .profile-info { flex: 1; min-width: 0; }
+
+        .profile-name {
+            font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin: 0;
         }
 
-        .profile-name a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color var(--transition-fast);
-        }
-
-        .profile-name a:hover {
-            color: var(--primary-hover);
-            text-decoration: underline;
-        }
+        .profile-name a { color: var(--fg); text-decoration: none; }
+        .profile-name a:hover { color: var(--accent-text); text-decoration: underline; }
 
         .profile-headline {
-            font-size: 10px;
-            color: var(--text-muted);
+            font-size: 11px;
+            color: var(--muted);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin: 0;
         }
 
         .profile-badge {
-            font-size: 9px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-            flex-shrink: 0;
+            flex: none;
+            padding: 1px var(--s2);
+            border-radius: var(--r-pill);
+            border: 1px solid var(--border);
+            font-size: 11px;
         }
 
-        .profile-badge.sent {
-            background: var(--success-light);
-            color: var(--success);
-        }
+        .profile-badge.sent { color: var(--success); border-color: var(--success); }
+        .profile-badge.skipped { color: var(--muted); }
 
-        .profile-badge.skipped {
-            background: var(--warning-light);
-            color: var(--warning);
-        }
-
-        /* ========== DIVIDER ========== */
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: var(--space-4) 0;
-        }
-
-        /* ========== FOOTER ========== */
-        .footer {
-            margin-top: var(--space-4);
-            font-size: 10px;
-            text-align: center;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-1);
-            padding-top: var(--space-3);
-            border-top: 1px solid var(--border);
-        }
-
-        .footer svg {
-            width: 12px;
-            height: 12px;
-            fill: var(--success);
-        }
-
-        /* ========== ANIMATIONS ========== */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-4px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
             }
         }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-            <span id="popupHeaderTitle">Engage</span>
-        </h2>
-        <p>Targeted LinkedIn networking automation</p>
-        <div style="margin-top:10px; display:flex; justify-content:center;">
-            <div style="width:220px; text-align:left;">
-                <label for="uiLanguageModeSelect"
-                    style="display:block; font-size:10px; color:rgba(255,255,255,0.82);">
-                    UI Language
-                </label>
-                <select id="uiLanguageModeSelect"
-                    style="margin-top:4px; width:100%; padding:6px 8px;
-                    border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.25);
-                    background:rgba(255,255,255,0.12); color:white; font-size:11px;">
-                    <option value="auto">Auto (Browser)</option>
-                    <option value="en">English</option>
-                    <option value="pt_BR">Português (Brasil)</option>
-                </select>
-            </div>
+<body data-mode="connect" data-view="main">
+    <header class="app-header">
+        <div class="bar">
+            <h1 class="wordmark" id="popupHeaderTitle">LinkedIn Engage</h1>
+            <button type="button" id="settingsBtn" class="icon-btn"
+                aria-label="Settings" data-i18n-aria-label="popup.nav.settings"
+                title="Settings" data-i18n-title="popup.nav.settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
         </div>
-    </div>
-
-    <div class="content">
-        <!-- MODE SELECTOR -->
-        <div class="section" style="margin-bottom:12px;">
-            <div class="section-label">Mode</div>
-            <div style="display:flex; gap:6px;">
-                <button class="mode-btn active"
-                    data-mode="connect"
-                    style="flex:1; padding:8px; border:1.5px solid var(--primary);
-                    border-radius:var(--radius-md); background:var(--primary);
-                    color:white; font-size:11px; font-weight:600; cursor:pointer;">
-                    Connect
-                </button>
-                <button class="mode-btn"
-                    data-mode="companies"
-                    style="flex:1; padding:8px; border:1.5px solid var(--border);
-                    border-radius:var(--radius-md); background:var(--bg-color);
-                    color:var(--text-main); font-size:11px; font-weight:600; cursor:pointer;">
-                    Companies
-                </button>
-                <button class="mode-btn"
-                    data-mode="jobs"
-                    style="flex:1; padding:8px; border:1.5px solid var(--border);
-                    border-radius:var(--radius-md); background:var(--bg-color);
-                    color:var(--text-main); font-size:11px; font-weight:600; cursor:pointer;">
-                    Jobs
-                </button>
-            </div>
+        <div class="tabs" role="tablist" id="modeTabs" aria-label="Mode" data-i18n-aria-label="common.mode">
+            <button type="button" class="mode-btn active" role="tab" id="tab-connect" data-mode="connect" aria-selected="true" aria-controls="connectSection" tabindex="0">Connect</button>
+            <button type="button" class="mode-btn" role="tab" id="tab-companies" data-mode="companies" aria-selected="false" aria-controls="companySection" tabindex="-1">Companies</button>
+            <button type="button" class="mode-btn" role="tab" id="tab-jobs" data-mode="jobs" aria-selected="false" aria-controls="jobsSection" tabindex="-1">Jobs</button>
+            <button type="button" class="mode-btn" role="tab" id="tab-withdraw" data-mode="withdraw" aria-selected="false" aria-controls="withdrawSection" tabindex="-1">Withdraw</button>
         </div>
+    </header>
 
-        <!-- COMPANY FOLLOW SECTION -->
-        <div id="companySection" style="display:none;">
-            <div class="section">
-                <div class="section-label">Company Search</div>
-                <div class="input-group">
-                    <label for="companyAreaPresetSelect">
-                        Company Area Preset
-                    </label>
-                    <select id="companyAreaPresetSelect">
-                        <option value="custom">Custom</option>
-                        <option value="tech">Tech (LATAM Offshore Hiring)</option>
-                        <option value="graphic-design">Graphic Design</option>
-                        <option value="art-direction">Art Direction</option>
-                        <option value="branding">Branding</option>
-                        <option value="ui-ux">UI/UX</option>
-                        <option value="motion-design">Motion Design</option>
-                        <option value="video-editing">Video Editing</option>
-                        <option value="videomaker">Videomaker</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="companyQueryInput">
-                        Search Query
-                    </label>
-                    <input type="text" class="custom-query-input"
-                        id="companyQueryInput"
-                        style="display:block;"
-                        placeholder="e.g. motion design studios, video producer..." />
-                </div>
-                <div class="row">
-                    <div class="input-group">
-                        <label for="companyUsageGoalSelect">
-                            Usage Goal
-                        </label>
-                        <select id="companyUsageGoalSelect">
-                            <option value="talent_watchlist">Talent Watchlist</option>
-                            <option value="brand_watchlist">Brand Watchlist</option>
-                            <option value="competitor_watch">Competitor Watch</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="companyExpectedResultsSelect">
-                            Expected Results
-                        </label>
-                        <select id="companyExpectedResultsSelect">
-                            <option value="precise">Precise (50-300)</option>
-                            <option value="balanced" selected>Balanced (300-1200)</option>
-                            <option value="broad">Broad (1200+)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="companySearchLanguageModeSelect">
-                        Search Language
-                    </label>
-                    <select id="companySearchLanguageModeSelect">
-                        <option value="auto">Auto</option>
-                        <option value="en">English</option>
-                        <option value="pt_BR">Português (Brasil)</option>
-                        <option value="bilingual">Bilingual</option>
-                    </select>
-                </div>
-                <div class="checkbox-group" style="margin-bottom:0;">
-                    <label for="companyTemplateAutoCheckbox">
-                        Auto-select template
-                    </label>
-                    <input type="checkbox"
-                        id="companyTemplateAutoCheckbox"
-                        checked />
-                </div>
-                <div class="input-group">
-                    <label for="companyTemplateSelect">Template</label>
-                    <select id="companyTemplateSelect"></select>
-                </div>
-                <div class="input-group">
-                    <label for="targetCompanies">
-                        Target companies (optional, one per line)
-                    </label>
-                    <textarea id="targetCompanies"
-                        class="note-area" rows="3"
-                        placeholder="Google&#10;Microsoft&#10;Meta&#10;Amazon&#10;Apple"></textarea>
-                </div>
-                <div class="input-group">
-                    <label for="companyLimitInput">Companies per run</label>
-                    <input type="number"
-                        id="companyLimitInput"
-                        value="50"
-                        min="1"
-                        max="100"
-                        style="width:100px;" />
-                </div>
-                <div style="margin-top:4px; display:flex;
-                    justify-content:space-between;
-                    align-items:center;">
-                    <span style="font-size:10px;
-                        color:var(--text-muted);">
-                        Leave empty to follow all results.
-                    </span>
-                    <button id="loadDefaultCompanies"
-                        type="button"
-                        style="font-size:10px;
-                        padding:2px 8px;
-                        border:1px solid var(--border);
-                        border-radius:4px;
-                        background:var(--input-bg);
-                        color:var(--primary);
-                        cursor:pointer;">
-                        Load defaults
-                    </button>
-                </div>
-                <div style="font-size:10px; color:var(--text-muted);">
-                    Preset defaults include global + Brazil companies.
-                    Fill in to only follow matching companies.
-                </div>
-            </div>
+    <main class="main" id="mainView">
 
-            <hr class="divider">
-
-            <div class="accordion"
-                id="companyAutomationAccordion"
-                data-mode="companies"
-                data-panel="automation">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="companies:automation">
-                    <span>Automation</span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-            <div class="section" style="margin-bottom:0;">
-                <div class="checkbox-group">
-                    <label for="companyScheduleCheckbox">
-                        Schedule recurring company follows
-                    </label>
-                    <input type="checkbox"
-                        id="companyScheduleCheckbox" />
-                </div>
-                <div id="companyScheduleOptions"
-                    style="display:none;">
-                    <div class="input-group"
-                        style="margin-bottom:8px;">
-                        <label for="companyScheduleInterval">
-                            Run every (hours)
-                        </label>
-                        <input type="number"
-                            id="companyScheduleInterval"
-                            value="24" min="1" max="168"
-                            style="width:80px;" />
-                    </div>
-                    <div class="input-group"
-                        style="margin-bottom:8px;">
-                        <label for="companyBatchSize">
-                            Companies per batch
-                        </label>
-                        <input type="number"
-                            id="companyBatchSize"
-                            value="10" min="1" max="50"
-                            style="width:80px;" />
-                    </div>
-                    <div style="font-size:10px;
-                        color:var(--text-muted);
-                        margin-top:4px;">
-                        Rotates through your company list in
-                        batches. Chrome must be running.
-                    </div>
-                </div>
-            </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- JOBS ASSIST SECTION -->
-        <div id="jobsSection" style="display:none;">
-            <div class="section">
-                <div class="section-label">Jobs Assist</div>
-                <div class="input-group">
-                    <label for="jobsAreaPresetSelect">
-                        Jobs Area Preset
-                    </label>
-                    <select id="jobsAreaPresetSelect">
-                        <option value="custom">Custom</option>
-                        <option value="tech">Tech</option>
-                        <option value="finance">Finance</option>
-                        <option value="real-estate">Real Estate</option>
-                        <option value="headhunting">Headhunting</option>
-                        <option value="legal-judicial-media">Legal/Judicial Media</option>
-                        <option value="environmental-engineering">Environmental Engineering</option>
-                        <option value="sanitary-engineering">Sanitary Engineering</option>
-                        <option value="healthcare">Healthcare</option>
-                        <option value="education">Education</option>
-                        <option value="marketing">Marketing</option>
-                        <option value="sales">Sales</option>
-                        <option value="graphic-design">Graphic Design</option>
-                        <option value="art-direction">Art Direction</option>
-                        <option value="branding">Branding</option>
-                        <option value="ui-ux">UI/UX</option>
-                        <option value="motion-design">Motion Design</option>
-                        <option value="video-editing">Video Editing</option>
-                        <option value="videomaker">Videomaker</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="jobsQueryInput">
-                        Jobs Query
-                    </label>
-                    <input type="text" class="custom-query-input"
-                        id="jobsQueryInput"
-                        style="display:block;"
-                        placeholder="e.g. product designer remote brazil" />
-                    <div style="text-align:right; margin-top:4px;">
-                        <button id="openJobsSearchBtn" type="button"
-                            style="background:none; border:none; cursor:pointer;
-                            color:var(--primary); font-size:11px; font-weight:600;
-                            padding:0; text-decoration:underline;">
-                            Open on LinkedIn →
-                        </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="input-group">
-                        <label for="jobsUsageGoalSelect">
-                            Usage Goal
-                        </label>
-                        <select id="jobsUsageGoalSelect">
-                            <option value="high_fit_easy_apply">High Fit Easy Apply</option>
-                            <option value="market_scan">Market Scan</option>
-                            <option value="target_company_roles">Target Company Roles</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsExpectedResultsSelect">
-                            Expected Results
-                        </label>
-                        <select id="jobsExpectedResultsSelect">
-                            <option value="precise">Precise (50-300)</option>
-                            <option value="balanced" selected>Balanced (300-1200)</option>
-                            <option value="broad">Broad (1200+)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label for="jobsSearchLanguageModeSelect">
-                        Search Language
-                    </label>
-                    <select id="jobsSearchLanguageModeSelect">
-                        <option value="auto">Auto</option>
-                        <option value="en">English</option>
-                        <option value="pt_BR">Português (Brasil)</option>
-                        <option value="bilingual">Bilingual</option>
-                    </select>
-                </div>
-                <div class="checkbox-group" style="margin-bottom:0;">
-                    <label for="jobsTemplateAutoCheckbox">
-                        Auto-select template
-                    </label>
-                    <input type="checkbox"
-                        id="jobsTemplateAutoCheckbox"
-                        checked />
-                </div>
-                <div class="input-group">
-                    <label for="jobsTemplateSelect">Template</label>
-                    <select id="jobsTemplateSelect"></select>
-                </div>
-                <div class="checkbox-group" style="margin-bottom:0;">
-                    <label for="jobsEasyApplyOnlyCheckbox">
-                        Easy Apply only (LinkedIn)
-                    </label>
-                    <input type="checkbox"
-                        id="jobsEasyApplyOnlyCheckbox"
-                        checked
-                        disabled />
-                </div>
-                <div class="checkbox-group" style="margin-bottom:0;">
-                    <label for="jobsUseCareerIntelligenceCheckbox">
-                        Use Career Intelligence
-                    </label>
-                    <input type="checkbox"
-                        id="jobsUseCareerIntelligenceCheckbox" />
-                </div>
-                <div style="font-size:10px; color:var(--text-muted);">
-                    Semi-auto mode: prepares the application and stops before final submit.
-                </div>
-            </div>
-
-            <div class="accordion"
-                id="jobsRefineAccordion"
-                data-mode="jobs"
-                data-panel="refine">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="jobs:refine">
-                    <span>Refine</span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-                    <div class="input-group">
-                        <label for="jobsRoleTermsInput">Role terms (one per line)</label>
-                        <textarea id="jobsRoleTermsInput"
-                            class="note-area"
-                            rows="3"
-                            placeholder="product designer&#10;ux designer"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsLocationTermsInput">Location terms (one per line)</label>
-                        <textarea id="jobsLocationTermsInput"
-                            class="note-area"
-                            rows="2"
-                            placeholder="brazil&#10;remote"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsKeywordTermsInput">Keyword terms (one per line)</label>
-                        <textarea id="jobsKeywordTermsInput"
-                            class="note-area"
-                            rows="2"
-                            placeholder="react&#10;typescript&#10;aws"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsPreferredCompaniesInput">Preferred companies (one per line)</label>
-                        <textarea id="jobsPreferredCompaniesInput"
-                            class="note-area"
-                            rows="2"
-                            placeholder="Nubank&#10;Mercado Livre"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsExcludedCompaniesInput">Excluded companies (one per line)</label>
-                        <textarea id="jobsExcludedCompaniesInput"
-                            class="note-area"
-                            rows="2"
-                            placeholder="Company A&#10;Company B"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="input-group">
-                            <label for="jobsExperienceLevelSelect">Experience level</label>
-                            <select id="jobsExperienceLevelSelect">
-                                <option value="">Any</option>
-                                <option value="1">Internship</option>
-                                <option value="2">Entry level</option>
-                                <option value="3">Associate</option>
-                                <option value="4">Mid-senior</option>
-                                <option value="5">Director</option>
-                                <option value="6">Executive</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="jobsWorkTypeSelect">Work type</label>
-                            <select id="jobsWorkTypeSelect">
-                                <option value="">Any</option>
-                                <option value="1">On-site</option>
-                                <option value="2">Remote</option>
-                                <option value="3">Hybrid</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="input-group" style="margin-bottom:0;">
-                        <label for="jobsLocationInput">LinkedIn location filter</label>
-                        <input id="jobsLocationInput"
-                            class="compact-input"
-                            type="text"
-                            placeholder="e.g. Brazil, United States" />
-                    </div>
-                    <div class="checkbox-group" style="margin-top:10px; margin-bottom:0;">
-                        <label for="jobsBrazilOffshoreFriendlyCheckbox">
-                            Brazil Offshore Friendly
-                        </label>
-                        <input type="checkbox"
-                            id="jobsBrazilOffshoreFriendlyCheckbox" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion"
-                id="jobsCareerAccordion"
-                data-mode="jobs"
-                data-panel="career">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="jobs:career">
-                    <span>Career Intelligence</span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-                    <div style="font-size:10px; color:var(--text-muted); margin-bottom:8px;">
-                        Local-only analysis from uploaded resumes and your LinkedIn profile.
-                    </div>
-                    <input id="jobsResumeUploadInput"
-                        type="file"
-                        accept=".pdf,.docx"
-                        multiple
-                        style="display:none;" />
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button id="importJobsLinkedInProfileBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--accent);
-                            border-radius:var(--radius-sm);
-                            background:transparent;
-                            color:var(--accent);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Import LinkedIn Profile
-                        </button>
-                        <button id="uploadJobsResumesBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--primary);
-                            border-radius:var(--radius-sm);
-                            background:var(--primary-light);
-                            color:var(--primary);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Upload Resumes
-                        </button>
-                        <button id="analyzeJobsCareerBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--success);
-                            border-radius:var(--radius-sm);
-                            background:transparent;
-                            color:var(--success);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Analyze &amp; Generate
-                        </button>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button id="clearJobsCareerIntelBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--warning);
-                            border-radius:var(--radius-sm);
-                            background:transparent;
-                            color:var(--warning);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Clear Career Intel
-                        </button>
-                    </div>
-                    <div id="jobsCareerIntelStatus" style="
-                        margin-top:8px;
-                        font-size:10px;
-                        color:var(--text-muted);
-                    ">
-                        Career intelligence: not configured.
-                    </div>
-                    <div id="jobsCareerDocsList" style="
-                        display:flex;
-                        flex-direction:column;
-                        gap:6px;
-                        margin-top:10px;
-                    "></div>
-                </div>
-            </div>
-
-            <div class="accordion"
-                id="jobsProfileAccordion"
-                data-mode="jobs"
-                data-panel="profile">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="jobs:profile">
-                    <span>Encrypted Profile Cache</span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-                    <div class="input-group">
-                        <label for="jobsProfilePassphraseInput">Session passphrase (unlock)</label>
-                        <input id="jobsProfilePassphraseInput"
-                            class="compact-input"
-                            type="password"
-                            placeholder="Required to save/unlock profile cache" />
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsProfileFullNameInput">Full name</label>
-                        <input id="jobsProfileFullNameInput"
-                            class="compact-input"
-                            type="text"
-                            placeholder="Your full name" />
-                    </div>
-                    <div class="row">
-                        <div class="input-group">
-                            <label for="jobsProfileEmailInput">Email</label>
-                            <input id="jobsProfileEmailInput"
-                                class="compact-input"
-                                type="text"
-                                placeholder="you@example.com" />
-                        </div>
-                        <div class="input-group">
-                            <label for="jobsProfilePhoneInput">Phone</label>
-                            <input id="jobsProfilePhoneInput"
-                                class="compact-input"
-                                type="text"
-                                placeholder="+1 555 123 456" />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="input-group">
-                            <label for="jobsProfileCityInput">City</label>
-                            <input id="jobsProfileCityInput"
-                                class="compact-input"
-                                type="text"
-                                placeholder="Sao Paulo" />
-                        </div>
-                        <div class="input-group">
-                            <label for="jobsProfileHeadlineInput">Current title</label>
-                            <input id="jobsProfileHeadlineInput"
-                                class="compact-input"
-                                type="text"
-                                placeholder="Product Designer" />
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsProfilePortfolioInput">Portfolio / Website</label>
-                        <input id="jobsProfilePortfolioInput"
-                            class="compact-input"
-                            type="text"
-                            placeholder="https://portfolio.example.com" />
-                    </div>
-                    <div class="input-group">
-                        <label for="jobsProfileSummaryInput">Resume summary</label>
-                        <textarea id="jobsProfileSummaryInput"
-                            class="note-area"
-                            rows="2"
-                            placeholder="Short professional summary used in application fields"></textarea>
-                    </div>
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button id="unlockJobsProfileCacheBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--accent);
-                            border-radius:var(--radius-sm);
-                            background:transparent;
-                            color:var(--accent);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Unlock Cache
-                        </button>
-                        <button id="saveJobsProfileCacheBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--primary);
-                            border-radius:var(--radius-sm);
-                            background:var(--primary-light);
-                            color:var(--primary);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Save Encrypted Cache
-                        </button>
-                        <button id="clearJobsProfileCacheBtn"
-                            type="button"
-                            style="flex:1; padding:8px;
-                            border:1px solid var(--warning);
-                            border-radius:var(--radius-sm);
-                            background:transparent;
-                            color:var(--warning);
-                            font-size:11px; font-weight:600; cursor:pointer;">
-                            Clear Cache
-                        </button>
-                    </div>
-                    <div id="jobsCacheStatus" style="
-                        margin-top:8px;
-                        font-size:10px;
-                        color:var(--text-muted);
-                    ">
-                        Encrypted cache: not configured.
-                    </div>
-                </div>
-            </div>
-
-            <div style="font-size:10px; color:var(--text-muted); margin-top:8px;">
-                Jobs mode is on-demand only in v1 (no recurring scheduler).
-            </div>
-        </div>
-
-
-        <!-- CONNECT SECTION (existing) -->
-        <div id="connectSection">
-        <!-- SEARCH BUILDER -->
-        <div class="section">
-            <div class="section-label">Search Builder</div>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="intentPresetSelect">
-                    Preset intent
-                </label>
-                <select id="intentPresetSelect">
+        <!-- ================= CONNECT ================= -->
+        <div id="connectSection" class="panel" role="tabpanel" aria-labelledby="tab-connect">
+            <div class="card">
+                <div class="field">
+                    <label for="intentPresetSelect" data-i18n="popup.connect.presetIntent">Preset intent</label>
+                    <select id="intentPresetSelect">
                     <option value="custom">Custom (advanced)</option>
                     <optgroup label="Recruiter outreach">
-                        <option value="recruiter-tech-global">Recruiters — Tech (global)</option>
-                        <option value="recruiter-tech-senior">Recruiters — Senior / Head of Talent</option>
-                        <option value="recruiter-tech-remote">Recruiters — Remote / LATAM-friendly</option>
-                        <option value="recruiter-tech-startup">Recruiters — Startup / SaaS</option>
-                        <option value="recruiter-tech-agency">Recruiters — Agency / Executive Search</option>
-                        <option value="recruiter-tech-brazil">Recruiters — Brasil (pt-BR)</option>
-                        <option value="recruiter-design">Recruiters — Design / Creative</option>
+                        <option value="recruiter-tech-global">Recruiters: Tech (global)</option>
+                        <option value="recruiter-tech-senior">Recruiters: Senior / Head of Talent</option>
+                        <option value="recruiter-tech-remote">Recruiters: Remote / LATAM-friendly</option>
+                        <option value="recruiter-tech-startup">Recruiters: Startup / SaaS</option>
+                        <option value="recruiter-tech-agency">Recruiters: Agency / Executive Search</option>
+                        <option value="recruiter-tech-brazil">Recruiters: Brasil (pt-BR)</option>
+                        <option value="recruiter-design">Recruiters: Design / Creative</option>
                     </optgroup>
                     <optgroup label="Networking">
-                        <option value="peer-networking-tech">Peer networking — Tech</option>
+                        <option value="peer-networking-tech">Peer networking: Tech</option>
                         <option value="decision-makers-tech">Tech decision-makers</option>
                     </optgroup>
                 </select>
-            </div>
-
-            <div class="accordion"
-                id="connectAdvancedAccordion"
-                data-mode="connect"
-                data-panel="advanced">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="connect:advanced">
-                    <span>Advanced search settings</span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="areaPresetSelect">
-                    Area Preset
-                </label>
-                <select id="areaPresetSelect">
+                </div>
+                <div class="field">
+                    <label for="areaPresetSelect">Area Preset</label>
+                    <select id="areaPresetSelect">
                     <option value="custom">Custom</option>
                     <option value="tech">Tech</option>
                     <option value="finance">Finance</option>
@@ -1490,135 +920,111 @@
                     <option value="video-editing">Video Editing</option>
                     <option value="videomaker">Videomaker</option>
                     <optgroup label="Recruiters">
-                        <option value="recruiter-tech-general">Recruiter — Tech (general)</option>
-                        <option value="recruiter-tech-senior">Recruiter — Senior / Head of Talent</option>
-                        <option value="recruiter-tech-remote-global">Recruiter — Remote / Global</option>
-                        <option value="recruiter-tech-startup-saas">Recruiter — Startup / SaaS</option>
-                        <option value="recruiter-tech-agency">Recruiter — Agency / Executive Search</option>
-                        <option value="recruiter-tech-brazil">Recruiter — Brasil (pt-BR)</option>
+                        <option value="recruiter-tech-general">Recruiter: Tech (general)</option>
+                        <option value="recruiter-tech-senior">Recruiter: Senior / Head of Talent</option>
+                        <option value="recruiter-tech-remote-global">Recruiter: Remote / Global</option>
+                        <option value="recruiter-tech-startup-saas">Recruiter: Startup / SaaS</option>
+                        <option value="recruiter-tech-agency">Recruiter: Agency / Executive Search</option>
+                        <option value="recruiter-tech-brazil">Recruiter: Brasil (pt-BR)</option>
                     </optgroup>
                 </select>
+                </div>
+                <div class="field">
+                    <label for="regionSelect">Recruiter location</label>
+                    <select id="regionSelect">
+                            <option value="103644278,101121807,101165590,101282230,102890719">Global (US/CA/UK/DE/NL)</option>
+                            <option value="103644278">United States</option>
+                            <option value="101121807">Canada</option>
+                            <option value="101165590">United Kingdom</option>
+                            <option value="101282230">Germany</option>
+                            <option value="102890719">Netherlands</option>
+                            <option value="105646813">Ireland</option>
+                            <option value="100364837">Portugal</option>
+                            <option value="105015875">Spain</option>
+                            <option value="106057199">Brazil</option>
+                            <option value="103644278,106057199">US + Brazil</option>
+                            <option value="103644278,101121807,101165590,101282230,102890719,105646813,100364837,105015875">US + EU Extended</option>
+                        </select>
+                </div>
+                <div class="field">
+                    <div class="query-head">
+                        <span class="label" id="compiledQueryLabel" data-i18n="popup.connect.compiledQuery">Compiled query</span>
+                        <button type="button" class="text-btn" id="toggleCustomQuery"
+                            aria-controls="customQueryInput" aria-expanded="false">Edit</button>
+                    </div>
+                    <div class="query-preview" id="queryPreview"></div>
+                    <input type="text" class="custom-query-input" id="customQueryInput" hidden
+                        aria-labelledby="compiledQueryLabel"
+                        placeholder="Type your search query..."
+                        data-i18n-placeholder="popup.connect.queryPlaceholder" />
+                </div>
             </div>
 
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="connectExpectedResultsSelect">
-                    Expected Results
-                </label>
-                <select id="connectExpectedResultsSelect">
+            <div class="accordion" id="connectFiltersAccordion" data-mode="connect" data-panel="filters">
+                <button class="accordion-toggle" type="button" data-accordion-toggle="connect:filters" aria-expanded="false" aria-controls="connectFiltersBody">
+                    <span data-i18n="popup.filters.more">More filters</span>
+                    <svg class="chev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div class="accordion-body" id="connectFiltersBody">
+                  <div class="accordion-inner">
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.group.search">Search</h3>
+                        <div class="rows">
+                            <div class="line"><label for="connectExpectedResultsSelect">Expected Results</label><select id="connectExpectedResultsSelect">
                     <option value="precise">Precise (50-300)</option>
                     <option value="balanced" selected>Balanced (300-1200)</option>
                     <option value="broad">Broad (1200+)</option>
-                </select>
-            </div>
-
-            <details class="advanced-disclosure">
-                <summary>Edit advanced…</summary>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="goalMode">
-                    Goal
-                </label>
-                <select id="goalMode">
+                </select></div>
+                            <div class="line"><label for="goalMode">Goal</label><select id="goalMode">
                     <option value="passive">
                         Networking & Visibility
                     </option>
                     <option value="active">
                         Actively Looking
                     </option>
-                </select>
-            </div>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="roleTermsLimitInput">
-                    Role Terms Limit
-                </label>
-                <input type="number" id="roleTermsLimitInput"
-                    min="1" max="10" value="6" />
-            </div>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="connectUsageGoalSelect">
-                    Usage Goal
-                </label>
-                <select id="connectUsageGoalSelect">
+                </select></div>
+                            <div class="line"><label for="connectUsageGoalSelect">Usage Goal</label><select id="connectUsageGoalSelect">
                     <option value="recruiter_outreach">Recruiter Outreach</option>
                     <option value="peer_networking">Peer Networking</option>
                     <option value="decision_makers">Decision Makers</option>
                     <option value="brazil_focus">Brazil Focus</option>
-                </select>
-            </div>
-
-            <div class="checkbox-group" style="margin-top:4px;">
-                <label for="connectTemplateAutoCheckbox">
-                    Auto-select template
-                </label>
-                <input type="checkbox"
-                    id="connectTemplateAutoCheckbox"
-                    checked />
-            </div>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="connectTemplateSelect">Template</label>
-                <select id="connectTemplateSelect"></select>
-            </div>
-
-            <div class="input-group" style="margin-bottom:8px;">
-                <label for="connectSearchLanguageModeSelect">
-                    Search Language
-                </label>
-                <select id="connectSearchLanguageModeSelect">
+                </select></div>
+                            <div class="line"><label for="roleTermsLimitInput">Role Terms Limit</label><input type="number" id="roleTermsLimitInput" min="1" max="10" value="6" /></div>
+                            <div class="line"><label for="connectSearchLanguageModeSelect">Search Language</label><select id="connectSearchLanguageModeSelect">
                     <option value="auto">Auto</option>
                     <option value="en">English</option>
                     <option value="pt_BR">Português (Brasil)</option>
                     <option value="bilingual">Bilingual</option>
-                </select>
-            </div>
+                </select></div>
+                            <div class="line"><label for="connectTemplateAutoCheckbox">Auto-select template</label><input type="checkbox" role="switch" id="connectTemplateAutoCheckbox" checked /></div>
+                            <div class="line"><label for="connectTemplateSelect">Template</label><select id="connectTemplateSelect"></select></div>
+                        </div>
+                    </section>
 
-            </details>
-
-                </div>
-            </div>
-
-            <div class="accordion"
-                id="connectRefineAccordion"
-                data-mode="connect"
-                data-panel="refine">
-                <button class="accordion-toggle" type="button"
-                    data-accordion-toggle="connect:refine">
-                    <span>
-                        Refine Filters
-                        <span class="accordion-meta"
-                            id="refineSelectedCount">
-                            0 selected
-                        </span>
-                    </span>
-                    <span class="accordion-chevron">▼</span>
-                </button>
-                <div class="accordion-body">
-                    <div class="input-group"
-                        style="margin-bottom:8px;">
-                        <label for="tagSearchInput">Filter tags</label>
-                        <input id="tagSearchInput"
-                            class="compact-input"
-                            type="text"
-                            placeholder="e.g. design, recruiter, marketing" />
-                    </div>
-
+                    <section class="group" id="connectRefineAccordion">
+                        <h3 class="group-title"><span data-i18n="popup.connect.refineFilters">Refine Filters</span><span class="meta" id="refineSelectedCount">0 selected</span></h3>
+                        <div class="rows">
+                            <div class="stack">
+                                <label for="tagSearchInput">Filter tags</label>
+                                <input id="tagSearchInput" type="text" placeholder="e.g. design, recruiter, marketing" />
+                            </div>
+                            <div class="pad-top">
             <div class="tag-group">
                 <div class="tag-group-label">Role</div>
                 <div class="area-filter-pills" id="roleAreaFilter" data-target-group="role">
-                    <button class="area-pill active" data-area="">All</button>
-                    <button class="area-pill" data-area="tech">Tech</button>
-                    <button class="area-pill" data-area="recruiting">Recruiting</button>
-                    <button class="area-pill" data-area="finance">Finance</button>
-                    <button class="area-pill" data-area="real-estate">Real Estate</button>
-                    <button class="area-pill" data-area="legal">Legal</button>
-                    <button class="area-pill" data-area="healthcare">Health</button>
-                    <button class="area-pill" data-area="education">Education</button>
-                    <button class="area-pill" data-area="marketing">Marketing</button>
-                    <button class="area-pill" data-area="sales">Sales</button>
-                    <button class="area-pill" data-area="design">Design</button>
-                    <button class="area-pill" data-area="creative">Creative</button>
+                    <button type="button" class="area-pill active" data-area="">All</button>
+                    <button type="button" class="area-pill" data-area="tech">Tech</button>
+                    <button type="button" class="area-pill" data-area="recruiting">Recruiting</button>
+                    <button type="button" class="area-pill" data-area="finance">Finance</button>
+                    <button type="button" class="area-pill" data-area="real-estate">Real Estate</button>
+                    <button type="button" class="area-pill" data-area="legal">Legal</button>
+                    <button type="button" class="area-pill" data-area="healthcare">Health</button>
+                    <button type="button" class="area-pill" data-area="education">Education</button>
+                    <button type="button" class="area-pill" data-area="marketing">Marketing</button>
+                    <button type="button" class="area-pill" data-area="sales">Sales</button>
+                    <button type="button" class="area-pill" data-area="design">Design</button>
+                    <button type="button" class="area-pill" data-area="creative">Creative</button>
                 </div>
                 <div class="tag-scroll-area">
                 </div>
@@ -1627,18 +1033,18 @@
             <div class="tag-group">
                 <div class="tag-group-label">Industry</div>
                 <div class="area-filter-pills" id="industryAreaFilter" data-target-group="industry">
-                    <button class="area-pill active" data-area="">All</button>
-                    <button class="area-pill" data-area="tech">Tech</button>
-                    <button class="area-pill" data-area="finance">Finance</button>
-                    <button class="area-pill" data-area="real-estate">Real Estate</button>
-                    <button class="area-pill" data-area="recruiting">Recruiting</button>
-                    <button class="area-pill" data-area="legal">Legal</button>
-                    <button class="area-pill" data-area="healthcare">Health</button>
-                    <button class="area-pill" data-area="education">Education</button>
-                    <button class="area-pill" data-area="marketing">Marketing</button>
-                    <button class="area-pill" data-area="sales">Sales</button>
-                    <button class="area-pill" data-area="design">Design</button>
-                    <button class="area-pill" data-area="creative">Creative</button>
+                    <button type="button" class="area-pill active" data-area="">All</button>
+                    <button type="button" class="area-pill" data-area="tech">Tech</button>
+                    <button type="button" class="area-pill" data-area="finance">Finance</button>
+                    <button type="button" class="area-pill" data-area="real-estate">Real Estate</button>
+                    <button type="button" class="area-pill" data-area="recruiting">Recruiting</button>
+                    <button type="button" class="area-pill" data-area="legal">Legal</button>
+                    <button type="button" class="area-pill" data-area="healthcare">Health</button>
+                    <button type="button" class="area-pill" data-area="education">Education</button>
+                    <button type="button" class="area-pill" data-area="marketing">Marketing</button>
+                    <button type="button" class="area-pill" data-area="sales">Sales</button>
+                    <button type="button" class="area-pill" data-area="design">Design</button>
+                    <button type="button" class="area-pill" data-area="creative">Creative</button>
                 </div>
                 <div class="tag-scroll-area">
                 </div>
@@ -1661,524 +1067,492 @@
                 <div class="tag-scroll-area">
                 </div>
             </div>
+                            </div>
+                        </div>
+                    </section>
 
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.connect.audienceFilters">Audience filters</h3>
+                        <div class="rows">
+                            <div class="line"><label for="activelyHiringCheckbox">Only "Actively Hiring" profiles</label><input type="checkbox" role="switch" id="activelyHiringCheckbox" /></div>
+                            <div class="line">
+                                <span class="line-label" data-i18n="popup.connect.degree">Connection degree</span>
+                                <span class="inline-checks">
+                                    <label><input type="checkbox" id="degree2nd" checked /> <span>2nd</span></label>
+                                    <label><input type="checkbox" id="degree3rd" checked /> <span>3rd+</span></label>
+                                </span>
+                            </div>
+                            <div class="line">
+                                <span class="line-label" id="yearsLabel" data-i18n="popup.connect.yearsOfExperience">Years of experience</span>
+                                <span class="range">
+                                    <input type="number" id="yearsMinInput" placeholder="min" min="0" max="50" aria-labelledby="yearsLabel" />
+                                    <input type="number" id="yearsMaxInput" placeholder="max" min="0" max="50" aria-labelledby="yearsLabel" />
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.connect.exclusionsSection">Exclusions</h3>
+                        <div class="rows">
+                            <div class="stack">
+                                <label for="excludedCompaniesInput">Excluded companies (one per line)</label>
+                                <textarea id="excludedCompaniesInput" rows="2" placeholder="Acme Corp&#10;Beta Labs"></textarea>
+                            </div>
+                            <div class="stack">
+                                <label for="excludeKeywordsInput" data-i18n="popup.connect.excludeKeywords">Exclude keywords (comma-separated, maps to NOT)</label>
+                                <input type="text" id="excludeKeywordsInput" placeholder="intern, junior, bootcamp" />
+                            </div>
+                            <div class="line"><label for="skipOpenToWorkRecruitersCheckbox">Skip Open to Work recruiters</label><input type="checkbox" role="switch" id="skipOpenToWorkRecruitersCheckbox" checked /></div>
+                            <div class="line"><label for="skipJobSeekingSignalsCheckbox" data-i18n="popup.connect.skipJobSeeking">Skip explicit job-seeking signals</label><input type="checkbox" role="switch" id="skipJobSeekingSignalsCheckbox" /></div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.connect.automationSection">Automation behavior</h3>
+                        <div class="rows">
+                            <div class="line"><label for="engagementOnlyCheckbox">Engagement only (visit + follow, no connect)</label><input type="checkbox" role="switch" id="engagementOnlyCheckbox" /></div>
+                            <div class="line"><label for="followFallbackCheckbox" data-i18n="popup.connect.followFallback">Follow people when Connect is unavailable</label><input type="checkbox" role="switch" id="followFallbackCheckbox" checked /></div>
+                            <div class="line"><label for="followFirstModeCheckbox" data-i18n="popup.connect.followFirst">Prefer Follow over Connect when both are shown (advanced)</label><input type="checkbox" role="switch" id="followFirstModeCheckbox" /></div>
+                            <div class="line"><label for="followMaxInput" data-i18n="popup.connect.followMax">Max follows per run</label><input type="number" id="followMaxInput" value="40" min="0" max="200" /></div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.connect.messageSection">Message</h3>
+                        <div class="rows">
+                            <div class="line"><label for="sendNoteCheckbox">Send personalized note</label><input type="checkbox" role="switch" id="sendNoteCheckbox" checked /></div>
+                            <div id="noteSection">
+                <div id="templateCards" class="template-grid">
+                    <button type="button" class="template-card" data-template="senior">
+                        <span class="template-name">Senior Professional</span>
+                        <span class="template-preview">I work on strategic projects in this area and value practical exchanges...</span>
+                    </button>
+                    <button type="button" class="template-card" data-template="mid">
+                        <span class="template-name">Mid-Level Professional</span>
+                        <span class="template-preview">I collaborate with teams in this area and enjoy sharing practical insights...</span>
+                    </button>
+                    <button type="button" class="template-card" data-template="junior">
+                        <span class="template-name">Junior / Associate</span>
+                        <span class="template-preview">I'm growing my career and would like to connect with professionals...</span>
+                    </button>
+                    <button type="button" class="template-card" data-template="lead">
+                        <span class="template-name">Team Lead / Manager</span>
+                        <span class="template-preview">I lead initiatives and value focused conversations about outcomes...</span>
+                    </button>
+                    <button type="button" class="template-card active" data-template="networking">
+                        <span class="template-name">General Networking</span>
+                        <span class="template-preview">I came across your profile and would like to connect to exchange insights...</span>
+                    </button>
+                    <button type="button" class="template-card" data-template="custom">
+                        <span class="template-name">Custom</span>
+                        <span class="template-preview">Write your own personalized message...</span>
+                    </button>
+                </div>
+                                <div class="stack">
+                                    <label for="noteTemplate"><span data-i18n="popup.connect.messageLabel">Message</span> <span class="hint" data-i18n="popup.connect.messageNameHint">{name} = first name</span></label>
+                                    <textarea id="noteTemplate" rows="3"></textarea>
+                                    <div class="char-counter" id="charCounter">0 / 300</div>
+                                    <div class="char-counter" id="noteLimitHint" hidden>LinkedIn free accounts allow 200 characters per note; longer notes are trimmed.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="common.automation">Automation</h3>
+                        <div class="rows">
+                            <div class="line"><label for="scheduleCheckbox">Schedule recurring runs</label><input type="checkbox" role="switch" id="scheduleCheckbox" /></div>
+                            <div id="scheduleOptions" hidden>
+                                <div class="line"><label for="scheduleInterval">Run every (hours)</label><input type="number" id="scheduleInterval" value="24" min="1" max="168" /></div>
+                                <div class="stack">
+                                    <label for="savedQueries">Query rotation (one per line)</label>
+                                    <textarea id="savedQueries" rows="3" placeholder="recruiter software remote&#10;talent acquisition latam&#10;hiring manager tech"></textarea>
+                                    <p class="hint" data-i18n="popup.connect.rotationHelp">Rotates through queries on each run. Leave empty to use current search. Chrome must be running.</p>
+                                </div>
+                                <div class="line"><label for="smartModeCheckbox" data-i18n="popup.connect.smartTiming">Smart timing (skip bad hours)</label><input type="checkbox" role="switch" id="smartModeCheckbox" /></div>
+                                <div id="scheduleInsight" class="insight" hidden><span id="insightText"></span></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.passive.title">Passive visibility</h3>
+                        <div class="rows">
+                            <div class="line"><label for="enableProfileWalkCheckbox">Enable profile-view walker (opt-in)</label><input type="checkbox" role="switch" id="enableProfileWalkCheckbox" /></div>
+                            <div class="line"><label for="profileWalkDailyTargetInput">Daily profile-view target (max 50)</label><input type="number" id="profileWalkDailyTargetInput" value="25" min="1" max="50" /></div>
+                            <div class="pad pad-top">
+                                <div class="btn-row">
+                                    <button type="button" id="profileWalkStartBtn" class="btn">Start walk</button>
+                                    <button type="button" id="profileWalkStopBtn" class="btn">Stop</button>
+                                </div>
+                                <p class="hint pad-top" id="profileWalkStatus"></p>
+                            </div>
+                        </div>
+                    </section>
+
+                  </div>
                 </div>
             </div>
         </div>
 
-        <hr class="divider">
-
-        <!-- COMPILED QUERY PREVIEW -->
-        <div class="section">
-            <div class="section-label">Compiled query</div>
-            <div class="query-preview" id="queryPreview"></div>
-            <pre id="booleanPreviewPre"
-                style="background:#f5f5f5; padding:6px;
-                       border-radius:4px; font-size:11px;
-                       white-space:pre-wrap; word-break:break-word;
-                       margin:6px 0 0 0; min-height:28px;"></pre>
-            <span class="toggle-custom" id="toggleCustomQuery">
-                Edit query manually
-            </span>
-            <input type="text" class="custom-query-input"
-                id="customQueryInput"
-                placeholder="Type your search query..." />
-        </div>
-
-        <!-- EXCLUSIONS -->
-        <div class="accordion"
-            id="connectExclusionsAccordion"
-            data-mode="connect"
-            data-panel="exclusions">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:exclusions">
-                <span>Exclusions</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-                <div class="input-group">
-                    <label for="excludedCompaniesInput">
-                        Excluded companies (one per line)
-                    </label>
-                    <textarea id="excludedCompaniesInput"
-                        class="note-area" rows="2"
-                        placeholder="Acme Corp&#10;Beta Labs"></textarea>
+        <!-- ================= COMPANIES ================= -->
+        <div id="companySection" class="panel" role="tabpanel" aria-labelledby="tab-companies" hidden>
+            <div class="card">
+                <div class="field">
+                    <label for="companyAreaPresetSelect">Company Area Preset</label>
+                    <select id="companyAreaPresetSelect">
+                        <option value="custom">Custom</option>
+                        <option value="tech">Tech (LATAM Offshore Hiring)</option>
+                        <option value="graphic-design">Graphic Design</option>
+                        <option value="art-direction">Art Direction</option>
+                        <option value="branding">Branding</option>
+                        <option value="ui-ux">UI/UX</option>
+                        <option value="motion-design">Motion Design</option>
+                        <option value="video-editing">Video Editing</option>
+                        <option value="videomaker">Videomaker</option>
+                    </select>
                 </div>
-
-                <div class="input-group">
-                    <label for="excludeKeywordsInput">
-                        Exclude keywords (comma-separated, maps to NOT)
-                    </label>
-                    <input type="text" id="excludeKeywordsInput"
-                        placeholder="intern, junior, bootcamp" />
+                <div class="field">
+                    <label for="companyQueryInput">Search Query</label>
+                    <input type="text" id="companyQueryInput" placeholder="e.g. motion design studios, video producer..." />
                 </div>
-
-                <div class="checkbox-group">
-                    <label for="skipOpenToWorkRecruitersCheckbox">
-                        Skip Open to Work recruiters
-                    </label>
-                    <input type="checkbox"
-                        id="skipOpenToWorkRecruitersCheckbox"
-                        checked />
-                </div>
-
-                <div class="checkbox-group">
-                    <label for="skipJobSeekingSignalsCheckbox">
-                        Skip explicit job-seeking signals
-                    </label>
-                    <input type="checkbox"
-                        id="skipJobSeekingSignalsCheckbox" />
-                </div>
-            </div>
-        </div>
-
-        <!-- AUDIENCE FILTERS -->
-        <div class="accordion"
-            id="connectAudienceAccordion"
-            data-mode="connect"
-            data-panel="filters">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:filters">
-                <span>Audience filters</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-                <div class="row">
-                    <div class="input-group">
-                        <label for="limitInput">Limit</label>
-                        <input type="number" id="limitInput"
-                            value="50" min="1" max="1000" />
-                    </div>
-                    <div class="input-group">
-                        <label for="regionSelect">
-                            Recruiter location
-                        </label>
-                        <select id="regionSelect">
-                            <option value="103644278,101121807,101165590,101282230,102890719">Global (US/CA/UK/DE/NL)</option>
-                            <option value="103644278">United States</option>
-                            <option value="101121807">Canada</option>
-                            <option value="101165590">United Kingdom</option>
-                            <option value="101282230">Germany</option>
-                            <option value="102890719">Netherlands</option>
-                            <option value="105646813">Ireland</option>
-                            <option value="100364837">Portugal</option>
-                            <option value="105015875">Spain</option>
-                            <option value="106057199">Brazil</option>
-                            <option value="103644278,106057199">US + Brazil</option>
-                            <option value="103644278,101121807,101165590,101282230,102890719,105646813,100364837,105015875">US + EU Extended</option>
+                <div class="field">
+                    <label for="companyUsageGoalSelect">Usage Goal</label>
+                    <select id="companyUsageGoalSelect">
+                            <option value="talent_watchlist">Talent Watchlist</option>
+                            <option value="brand_watchlist">Brand Watchlist</option>
+                            <option value="competitor_watch">Competitor Watch</option>
                         </select>
-                    </div>
                 </div>
-
-                <div class="checkbox-group">
-                    <label for="activelyHiringCheckbox">
-                        Only "Actively Hiring" profiles
-                    </label>
-                    <input type="checkbox" id="activelyHiringCheckbox" />
+                <div class="field">
+                    <label for="companyExpectedResultsSelect">Expected Results</label>
+                    <select id="companyExpectedResultsSelect">
+                            <option value="precise">Precise (50-300)</option>
+                            <option value="balanced" selected>Balanced (300-1200)</option>
+                            <option value="broad">Broad (1200+)</option>
+                        </select>
                 </div>
+            </div>
 
-                <div class="input-group">
-                    <label>Connection degree</label>
-                    <div style="display:flex; gap:8px; margin-top:2px;">
-                        <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
-                            <input type="checkbox" id="degree2nd" checked /> 2nd
-                        </label>
-                        <label style="display:flex; align-items:center; gap:4px; font-weight:400; font-size:11px;">
-                            <input type="checkbox" id="degree3rd" checked /> 3rd+
-                        </label>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>Years of experience</label>
-                    <div style="display:flex; gap:8px; margin-top:2px;">
-                        <input type="number" id="yearsMinInput"
-                            placeholder="min" min="0" max="50"
-                            style="width:72px;" />
-                        <input type="number" id="yearsMaxInput"
-                            placeholder="max" min="0" max="50"
-                            style="width:72px;" />
-                    </div>
+            <div class="accordion" id="companyAutomationAccordion" data-mode="companies" data-panel="automation">
+                <button class="accordion-toggle" type="button" data-accordion-toggle="companies:automation" aria-expanded="false" aria-controls="companyFiltersBody">
+                    <span data-i18n="popup.filters.more">More filters</span>
+                    <svg class="chev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div class="accordion-body" id="companyFiltersBody">
+                  <div class="accordion-inner">
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.group.search">Search</h3>
+                        <div class="rows">
+                            <div class="line"><label for="companySearchLanguageModeSelect">Search Language</label><select id="companySearchLanguageModeSelect">
+                        <option value="auto">Auto</option>
+                        <option value="en">English</option>
+                        <option value="pt_BR">Português (Brasil)</option>
+                        <option value="bilingual">Bilingual</option>
+                    </select></div>
+                            <div class="line"><label for="companyTemplateAutoCheckbox">Auto-select template</label><input type="checkbox" role="switch" id="companyTemplateAutoCheckbox" checked /></div>
+                            <div class="line"><label for="companyTemplateSelect">Template</label><select id="companyTemplateSelect"></select></div>
+                        </div>
+                    </section>
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.group.targets">Target companies</h3>
+                        <div class="rows">
+                            <div class="stack">
+                                <label for="targetCompanies">Target companies (optional, one per line)</label>
+                                <textarea id="targetCompanies" rows="3" placeholder="Google&#10;Microsoft&#10;Meta&#10;Amazon&#10;Apple"></textarea>
+                                <p class="hint">Leave empty to follow all results.</p>
+                                <p class="hint" data-i18n="popup.company.defaultTargetsHelp">Preset defaults include global + Brazil companies. Fill in to only follow matching companies.</p>
+                                <div class="btn-row"><button id="loadDefaultCompanies" type="button" class="btn">Load defaults</button></div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="common.automation">Automation</h3>
+                        <div class="rows">
+                            <div class="line"><label for="companyScheduleCheckbox">Schedule recurring company follows</label><input type="checkbox" role="switch" id="companyScheduleCheckbox" /></div>
+                            <div id="companyScheduleOptions" hidden>
+                                <div class="line"><label for="companyScheduleInterval">Run every (hours)</label><input type="number" id="companyScheduleInterval" value="24" min="1" max="168" /></div>
+                                <div class="line"><label for="companyBatchSize">Companies per batch</label><input type="number" id="companyBatchSize" value="10" min="1" max="50" /></div>
+                                <div class="stack"><p class="hint" data-i18n="popup.company.batchHelp">Rotates through your company list in batches. Chrome must be running.</p></div>
+                            </div>
+                        </div>
+                    </section>
+                  </div>
                 </div>
             </div>
         </div>
 
-        <!-- AUTOMATION BEHAVIOR -->
-        <div class="accordion"
-            id="connectAutomationAccordion"
-            data-mode="connect"
-            data-panel="automation">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:automation">
-                <span>Automation behavior</span>
-                <span class="accordion-chevron">▼</span>
+        <!-- ================= JOBS ================= -->
+        <div id="jobsSection" class="panel" role="tabpanel" aria-labelledby="tab-jobs" hidden>
+            <div class="card">
+                <div class="field">
+                    <label for="jobsAreaPresetSelect">Jobs Area Preset</label>
+                    <select id="jobsAreaPresetSelect">
+                        <option value="custom">Custom</option>
+                        <option value="tech">Tech</option>
+                        <option value="finance">Finance</option>
+                        <option value="real-estate">Real Estate</option>
+                        <option value="headhunting">Headhunting</option>
+                        <option value="legal-judicial-media">Legal/Judicial Media</option>
+                        <option value="environmental-engineering">Environmental Engineering</option>
+                        <option value="sanitary-engineering">Sanitary Engineering</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="sales">Sales</option>
+                        <option value="graphic-design">Graphic Design</option>
+                        <option value="art-direction">Art Direction</option>
+                        <option value="branding">Branding</option>
+                        <option value="ui-ux">UI/UX</option>
+                        <option value="motion-design">Motion Design</option>
+                        <option value="video-editing">Video Editing</option>
+                        <option value="videomaker">Videomaker</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <div class="query-head">
+                        <label for="jobsQueryInput" class="label">Jobs Query</label>
+                        <button id="openJobsSearchBtn" type="button" class="text-btn" data-i18n="popup.jobs.openOnLinkedIn">Open on LinkedIn</button>
+                    </div>
+                    <input type="text" id="jobsQueryInput" placeholder="e.g. product designer remote brazil" />
+                </div>
+                <div class="field">
+                    <label for="jobsUsageGoalSelect">Usage Goal</label>
+                    <select id="jobsUsageGoalSelect">
+                            <option value="high_fit_easy_apply">High Fit Easy Apply</option>
+                            <option value="market_scan">Market Scan</option>
+                            <option value="target_company_roles">Target Company Roles</option>
+                        </select>
+                </div>
+                <div class="field">
+                    <label for="jobsWorkTypeSelect">Work type</label>
+                    <select id="jobsWorkTypeSelect">
+                                <option value="">Any</option>
+                                <option value="1">On-site</option>
+                                <option value="2">Remote</option>
+                                <option value="3">Hybrid</option>
+                            </select>
+                </div>
+                <p class="hint" data-i18n="popup.jobs.semiAutoHelp">Semi-auto mode: prepares the application and stops before final submit.</p>
+            </div>
+
+            <div class="accordion" id="jobsRefineAccordion" data-mode="jobs" data-panel="refine">
+                <button class="accordion-toggle" type="button" data-accordion-toggle="jobs:refine" aria-expanded="false" aria-controls="jobsFiltersBody">
+                    <span data-i18n="popup.filters.more">More filters</span>
+                    <svg class="chev" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+                <div class="accordion-body" id="jobsFiltersBody">
+                  <div class="accordion-inner">
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="popup.group.search">Search</h3>
+                        <div class="rows">
+                            <div class="line"><label for="jobsExpectedResultsSelect">Expected Results</label><select id="jobsExpectedResultsSelect">
+                            <option value="precise">Precise (50-300)</option>
+                            <option value="balanced" selected>Balanced (300-1200)</option>
+                            <option value="broad">Broad (1200+)</option>
+                        </select></div>
+                            <div class="line"><label for="jobsSearchLanguageModeSelect">Search Language</label><select id="jobsSearchLanguageModeSelect">
+                        <option value="auto">Auto</option>
+                        <option value="en">English</option>
+                        <option value="pt_BR">Português (Brasil)</option>
+                        <option value="bilingual">Bilingual</option>
+                    </select></div>
+                            <div class="line"><label for="jobsTemplateAutoCheckbox">Auto-select template</label><input type="checkbox" role="switch" id="jobsTemplateAutoCheckbox" checked /></div>
+                            <div class="line"><label for="jobsTemplateSelect">Template</label><select id="jobsTemplateSelect"></select></div>
+                            <div class="line"><label for="jobsEasyApplyOnlyCheckbox">Easy Apply only (LinkedIn)</label><input type="checkbox" role="switch" id="jobsEasyApplyOnlyCheckbox" checked disabled /></div>
+                            <div class="line"><label for="jobsUseCareerIntelligenceCheckbox">Use Career Intelligence</label><input type="checkbox" role="switch" id="jobsUseCareerIntelligenceCheckbox" /></div>
+                        </div>
+                    </section>
+
+                    <section class="group">
+                        <h3 class="group-title" data-i18n="common.refine">Refine</h3>
+                        <div class="rows">
+                            <div class="stack"><label for="jobsRoleTermsInput">Role terms (one per line)</label><textarea id="jobsRoleTermsInput" rows="3" placeholder="product designer&#10;ux designer"></textarea></div>
+                            <div class="stack"><label for="jobsLocationTermsInput">Location terms (one per line)</label><textarea id="jobsLocationTermsInput" rows="2" placeholder="brazil&#10;remote"></textarea></div>
+                            <div class="stack"><label for="jobsKeywordTermsInput">Keyword terms (one per line)</label><textarea id="jobsKeywordTermsInput" rows="2" placeholder="react&#10;typescript&#10;aws"></textarea></div>
+                            <div class="stack"><label for="jobsPreferredCompaniesInput">Preferred companies (one per line)</label><textarea id="jobsPreferredCompaniesInput" rows="2" placeholder="Nubank&#10;Mercado Livre"></textarea></div>
+                            <div class="stack"><label for="jobsExcludedCompaniesInput">Excluded companies (one per line)</label><textarea id="jobsExcludedCompaniesInput" rows="2" placeholder="Company A&#10;Company B"></textarea></div>
+                            <div class="line"><label for="jobsExperienceLevelSelect">Experience level</label><select id="jobsExperienceLevelSelect">
+                                <option value="">Any</option>
+                                <option value="1">Internship</option>
+                                <option value="2">Entry level</option>
+                                <option value="3">Associate</option>
+                                <option value="4">Mid-senior</option>
+                                <option value="5">Director</option>
+                                <option value="6">Executive</option>
+                            </select></div>
+                            <div class="line"><label for="jobsLocationInput">LinkedIn location filter</label><input id="jobsLocationInput" type="text" placeholder="e.g. Brazil" /></div>
+                            <div class="line"><label for="jobsBrazilOffshoreFriendlyCheckbox">Brazil Offshore Friendly</label><input type="checkbox" role="switch" id="jobsBrazilOffshoreFriendlyCheckbox" /></div>
+                        </div>
+                    </section>
+
+                    <section class="group" id="jobsCareerAccordion">
+                        <h3 class="group-title" data-i18n="popup.jobs.careerIntel">Career Intelligence</h3>
+                        <div class="rows">
+                            <div class="pad pad-top">
+                                <p class="hint" data-i18n="popup.jobs.careerIntelHelp">Local-only analysis from uploaded resumes and your LinkedIn profile.</p>
+                                <input id="jobsResumeUploadInput" type="file" accept=".pdf,.docx" multiple hidden />
+                                <div class="btn-row pad-top">
+                                    <button id="importJobsLinkedInProfileBtn" type="button" class="btn">Import LinkedIn Profile</button>
+                                    <button id="uploadJobsResumesBtn" type="button" class="btn">Upload Resumes</button>
+                                    <button id="analyzeJobsCareerBtn" type="button" class="btn">Analyze &amp; Generate</button>
+                                    <button id="clearJobsCareerIntelBtn" type="button" class="btn btn-danger">Clear Career Intel</button>
+                                </div>
+                                <p class="hint pad-top" id="jobsCareerIntelStatus">Career intelligence: not configured.</p>
+                            </div>
+                            <div id="jobsCareerDocsList" class="doc-list pad-top" hidden></div>
+                        </div>
+                    </section>
+
+                    <section class="group" id="jobsProfileAccordion">
+                        <h3 class="group-title" data-i18n="popup.jobs.encryptedProfileCache">Encrypted Profile Cache</h3>
+                        <div class="rows">
+                            <div class="stack"><label for="jobsProfilePassphraseInput">Session passphrase (unlock)</label><input id="jobsProfilePassphraseInput" type="password" placeholder="Required to save/unlock profile cache" /></div>
+                            <div class="stack"><label for="jobsProfileFullNameInput">Full name</label><input id="jobsProfileFullNameInput" type="text" placeholder="Your full name" /></div>
+                            <div class="stack"><label for="jobsProfileEmailInput">Email</label><input id="jobsProfileEmailInput" type="text" placeholder="you@example.com" /></div>
+                            <div class="stack"><label for="jobsProfilePhoneInput">Phone</label><input id="jobsProfilePhoneInput" type="text" placeholder="+1 555 123 456" /></div>
+                            <div class="stack"><label for="jobsProfileCityInput">City</label><input id="jobsProfileCityInput" type="text" placeholder="Sao Paulo" /></div>
+                            <div class="stack"><label for="jobsProfileHeadlineInput">Current title</label><input id="jobsProfileHeadlineInput" type="text" placeholder="Product Designer" /></div>
+                            <div class="stack"><label for="jobsProfilePortfolioInput">Portfolio / Website</label><input id="jobsProfilePortfolioInput" type="text" placeholder="https://portfolio.example.com" /></div>
+                            <div class="stack"><label for="jobsProfileSummaryInput">Resume summary</label><textarea id="jobsProfileSummaryInput" rows="2" placeholder="Short professional summary used in application fields"></textarea></div>
+                            <div class="pad pad-top">
+                                <div class="btn-row">
+                                    <button id="unlockJobsProfileCacheBtn" type="button" class="btn">Unlock Cache</button>
+                                    <button id="saveJobsProfileCacheBtn" type="button" class="btn">Save Encrypted Cache</button>
+                                    <button id="clearJobsProfileCacheBtn" type="button" class="btn btn-danger">Clear Cache</button>
+                                </div>
+                                <p class="hint pad-top" id="jobsCacheStatus">Encrypted cache: not configured.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="pad pad-top"><p class="hint" data-i18n="popup.jobs.onDemandOnly">Jobs mode is on-demand only in v1 (no recurring scheduler).</p></div>
+                  </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= WITHDRAW ================= -->
+        <div id="withdrawSection" class="panel" role="tabpanel" aria-labelledby="tab-withdraw" hidden>
+            <div class="empty" id="withdrawGate">
+                <h2 data-i18n="popup.withdraw.gateTitle">Withdraw is turned off</h2>
+                <p data-i18n="popup.withdraw.gateBody">Turn on Withdraw stale invites in Settings to use this mode.</p>
+                <button type="button" class="btn" id="withdrawOpenSettingsBtn" data-i18n="popup.withdraw.gateAction">Open settings</button>
+            </div>
+            <div id="withdrawForm" hidden>
+                <div class="card">
+                    <p class="hint" data-i18n="popup.withdraw.help">Opens your Sent invitations and withdraws pending invites older than the minimum age. Up to 20 per run and 40 per day. Turn it on under Feature Toggles first.</p>
+                    <div class="field">
+                        <label for="withdrawMinWeeks" data-i18n="popup.withdraw.minWeeks">Minimum age (weeks)</label>
+                        <input type="number" id="withdrawMinWeeks" value="3" min="1" max="520" />
+                    </div>
+                    <p class="run-status" id="withdrawStatus" role="status" aria-live="polite"></p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= SETTINGS ================= -->
+    <div class="settings-view" id="settingsView" role="region" aria-labelledby="settingsTitle">
+        <div class="settings-bar">
+            <button type="button" id="settingsBackBtn" class="icon-btn" aria-label="Back" data-i18n-aria-label="popup.nav.back" title="Back" data-i18n-title="popup.nav.back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
             </button>
-            <div class="accordion-body">
-                <div class="checkbox-group">
-                    <label for="engagementOnlyCheckbox">
-                        Engagement only (visit + follow, no connect)
-                    </label>
-                    <input type="checkbox" id="engagementOnlyCheckbox" />
-                </div>
-
-                <div class="checkbox-group">
-                    <label for="followFallbackCheckbox">
-                        Follow people when Connect is unavailable
-                    </label>
-                    <input type="checkbox"
-                        id="followFallbackCheckbox" checked />
-                </div>
-
-                <div class="checkbox-group">
-                    <label for="followFirstModeCheckbox">
-                        Prefer Follow over Connect when both are shown (advanced)
-                    </label>
-                    <input type="checkbox"
-                        id="followFirstModeCheckbox" />
-                </div>
-
-                <div class="input-group">
-                    <label for="followMaxInput">
-                        Max follows per run
-                    </label>
-                    <input type="number" id="followMaxInput"
-                        value="40" min="0" max="200" />
-                </div>
-            </div>
+            <h2 id="settingsTitle" data-i18n="popup.nav.settings">Settings</h2>
         </div>
-
-        <hr class="divider">
-
-        <!-- PASSIVE VISIBILITY: profile-view walker -->
-        <div class="accordion"
-            id="connectPassiveAccordion"
-            data-mode="connect"
-            data-panel="passive">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:passive">
-                <span>Passive visibility</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-                <div class="checkbox-group">
-                    <label for="enableProfileWalkCheckbox">
-                        Enable profile-view walker (opt-in)
-                    </label>
-                    <input type="checkbox"
-                        id="enableProfileWalkCheckbox" />
+        <div class="settings-scroll">
+            <section>
+                <h3 class="section-title" data-i18n="popup.settings.groupLanguage">Language</h3>
+                <div class="card rows">
+                    <div class="line"><label for="uiLanguageModeSelect">UI Language</label><select id="uiLanguageModeSelect">
+                    <option value="auto">Auto (Browser)</option>
+                    <option value="en">English</option>
+                    <option value="pt_BR">Português (Brasil)</option>
+                </select></div>
                 </div>
-                <div class="input-group">
-                    <label for="profileWalkDailyTargetInput">
-                        Daily profile-view target (max 50)
-                    </label>
-                    <input type="number"
-                        id="profileWalkDailyTargetInput"
-                        value="25" min="1" max="50" />
+            </section>
+
+            <section>
+                <h3 class="section-title" data-i18n="popup.settings.featureToggles">Feature Toggles</h3>
+                <div class="card rows">
+                    <div class="line"><label for="connectToggle" data-i18n="popup.settings.connectEnabled">Enable Connect automation</label><input type="checkbox" role="switch" id="connectToggle" checked /></div>
+                    <div class="line"><label for="jobsToggle" data-i18n="popup.settings.jobsEnabled">Enable Jobs automation</label><input type="checkbox" role="switch" id="jobsToggle" checked /></div>
+                    <div class="line"><label for="companiesToggle" data-i18n="popup.settings.companiesEnabled">Enable Companies automation</label><input type="checkbox" role="switch" id="companiesToggle" checked /></div>
+                    <div class="line"><label for="withdrawToggle" data-i18n="popup.settings.withdrawEnabled">Enable Withdraw stale invites (opt-in)</label><input type="checkbox" role="switch" id="withdrawToggle" /></div>
                 </div>
-                <div class="input-group"
-                    style="display:flex; gap:8px;">
-                    <button type="button"
-                        id="profileWalkStartBtn"
-                        class="primary-button">
-                        Start walk
-                    </button>
-                    <button type="button"
-                        id="profileWalkStopBtn"
-                        class="secondary-button">
-                        Stop
-                    </button>
-                </div>
-                <div id="profileWalkStatus"
-                    style="font-size:11px;
-                           color:var(--text-muted);
-                           margin-top:4px;">
-                </div>
-            </div>
-        </div>
+            </section>
 
-        <hr class="divider">
-
-        <!-- NOTE TEMPLATES -->
-        <div class="accordion"
-            id="connectMessageAccordion"
-            data-mode="connect"
-            data-panel="message">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:message">
-                <span>Message</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-        <div class="section" style="margin-bottom:0;">
-            <div class="checkbox-group">
-                <label for="sendNoteCheckbox">Send personalized note</label>
-                <input type="checkbox" id="sendNoteCheckbox" checked />
-            </div>
-
-            <div id="noteSection">
-                <div class="section-label">Template</div>
-
-                <div id="templateCards">
-                    <div class="template-card" data-template="senior">
-                        <div class="template-name">Senior Professional</div>
-                        <div class="template-preview">I work on strategic projects in this area and value practical exchanges...</div>
+            <section>
+                <h3 class="section-title" data-i18n="popup.settings.groupLimits">Limits and warm-up</h3>
+                <div class="card rows">
+                    <div class="line">
+                        <span class="line-label" data-i18n="popup.settings.weeklyInvites">Invites this week</span>
+                        <span class="num" id="weeklyCounter"><strong id="weeklyCount">0</strong> / <span id="weeklyLimit">100</span></span>
                     </div>
-                    <div class="template-card" data-template="mid">
-                        <div class="template-name">Mid-Level Professional</div>
-                        <div class="template-preview">I collaborate with teams in this area and enjoy sharing practical insights...</div>
+                    <div class="line"><label for="warmupCheckbox">Warm-up preset</label><input type="checkbox" role="switch" id="warmupCheckbox" /></div>
+                    <div class="stack" id="warmupStatus"></div>
+                    <div class="stack" id="rateLimitBar" hidden><span class="hint" id="rateLimitText"></span></div>
+                </div>
+                <div class="notice" id="acceptanceWarning" role="alert" hidden></div>
+            </section>
+
+            <section id="recentProfiles" hidden>
+                <h3 class="section-title" data-i18n="popup.tools.recentConnections">Recent Connections</h3>
+                <div class="card rows" id="recentList"></div>
+            </section>
+
+            <section>
+                <h3 class="section-title" data-i18n="popup.settings.groupData">Data</h3>
+                <div class="card rows">
+                    <div class="pad pad-top">
+                        <div class="btn-row">
+                            <button type="button" id="checkAcceptedBtn" class="btn">Check Accepted Connections</button>
+                            <button type="button" id="exportBtn" class="btn" hidden>Export Connection Log (CSV)</button>
+                        </div>
                     </div>
-                    <div class="template-card" data-template="junior">
-                        <div class="template-name">Junior / Associate</div>
-                        <div class="template-preview">I'm growing my career and would like to connect with professionals...</div>
-                    </div>
-                    <div class="template-card" data-template="lead">
-                        <div class="template-name">Team Lead / Manager</div>
-                        <div class="template-preview">I lead initiatives and value focused conversations about outcomes...</div>
-                    </div>
-                    <div class="template-card active" data-template="networking">
-                        <div class="template-name">General Networking</div>
-                        <div class="template-preview">I came across your profile and would like to connect to exchange insights...</div>
-                    </div>
-                    <div class="template-card" data-template="custom">
-                        <div class="template-name">Custom</div>
-                        <div class="template-preview">Write your own personalized message...</div>
-                    </div>
+                    <a class="link-row" id="openDashboardLink" href="../options.html" target="_blank" rel="noopener">
+                        <span data-i18n="popup.settings.openDashboard">Open dashboard</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg>
+                    </a>
                 </div>
-
-                <div style="margin-top: 8px;">
-                    <label for="noteTemplate">
-                        Message
-                        <small style="font-weight:normal; color:var(--text-muted);">
-                            &mdash; {name} = first name
-                        </small>
-                    </label>
-                    <textarea id="noteTemplate" class="note-area" rows="3"></textarea>
-                    <div class="char-counter" id="charCounter">0 / 300</div>
-                    <div class="char-counter" id="noteLimitHint" hidden>LinkedIn free accounts allow 200 characters per note; longer notes are trimmed.</div>
-                </div>
-            </div>
-        </div>
-            </div>
-        </div>
-
-        <hr class="divider">
-
-        <div class="accordion"
-            id="connectAutomationAccordion"
-            data-mode="connect"
-            data-panel="automation">
-            <button class="accordion-toggle" type="button"
-                data-accordion-toggle="connect:automation">
-                <span>Automation</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-        <div class="section" style="margin-bottom:0;">
-            <div class="checkbox-group">
-                <label for="scheduleCheckbox">Schedule recurring runs</label>
-                <input type="checkbox" id="scheduleCheckbox" />
-            </div>
-            <div id="scheduleOptions" style="display:none;">
-                <div class="input-group" style="margin-bottom:8px;">
-                    <label for="scheduleInterval">
-                        Run every (hours)
-                    </label>
-                    <input type="number" id="scheduleInterval"
-                        value="24" min="1" max="168"
-                        style="width:80px;" />
-                </div>
-                <div class="input-group" style="margin-bottom:0;">
-                    <label for="savedQueries">
-                        Query rotation (one per line)
-                    </label>
-                    <textarea id="savedQueries"
-                        class="note-area" rows="3"
-                        placeholder="recruiter software remote&#10;talent acquisition latam&#10;hiring manager tech"></textarea>
-                </div>
-                <div style="
-                    font-size:10px; color:var(--text-muted);
-                    margin-top:4px;
-                ">
-                    Rotates through queries on each run.
-                    Leave empty to use current search.
-                    Chrome must be running.
-                </div>
-                <div class="checkbox-group"
-                    style="margin-top:10px;">
-                    <label for="smartModeCheckbox">
-                        Smart timing (skip bad hours)
-                    </label>
-                    <input type="checkbox"
-                        id="smartModeCheckbox" />
-                </div>
-                <div id="scheduleInsight" style="
-                    display:none; margin-top:8px;
-                    padding:8px 10px;
-                    background:var(--primary-light);
-                    border-radius:var(--radius-sm);
-                    font-size:11px;
-                    color:var(--text-main);
-                    line-height:1.4;
-                ">
-                    <span id="insightText"></span>
-                </div>
-            </div>
-        </div>
-            </div>
-        </div>
-
-        <div id="weeklyCounter" style="
-            font-size:11px; text-align:center;
-            margin-bottom:10px; color:var(--text-muted);
-        ">
-            This week: <strong id="weeklyCount">0</strong>
-            / <span id="weeklyLimit">100</span> invites
-        </div>
-        <div id="acceptanceWarning" role="alert" style="
-            display:none; font-size:11px; line-height:1.4;
-            margin-bottom:10px; padding:8px 10px; border-radius:6px;
-            color:var(--warning); border:1px solid var(--warning);
-        "></div>
-        <div class="checkbox-group" style="margin-bottom:4px;">
-            <label for="warmupCheckbox">Warm-up preset</label>
-            <input type="checkbox" id="warmupCheckbox" />
-        </div>
-        <div id="warmupStatus" style="
-            font-size:11px; color:var(--text-muted);
-            margin-bottom:10px;
-        "></div>
-        </div><!-- /connectSection -->
-
-        <div id="rateLimitBar" style="
-            font-size:10px; text-align:center;
-            margin-bottom:8px; color:var(--text-muted);
-            display:none;
-        ">
-            <span id="rateLimitText"></span>
-        </div>
-
-        <button id="startBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Launch Automation
-        </button>
-
-        <button id="stopBtn" style="display:none;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
-            Stop
-        </button>
-
-        <div id="progressBox" class="status" style="display:none;">
-            <span id="progressText">Sent 0 / 0</span>
-            <span style="margin-left:8px; color:var(--text-muted);" id="progressMeta"></span>
-        </div>
-
-        <div id="statusBox" class="status">
-            Ready to start.
-        </div>
-
-        <div class="accordion"
-            id="toolsAccordion"
-            data-mode="tools"
-            data-panel="extras">
-            <button class="accordion-toggle"
-                type="button"
-                data-accordion-toggle="tools:extras">
-                <span>Tools</span>
-                <span class="accordion-chevron">▼</span>
-            </button>
-            <div class="accordion-body">
-        <button id="checkAcceptedBtn" style="
-            display:block; width:100%; padding:8px;
-            margin-top:8px; background:transparent;
-            border:1.5px solid var(--success);
-            border-radius:var(--radius-md);
-            color:var(--success); font-size:12px;
-            font-weight:600; cursor:pointer;
-        ">
-            Check Accepted Connections
-        </button>
-
-        <button id="exportBtn" style="
-            display:none; width:100%; padding:8px;
-            margin-top:8px; background:transparent;
-            border:1.5px solid var(--primary);
-            border-radius:var(--radius-md);
-            color:var(--primary); font-size:12px;
-            font-weight:600; cursor:pointer;
-        ">
-            Export Connection Log (CSV)
-        </button>
-
-        <div id="withdrawSection" style="margin-top:14px;">
-            <div class="section-label" data-i18n="popup.withdraw.title">Withdraw stale invites</div>
-            <div style="font-size:10px; color:var(--text-muted); margin-bottom:8px;" data-i18n="popup.withdraw.help">
-                Opens your Sent invitations and withdraws pending invites older than the minimum age. Up to 20 per run and 40 per day. Turn it on under Feature Toggles first.
-            </div>
-            <div class="row">
-                <div class="input-group">
-                    <label for="withdrawMinWeeks" data-i18n="popup.withdraw.minWeeks">Minimum age (weeks)</label>
-                    <input type="number" id="withdrawMinWeeks" value="3" min="1" max="520" />
-                </div>
-                <div class="input-group">
-                    <label for="withdrawLimit" data-i18n="popup.withdraw.limit">Per run (max 20)</label>
-                    <input type="number" id="withdrawLimit" value="20" min="1" max="20" />
-                </div>
-            </div>
-            <button id="withdrawStartBtn" type="button" style="
-                display:block; width:100%; padding:8px;
-                background:transparent;
-                border:1.5px solid var(--warning);
-                border-radius:var(--radius-md);
-                color:var(--warning); font-size:12px;
-                font-weight:600; cursor:pointer;
-            " data-i18n="popup.withdraw.start">Withdraw stale invites</button>
-            <button id="withdrawStopBtn" type="button" style="
-                display:none; width:100%; padding:8px;
-                background:transparent;
-                border:1.5px solid var(--border);
-                border-radius:var(--radius-md);
-                color:var(--text-main); font-size:12px;
-                font-weight:600; cursor:pointer;
-            " data-i18n="common.stop">Stop</button>
-            <div id="withdrawStatus" style="font-size:11px; margin-top:6px; color:var(--text-muted);"></div>
-        </div>
-
-        <div id="recentProfiles" style="display:none; margin-top:14px;">
-            <div class="section-label">Recent Connections</div>
-            <div id="recentList" style="
-                display:flex; flex-direction:column; gap:6px;
-            "></div>
-        </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            Runs safely in your browser
+            </section>
         </div>
     </div>
 
-        <div class="section" style="margin-bottom:12px; margin-top:12px;">
-            <div class="section-label" data-i18n="popup.settings.featureToggles">Feature Toggles</div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
-                    <input type="checkbox" id="connectToggle" checked />
-                    <span data-i18n="popup.settings.connectEnabled">Enable Connect automation</span>
-                </label>
-                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
-                    <input type="checkbox" id="jobsToggle" checked />
-                    <span data-i18n="popup.settings.jobsEnabled">Enable Jobs automation</span>
-                </label>
-                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
-                    <input type="checkbox" id="companiesToggle" checked />
-                    <span data-i18n="popup.settings.companiesEnabled">Enable Companies automation</span>
-                </label>
-                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
-                    <input type="checkbox" id="withdrawToggle" />
-                    <span data-i18n="popup.settings.withdrawEnabled">Enable Withdraw stale invites (opt-in)</span>
-                </label>
-            </div>
+    <!-- ================= STICKY FOOTER ================= -->
+    <footer class="app-footer">
+        <div id="progressBox" class="progress" hidden>
+            <span id="progressText">Sent 0 / 0</span>
+            <span class="progress-meta" id="progressMeta"></span>
         </div>
+        <div id="statusBox" class="status" data-type="info" role="status" aria-live="polite">Ready to start.</div>
+        <div class="footer-actions">
+            <div class="limit" data-limit-for="connect">
+                <label for="limitInput" data-i18n="common.limit">Limit</label>
+                <button type="button" class="step" data-step-for="limitInput" data-step="-5" aria-label="Decrease limit" data-i18n-aria-label="popup.footer.decrease">&minus;</button>
+                <input type="number" id="limitInput" value="50" min="1" max="1000" />
+                <button type="button" class="step" data-step-for="limitInput" data-step="5" aria-label="Increase limit" data-i18n-aria-label="popup.footer.increase">+</button>
+            </div>
+            <div class="limit" data-limit-for="companies" hidden>
+                <label for="companyLimitInput" data-i18n="common.limit">Limit</label>
+                <button type="button" class="step" data-step-for="companyLimitInput" data-step="-5" aria-label="Decrease limit" data-i18n-aria-label="popup.footer.decrease">&minus;</button>
+                <input type="number" id="companyLimitInput" value="50" min="1" max="100" />
+                <button type="button" class="step" data-step-for="companyLimitInput" data-step="5" aria-label="Increase limit" data-i18n-aria-label="popup.footer.increase">+</button>
+            </div>
+            <div class="limit" data-limit-for="withdraw" hidden>
+                <label for="withdrawLimit" data-i18n="common.limit">Limit</label>
+                <button type="button" class="step" data-step-for="withdrawLimit" data-step="-5" aria-label="Decrease limit" data-i18n-aria-label="popup.footer.decrease">&minus;</button>
+                <input type="number" id="withdrawLimit" value="20" min="1" max="20" />
+                <button type="button" class="step" data-step-for="withdrawLimit" data-step="5" aria-label="Increase limit" data-i18n-aria-label="popup.footer.increase">+</button>
+            </div>
+            <button id="startBtn" type="button" class="btn btn-primary">Start Connect</button>
+            <button id="stopBtn" type="button" class="btn btn-stop" hidden>Stop</button>
+            <button id="withdrawStartBtn" type="button" class="btn btn-primary" data-i18n="popup.withdraw.start">Start Withdraw</button>
+            <button id="withdrawStopBtn" type="button" class="btn btn-stop" hidden data-i18n="common.stop">Stop</button>
+        </div>
+    </footer>
 
     <script src="../lib/text-utils.js"></script>
     <script src="../lib/feature-toggles.js"></script>

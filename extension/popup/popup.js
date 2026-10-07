@@ -91,7 +91,6 @@ const UI_LABEL_KEYS = Object.freeze({
     companyTemplateAutoCheckbox: 'common.autoSelectTemplate',
     companyTemplateSelect: 'common.template',
     targetCompanies: 'popup.company.targetCompanies',
-    companyLimitInput: 'popup.company.limit',
     companyScheduleCheckbox: 'popup.company.scheduleRecurring',
     companyScheduleInterval: 'common.runEveryHours',
     companyBatchSize: 'popup.company.batchSize',
@@ -129,7 +128,6 @@ const UI_LABEL_KEYS = Object.freeze({
     connectSearchLanguageModeSelect: 'common.searchLanguage',
     connectTemplateAutoCheckbox: 'common.autoSelectTemplate',
     connectTemplateSelect: 'common.template',
-    limitInput: 'common.limit',
     regionSelect: 'popup.connect.recruiterLocation',
     activelyHiringCheckbox: 'popup.connect.activelyHiring',
     engagementOnlyCheckbox: 'popup.connect.engagementOnly',
@@ -549,81 +547,32 @@ async function applyPopupLocalization() {
         : await loadLocaleMessages(currentUiLocale);
 
     setElementText('#popupHeaderTitle', 'extensionName', 'LinkedIn Engage');
-    setElementText('.header p', 'popup.header.subtitle',
-        'Targeted LinkedIn networking automation');
-    setElementText('.section[style*="margin-bottom:12px;"] .section-label',
-        'common.mode',
-        'Mode');
+    if (typeof applyTranslations === 'function') {
+        applyTranslations(document, activeUiCatalog, fallbackUiCatalog);
+    }
     document.querySelectorAll('.mode-btn').forEach(btn => {
         const key = {
             connect: 'common.connect',
             companies: 'common.companies',
-            jobs: 'common.jobs'
+            jobs: 'common.jobs',
+            withdraw: 'common.withdraw'
         }[btn.dataset.mode];
         if (key) {
             btn.textContent = tr(key, null, btn.textContent);
         }
     });
-    setElementText('#companySection > .section .section-label',
-        'popup.company.section',
-        'Company Search');
-    setElementText('#jobsSection > .section .section-label',
-        'popup.jobs.section',
-        'Jobs Assist');
-    setElementText('#connectSection > .section .section-label',
-        'popup.connect.section',
-        'Search Builder');
-    setElementText('#connectMessageAccordion .section-label',
-        'common.template',
-        'Template');
-    setElementText('#recentProfiles .section-label',
-        'popup.tools.recentConnections',
-        'Recent Connections');
 
     Object.entries(UI_LABEL_KEYS).forEach(([id, key]) => {
         setLabelText(id, key);
     });
     if (typeof refreshConnectSafety === 'function') refreshConnectSafety();
 
-    setElementText('#companyAutomationAccordion .accordion-toggle span:first-child',
-        'common.automation',
-        'Automation');
-    setElementText('#jobsRefineAccordion .accordion-toggle span:first-child',
-        'common.refine',
-        'Refine');
-    setElementText('#jobsCareerAccordion .accordion-toggle span:first-child',
-        'popup.jobs.careerIntel',
-        'Career Intelligence');
-    setElementText('#jobsProfileAccordion .accordion-toggle span:first-child',
-        'popup.jobs.encryptedProfileCache',
-        'Encrypted Profile Cache');
-    setElementText('#connectRefineAccordion .accordion-toggle > span:first-child',
-        'popup.connect.refineFilters',
-        'Refine Filters');
-    setElementText('#connectPassiveAccordion .accordion-toggle span:first-child',
-        'popup.passive.title',
-        'Passive visibility');
     setElementText('#profileWalkStartBtn',
         'popup.passive.startWalk',
         'Start walk');
     setElementText('#profileWalkStopBtn',
         'common.stop',
         'Stop');
-    setElementText('#connectAudienceAccordion .accordion-toggle span:first-child',
-        'popup.connect.audienceFilters',
-        'Audience filters');
-    setElementText('#connectExclusionsAccordion .accordion-toggle span:first-child',
-        'popup.connect.exclusionsSection',
-        'Exclusions');
-    setElementText('#connectMessageAccordion .accordion-toggle span:first-child',
-        'popup.connect.messageSection',
-        'Message');
-    setElementText('#connectAutomationAccordion .accordion-toggle span:first-child',
-        'popup.connect.automationSection',
-        'Automation behavior');
-    setElementText('#toolsAccordion .accordion-toggle span:first-child',
-        'popup.tools.section',
-        'Tools');
 
     setElementText('#loadDefaultCompanies', 'common.loadDefaults', 'Load defaults');
     setElementText('#importJobsLinkedInProfileBtn',
@@ -653,14 +602,11 @@ async function applyPopupLocalization() {
     setElementText('#exportBtn',
         'popup.tools.exportConnections',
         'Export Connection Log (CSV)');
-    setElementText('.footer',
-        'popup.footer.safeRun',
-        'Runs safely in your browser');
 
     setElementText('#toggleCustomQuery',
         useCustomQuery ? 'popup.connect.useTagBuilder'
             : 'popup.connect.editQueryManually',
-        useCustomQuery ? 'Use tag builder' : 'Edit query manually');
+        useCustomQuery ? 'Done' : 'Edit');
     setInputPlaceholder(
         'tagSearchInput',
         'popup.connect.filterTagsPlaceholder',
@@ -727,46 +673,6 @@ async function applyPopupLocalization() {
         'Write your own personalized message...'
     );
 
-    setElementText('#companySection > div[style*="font-size:10px; color:var(--text-muted);"]',
-        'popup.company.defaultTargetsHelp',
-        'Preset defaults include global + Brazil companies. Fill in to only follow matching companies.');
-    setElementText('#jobsSection > div[style*="font-size:10px; color:var(--text-muted); margin-top:8px;"]',
-        'popup.jobs.onDemandOnly',
-        'Jobs mode is on-demand only in v1 (no recurring scheduler).');
-
-    const companyHelpRow = document.querySelector(
-        '#companySection div[style*="justify-content:space-between"] span'
-    );
-    if (companyHelpRow) {
-        companyHelpRow.textContent = tr(
-            'popup.company.leaveEmptyFollowAll',
-            null,
-            'Leave empty to follow all results.'
-        );
-    }
-
-    const jobsCareerHelp = document.querySelector(
-        '#jobsCareerAccordion .accordion-body > div:first-child'
-    );
-    if (jobsCareerHelp) {
-        jobsCareerHelp.textContent = tr(
-            'popup.jobs.careerIntelHelp',
-            null,
-            'Local-only analysis from uploaded resumes and your LinkedIn profile.'
-        );
-    }
-
-    const jobsModeHelp = document.querySelector(
-        '#jobsSection .section div[style*="font-size:10px; color:var(--text-muted);"]'
-    );
-    if (jobsModeHelp) {
-        jobsModeHelp.textContent = tr(
-            'popup.jobs.semiAutoHelp',
-            null,
-            'Semi-auto mode: prepares the application and stops before final submit.'
-        );
-    }
-
     translateSelectOptions(
         'uiLanguageModeSelect',
         POPUP_SELECT_OPTION_KEYS.uiLanguageModeSelect
@@ -828,6 +734,7 @@ async function applyPopupLocalization() {
     setMode(currentMode);
     updateQueryPreview();
     updateCharCounter();
+    updateRefineSelectedCount();
 }
 
 function getUiLanguageMode() {
@@ -1311,11 +1218,13 @@ function updateWeeklyDisplay() {
             WEEKLY_LIMIT;
         const el = document.getElementById('weeklyCounter');
         if (count >= WEEKLY_LIMIT) {
-            el.style.color = '#d32f2f';
+            el.classList.add('is-danger');
+            el.classList.remove('is-warn');
         } else if (count >= Math.floor(WEEKLY_LIMIT * 0.8)) {
-            el.style.color = 'var(--warning)';
+            el.classList.add('is-warn');
+            el.classList.remove('is-danger');
         } else {
-            el.style.color = 'var(--text-muted)';
+            el.classList.remove('is-warn', 'is-danger');
         }
     });
 }
@@ -1376,10 +1285,10 @@ function refreshConnectSafety() {
                     [pct, safety.acceptance.sample, safety.limit],
                     `Low acceptance rate (${pct}% of ${safety.acceptance.sample} invites). Daily limit reduced to ${safety.limit} until it is back to 20%.`
                 );
-                warning.style.display = 'block';
+                warning.hidden = false;
             } else {
                 warning.textContent = '';
-                warning.style.display = 'none';
+                warning.hidden = true;
             }
         }
         return safety;
@@ -1664,6 +1573,14 @@ function fillJobsCareerPlan(plan) {
     }
 }
 
+function escapeDocText(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function renderJobsCareerDocsList(state) {
     const container = document.getElementById('jobsCareerDocsList');
     if (!container) return;
@@ -1672,43 +1589,24 @@ function renderJobsCareerDocsList(state) {
         : [];
     if (!docs.length) {
         container.innerHTML = '';
-        container.style.display = 'none';
+        container.hidden = true;
         return;
     }
-    container.style.display = 'flex';
+    container.hidden = false;
     container.innerHTML = docs.map(doc => `
-        <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:8px;
-            padding:8px;
-            border:1px solid var(--border);
-            border-radius:var(--radius-sm);
-            background:var(--card-bg);
-        ">
-            <div style="min-width:0;">
-                <div style="font-size:11px; font-weight:600;">
-                    ${doc.fileName}
+        <div class="doc-item">
+            <div>
+                <div class="doc-name">
+                    ${escapeDocText(doc.fileName)}
                 </div>
-                <div style="font-size:10px; color:var(--text-muted);">
-                    ${(doc.extension || '').toUpperCase()} ·
+                <div class="doc-meta">
+                    ${escapeDocText((doc.extension || '').toUpperCase())} ·
                     ${Math.max(1, Math.round((doc.size || 0) / 1024))} KB
                 </div>
             </div>
-            <button type="button"
-                data-remove-jobs-doc="${doc.id}"
-                style="
-                    padding:6px 8px;
-                    border:1px solid var(--warning);
-                    border-radius:var(--radius-sm);
-                    background:transparent;
-                    color:var(--warning);
-                    font-size:10px;
-                    font-weight:600;
-                    cursor:pointer;
-                ">
-                Remove
+            <button type="button" class="btn btn-danger"
+                data-remove-jobs-doc="${escapeDocText(doc.id)}">
+                ${escapeDocText(tr('popup.jobs.removeDoc', null, 'Remove'))}
             </button>
         </div>
     `).join('');
@@ -1987,9 +1885,9 @@ function getSelectedRegionGeoUrn() {
 
 function setActiveTemplate(templateKey) {
     document.querySelectorAll('.template-card').forEach(card => {
-        card.classList.toggle(
-            'active', card.dataset.template === templateKey
-        );
+        const isActive = card.dataset.template === templateKey;
+        card.classList.toggle('active', isActive);
+        card.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 
     const textarea = document.getElementById('noteTemplate');
@@ -2002,15 +1900,10 @@ function setActiveTemplate(templateKey) {
 
 function setStatusMessage(text, type) {
     const statusBox = document.getElementById('statusBox');
-    statusBox.style.display = 'block';
+    statusBox.hidden = false;
     statusBox.textContent = text;
-    const colors = {
-        info: 'var(--primary)',
-        success: '#2e7d32',
-        error: '#d32f2f',
-        warning: '#b24020'
-    };
-    statusBox.style.borderLeftColor = colors[type] || colors.info;
+    statusBox.dataset.type = ['info', 'success', 'error', 'warning']
+        .includes(type) ? type : 'info';
 }
 
 function saveState() {
@@ -2376,8 +2269,8 @@ function loadState() {
         if (popupState.sendNote !== undefined) {
             document.getElementById('sendNoteCheckbox').checked =
                 popupState.sendNote;
-            document.getElementById('noteSection').style.display =
-                popupState.sendNote ? 'block' : 'none';
+            document.getElementById('noteSection').hidden =
+                !popupState.sendNote;
         }
         if (popupState.customNote) {
             TEMPLATES.custom = popupState.customNote;
@@ -2390,7 +2283,7 @@ function loadState() {
             document.getElementById('scheduleCheckbox').checked =
                 true;
             document.getElementById('scheduleOptions')
-                .style.display = 'block';
+                .hidden = false;
         }
         if (popupState.scheduleInterval) {
             document.getElementById('scheduleInterval').value =
@@ -2406,18 +2299,7 @@ function loadState() {
         }
         if (popupState.useCustomQuery) {
             useCustomQuery = true;
-            document.getElementById('customQueryInput').style.display = 'block';
-            document.getElementById('toggleCustomQuery').textContent =
-                tr(
-                    'popup.connect.useTagBuilder',
-                    null,
-                    'Use tag builder'
-                );
-            document.querySelectorAll('.tag-group').forEach(
-                g => g.style.opacity = '0.4'
-            );
-            document.getElementById('areaPresetSelect').disabled = true;
-            document.getElementById('areaPresetSelect').style.opacity = '0.4';
+            applyCustomQueryUi(true);
         }
 
         document.getElementById('tagSearchInput').value =
@@ -2582,7 +2464,7 @@ function loadState() {
             ).checked = true;
             document.getElementById(
                 'companyScheduleOptions'
-            ).style.display = 'block';
+            ).hidden = false;
         }
         if (popupState.companyScheduleInterval) {
             document.getElementById(
@@ -2718,42 +2600,40 @@ if (intentSelectEl) {
     });
 }
 
+function applyCustomQueryUi(on) {
+    const input = document.getElementById('customQueryInput');
+    const toggle = document.getElementById('toggleCustomQuery');
+    const areaSelect = document.getElementById('areaPresetSelect');
+    input.hidden = !on;
+    document.getElementById('queryPreview').hidden = on;
+    toggle.setAttribute('aria-expanded', on ? 'true' : 'false');
+    toggle.textContent = on
+        ? tr('popup.connect.useTagBuilder', null, 'Done')
+        : tr('popup.connect.editQueryManually', null, 'Edit');
+    document.querySelectorAll('.tag-group').forEach(
+        g => g.classList.toggle('is-dimmed', on)
+    );
+    areaSelect.disabled = on;
+    areaSelect.classList.toggle('is-dimmed', on);
+}
+
 document.getElementById('toggleCustomQuery').addEventListener('click', () => {
     useCustomQuery = !useCustomQuery;
     const input = document.getElementById('customQueryInput');
-    const toggle = document.getElementById('toggleCustomQuery');
 
     if (useCustomQuery) {
-        input.style.display = 'block';
         let seededDefault = '';
         if (typeof getAreaPresetDefaultQuery === 'function') {
             seededDefault = getAreaPresetDefaultQuery(
                 getSelectedAreaPreset()
             );
         }
-        input.value = input.value || seededDefault || buildQuery();
-        toggle.textContent = tr(
-            'popup.connect.useTagBuilder',
-            null,
-            'Use tag builder'
-        );
-        document.querySelectorAll('.tag-group').forEach(
-            g => g.style.opacity = '0.4'
-        );
-        document.getElementById('areaPresetSelect').disabled = true;
-        document.getElementById('areaPresetSelect').style.opacity = '0.4';
+        input.value = input.value || seededDefault ||
+            buildConnectSearchPlan().query;
+        applyCustomQueryUi(true);
+        input.focus();
     } else {
-        input.style.display = 'none';
-        toggle.textContent = tr(
-            'popup.connect.editQueryManually',
-            null,
-            'Edit query manually'
-        );
-        document.querySelectorAll('.tag-group').forEach(
-            g => g.style.opacity = '1'
-        );
-        document.getElementById('areaPresetSelect').disabled = false;
-        document.getElementById('areaPresetSelect').style.opacity = '1';
+        applyCustomQueryUi(false);
     }
 
     updateQueryPreview();
@@ -2813,8 +2693,7 @@ document.getElementById('noteTemplate').addEventListener('input', (e) => {
 });
 
 document.getElementById('sendNoteCheckbox').addEventListener('change', (e) => {
-    document.getElementById('noteSection').style.display =
-        e.target.checked ? 'block' : 'none';
+    document.getElementById('noteSection').hidden = !e.target.checked;
     saveState();
 });
 
@@ -2981,7 +2860,7 @@ document.getElementById('warmupCheckbox')
 document.getElementById('scheduleCheckbox').addEventListener(
     'change', (e) => {
         const opts = document.getElementById('scheduleOptions');
-        opts.style.display = e.target.checked ? 'block' : 'none';
+        opts.hidden = !e.target.checked;
         const hours = parseInt(
             document.getElementById('scheduleInterval').value
         ) || 24;
@@ -3068,7 +2947,7 @@ function fetchScheduleInsight() {
             msg += ` Top days: ${days || 'weekdays'}.`;
 
             text.textContent = msg;
-            box.style.display = 'block';
+            box.hidden = false;
         }
     );
 }
@@ -3533,12 +3412,13 @@ function startJobsAssist() {
 function showProgressUI(verb, limit, statusMsg) {
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    startBtn.style.display = 'none';
-    stopBtn.style.display = 'flex';
+    startBtn.hidden = true;
+    stopBtn.hidden = false;
     stopBtn.disabled = false;
+    stopBtn.classList.add('is-loading');
+    document.body.classList.add('is-running');
     stopBtn.textContent = tr('common.stop', null, 'Stop');
-    document.getElementById('progressBox')
-        .style.display = 'block';
+    document.getElementById('progressBox').hidden = false;
     document.getElementById('progressText').textContent =
         `${verb} 0 / ${limit}`;
     document.getElementById('progressMeta').textContent =
@@ -3549,11 +3429,12 @@ function showProgressUI(verb, limit, statusMsg) {
 function resetProgressUI() {
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    startBtn.style.display = 'flex';
+    startBtn.hidden = false;
     startBtn.disabled = false;
-    stopBtn.style.display = 'none';
-    document.getElementById('progressBox')
-        .style.display = 'none';
+    stopBtn.hidden = true;
+    stopBtn.classList.remove('is-loading');
+    document.body.classList.remove('is-running');
+    document.getElementById('progressBox').hidden = true;
 }
 
 function handleLaunchResponse(response) {
@@ -3672,6 +3553,7 @@ chrome.runtime.onMessage.addListener((request) => {
         return;
     }
     if (request.action === 'progress') {
+        document.getElementById('stopBtn').classList.remove('is-loading');
         const isConnect = currentMode === 'connect';
         const engMode = isConnect && document.getElementById(
             'engagementOnlyCheckbox'
@@ -3715,8 +3597,10 @@ chrome.runtime.onMessage.addListener((request) => {
         const stopBtn = document.getElementById('stopBtn');
         const response = request.result;
 
-        stopBtn.style.display = 'none';
-        startBtn.style.display = 'flex';
+        stopBtn.hidden = true;
+        stopBtn.classList.remove('is-loading');
+        startBtn.hidden = false;
+        document.body.classList.remove('is-running');
 
         updateWeeklyDisplay();
         refreshConnectSafety();
@@ -3724,7 +3608,7 @@ chrome.runtime.onMessage.addListener((request) => {
         if (response?.log?.length && response?.mode !== 'jobs') {
             lastConnectionLog = response.log;
             document.getElementById('exportBtn')
-                .style.display = 'block';
+                .hidden = false;
 
             chrome.storage.local.get(
                 'connectionHistory', (hData) => {
@@ -3879,10 +3763,10 @@ function renderRecentProfiles(entries) {
     const container = document.getElementById('recentProfiles');
     const list = document.getElementById('recentList');
     if (!entries || !entries.length) {
-        container.style.display = 'none';
+        container.hidden = true;
         return;
     }
-    container.style.display = 'block';
+    container.hidden = false;
     list.textContent = '';
     const recent = entries.slice(-5).reverse();
     for (const r of recent) {
@@ -3955,52 +3839,55 @@ let currentMode = 'connect';
 
 function setMode(mode) {
     currentMode = mode;
-    document.getElementById('connectSection')
-        .style.display = mode === 'connect' ? 'block' : 'none';
-    document.getElementById('companySection')
-        .style.display = mode === 'companies' ? 'block' : 'none';
-    document.getElementById('jobsSection')
-        .style.display = mode === 'jobs' ? 'block' : 'none';
-    document.getElementById('weeklyCounter')
-        .style.display = mode === 'connect' ? 'block' : 'none';
+    document.body.dataset.mode = mode;
+    const panels = {
+        connect: 'connectSection',
+        companies: 'companySection',
+        jobs: 'jobsSection',
+        withdraw: 'withdrawSection'
+    };
+    Object.entries(panels).forEach(([key, id]) => {
+        document.getElementById(id).hidden = key !== mode;
+    });
+    document.querySelectorAll('[data-limit-for]').forEach(node => {
+        node.hidden = node.dataset.limitFor !== mode;
+    });
 
     document.querySelectorAll('.mode-btn').forEach(btn => {
         const isActive = btn.dataset.mode === mode;
         btn.classList.toggle('active', isActive);
-        btn.style.background = isActive
-            ? 'var(--primary)' : 'var(--bg-color)';
-        btn.style.color = isActive
-            ? 'white' : 'var(--text-main)';
-        btn.style.borderColor = isActive
-            ? 'var(--primary)' : 'var(--border)';
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        btn.tabIndex = isActive ? 0 : -1;
     });
 
     const labels = {
-        connect: tr('popup.start.connect', null, 'Launch Automation'),
-        companies: tr('popup.start.companies', null, 'Follow Companies'),
-        jobs: tr('popup.start.jobs', null, 'Assist Job Apply')
+        connect: tr('popup.start.connect', null, 'Start Connect'),
+        companies: tr('popup.start.companies', null, 'Start Companies'),
+        jobs: tr('popup.start.jobs', null, 'Start Jobs'),
+        withdraw: ''
     };
     const startBtn = document.getElementById('startBtn');
-    startBtn.textContent = '';
-    const svg = document.createElementNS(
-        'http://www.w3.org/2000/svg', 'svg'
-    );
-    svg.setAttribute('width', '16');
-    svg.setAttribute('height', '16');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    const poly = document.createElementNS(
-        'http://www.w3.org/2000/svg', 'polygon'
-    );
-    poly.setAttribute('points', '5 3 19 12 5 21 5 3');
-    svg.appendChild(poly);
-    startBtn.appendChild(svg);
-    startBtn.appendChild(
-        document.createTextNode(' ' + labels[mode])
-    );
-    startBtn.disabled = false;
+    if (mode !== 'withdraw') {
+        startBtn.textContent = '';
+        const svg = document.createElementNS(
+            'http://www.w3.org/2000/svg', 'svg'
+        );
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('aria-hidden', 'true');
+        const poly = document.createElementNS(
+            'http://www.w3.org/2000/svg', 'polygon'
+        );
+        poly.setAttribute('points', '5 3 19 12 5 21 5 3');
+        svg.appendChild(poly);
+        startBtn.appendChild(svg);
+        startBtn.appendChild(document.createTextNode(labels[mode]));
+        startBtn.disabled = false;
+    }
 
     saveState();
     if (mode === 'jobs') {
@@ -4014,6 +3901,63 @@ function setMode(mode) {
 document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         setMode(btn.dataset.mode);
+    });
+});
+
+// Segmented tabs: arrow keys, Home and End move between modes.
+document.getElementById('modeTabs').addEventListener('keydown', (event) => {
+    const tabs = Array.from(document.querySelectorAll('.mode-btn'));
+    const index = tabs.indexOf(document.activeElement);
+    if (index < 0) return;
+    let next = -1;
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') {
+        next = (index - 1 + tabs.length) % tabs.length;
+    } else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabs.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    setMode(tabs[next].dataset.mode);
+    tabs[next].focus();
+});
+
+// Settings view: gear opens it, back button and Esc return to the main view.
+function setPopupView(view) {
+    document.body.dataset.view = view;
+    const target = view === 'settings'
+        ? document.getElementById('settingsBackBtn')
+        : document.getElementById('settingsBtn');
+    if (target) target.focus();
+}
+
+document.getElementById('settingsBtn')
+    .addEventListener('click', () => setPopupView('settings'));
+document.getElementById('settingsBackBtn')
+    .addEventListener('click', () => setPopupView('main'));
+document.getElementById('withdrawOpenSettingsBtn')
+    .addEventListener('click', () => setPopupView('settings'));
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && document.body.dataset.view === 'settings') {
+        event.preventDefault();
+        setPopupView('main');
+    }
+});
+
+// Footer limit stepper: nudges the numeric input and notifies listeners.
+document.querySelectorAll('[data-step-for]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.stepFor);
+        if (!input) return;
+        const min = Number(input.min) || 1;
+        const max = Number(input.max) || Number.MAX_SAFE_INTEGER;
+        const current = Number(input.value) || min;
+        const next = Math.min(
+            max,
+            Math.max(min, current + Number(btn.dataset.step))
+        );
+        input.value = String(next);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     });
 });
 
@@ -4572,8 +4516,7 @@ document.getElementById('companyScheduleCheckbox')
         const opts = document.getElementById(
             'companyScheduleOptions'
         );
-        opts.style.display = e.target.checked
-            ? 'block' : 'none';
+        opts.hidden = !e.target.checked;
         const hours = parseInt(
             document.getElementById(
                 'companyScheduleInterval'
@@ -4696,11 +4639,11 @@ function loadRateLimitStatus() {
         );
 
         if (hourLeft === 0 || dayLeft === 0) {
-            text.style.color = 'var(--warning)';
+            text.classList.add('is-warn');
         } else {
-            text.style.color = 'var(--text-muted)';
+            text.classList.remove('is-warn');
         }
-        bar.style.display = 'block';
+        bar.hidden = false;
     });
 }
 
@@ -4722,15 +4665,27 @@ if (typeof getFeatureToggles === 'function'
         companiesEnabled: document.getElementById('companiesToggle'),
         withdrawEnabled: document.getElementById('withdrawToggle')
     };
+    // Withdraw is opt-in: when its toggle is off the mode shows an empty
+    // state that points to Settings instead of the form.
+    const renderWithdrawGate = (enabled) => {
+        document.getElementById('withdrawGate').hidden = enabled;
+        document.getElementById('withdrawForm').hidden = !enabled;
+        document.getElementById('withdrawStartBtn').disabled = !enabled;
+    };
+    renderWithdrawGate(false);
     getFeatureToggles((toggles) => {
         Object.keys(toggleEls).forEach((key) => {
             if (toggleEls[key]) toggleEls[key].checked = !!toggles[key];
         });
+        renderWithdrawGate(!!toggles.withdrawEnabled);
     });
     const wire = (el, key) => {
         if (!el) return;
         el.addEventListener('change', () => {
             setFeatureToggle(key, el.checked, () => {});
+            if (key === FEATURE_KEYS.WITHDRAW) {
+                renderWithdrawGate(el.checked);
+            }
         });
     };
     wire(toggleEls.connectEnabled, FEATURE_KEYS.CONNECT);
@@ -4772,8 +4727,9 @@ if (document.getElementById('scheduleCheckbox').checked &&
     }
 
     function setRunning(on) {
-        startBtn.style.display = on ? 'none' : 'block';
-        stopBtn.style.display = on ? 'block' : 'none';
+        startBtn.hidden = on;
+        stopBtn.hidden = !on;
+        document.body.classList.toggle('is-running', on);
         stopBtn.disabled = false;
     }
 
