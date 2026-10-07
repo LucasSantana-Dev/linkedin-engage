@@ -199,6 +199,14 @@
         return !!a && !!b && (a === b || a.contains(b) || b.contains(a));
     }
 
+    // A per-card withdraw control (aria-label pattern, or anywhere inside a
+    // list item) is never a confirmation, even if a dialog wraps the list.
+    function isCardWithdrawControl(el) {
+        if (isWithdrawAriaLabel(el.getAttribute('aria-label'))) return true;
+        return typeof el.closest === 'function' &&
+            !!el.closest('[role="listitem"]');
+    }
+
     // Confirmation button in a modal dialog, never the original card control.
     function findWithdrawConfirm(root, originalLink) {
         if (!root || typeof root.querySelectorAll !== 'function') return null;
@@ -211,7 +219,8 @@
             );
             const hit = candidates.find(el =>
                 isWithdrawLabel(el.textContent) &&
-                !isDescendantOrSame(el, originalLink)
+                !isDescendantOrSame(el, originalLink) &&
+                !isCardWithdrawControl(el)
             );
             if (hit) return hit;
         }

@@ -253,6 +253,27 @@ describe('confirmation dialog and completion helpers', () => {
         )).toBeNull();
     });
 
+    test('a dialog wrapping the sent list yields no confirmation', () => {
+        loadFixture();
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('role', 'dialog');
+        while (document.body.firstChild) {
+            wrapper.appendChild(document.body.firstChild);
+        }
+        document.body.appendChild(wrapper);
+        const orig = wrapper.querySelector('a[aria-label^="Withdraw"]');
+        expect(lib.findWithdrawConfirm(document, orig)).toBeNull();
+    });
+
+    test('a real confirm still wins inside a dialog that also holds cards', () => {
+        document.body.innerHTML =
+            '<div role="dialog"><div role="listitem">' +
+            '<button>Withdraw</button></div>' +
+            '<a aria-label="Withdraw invitation sent to B">Withdraw</a>' +
+            '<button id="real">Withdraw</button></div>';
+        expect(lib.findWithdrawConfirm(document, null).id).toBe('real');
+    });
+
     test('findDialogDismiss finds cancel by text or aria-label', () => {
         dialogDom();
         expect(lib.findDialogDismiss(document).id).toBe('cancel');
