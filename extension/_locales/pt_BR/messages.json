@@ -1189,5 +1189,50 @@
   },
   "popup_connect_noteQuotaReached": {
     "message": "Cota de notas do LinkedIn atingida: $1 convites foram enviados sem nota."
+  },
+  "popup_settings_withdrawEnabled": {
+    "message": "Ativar Retirar convites antigos (opcional)"
+  },
+  "popup_withdraw_title": {
+    "message": "Retirar convites antigos"
+  },
+  "popup_withdraw_help": {
+    "message": "Abre seus convites enviados e retira os pendentes mais antigos que a idade mínima. Até 20 por execução e 40 por dia. Ative antes em Alternâncias de Recursos."
+  },
+  "popup_withdraw_minWeeks": {
+    "message": "Idade mínima (semanas)"
+  },
+  "popup_withdraw_limit": {
+    "message": "Por execução (máx. 20)"
+  },
+  "popup_withdraw_start": {
+    "message": "Retirar convites antigos"
+  },
+  "popup_withdraw_opening": {
+    "message": "Abrindo os convites enviados..."
+  },
+  "popup_withdraw_progress": {
+    "message": "Retirados $1 / $2"
+  },
+  "popup_withdraw_done": {
+    "message": "$1 convite(s) antigo(s) retirado(s). $2 recente(s) mantido(s) e $3 com data desconhecida."
+  },
+  "popup_withdraw_none": {
+    "message": "Nenhum convite pendente com mais de $1 semana(s) foi encontrado."
+  },
+  "popup_withdraw_failed": {
+    "message": "Falha ao retirar convites: $1"
+  },
+  "popup_withdraw_disabled": {
+    "message": "Ative Retirar convites antigos em Alternâncias de Recursos primeiro."
+  },
+  "popup_withdraw_blocked": {
+    "message": "Limite de retiradas atingido (20 por hora, 40 por dia). Tente mais tarde."
+  },
+  "notification_withdraw_done": {
+    "message": "$1 convite(s) antigo(s) retirado(s)."
+  },
+  "status_withdrawn": {
+    "message": "Retirado"
   }
 }

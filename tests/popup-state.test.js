@@ -260,3 +260,36 @@ describe('popup-state contract', () => {
         });
     });
 });
+
+describe('normalizeWithdrawSettings', () => {
+    const {
+        normalizeWithdrawSettings,
+        DEFAULT_WITHDRAW_MIN_WEEKS,
+        DEFAULT_WITHDRAW_LIMIT,
+        MAX_WITHDRAW_LIMIT
+    } = require('../extension/lib/popup-state');
+
+    test('defaults are 3 weeks and 20 per run', () => {
+        expect(DEFAULT_WITHDRAW_MIN_WEEKS).toBe(3);
+        expect(DEFAULT_WITHDRAW_LIMIT).toBe(20);
+        expect(MAX_WITHDRAW_LIMIT).toBe(20);
+        expect(normalizeWithdrawSettings(undefined)).toEqual({
+            withdrawMinWeeks: 3, withdrawLimit: 20
+        });
+        expect(normalizeWithdrawSettings('x')).toEqual({
+            withdrawMinWeeks: 3, withdrawLimit: 20
+        });
+    });
+
+    test('clamps and floors values', () => {
+        expect(normalizeWithdrawSettings({
+            withdrawMinWeeks: '6', withdrawLimit: '12'
+        })).toEqual({ withdrawMinWeeks: 6, withdrawLimit: 12 });
+        expect(normalizeWithdrawSettings({
+            withdrawMinWeeks: 0, withdrawLimit: 99
+        })).toEqual({ withdrawMinWeeks: 3, withdrawLimit: 20 });
+        expect(normalizeWithdrawSettings({
+            withdrawMinWeeks: 99999, withdrawLimit: -1
+        })).toEqual({ withdrawMinWeeks: 520, withdrawLimit: 20 });
+    });
+});

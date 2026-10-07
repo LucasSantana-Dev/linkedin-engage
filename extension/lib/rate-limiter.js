@@ -1,13 +1,15 @@
 const DAILY_LIMITS = {
     connect: 40,
     companyFollow: 30,
-    jobsAssist: 20
+    jobsAssist: 20,
+    withdrawInvites: 40
 };
 
 const HOURLY_LIMITS = {
     connect: 12,
     companyFollow: 10,
-    jobsAssist: 8
+    jobsAssist: 8,
+    withdrawInvites: 20
 };
 
 const WEEKLY_LIMIT = 150;
@@ -121,6 +123,24 @@ function incrementCount(mode, storage) {
     });
 }
 
+// Adds `amount` to the hour and day counters only (no weekly counter), for
+// modes whose budget is independent of the Connect weekly limit.
+function incrementPeriodCounts(mode, storage, amount) {
+    if (typeof storage?.get !== 'function') return;
+    const n = Math.floor(Number(amount)) || 0;
+    if (n <= 0) return;
+
+    const hKey = getHourKey(mode);
+    const dKey = getDayKey(mode);
+
+    storage.get([hKey, dKey], (data) => {
+        storage.set({
+            [hKey]: (data[hKey] || 0) + n,
+            [dKey]: (data[dKey] || 0) + n
+        });
+    });
+}
+
 function cleanupOldKeys(storage) {
     if (typeof storage?.get !== 'function') return;
 
@@ -155,6 +175,7 @@ if (typeof module !== 'undefined' && module.exports) {
         checkLimits,
         getLimitStatus,
         incrementCount,
+        incrementPeriodCounts,
         cleanupOldKeys
     };
 }

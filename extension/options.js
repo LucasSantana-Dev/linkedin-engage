@@ -44,7 +44,8 @@ function translateDashboardStatus(status) {
         visited: ['status.visited', 'Visited'],
         followed: ['status.followed', 'Followed'],
         'visited-followed': ['status.visitedFollowed', 'Visited + Followed'],
-        'company-followed': ['status.companyFollowed', 'Company followed']
+        'company-followed': ['status.companyFollowed', 'Company followed'],
+        withdrawn: ['status.withdrawn', 'Withdrawn']
     };
     if (map[value]) {
         const [key, fallback] = map[value];
