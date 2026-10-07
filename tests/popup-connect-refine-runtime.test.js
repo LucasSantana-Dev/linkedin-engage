@@ -139,6 +139,9 @@ describe('popup connect refine runtime', () => {
                 '../extension/lib/chip-hydrator'
             );
             Object.assign(global, chipHydrator);
+            Object.assign(global, require(
+                '../extension/lib/invite-note'
+            ));
             require('../extension/popup/popup.js');
         });
     });

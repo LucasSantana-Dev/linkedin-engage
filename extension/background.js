@@ -815,6 +815,7 @@ function launchAutomation(config) {
                             'lib/ui-notify.js',
                             'lib/search-no-results.js',
                             'lib/invite-utils.js',
+                            'lib/invite-note.js',
                             'lib/human-behavior.js',
                             'lib/connect-action-utils.js'
                         ],

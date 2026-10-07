@@ -2019,6 +2019,22 @@ function updateQueryPreview() {
     if (boolPreview) boolPreview.textContent = query;
 }
 
+// LinkedIn replaces {name} with the first name; assume ~12 chars for the hint.
+const NOTE_NAME_PLACEHOLDER_LENGTH = 12;
+
+function updateNoteLimitHint() {
+    const hint = document.getElementById('noteLimitHint');
+    if (!hint) return;
+    const text = document.getElementById('noteTemplate').value;
+    const effective = text.replace(/{name}/gi, 'x'.repeat(NOTE_NAME_PLACEHOLDER_LENGTH));
+    hint.textContent = tr(
+        'popup.connect.noteLimitHint',
+        null,
+        hint.textContent
+    );
+    hint.hidden = effective.length <= DEFAULT_INVITE_NOTE_MAX;
+}
+
 function updateCharCounter() {
     const textarea = document.getElementById('noteTemplate');
     const counter = document.getElementById('charCounter');
@@ -2028,6 +2044,7 @@ function updateCharCounter() {
         [len, MAX_CHARS],
         `${len} / ${MAX_CHARS}`
     );
+    updateNoteLimitHint();
     counter.classList.remove('warn', 'over');
     if (len > MAX_CHARS) {
         counter.classList.add('over');
@@ -3880,9 +3897,19 @@ chrome.runtime.onMessage.addListener((request) => {
             if (response?.mode === 'jobs') {
                 jobsManualResumePending = false;
             }
+            const quotaNotice = response?.mode === 'connect' &&
+                response.noteQuotaExhausted === true
+                ? ' ' + tr(
+                    'popup.connect.noteQuotaReached',
+                    [Number(response.sentWithoutNoteAfterQuota) || 0],
+                    'LinkedIn note quota reached: ' +
+                        (Number(response.sentWithoutNoteAfterQuota) || 0) +
+                        ' invites were sent without a note.'
+                )
+                : '';
             setStatusMessage(
                 tr('common.successPrefix', null, 'Success! ') +
-                    (response.message || ''),
+                    (response.message || '') + quotaNotice,
                 'success'
             );
             startBtn.textContent = tr('common.doneBang', null, 'Done!');
