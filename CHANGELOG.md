@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - People and company search now work with LinkedIn's redesigned result cards (div role=listitem), so Connect profile data and company Follow runs no longer come back empty (#264)
 - Profile walker panel and run result messages are now localized in PT-BR (#234)
 - Connect and Companies queries are capped at 5 boolean operators (LinkedIn returns no results above that), company presets no longer append NOT tails, the companies custom default is `software development`, and the relaxed retry keeps up to 3 terms joined by OR (#265)
-- Search templates: a non-custom preset now prefers a template of its own preset or family before the generic `custom` one, and the `custom` fallback no longer leaks its terms (software engineer, global, senior) into other presets (#266)
+- Search templates: a non-custom Connect or Companies preset now prefers a template of its own preset or family before the generic `custom` one (Jobs keeps the `custom` fallback so its filters never override the popup), and the `custom` fallback no longer leaks its terms (software engineer, global, senior) into other presets (#266)
 
 ### Changed
 - Pure clusters from popup.js, jobs-assist.js and content.js moved into tested lib modules; run-outcome.js is now a UMD module (#239)
