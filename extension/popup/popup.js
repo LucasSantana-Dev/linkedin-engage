@@ -308,63 +308,6 @@ function parseMultilineList(raw) {
         .filter(Boolean);
 }
 
-function getSkipKeywordsTemplateId() {
-    return getValueOrDefault('skipKeywordsTemplateSelect', '');
-}
-
-function getSkipKeywordsTemplateTerms(templateId) {
-    const terms = SKIP_KEYWORD_TEMPLATES[templateId];
-    return Array.isArray(terms) ? terms.slice() : [];
-}
-
-function mergeUniqueKeywordTerms(baseTerms, extraTerms) {
-    const merged = [];
-    const seen = new Set();
-
-    [...baseTerms, ...extraTerms].forEach((term) => {
-        const value = String(term || '').trim();
-        if (!value) return;
-        const normalized = value.toLowerCase();
-        if (seen.has(normalized)) return;
-        seen.add(normalized);
-        merged.push(value);
-    });
-
-    return merged;
-}
-
-function applySkipKeywordsTemplate(mode) {
-    const templateId = getSkipKeywordsTemplateId();
-    if (!templateId) {
-        setStatusMessageKey(
-            'popup.feed.skipTemplateSelectFirst',
-            'warning',
-            'Choose a keyword template first.'
-        );
-        return;
-    }
-
-    const templateTerms = getSkipKeywordsTemplateTerms(templateId);
-    if (!templateTerms.length) return;
-
-    const textarea = document.getElementById('skipKeywordsInput');
-    const currentTerms = parseMultilineList(textarea.value);
-    const nextTerms = mode === 'append'
-        ? mergeUniqueKeywordTerms(currentTerms, templateTerms)
-        : templateTerms;
-
-    textarea.value = nextTerms.join('\n');
-    saveState();
-
-    const messageKey = mode === 'append'
-        ? 'popup.feed.skipTemplateAppended'
-        : 'popup.feed.skipTemplateApplied';
-    const fallback = mode === 'append'
-        ? 'Keyword template appended.'
-        : 'Keyword template applied.';
-    setStatusMessageKey(messageKey, 'success', fallback);
-}
-
 function getJobsPresetTerms(preset) {
     if (!preset || preset === 'custom') {
         return { role: [], industry: [] };
@@ -902,10 +845,6 @@ async function applyPopupLocalization() {
     translateSelectOptions(
         'jobsWorkTypeSelect',
         POPUP_SELECT_OPTION_KEYS.jobsWorkTypeSelect
-    );
-    translateSelectOptions(
-        'skipKeywordsTemplateSelect',
-        POPUP_SELECT_OPTION_KEYS.skipKeywordsTemplateSelect
     );
     translateAreaPresetOptions('areaPresetSelect');
     translateAreaPresetOptions('companyAreaPresetSelect');
@@ -2289,11 +2228,6 @@ function loadState() {
                 DEFAULT_EXPECTED_RESULTS,
                 DEFAULT_EXPECTED_RESULTS
             );
-            setSelectValue(
-                'skipKeywordsTemplateSelect',
-                '',
-                ''
-            );
             refreshTemplatesForArea();
             refreshTemplateControls();
             setActiveTemplate(DEFAULT_TEMPLATE_KEY);
@@ -2652,11 +2586,6 @@ function loadState() {
             ).checked =
                 popupState.jobsBrazilOffshoreFriendly === true;
         }
-        setSelectValue(
-            'skipKeywordsTemplateSelect',
-            popupState.skipKeywordsTemplate || '',
-            ''
-        );
         if (popupState.companyScheduleEnabled) {
             document.getElementById(
                 'companyScheduleCheckbox'
