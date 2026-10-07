@@ -429,7 +429,8 @@ function loadDashboard() {
                 }
                 if (r.profileUrl &&
                     acceptedSet.has(r.profileUrl) &&
-                    r.status === 'sent') {
+                    (r.status === 'sent' ||
+                        r.status === 'sent-unverified')) {
                     r.status = 'accepted';
                 }
             }
@@ -597,7 +598,8 @@ function loadDashboard() {
                 badge.className = 'badge ';
                 if (r.status === 'accepted') {
                     badge.className += 'badge-accepted';
-                } else if (r.status === 'sent') {
+                } else if (r.status === 'sent' ||
+                    r.status === 'sent-unverified') {
                     badge.className += 'badge-sent';
                 } else if (r.status === 'visited' ||
                     r.status === 'followed' ||
@@ -649,6 +651,7 @@ function renderChart(history) {
         if (!r.time) continue;
         const s = r.status || '';
         if (s === 'sent' ||
+            s === 'sent-unverified' ||
             s === 'company-followed') {
             const day = r.time.substring(0, 10);
             dayCounts[day] = (dayCounts[day] || 0) + 1;
@@ -725,7 +728,8 @@ function exportCsv() {
                 let status = r.status || '';
                 if (r.profileUrl &&
                     acceptedSet.has(r.profileUrl) &&
-                    status === 'sent') {
+                    (status === 'sent' ||
+                        status === 'sent-unverified')) {
                     status = 'accepted';
                 }
                 const name = (r.name || '')

@@ -70,6 +70,15 @@
         return { acceptance, warmup, limit, reasons };
     }
 
+    // Launch limit = user value capped by every remaining budget. A cap of
+    // null/undefined is ignored; a remaining budget of 0 blocks the run.
+    function resolveLaunchLimit({ userLimit, weeklyLeft, dailyLeft } = {}) {
+        const caps = [userLimit, weeklyLeft, dailyLeft]
+            .filter(v => Number.isFinite(v));
+        if (!caps.length) return 0;
+        return Math.max(0, Math.min(...caps));
+    }
+
     return Object.freeze({
         LOW_ACCEPTANCE_RATE,
         LOW_ACCEPTANCE_MIN_SAMPLE,
@@ -77,6 +86,7 @@
         computeAcceptance,
         getWarmupState,
         getEffectiveConnectDailyLimit,
-        resolveConnectSafety
+        resolveConnectSafety,
+        resolveLaunchLimit
     });
 });

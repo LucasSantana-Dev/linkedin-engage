@@ -84,6 +84,68 @@ function isPendingInCard(card) {
     return false;
 }
 
+// Full name from "Invite <Name> to connect" (EN) or the PT-BR equivalent.
+function extractInviteName(ariaLabel) {
+    const m = String(ariaLabel || '').match(
+        /^\s*(?:invite|convidar)\s+(.+?)\s+(?:to connect|para\s+(?:se\s+)?conectar)/i
+    );
+    return m ? m[1].trim() : '';
+}
+
+const SEND_CONTEXT_CARD_SELECTOR =
+    '[role="listitem"], .entity-result, li';
+
+function isPendingControl(el) {
+    const text = (el.innerText || el.textContent || '').trim()
+        .toLowerCase();
+    const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+    return aria.startsWith('pending') ||
+        aria.startsWith('pendente') ||
+        text === 'pending' || text === 'pendente';
+}
+
+// Snapshot taken BEFORE the final Send click: LinkedIn swaps the Connect
+// control for a new Pending one, so the clicked node ends up detached.
+// The result card stays in the DOM and keeps the person's name and URL.
+function captureSendContext(button, card) {
+    const link = card && card.querySelector('a[href*="/in/"]');
+    return {
+        card: card || null,
+        name: extractInviteName(button.getAttribute('aria-label')),
+        profileUrl: link
+            ? String(link.href || '').split('?')[0] : ''
+    };
+}
+
+// True when the Pending state is visible for the captured person: first in
+// the pre-click card, then anywhere under root (Pending control naming the
+// person, or sitting in a card with the same profile URL).
+function isSendConfirmed(ctx, root) {
+    if (!ctx) return false;
+    if (ctx.card && isPendingInCard(ctx.card)) return true;
+    if (!root || (!ctx.name && !ctx.profileUrl)) return false;
+    const name = ctx.name.toLowerCase();
+    for (const el of root.querySelectorAll('a[aria-label], button')) {
+        if (!isPendingControl(el)) continue;
+        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+        if (name && aria.includes(name)) return true;
+        const owner = el.closest(SEND_CONTEXT_CARD_SELECTOR);
+        if (ctx.profileUrl && owner && Array.from(
+            owner.querySelectorAll('a[href*="/in/"]')
+        ).some(a => String(a.href || '').split('?')[0] ===
+            ctx.profileUrl)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Hard ceiling: every completed final Send click consumes budget, verified
+// or not, so a failing verification can never extend a run past its limit.
+function hasSendBudget(sendAttempts, limit) {
+    return sendAttempts < limit;
+}
+
 function isInviteUrl(url) {
     return url.includes('MemberRelationships') &&
         url.includes('verifyQuotaAndCreate');
@@ -331,6 +393,10 @@ if (typeof module !== 'undefined' && module.exports) {
         hasMessageButtonInCard,
         isPendingState,
         isPendingInCard,
+        extractInviteName,
+        captureSendContext,
+        isSendConfirmed,
+        hasSendBudget,
         isInviteUrl,
         detectChallengeFromUrl,
         detectChallengeFromText,

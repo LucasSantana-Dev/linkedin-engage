@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
 ### Fixed
+- Connect: the run limit is now a hard ceiling on send attempts (unverified sends count, logged as `sent-unverified`), sends are verified on the card captured before the click so LinkedIn's swapped Pending control is recognised, and the popup launches with the smallest of the typed, weekly and daily limits (#270)
 - People and company search now work with LinkedIn's redesigned result cards (div role=listitem), so Connect profile data and company Follow runs no longer come back empty (#264)
 - Profile walker panel and run result messages are now localized in PT-BR (#234)
 - Connect and Companies queries are capped at 5 boolean operators (LinkedIn returns no results above that), company presets no longer append NOT tails, the companies custom default is `software development`, and the relaxed retry keeps up to 3 terms joined by OR (#265)
