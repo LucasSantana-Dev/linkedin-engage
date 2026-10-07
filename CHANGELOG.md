@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed
+- Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
+
 ## [1.40.0] - 2026-06-26
 
 ### Added

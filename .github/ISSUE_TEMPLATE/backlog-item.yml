@@ -14,7 +14,7 @@ body:
         | Dimension | Pick one |
         |-----------|----------|
         | Type | `bug` `enhancement` `refactor` `testing` `chore` `documentation` `performance` `security` |
-        | Area | `area: connect` `area: jobs` `area: feed` `area: companies` `area: popup` `area: background` `area: playwright` `area: ci` |
+        | Area | `area: connect` `area: jobs` `area: feed` `area: companies` `area: popup` `area: background` `area: ci` |
         | Risk | `breaking-change` `dependencies` |
 
   - type: textarea

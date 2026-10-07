@@ -42,7 +42,6 @@ body:
         - "companies (company-follow.js)"
         - "popup / dashboard"
         - "background (service worker)"
-        - "playwright connector"
         - "ci / tooling"
         - "unknown"
     validations:
