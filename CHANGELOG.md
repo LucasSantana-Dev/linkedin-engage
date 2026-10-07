@@ -8,12 +8,19 @@ All notable changes to this project will be documented in this file.
 - Withdraw stale invites mode: opt-in, withdraws pending invitations older than N weeks (default 3), 20 per run and 40 per day (#236)
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
+### Fixed
+- Profile walker panel and run result messages are now localized in PT-BR (#234)
+
+### Changed
+- Shared getWeekKey and status labels between popup and dashboard; rate-limiter is now a UMD module (#235)
+
 ### Security
 - Vendored pdf.js updated to 6.4.299 (GHSA-hq66-cqwq-w95j) and eval disabled in the PDF parser (#231)
 
 ### Removed
 - Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
 - Chrome Web Store publish job; releases ship as GitHub zip only (#225)
+- Orphan Feed/Nurture/AI locale keys and dead skip-keyword code (#234)
 
 ### Docs
 - README, privacy policy and agent docs no longer describe removed Feed, Nurture and Groq features (#226)

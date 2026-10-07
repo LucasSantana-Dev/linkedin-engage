@@ -223,7 +223,9 @@ if (typeof window.linkedInWithdrawInvitesInjected === 'undefined') {
             return buildResult(state, {
                 runStatus: 'success',
                 reason: 'no-results',
-                message: msg('none', [minWeeks])
+                message: msg('none', [minWeeks]),
+                messageKey: 'popup.withdraw.none',
+                messageArgs: [minWeeks]
             });
         }
 
@@ -306,7 +308,9 @@ if (typeof window.linkedInWithdrawInvitesInjected === 'undefined') {
                 : msg('failures', [consecutiveFailures]),
             message: msg('doneDetail', [
                 withdrawn, state.tooRecent, state.unknownAge
-            ])
+            ]),
+            messageKey: 'popup.withdraw.done',
+            messageArgs: [withdrawn, state.tooRecent, state.unknownAge]
         });
     }
 

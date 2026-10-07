@@ -1,4 +1,3 @@
-const WEEKLY_LIMIT = 150;
 const DAYS_IN_CHART = 14;
 const MIN_BAR_HEIGHT_PCT = 5;
 const HOUR_LABEL_STEP = 3;
@@ -37,32 +36,11 @@ function formatDashboardDateTime(value) {
 }
 
 function translateDashboardStatus(status) {
-    const value = String(status || '').trim();
-    const map = {
-        sent: ['status.sent', 'Sent'],
-        accepted: ['status.accepted', 'Accepted'],
-        visited: ['status.visited', 'Visited'],
-        followed: ['status.followed', 'Followed'],
-        'visited-followed': ['status.visitedFollowed', 'Visited + Followed'],
-        'company-followed': ['status.companyFollowed', 'Company followed'],
-        withdrawn: ['status.withdrawn', 'Withdrawn']
-    };
-    if (map[value]) {
-        const [key, fallback] = map[value];
-        return dt(key, null, fallback);
-    }
-    if (value.startsWith('company-')) {
-        return dt(
-            'status.companyAction',
-            null,
-            value.replace(/^company-/, 'company ')
-        );
-    }
-    if (value.startsWith('skipped-')) {
-        const key = `status.${value.replace(/^skipped-/, '')}`;
-        return dt(key, null, value.replace(/^skipped-/, ''));
-    }
-    return value.replace(/-/g, ' ');
+    return getStatusLabel(
+        status,
+        (key, fallback) => dt(key, null, fallback),
+        { includeCompany: true, trim: true }
+    );
 }
 
 function translateTabName(tab) {
@@ -343,15 +321,6 @@ function initializeDashboardTabs() {
             renderDashboardTabs();
         }
     );
-}
-
-function getWeekKey() {
-    const now = new Date();
-    const jan1 = new Date(now.getFullYear(), 0, 1);
-    const week = Math.ceil(
-        ((now - jan1) / 86400000 + jan1.getDay() + 1) / 7
-    );
-    return `week_${now.getFullYear()}_${week}`;
 }
 
 function escapeHtml(str) {

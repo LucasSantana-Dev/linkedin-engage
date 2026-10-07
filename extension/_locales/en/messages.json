@@ -71,9 +71,6 @@
   "common_expectedResults": {
     "message": "Expected Results"
   },
-  "common_feed": {
-    "message": "Feed"
-  },
   "common_fullName": {
     "message": "Full name"
   },
@@ -103,9 +100,6 @@
   },
   "common_refine": {
     "message": "Refine"
-  },
-  "common_remove": {
-    "message": "Remove"
   },
   "common_runEveryHours": {
     "message": "Run every (hours)"
@@ -152,23 +146,8 @@
   "notification_companyScheduledQuery": {
     "message": "Scheduled company follow: query \"$1\""
   },
-  "notification_feedScheduledEngage": {
-    "message": "Scheduled feed engagement: $1 posts$2"
-  },
-  "notification_feedScheduledEngageCommentSuffix": {
-    "message": " (react+comment)"
-  },
-  "notification_feedScheduledEngageReactSuffix": {
-    "message": " (react only)"
-  },
-  "notification_feedScheduledWarmup": {
-    "message": "Scheduled feed warmup run $1/$2: react + learn only"
-  },
   "notification_loginRequired": {
     "message": "LinkedIn login required. Please log in and restart the automation."
-  },
-  "notification_nurtureStarted": {
-    "message": "Nurturing $1: engaging with recent posts"
   },
   "notification_quotaRetry": {
     "message": "Quota retry: testing with 10 invites to check if limit reset."
@@ -230,15 +209,6 @@
   "options_card_bestHour": {
     "message": "Best Hour"
   },
-  "options_card_commentedSub": {
-    "message": "commented / engaged"
-  },
-  "options_card_commentRate": {
-    "message": "Comment Rate"
-  },
-  "options_card_commentsSent": {
-    "message": "Comments Sent"
-  },
   "options_card_companies": {
     "message": "Companies"
   },
@@ -253,12 +223,6 @@
   },
   "options_card_engagedSub": {
     "message": "profile visits + follows"
-  },
-  "options_card_feed": {
-    "message": "Feed"
-  },
-  "options_card_feedSub": {
-    "message": "posts reacted/commented"
   },
   "options_card_followed": {
     "message": "Followed"
@@ -287,9 +251,6 @@
   "options_card_topCategory": {
     "message": "Top Category"
   },
-  "options_card_topReaction": {
-    "message": "Top Reaction"
-  },
   "options_card_verifiedSent": {
     "message": "Verified Sent"
   },
@@ -299,38 +260,14 @@
   "options_empty_logs": {
     "message": "No connection history yet. Run the automation to start tracking."
   },
-  "options_empty_nurture": {
-    "message": "No nurture targets yet. New connections are added automatically during connect runs."
-  },
   "options_exportCsv": {
     "message": "Export CSV"
-  },
-  "options_feed_commentRateCount": {
-    "message": "$1 of $2 posts"
-  },
-  "options_feed_commentRateSub": {
-    "message": "of posts engaged"
-  },
-  "options_feed_skippedSub": {
-    "message": "keyword/duplicate filter"
-  },
-  "options_feed_timesUsed": {
-    "message": "$1 times"
-  },
-  "options_feed_topReactionSub": {
-    "message": "most used"
-  },
-  "options_nurture_entryMeta": {
-    "message": "$1/3 engagements · added $2d ago"
   },
   "options_schedule_companiesEvery": {
     "message": "Companies: every $1h (batch $2)"
   },
   "options_schedule_connectEvery": {
     "message": "Connect: every $1h"
-  },
-  "options_schedule_feedEvery": {
-    "message": "Feed: every $1h"
   },
   "options_schedule_notScheduled": {
     "message": "Not scheduled"
@@ -350,9 +287,6 @@
   "options_section_logs": {
     "message": "Recent Connection Log"
   },
-  "options_section_nurture": {
-    "message": "Connection Nurture List"
-  },
   "options_section_reactionBreakdown": {
     "message": "Reaction Breakdown"
   },
@@ -365,14 +299,8 @@
   "options_tab_activity": {
     "message": "Activity"
   },
-  "options_tab_feed": {
-    "message": "Feed"
-  },
   "options_tab_logs": {
     "message": "Logs"
-  },
-  "options_tab_nurture": {
-    "message": "Nurture"
   },
   "options_tab_overview": {
     "message": "Overview"
@@ -589,114 +517,6 @@
   },
   "popup_connect_warningWeeklyLimitAdjusted": {
     "message": "Only $1 invites left this week ($2/$3). Limit auto-adjusted to $1."
-  },
-  "popup_feed_aiApiKey": {
-    "message": "AI API Key (Groq — free)"
-  },
-  "popup_feed_checkEveryHours": {
-    "message": "Check every (hours)"
-  },
-  "popup_feed_comment": {
-    "message": "Comment on posts"
-  },
-  "popup_feed_commentSettings": {
-    "message": "Comment Settings"
-  },
-  "popup_feed_enableWarmup": {
-    "message": "Enable Warmup Learning"
-  },
-  "popup_feed_errorEnableReactOrComment": {
-    "message": "Enable at least one: react or comment."
-  },
-  "popup_feed_fallbackTemplates": {
-    "message": "Fallback templates (one per line)"
-  },
-  "popup_feed_nurtureConnections": {
-    "message": "Nurture new connections"
-  },
-  "popup_feed_openingFeed": {
-    "message": "Navigating to feed..."
-  },
-  "popup_feed_postsPerVisit": {
-    "message": "Posts per visit"
-  },
-  "popup_feed_react": {
-    "message": "React to posts"
-  },
-  "popup_feed_resetLearningProgress": {
-    "message": "Reset Learning Progress"
-  },
-  "popup_feed_resetWarmupFailed": {
-    "message": "Failed to reset warmup progress."
-  },
-  "popup_feed_resetWarmupSuccess": {
-    "message": "Warmup learning progress reset."
-  },
-  "popup_feed_scheduleRecurring": {
-    "message": "Schedule recurring feed engagement"
-  },
-  "popup_feed_section": {
-    "message": "Feed Engagement"
-  },
-  "popup_feed_skipKeywords": {
-    "message": "Skip posts with keywords (one per line)"
-  },
-  "popup_feed_skipTemplateApplied": {
-    "message": "Keyword template applied."
-  },
-  "popup_feed_skipTemplateAppend": {
-    "message": "Append list"
-  },
-  "popup_feed_skipTemplateAppended": {
-    "message": "Keyword template appended."
-  },
-  "popup_feed_skipTemplateChoose": {
-    "message": "Choose template"
-  },
-  "popup_feed_skipTemplateCryptoHype": {
-    "message": "Crypto / Web3 hype"
-  },
-  "popup_feed_skipTemplateControversy": {
-    "message": "Controversy / rage-bait"
-  },
-  "popup_feed_skipTemplateEngagementBait": {
-    "message": "Engagement bait"
-  },
-  "popup_feed_skipTemplateHelp": {
-    "message": "Use a template as a starting point, then customize the list."
-  },
-  "popup_feed_skipTemplateLabel": {
-    "message": "Keyword template"
-  },
-  "popup_feed_skipTemplateJobSpam": {
-    "message": "Job spam / mass hiring"
-  },
-  "popup_feed_skipTemplatePolitics": {
-    "message": "Politics-heavy"
-  },
-  "popup_feed_skipTemplateReplace": {
-    "message": "Replace list"
-  },
-  "popup_feed_skipTemplateSelectFirst": {
-    "message": "Choose a keyword template first."
-  },
-  "popup_feed_skipTemplateSponsored": {
-    "message": "Sponsored & Ads"
-  },
-  "popup_feed_warmupDisabled": {
-    "message": "Learning warmup disabled. Comments are unlocked."
-  },
-  "popup_feed_warmupProgress": {
-    "message": "Learning progress: $1 / $2 runs · Comments unlock on run #$3"
-  },
-  "popup_feed_warmupRunning": {
-    "message": "Warmup mode: reacting + learning..."
-  },
-  "popup_feed_warmupRunsRequired": {
-    "message": "Warmup Runs Required"
-  },
-  "popup_feed_warmupStarted": {
-    "message": "Warmup run $1/$2: reactions + learning, no comments."
   },
   "popup_footer_safeRun": {
     "message": "Runs safely in your browser"
@@ -956,12 +776,6 @@
   "popup_jobs_workTypeRemote": {
     "message": "Remote"
   },
-  "popup_nurture_empty": {
-    "message": "No nurture targets yet. Connect with people to start nurturing."
-  },
-  "popup_nurture_summary": {
-    "message": "$1 total, $2 active targets ready."
-  },
   "popup_progress_engaged": {
     "message": "Engaged"
   },
@@ -1016,9 +830,6 @@
   "popup_start_errorFailed": {
     "message": "Failed to start: $1"
   },
-  "popup_start_feed": {
-    "message": "Engage Feed"
-  },
   "popup_start_jobs": {
     "message": "Assist Job Apply"
   },
@@ -1057,9 +868,6 @@
   },
   "status_email": {
     "message": "email"
-  },
-  "status_feedEngaged": {
-    "message": "Feed engaged"
   },
   "status_followed": {
     "message": "Followed"
@@ -1189,6 +997,87 @@
   },
   "popup_connect_noteQuotaReached": {
     "message": "LinkedIn note quota reached: $1 invites were sent without a note."
+  },
+  "popup_passive_title": {
+    "message": "Passive visibility"
+  },
+  "popup_passive_enableWalker": {
+    "message": "Enable profile-view walker (opt-in)"
+  },
+  "popup_passive_dailyTarget": {
+    "message": "Daily profile-view target (max 50)"
+  },
+  "popup_passive_startWalk": {
+    "message": "Start walk"
+  },
+  "popup_passive_enableFirst": {
+    "message": "Enable the profile walker first."
+  },
+  "popup_passive_starting": {
+    "message": "Starting profile walk (target $1)..."
+  },
+  "popup_passive_startFailed": {
+    "message": "Failed to start walk: $1"
+  },
+  "popup_passive_stopRequested": {
+    "message": "Stop requested."
+  },
+  "popup_passive_done": {
+    "message": "Walk done: visited $1 (today $2/$3), reason $4"
+  },
+  "popup_result_captcha": {
+    "message": "CAPTCHA detected"
+  },
+  "popup_result_captchaStopped": {
+    "message": "CAPTCHA or security challenge detected. Sent $1 before stop."
+  },
+  "popup_result_captchaAfterNav": {
+    "message": "CAPTCHA detected after page navigation. Sent $1."
+  },
+  "popup_result_securityChallenge": {
+    "message": "CAPTCHA or security challenge detected"
+  },
+  "popup_result_searchNoResults": {
+    "message": "Search returned no results for this query."
+  },
+  "popup_result_quotaFallback": {
+    "message": "Sent $1, then engaged $2 profiles (quota fallback)."
+  },
+  "popup_result_connectFinished": {
+    "message": "Finished! Sent $1 connection requests."
+  },
+  "popup_result_engagementDone": {
+    "message": "Engagement done! Visited/followed $1 profiles."
+  },
+  "popup_result_companyNoResults": {
+    "message": "No results for current query."
+  },
+  "popup_result_companyNoMoreResults": {
+    "message": "No additional results for current query."
+  },
+  "popup_result_companyFollowedStep": {
+    "message": "Followed $1 companies in this search."
+  },
+  "popup_result_companyFollowedTotal": {
+    "message": "Followed $1 companies."
+  },
+  "popup_result_companyOpenSearchFailed": {
+    "message": "Failed to open company search"
+  },
+  "popup_result_previousRunCanceled": {
+    "message": "Previous run canceled by new company run."
+  },
+  "popup_result_jobsNoJobs": {
+    "message": "No jobs found on current page."
+  },
+  "popup_result_jobsPrepared": {
+    "message": "Job application prepared. Review and submit manually."
+  },
+  "popup_result_jobsManualInput": {
+    "message": "Manual input required on current application. Complete it and restart Jobs Assist."
+  },
+  "popup_result_jobsNoManualReview": {
+    "message": "No job reached manual-review stage."
   },
   "popup_settings_withdrawEnabled": {
     "message": "Enable Withdraw stale invites (opt-in)"
