@@ -39,7 +39,7 @@ Re-run `npm run install-hooks` after pulling changes to the install script — h
 
 The required CI status checks are:
 
-- `test (18)`, `test (20)`, `test (22)` — Jest on Node 18 / 20 / 22 matrix
+- `test (22)`, `test (24)`: Jest on the Node 22 / 24 matrix (lint, typecheck and coverage on 22)
 - `portability` — `scripts/check-path-portability.sh`
 
 `strict` is enabled — branches must be up-to-date with `main` before merge. Force-push and branch deletion are blocked. Squash merge is the convention.

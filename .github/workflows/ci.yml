@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v6
 
@@ -27,16 +27,16 @@ jobs:
       - run: npm ci
 
       - run: npm run lint
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
 
       - run: npm run typecheck
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
 
       - run: npm test -- --coverage --coverageReporters=text-summary --coverageReporters=json-summary
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
 
       - name: Comment coverage on PR
-        if: matrix.node-version == 20 && github.event_name == 'pull_request'
+        if: matrix.node-version == 22 && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -82,4 +82,4 @@ jobs:
             }
 
       - run: npm test
-        if: matrix.node-version != 20
+        if: matrix.node-version != 22

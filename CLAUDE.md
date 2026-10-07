@@ -13,7 +13,7 @@ npm test -- --coverage --coverageReporters=text-summary        # With coverage s
 npm run install-hooks                                           # Install local git hooks
 ```
 
-CI runs lint + typecheck on Node 20 only; tests run on Node 18, 20, and 22.
+CI runs lint + typecheck + coverage on Node 22 only; tests run on Node 22 and 24.
 
 ## Architecture
 
@@ -58,7 +58,7 @@ Key lib modules:
 - `i18n.js` — locale catalog loader; keys in `_locales/*/messages.json` must match `[A-Za-z0-9_]` only
 - `popup-state.js` — popup DEFAULT_* constants and state normalization
 - `jobs-career-intelligence.js` — resume analysis + jobs plan generation (pure, no chrome API)
-- `jobs-career-vault.js` — AES-GCM + PBKDF2 encrypted IndexedDB; needs `require('crypto').webcrypto` fallback for Node 18
+- `jobs-career-vault.js` — AES-GCM + PBKDF2 encrypted IndexedDB; keeps a `require('crypto').webcrypto` fallback for jsdom tests
 
 ### Cross-document querying
 
@@ -86,8 +86,7 @@ Coverage applies to `extension/lib/**` only (`collectCoverageFrom` in `jest.conf
 Function headroom is tightest (+0.06pp over threshold: 638/644 at 99%). Watch this on refactors that add or remove functions.
 
 **Node cross-version gotchas:**
-- `crypto.subtle` — not a global on Node 18; use `require('crypto').webcrypto` fallback
-- `btoa`/`atob` — not available in Node 18; use `Buffer.from` fallback
+- `crypto.subtle` — jsdom may not expose it; keep the `require('crypto').webcrypto` fallback
 - jsdom cross-realm `ArrayBuffer` — wrap in `Uint8Array` before passing to SubtleCrypto
 
 ## Release flow

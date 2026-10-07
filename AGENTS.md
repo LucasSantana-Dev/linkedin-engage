@@ -36,10 +36,10 @@ tests/                 # 47 test files
 
 - **Runtime**: Chrome Extension (Manifest V3), service worker + content scripts
 - **Language**: JavaScript (no build step, no bundler)
-- **Testing**: Jest + jest-environment-jsdom, Node 18/20/22
+- **Testing**: Jest + jest-environment-jsdom, Node 22/24
 - **Linting**: ESLint
 - **Type checking**: TypeScript (allowJs, noEmit)
-- **CI**: GitHub Actions (lint + typecheck on Node 20, tests on Node 18/20/22)
+- **CI**: GitHub Actions (lint + typecheck + coverage on Node 22, tests on Node 22/24)
 - **Release**: Automatic GitHub Release + zip on `v*` tags
 
 ## Key Modules (extension/lib/)
@@ -105,6 +105,6 @@ CI auto-posts a coverage table comment on every PR.
 
 - `extension/lib/` modules are testable in Node; `extension/*.js` scripts are Chrome-only runtime
 - `jobs-career-parser.js` lines 27-56 (loadPdfJs/extractTextFromPdf) require `chrome.runtime.getURL` — untestable in Node/jsdom
-- `jobs-career-vault.js` needs `require('crypto').webcrypto` fallback for Node 18 (no global `crypto.subtle`)
+- `jobs-career-vault.js` keeps a `require('crypto').webcrypto` fallback for jsdom tests
 - `STATE_TAG_VERSION` in `connect-config.js` must be bumped when adding presets (triggers migration)
 - Locale keys in `_locales/*/messages.json` must use `[A-Za-z0-9_]` only — dotted keys are normalized at the i18n boundary
