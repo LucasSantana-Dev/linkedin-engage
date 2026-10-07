@@ -285,6 +285,74 @@ describe('confirmation dialog and completion helpers', () => {
         expect(lib.findDialogDismiss(null)).toBeNull();
     });
 
+    function loadDialogFixture(open = true) {
+        document.body.innerHTML = fs.readFileSync(path.join(
+            __dirname,
+            'fixtures/linkedin-sent-invitations/withdraw-dialog.html'
+        ), 'utf8');
+        if (!open) {
+            document.getElementById('withdraw-confirm')
+                .removeAttribute('open');
+        }
+    }
+
+    test('findWithdrawConfirm finds the button in a native open dialog', () => {
+        loadDialogFixture();
+        expect(lib.findWithdrawConfirm(document, null).id).toBe('confirm');
+    });
+
+    test('a closed native dialog is ignored', () => {
+        loadDialogFixture(false);
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+        expect(lib.findDialogDismiss(document)).toBeNull();
+    });
+
+    test('hidden dialogs are ignored', () => {
+        loadDialogFixture();
+        const dlg = document.getElementById('withdraw-confirm');
+        dlg.setAttribute('aria-hidden', 'true');
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+        dlg.removeAttribute('aria-hidden');
+        dlg.setAttribute('hidden', '');
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+    });
+
+    test('an ad-menu dialog never yields a confirmation', () => {
+        loadDialogFixture(false);
+        document.getElementById('ad-menu').setAttribute('open', '');
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+    });
+
+    test('aria-modal containers count and are not duplicated by role', () => {
+        document.body.innerHTML =
+            '<div role="dialog" aria-modal="true"><button id="ok">Withdraw</button></div>' +
+            '<div aria-modal="true"><button id="ok2">Withdraw</button></div>';
+        expect(lib.findWithdrawConfirm(document, null).id).toBe('ok');
+    });
+
+    test('findDialogDismiss returns Cancel in the native dialog, not Withdraw', () => {
+        loadDialogFixture();
+        expect(lib.findDialogDismiss(document).id).toBe('cancel');
+    });
+
+    test('a native dialog nested inside a listitem card still confirms', () => {
+        loadFixture();
+        const card = document.querySelector('[role="listitem"]');
+        const orig = card.querySelector('a[aria-label^="Withdraw"]');
+        card.insertAdjacentHTML('beforeend',
+            '<dialog open><button id="cancel">Cancel</button>' +
+            '<button id="confirm">Withdraw</button></dialog>');
+        expect(lib.findWithdrawConfirm(document, orig).id).toBe('confirm');
+        expect(lib.findDialogDismiss(document).id).toBe('cancel');
+    });
+
+    test('a per-card control inside a native dialog is still rejected', () => {
+        document.body.innerHTML =
+            '<dialog open><div role="listitem"><button>Withdraw</button></div>' +
+            '<a aria-label="Withdraw invitation sent to B">Withdraw</a></dialog>';
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+    });
+
     test('isWithdrawComplete', () => {
         document.body.innerHTML = '<div id="c"><a id="l">Withdraw</a></div>';
         const card = document.getElementById('c');

@@ -46,9 +46,16 @@ describe('withdraw-invites MAIN-world runtime', () => {
                 if (behavior === 'direct') {
                     card.remove();
                 } else if (behavior === 'confirm' ||
+                    behavior === 'confirm-native' ||
                     behavior === 'confirm-never') {
-                    const dlg = document.createElement('div');
-                    dlg.setAttribute('role', 'dialog');
+                    const dlg = document.createElement(
+                        behavior === 'confirm-native' ? 'dialog' : 'div'
+                    );
+                    if (behavior === 'confirm-native') {
+                        dlg.setAttribute('open', '');
+                    } else {
+                        dlg.setAttribute('role', 'dialog');
+                    }
                     dlg.innerHTML =
                         '<button class="cancel">Cancel</button>' +
                         '<button class="ok">Withdraw</button>';
@@ -57,7 +64,7 @@ describe('withdraw-invites MAIN-world runtime', () => {
                     );
                     dlg.querySelector('.ok').addEventListener('click', () => {
                         dlg.remove();
-                        if (behavior === 'confirm') card.remove();
+                        if (behavior !== 'confirm-never') card.remove();
                     });
                     document.body.appendChild(dlg);
                 }
@@ -138,6 +145,16 @@ describe('withdraw-invites MAIN-world runtime', () => {
         expect(clicks).toHaveLength(1);
         expect(result.withdrawn).toBe(1);
         expect(document.querySelector('[role="dialog"]')).toBeNull();
+    });
+
+    test('withdraws through a native role-less dialog', async () => {
+        load('confirm-native');
+        const result = await api.runWithdrawInvites({
+            minWeeks: 3, limit: 1, timing: FAST
+        });
+        expect(clicks).toHaveLength(1);
+        expect(result.withdrawn).toBe(1);
+        expect(document.querySelector('dialog')).toBeNull();
     });
 
     test('respects the remaining daily budget', async () => {

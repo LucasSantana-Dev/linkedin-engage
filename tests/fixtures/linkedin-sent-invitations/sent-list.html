@@ -8,7 +8,7 @@
     - card: [role="listitem"]
     - age: leaf <span> with text "Sent <n> <unit> ago"
     - withdraw: <a aria-label="Withdraw invitation sent to <Name>"> with inner text "Withdraw" (href is a placeholder; it is an SDUI action link)
-  Not captured (needs a click): the withdraw confirmation dialog. Validate in smoke test #233.
+  The withdraw confirmation is a native <dialog> without a role (captured live, see withdraw-dialog.html).
 -->
 <div data-testid="lazy-column" data-component-type="LazyColumn">
   <div role="listitem" componentkey="11111111-1111-1111-1111-000000000001">

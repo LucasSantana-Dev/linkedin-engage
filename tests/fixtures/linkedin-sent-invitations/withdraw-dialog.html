@@ -1,0 +1,19 @@
+<!--
+  LinkedIn Invitation Manager, Sent > People, after clicking a card's Withdraw (issue #274).
+  The confirmation is a native <dialog open> with NO role attribute. Controls are <button>s:
+  an icon-only close button (empty text), Cancel, Withdraw. The page also holds closed
+  <dialog> elements for ad menus. No shadow DOM, no iframe. Placeholder names only.
+-->
+<dialog open id="withdraw-confirm">
+  <button id="close-icon" type="button"><svg aria-hidden="true"></svg></button>
+  <h2>Withdraw invitation</h2>
+  <p>If you withdraw now, you won't be able to resend to this person for up to 3 weeks.</p>
+  <button id="cancel" type="button">Cancel</button>
+  <button id="confirm" type="button">Withdraw</button>
+</dialog>
+<dialog id="ad-menu">
+  <button type="button">Why am I seeing</button>
+  <button type="button">Hide or report</button>
+  <button type="button">Report this ad</button>
+  <button type="button">Submit</button>
+</dialog>
