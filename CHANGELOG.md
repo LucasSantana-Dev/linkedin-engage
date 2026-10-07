@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Security
+- Vendored pdf.js updated to 6.4.299 (GHSA-hq66-cqwq-w95j) and eval disabled in the PDF parser (#231)
+
 ### Removed
 - Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
 - Chrome Web Store publish job; releases ship as GitHub zip only (#225)
