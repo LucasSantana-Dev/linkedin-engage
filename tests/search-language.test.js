@@ -442,3 +442,35 @@ describe('search-language.js', () => {
     });
   });
 });
+
+describe('search-language.js display helpers', () => {
+  const lib = require('../extension/lib/search-language.js');
+
+  it('maps ui locale to search locale', () => {
+    expect(lib.uiLocaleToSearchLocale('pt_BR')).toBe('pt_BR');
+    expect(lib.uiLocaleToSearchLocale('en')).toBe('en');
+    expect(lib.uiLocaleToSearchLocale(undefined)).toBe('en');
+  });
+
+  it('formats display terms', () => {
+    expect(lib.formatDisplayTerm(null)).toBe('');
+    expect(lib.formatDisplayTerm('""')).toBe('');
+    expect(lib.formatDisplayTerm('"product manager"')).toBe('Product Manager');
+    expect(lib.formatDisplayTerm('CEO of ai')).toBe('CEO of ai');
+    expect(lib.formatDisplayTerm('c++ dev')).toBe('C++ dev');
+  });
+
+  it('localizes and formats a display term for a ui locale', () => {
+    const canonical = lib.localizeSearchTerms(['developer'], 'pt_BR')[0];
+    expect(lib.localizeDisplayTermForLocale('developer', 'pt_BR'))
+      .toBe(lib.formatDisplayTerm(canonical));
+    expect(lib.localizeDisplayTermForLocale('developer', 'en'))
+      .toBe(lib.formatDisplayTerm(lib.localizeSearchTerms(['developer'], 'en')[0]));
+  });
+
+  it('falls back to the raw term when localization yields nothing', () => {
+    expect(lib.localizeDisplayTermForLocale('', 'en')).toBe('');
+    expect(lib.localizeDisplayTermForLocale('zzz unknown term', 'en'))
+      .toBe('zzz Unknown Term');
+  });
+});

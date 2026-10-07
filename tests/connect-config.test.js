@@ -474,3 +474,21 @@ describe('connect-config', () => {
         });
     });
 });
+
+describe('getJobsPresetTerms', () => {
+  const cfg = require('../extension/lib/connect-config.js');
+
+  it('returns empty lists for falsy, custom or unknown presets', () => {
+    expect(cfg.getJobsPresetTerms('')).toEqual({ role: [], industry: [] });
+    expect(cfg.getJobsPresetTerms('custom')).toEqual({ role: [], industry: [] });
+    expect(cfg.getJobsPresetTerms('nope-preset')).toEqual({ role: [], industry: [] });
+  });
+
+  it('returns copies of preset terms', () => {
+    const key = Object.keys(cfg.AREA_PRESETS).find(k => k !== 'custom' && cfg.AREA_PRESETS[k].role);
+    const out = cfg.getJobsPresetTerms(key);
+    expect(out.role).toEqual(cfg.AREA_PRESETS[key].role);
+    expect(out.role).not.toBe(cfg.AREA_PRESETS[key].role);
+    expect(out.industry).not.toBe(cfg.AREA_PRESETS[key].industry);
+  });
+});
