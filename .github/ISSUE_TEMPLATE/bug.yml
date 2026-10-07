@@ -38,11 +38,9 @@ body:
       options:
         - "connect (content.js)"
         - "jobs (jobs-assist.js)"
-        - "feed (feed-engage.js)"
         - "companies (company-follow.js)"
         - "popup / dashboard"
         - "background (service worker)"
-        - "playwright connector"
         - "ci / tooling"
         - "unknown"
     validations:
