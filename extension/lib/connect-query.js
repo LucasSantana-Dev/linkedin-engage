@@ -25,7 +25,8 @@
         }
 
         /**
-         * Build a relaxed connect query by removing boolean operators and capping segments.
+         * Build a relaxed connect query: at most 3 terms joined by OR (2 operators),
+         * so the retry keeps the OR intent and stays under LinkedIn's operator cap.
          * @param {string} query - The original query string
          * @returns {string} The relaxed query
          */
@@ -45,7 +46,7 @@
                 }
             }
             if (uniqueSegments.length > 0) {
-                return uniqueSegments.slice(0, 4).join(' ');
+                return uniqueSegments.slice(0, 3).join(' OR ');
             }
 
             const words = source
@@ -54,7 +55,7 @@
                 .filter(part => part && !/^(AND|OR|NOT)$/i.test(part));
 
             if (words.length === 0) return source;
-            return words.slice(0, 4).join(' ');
+            return words.slice(0, 3).join(' OR ');
         }
 
         /**

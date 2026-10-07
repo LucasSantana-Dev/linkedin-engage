@@ -19,6 +19,11 @@
             'bilingual'
         ]);
 
+        // LinkedIn people and company search return "No results found" once
+        // the keyword query has more than 5 boolean operators (OR + AND +
+        // NOT combined). Jobs search is not affected. Verified live 2026-10-07.
+        const LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP = 5;
+
         const TERM_VARIANTS = Object.freeze({
             recruiter: {
                 en: ['recruiter'],
@@ -955,6 +960,7 @@
         }
 
         return {
+            LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP,
             SEARCH_LANGUAGE_MODES,
             normalizeSearchLanguageMode,
             resolveSearchLocale,
