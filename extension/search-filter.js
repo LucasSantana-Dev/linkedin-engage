@@ -35,7 +35,8 @@
         const cards = document.querySelectorAll(
             '.entity-result, ' +
             '.reusable-search__result-container, ' +
-            '[data-chameleon-result-urn]'
+            '[data-chameleon-result-urn], ' +
+            '[role="listitem"]'
         );
         for (const card of cards) {
             if (card.dataset.leDone) continue;
