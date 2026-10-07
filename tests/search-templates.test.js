@@ -410,7 +410,7 @@ describe('search-templates', () => {
         expect(plan.query.toLowerCase()).toContain('brasil');
     });
 
-    it('builds companies template plan with offshore terms and exclusions within budget', () => {
+    it('builds companies template plan with offshore terms and no NOT tail within the operator cap', () => {
         const plan = buildSearchTemplatePlan({
             mode: 'companies',
             areaPreset: 'tech',
@@ -422,8 +422,8 @@ describe('search-templates', () => {
 
         expect(plan.query.toLowerCase()).toContain('nearshore software company');
         expect(plan.query.toLowerCase()).toContain('latam talent partner');
-        expect(plan.query.toLowerCase()).toContain('not university');
-        expect(plan.meta.operatorCount).toBeLessThanOrEqual(12);
+        expect(plan.query.toLowerCase()).not.toContain('not ');
+        expect(plan.meta.operatorCount).toBeLessThanOrEqual(5);
     });
 
     it('keeps companies default keywords when selectedTags.keywords is missing', () => {
@@ -440,7 +440,7 @@ describe('search-templates', () => {
         const q = plan.query.toLowerCase();
         expect(q).toContain('nearshore software company');
         expect(q).toContain('latam talent partner');
-        expect(q).toContain('not university');
+        expect(q).not.toContain('not ');
     });
 
     it('omits companies default keywords when selectedTags.keywords is explicitly empty', () => {
@@ -475,7 +475,7 @@ describe('search-templates', () => {
         const q = plan.query.toLowerCase();
         expect(q).toContain('nearshore software company');
         expect(q).toContain('latam talent partner');
-        expect(q).toContain('not university');
+        expect(q).not.toContain('not ');
     });
 
     it('keeps jobs defaults when role/location/keywords keys are missing', () => {
@@ -691,7 +691,7 @@ describe('search-templates', () => {
             const query = plan.query.toLowerCase();
             expect(plan.template.id).toBe('companies.tech.talent_watchlist.balanced');
             expect(query).toMatch(/hiring latam developers|latam talent partner/);
-            expect(query).toContain('not university');
+            expect(query).not.toContain('not ');
         });
 
         it('buildSearchTemplatePlan — manual companies tech sub-preset interleaves specialty with offshore terms', () => {
@@ -1110,7 +1110,11 @@ describe('connect plan — workMode and seniority chip groups', () => {
         expect(plan.query).toMatch(/\bhíbrido\b/);
     });
 
-    it('localizes new seniority chips to PT-BR (intern, associate, junior)', () => {
+    it.each([
+        ['intern', /estagiário|estágio/],
+        ['associate', /\bassistente\b/],
+        ['junior', /\bjúnior\b/]
+    ])('localizes seniority chip %s to PT-BR', (chip, pattern) => {
         const plan = buildSearchTemplatePlan({
             mode: 'connect',
             areaPreset: 'custom',
@@ -1123,12 +1127,10 @@ describe('connect plan — workMode and seniority chip groups', () => {
                 role: [],
                 industry: [],
                 market: [],
-                level: ['intern', 'associate', 'junior']
+                level: [chip]
             }
         });
-        expect(plan.query).toMatch(/estagiário|estágio/);
-        expect(plan.query).toMatch(/\bjúnior\b/);
-        expect(plan.query).toMatch(/\bassistente\b/);
+        expect(plan.query).toMatch(pattern);
     });
 
     it('produces no workMode terms when none selected', () => {

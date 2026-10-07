@@ -82,16 +82,17 @@ describe('buildConnectSearchKeywords', () => {
 });
 
 describe('buildRelaxedConnectQuery', () => {
-    it('removes AND operators and returns 4 segments max', () => {
+    it('removes AND operators and keeps 3 terms joined by OR', () => {
         const result = buildRelaxedConnectQuery('javascript AND python AND ruby AND go AND rust');
-        const segments = result.split(/\s+/);
-        expect(segments.length).toBeLessThanOrEqual(4);
+        expect(result).toBe('javascript OR python OR ruby');
         expect(result).not.toContain('AND');
     });
 
-    it('removes OR operators', () => {
-        const result = buildRelaxedConnectQuery('senior OR junior OR manager');
-        expect(result).not.toContain('OR');
+    it('keeps OR between terms and at most 3 terms', () => {
+        const result = buildRelaxedConnectQuery('senior OR junior OR manager OR lead OR head');
+        expect(result).toBe('senior OR junior OR manager');
+        expect(result.split(' OR ')).toHaveLength(3);
+        expect(countBooleanOperatorsSafe(result)).toBeLessThanOrEqual(2);
     });
 
     it('returns empty for empty query', () => {
@@ -104,7 +105,7 @@ describe('buildRelaxedConnectQuery', () => {
         expect(segments).toContain('python');
         expect(segments).toContain('javascript');
         // Only one instance of python in the result
-        expect(result).toBe('python javascript');
+        expect(result).toBe('python OR javascript');
     });
 
     it('strips special chars from segments', () => {
@@ -118,11 +119,9 @@ describe('buildRelaxedConnectQuery', () => {
         expect(result).toBe('!@#');
     });
 
-    it('caps at 4 Boolean-operator-separated segments', () => {
-        // With AND/OR, each segment is capped to max 4 segments
+    it('caps at 3 Boolean-operator-separated segments', () => {
         const result = buildRelaxedConnectQuery('one AND two AND three AND four AND five');
-        const segments = result.split(/\s+/);
-        expect(segments.length).toBeLessThanOrEqual(4);
+        expect(result).toBe('one OR two OR three');
     });
 
     it('uses fallback word path when all segments normalize to empty', () => {
@@ -366,8 +365,7 @@ describe('buildRelaxedConnectConfig', () => {
             mockNormalizeTemplateMeta
         );
         expect(result.query).not.toContain('AND');
-        expect(result.query.split(/\s+/).length)
-        .toBeLessThanOrEqual(4);
+        expect(result.query).toBe('python OR javascript OR ruby');
     });
 
     it('normalizes template metadata with injected function', () => {

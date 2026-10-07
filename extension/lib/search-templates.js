@@ -21,6 +21,10 @@
             searchLanguageApi?.resolveSearchLocale;
         const localizeSearchTerms =
             searchLanguageApi?.localizeSearchTerms;
+        // Connect and Companies queries must stay within this many boolean
+        // operators (OR + AND + NOT) or LinkedIn returns no results.
+        const LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP =
+            searchLanguageApi?.LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP || 5;
         const EXPECTED_RESULTS_BUCKETS = Object.freeze([
             'precise',
             'balanced',
@@ -98,16 +102,6 @@
             'hiring latam developers',
             'nearshore software company',
             'latam talent partner'
-        ]);
-
-        const TECH_COMPANIES_EXCLUDE_KEYWORDS = Object.freeze([
-            'university',
-            'college',
-            'institute',
-            'academy',
-            'bootcamp',
-            'group',
-            'jobs'
         ]);
 
         const SEARCH_TEMPLATES = Object.freeze([
@@ -1286,7 +1280,7 @@
                 usageGoal: 'talent_watchlist',
                 expectedResultsBucket: 'balanced',
                 querySpec: {
-                    keywords: ['technology companies', 'hiring teams']
+                    keywords: ['software development']
                 },
                 filterSpec: {
                     batchSize: 10
@@ -2055,7 +2049,54 @@
             );
             if (any) return any;
 
+            if (areaPreset !== 'custom') {
+                const sameArea = findSameAreaTemplate(
+                    mode,
+                    [areaPreset, areaFamily].filter(area => area !== 'custom'),
+                    usageGoal,
+                    expectedResultsBucket
+                );
+                if (sameArea) return sameArea;
+            }
+
             return findModeDefaultTemplate(mode, usageGoal, expectedResultsBucket);
+        }
+
+        // Last resort before the generic `custom` template: a template of the
+        // same preset (then the same family) with any goal or bucket, so a
+        // finance search never inherits the generic tech terms (#266).
+        // Within one area: same goal first, then same bucket, then balanced.
+        function findSameAreaTemplate(mode, areas, usageGoal, bucket) {
+            for (const area of areas) {
+                const inArea = SEARCH_TEMPLATES.filter(template =>
+                    template.mode === mode && template.areaPreset === area
+                );
+                if (inArea.length === 0) continue;
+                return inArea.find(t => t.usageGoal === usageGoal) ||
+                    inArea.find(t => t.expectedResultsBucket === bucket) ||
+                    inArea.find(t => t.expectedResultsBucket === 'balanced') ||
+                    inArea[0];
+            }
+            return null;
+        }
+
+        // True when the generic `custom` template was picked for a preset
+        // that is not `custom`. Its terms are placeholders for "any field",
+        // so they must not be merged into the preset's own terms (#266).
+        function isGenericFallbackTemplate(template, options) {
+            if (template?.areaPreset !== 'custom') return false;
+            const requested = template.mode === 'companies'
+                ? normalizeCompaniesAreaPreset(options?.areaPreset)
+                : normalizeAreaPresetValue(options?.areaPreset);
+            return requested !== 'custom';
+        }
+
+        function effectiveQuerySpec(template, options, selectedPrimary) {
+            if (listFrom(selectedPrimary).length > 0 &&
+                isGenericFallbackTemplate(template, options)) {
+                return {};
+            }
+            return template?.querySpec || {};
         }
 
         function mergeGroupTerms(template, selected, key) {
@@ -2157,29 +2198,36 @@
             const expectedResultsBucket = normalizeExpectedResultsBucket(
                 template.expectedResultsBucket
             );
+            const mergeTemplate = {
+                querySpec: effectiveQuerySpec(
+                    template,
+                    options,
+                    selectedTags.role
+                )
+            };
             const groupTerms = {
                 role: localizeTerms(
                     shouldOmitDefaults('role')
                         ? selectedValues('role')
-                        : mergeGroupTerms(template, selectedTags, 'role'),
+                        : mergeGroupTerms(mergeTemplate, selectedTags, 'role'),
                     searchLocale
                 ),
                 industry: localizeTerms(
                     shouldOmitDefaults('industry')
                         ? selectedValues('industry')
-                        : mergeGroupTerms(template, selectedTags, 'industry'),
+                        : mergeGroupTerms(mergeTemplate, selectedTags, 'industry'),
                     searchLocale
                 ),
                 market: localizeTerms(
-                    mergeGroupTerms(template, selectedTags, 'market'),
+                    mergeGroupTerms(mergeTemplate, selectedTags, 'market'),
                     searchLocale
                 ),
                 level: localizeTerms(
-                    mergeGroupTerms(template, selectedTags, 'level'),
+                    mergeGroupTerms(mergeTemplate, selectedTags, 'level'),
                     searchLocale
                 ),
                 workMode: localizeTerms(
-                    mergeGroupTerms(template, selectedTags, 'workMode'),
+                    mergeGroupTerms(mergeTemplate, selectedTags, 'workMode'),
                     searchLocale
                 )
             };
@@ -2213,7 +2261,9 @@
                 ),
                 must: [],
                 mustNot: excludeKeywords,
-                budget: 12,
+                // Trim order (tail first): workMode, level, market,
+                // industry, then roles. Roles carry the intent.
+                budget: LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP,
                 explicitAnd: false,
                 wrapShould: false
             });
@@ -2266,25 +2316,26 @@
                 template?.areaPreset
             ) === 'tech' && template?.usageGoal === 'talent_watchlist';
 
+            const querySpec = effectiveQuerySpec(
+                template,
+                options,
+                selectedTags.keywords
+            );
             const keywords = resolveLocalizedOptionalGroup(
                 selectedTags,
                 'keywords',
-                template?.querySpec?.keywords,
+                querySpec.keywords,
                 searchLocale
             );
             const excludeKeywords = resolveLocalizedOptionalGroup(
                 selectedTags,
                 'excludeKeywords',
-                template?.querySpec?.excludeKeywords,
+                querySpec.excludeKeywords,
                 searchLocale
             );
 
             const localizedTechOffshoreKeywords = localizeTerms(
                 TECH_COMPANIES_OFFSHORE_KEYWORDS,
-                searchLocale
-            );
-            const localizedTechExcludeKeywords = localizeTerms(
-                TECH_COMPANIES_EXCLUDE_KEYWORDS,
                 searchLocale
             );
 
@@ -2309,9 +2360,13 @@
                         .concat(offshoreKeywords);
                 })();
 
-            const mergedExcludeKeywords = !isTechTalentWatchlist || hasExplicitExcludeKeywords
+            // NOT tails count against the operator cap and made searches
+            // return nothing. Low-fit entities (education, training, job
+            // boards) are skipped after the search by isLowFitCompanyEntity,
+            // so only user-provided exclusions are compiled.
+            const mergedExcludeKeywords = hasExplicitExcludeKeywords
                 ? excludeKeywords
-                : excludeKeywords.concat(localizedTechExcludeKeywords);
+                : [];
 
             const prioritizedKeywords = uniqueNormalized(mergedKeywords).slice(0, 6);
             const prioritizedExcludeKeywords = uniqueNormalized(
@@ -2323,7 +2378,7 @@
                 mustNot: prioritizedKeywords.length > 0
                     ? prioritizedExcludeKeywords
                     : [],
-                budget: 12,
+                budget: LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP,
                 explicitAnd: true,
                 wrapShould: true
             });
@@ -2360,11 +2415,16 @@
                 return _buildManualQueryResult(template, manualQuery, searchLocale, 'jobs');
             }
 
+            const querySpec = effectiveQuerySpec(
+                template,
+                options,
+                options?.roleTerms
+            );
             const roleTerms = uniqueNormalized(
                 resolveLocalizedOptionalGroup(
                     options,
                     'roleTerms',
-                    template?.querySpec?.roleTerms,
+                    querySpec.roleTerms,
                     searchLocale
                 )
             );
@@ -2372,7 +2432,7 @@
                 resolveLocalizedOptionalGroup(
                     options,
                     'locationTerms',
-                    template?.querySpec?.locationTerms,
+                    querySpec.locationTerms,
                     searchLocale
                 )
             );
@@ -2380,7 +2440,7 @@
                 resolveLocalizedOptionalGroup(
                     options,
                     'keywords',
-                    template?.querySpec?.keywords,
+                    querySpec.keywords,
                     searchLocale
                 )
             );
@@ -2507,6 +2567,7 @@
             EXPECTED_RESULTS_BUCKETS,
             MODE_USAGE_GOALS,
             SEARCH_TEMPLATES,
+            LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP,
             CONNECT_ROLE_LIMITS,
             AREA_FAMILY_MAP,
             normalizeExpectedResultsBucket,

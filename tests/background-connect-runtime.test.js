@@ -542,7 +542,7 @@ describe('background connect runtime config', () => {
         expect(secondUrl).toContain('&network=%5B%22S%22%2C%22O%22%5D');
         expect(secondUrl).not.toContain('activelyHiring=true');
         expect(getKeywordsFromUrl(secondUrl)).toBe(
-            'recruiter talent acquisition hiring manager tech'
+            'recruiter OR talent acquisition OR hiring manager'
         );
         expect(chrome.tabs.remove).toHaveBeenCalled();
         const removedTabId = chrome.tabs.remove.mock.calls[0][0];

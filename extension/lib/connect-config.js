@@ -26,6 +26,8 @@
                 : null);
         const localizeSearchTerms =
             searchLanguageApi?.localizeSearchTerms;
+        const LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP =
+            searchLanguageApi?.LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP || 5;
         const STATE_TAG_VERSION = 8;
 
         const AREA_PRESETS = {
@@ -664,9 +666,7 @@
             tech: {
                 defaultQuery:
                     '"nearshore software company" OR "latam talent partner" OR ' +
-                    '"offshore engineering team" OR "hiring latam developers" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"offshore engineering team" OR "hiring latam developers"',
                 defaultTargetCompanies: [
                     'Google',
                     'Microsoft',
@@ -866,9 +866,7 @@
             'tech-frontend': {
                 defaultQuery:
                     '"frontend engineering remote" OR "react product team" OR ' +
-                    '"hiring latam frontend" OR "remote web platform" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam frontend" OR "remote web platform"',
                 defaultTargetCompanies: [
                     'Vercel', 'Netlify', 'Shopify', 'Canva',
                     'Figma', 'Airbnb', 'Stripe', 'GitHub',
@@ -880,9 +878,7 @@
             'tech-backend': {
                 defaultQuery:
                     '"backend engineering remote" OR "api platform company" OR ' +
-                    '"hiring latam backend" OR "distributed engineering team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam backend" OR "distributed engineering team"',
                 defaultTargetCompanies: [
                     'Stripe', 'Datadog', 'Cloudflare', 'Twilio',
                     'MongoDB', 'Elastic', 'Redis', 'Confluent',
@@ -894,9 +890,7 @@
             'tech-fullstack': {
                 defaultQuery:
                     '"full stack engineering remote" OR "product engineering company" OR ' +
-                    '"hiring latam fullstack" OR "distributed product team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam fullstack" OR "distributed product team"',
                 defaultTargetCompanies: [
                     'Vercel', 'Supabase', 'Shopify', 'Stripe',
                     'GitHub', 'GitLab', 'Notion', 'Linear',
@@ -908,9 +902,7 @@
             'tech-devops': {
                 defaultQuery:
                     '"devops engineering remote" OR "site reliability remote" OR ' +
-                    '"hiring latam devops" OR "cloud platform team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam devops" OR "cloud platform team"',
                 defaultTargetCompanies: [
                     'Datadog', 'HashiCorp', 'Cloudflare',
                     'Grafana Labs', 'GitLab', 'Docker',
@@ -923,9 +915,7 @@
             'tech-data': {
                 defaultQuery:
                     '"data engineering remote" OR "analytics platform team" OR ' +
-                    '"hiring latam data" OR "machine learning product team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam data" OR "machine learning product team"',
                 defaultTargetCompanies: [
                     'Databricks', 'Snowflake', 'dbt Labs',
                     'Confluent', 'Datadog', 'MongoDB', 'Elastic',
@@ -938,9 +928,7 @@
             'tech-cloud': {
                 defaultQuery:
                     '"cloud engineering remote" OR "platform infrastructure company" OR ' +
-                    '"hiring latam cloud" OR "distributed cloud team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam cloud" OR "distributed cloud team"',
                 defaultTargetCompanies: [
                     'Amazon Web Services', 'Google Cloud',
                     'Microsoft Azure', 'Cloudflare', 'HashiCorp',
@@ -953,9 +941,7 @@
             'tech-security': {
                 defaultQuery:
                     '"security engineering remote" OR "application security company" OR ' +
-                    '"hiring latam security" OR "cybersecurity platform" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam security" OR "cybersecurity platform"',
                 defaultTargetCompanies: [
                     'CrowdStrike', 'Palo Alto Networks',
                     'Cloudflare', 'Snyk', 'Wiz', 'Fortinet',
@@ -968,9 +954,7 @@
             'tech-mobile': {
                 defaultQuery:
                     '"mobile engineering remote" OR "consumer app platform" OR ' +
-                    '"hiring latam mobile" OR "react native product team" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam mobile" OR "react native product team"',
                 defaultTargetCompanies: [
                     'Apple', 'Google', 'Meta', 'Spotify', 'Uber',
                     'Airbnb', 'Shopify', 'Block', 'Nubank',
@@ -982,9 +966,7 @@
             'tech-ml-ai': {
                 defaultQuery:
                     '"machine learning platform remote" OR "ai product company" OR ' +
-                    '"hiring latam ai" OR "generative ai engineering" ' +
-                    'NOT university NOT college NOT institute NOT academy ' +
-                    'NOT bootcamp NOT group NOT jobs',
+                    '"hiring latam ai" OR "generative ai engineering"',
                 defaultTargetCompanies: [
                     'OpenAI', 'Anthropic', 'Google DeepMind',
                     'Meta AI', 'Hugging Face', 'Cohere',
@@ -1356,9 +1338,14 @@
                 ? tags
                 : {};
             const parts = [];
+            // Other groups are space-joined (implicit AND, no operator), so
+            // only the role ORs count against LinkedIn's operator cap.
             const safeRoles = limitRoleTerms(
                 localizeTerms(source.role, searchLanguageMode),
-                roleTermsLimit
+                Math.min(
+                    Number(roleTermsLimit) || 6,
+                    LINKEDIN_PEOPLE_SEARCH_OPERATOR_CAP + 1
+                )
             ).map(formatQueryTerm).filter(Boolean);
             if (safeRoles.length === 1) {
                 parts.push(safeRoles[0]);
