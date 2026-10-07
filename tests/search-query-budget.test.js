@@ -179,10 +179,10 @@ describe('template term leaks (#266)', () => {
 
     it('prefers the same family before custom', () => {
         const template = selectSearchTemplate({
-            mode: 'jobs',
+            mode: 'connect',
             areaPreset: 'tech-frontend',
             auto: true,
-            usageGoal: 'market_scan',
+            usageGoal: 'peer_networking',
             expectedResultsBucket: 'balanced'
         });
         expect(template.areaPreset).not.toBe('custom');
@@ -226,5 +226,19 @@ describe('template term leaks (#266)', () => {
         });
         expect(plan.query).toContain('software engineer');
         expect(plan.query).toContain('designer');
+    });
+
+    it('jobs: popup defaults keep the custom template, no forced filters or locale terms', () => {
+        AREA_PRESET_VALUES.filter(p => p !== 'custom').forEach((preset) => {
+            const plan = jobsQuery(preset);
+            const own = getJobsPresetTerms(preset).role.join(' ').toLowerCase();
+            const query = plan.query.toLowerCase();
+            expect(plan.template.areaPreset).toBe('custom');
+            expect(plan.filterSpec.experienceLevel).toBeUndefined();
+            expect(plan.filterSpec.workType).toBeUndefined();
+            ['brasil', 'remoto'].forEach((word) => {
+                if (!own.includes(word)) expect(query).not.toContain(word);
+            });
+        });
     });
 });

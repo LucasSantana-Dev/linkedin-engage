@@ -2049,7 +2049,9 @@
             );
             if (any) return any;
 
-            if (areaPreset !== 'custom') {
+            // Jobs templates carry filterSpec and location terms that would
+            // override the user's selects, so jobs keeps the custom fallback.
+            if (mode !== 'jobs' && areaPreset !== 'custom') {
                 const sameArea = findSameAreaTemplate(
                     mode,
                     [areaPreset, areaFamily].filter(area => area !== 'custom'),
@@ -2096,7 +2098,7 @@
                 isGenericFallbackTemplate(template, options)) {
                 return {};
             }
-            return template?.querySpec || {};
+            return { ...(template?.querySpec || {}) };
         }
 
         function mergeGroupTerms(template, selected, key) {
@@ -2415,11 +2417,13 @@
                 return _buildManualQueryResult(template, manualQuery, searchLocale, 'jobs');
             }
 
-            const querySpec = effectiveQuerySpec(
-                template,
-                options,
-                options?.roleTerms
-            );
+            // Generic fallback: keep its location and keyword terms, but
+            // never its role terms (they are placeholders for any field).
+            const querySpec = { ...(template?.querySpec || {}) };
+            if (isGenericFallbackTemplate(template, options) &&
+                listFrom(options?.roleTerms).length > 0) {
+                querySpec.roleTerms = [];
+            }
             const roleTerms = uniqueNormalized(
                 resolveLocalizedOptionalGroup(
                     options,
