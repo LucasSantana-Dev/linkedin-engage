@@ -39,6 +39,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     // Run-scoped: set once LinkedIn stops offering a note textarea (free
     // note quota used up). Reset at the start of each Connect run.
     let noteQuotaExhausted = false;
+    let noteTextareaMisses = 0;
     let sentWithoutNoteAfterQuota = 0;
     let lastInviteStatus = null;
     let fuseLimitHit = false;
@@ -907,12 +908,14 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         let consecutiveFails = 0;
         let backoffMultiplier = 1;
         const MAX_CONSECUTIVE_FAILS = 3;
+        const NOTE_QUOTA_MISS_THRESHOLD = 2;
         const MAX_BACKOFF_MS = 300000;
         stopRequested = false;
         connectionLog.length = 0;
         showRunningNotification();
         const sentUrls = new Set(config?.sentUrls || []);
         noteQuotaExhausted = false;
+        noteTextareaMisses = 0;
         sentWithoutNoteAfterQuota = 0;
 
         // Shared "Send without a note" flow. Returns true when the invite
@@ -1620,6 +1623,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             }
 
                             if (textArea) {
+                                noteTextareaMisses = 0;
                                 const nativeSetter =
                                     Object
                                         .getOwnPropertyDescriptor(
@@ -1724,16 +1728,24 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                     dismissModal();
                                 }
                             } else {
-                                // "Add a note" gave no textarea: the free
-                                // note quota is used up. Send the rest of
-                                // the run without notes.
-                                noteQuotaExhausted = true;
-                                const quotaBtns = findInviteButtons();
-                                if (quotaBtns.sendWithout) {
-                                    if (await sendWithoutNote(
-                                        button,
-                                        quotaBtns.sendWithout)) {
-                                        continue;
+                                // "Add a note" gave no textarea. One miss may
+                                // be a slow modal, so skip this person. After
+                                // NOTE_QUOTA_MISS_THRESHOLD consecutive misses
+                                // assume the free note quota is used up and
+                                // send the rest of the run without notes.
+                                noteTextareaMisses++;
+                                if (noteTextareaMisses >=
+                                    NOTE_QUOTA_MISS_THRESHOLD) {
+                                    noteQuotaExhausted = true;
+                                    const quotaBtns = findInviteButtons();
+                                    if (quotaBtns.sendWithout) {
+                                        if (await sendWithoutNote(
+                                            button,
+                                            quotaBtns.sendWithout)) {
+                                            continue;
+                                        }
+                                    } else {
+                                        dismissModal();
                                     }
                                 } else {
                                     dismissModal();
