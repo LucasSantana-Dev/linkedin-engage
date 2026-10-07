@@ -89,29 +89,6 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
       .trim();
   }
 
-  function parsePostedHours(text) {
-    const raw = normalized(text);
-    if (!raw) return null;
-    const minuteMatch = raw.match(/(\d+)\s*(minute|minuto)/);
-    if (minuteMatch) return 1;
-    const hourMatch = raw.match(/(\d+)\s*(hour|hora)/);
-    if (hourMatch) return parseInt(hourMatch[1], 10);
-    const dayMatch = raw.match(/(\d+)\s*(day|dia)/);
-    if (dayMatch) return parseInt(dayMatch[1], 10) * 24;
-    const weekMatch = raw.match(/(\d+)\s*(week|semana)/);
-    if (weekMatch) return parseInt(weekMatch[1], 10) * 24 * 7;
-    return null;
-  }
-
-  function inferWorkType(text) {
-    const raw = normalized(text);
-    if (!raw) return "";
-    if (/remote|remoto/.test(raw)) return "remote";
-    if (/hybrid|hibrido|híbrido/.test(raw)) return "hybrid";
-    if (/on site|onsite|presencial/.test(raw)) return "onsite";
-    return "";
-  }
-
   // Pick the job title by selector PRIORITY (most stable first), not DOM order.
   // A comma-list querySelector returns the first match in document order, which
   // could grab a footer/secondary element; query each candidate in order and
@@ -427,82 +404,8 @@ if (typeof window.linkedInJobsAssistInjected === "undefined") {
     return null;
   }
 
-  function toNonNegativeInt(value, fallback) {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return fallback;
-    }
-    return Math.floor(parsed);
-  }
-
   function resolveRuntimeOptions(options) {
-    const source = options && typeof options === "object" ? options : {};
-    return {
-      openCardScrollMs: toNonNegativeInt(
-        source.openCardScrollMs,
-        DEFAULT_RUNTIME_OPTIONS.openCardScrollMs,
-      ),
-      openCardOpenMs: toNonNegativeInt(
-        source.openCardOpenMs,
-        DEFAULT_RUNTIME_OPTIONS.openCardOpenMs,
-      ),
-      afterApplyClickMs: toNonNegativeInt(
-        source.afterApplyClickMs,
-        DEFAULT_RUNTIME_OPTIONS.afterApplyClickMs,
-      ),
-      afterStepClickMs: toNonNegativeInt(
-        source.afterStepClickMs,
-        DEFAULT_RUNTIME_OPTIONS.afterStepClickMs,
-      ),
-      modalPollTimeoutMs: toNonNegativeInt(
-        source.modalPollTimeoutMs,
-        DEFAULT_RUNTIME_OPTIONS.modalPollTimeoutMs,
-      ),
-      modalPollIntervalMs: Math.max(
-        1,
-        toNonNegativeInt(
-          source.modalPollIntervalMs,
-          DEFAULT_RUNTIME_OPTIONS.modalPollIntervalMs,
-        ),
-      ),
-      stepPollTimeoutMs: toNonNegativeInt(
-        source.stepPollTimeoutMs,
-        DEFAULT_RUNTIME_OPTIONS.stepPollTimeoutMs,
-      ),
-      stepPollIntervalMs: Math.max(
-        1,
-        toNonNegativeInt(
-          source.stepPollIntervalMs,
-          DEFAULT_RUNTIME_OPTIONS.stepPollIntervalMs,
-        ),
-      ),
-      maxModalSteps: Math.max(
-        1,
-        toNonNegativeInt(
-          source.maxModalSteps,
-          DEFAULT_RUNTIME_OPTIONS.maxModalSteps,
-        ),
-      ),
-    };
-  }
-
-  function isRequiredField(field) {
-    return (
-      field.required ||
-      normalized(field.getAttribute("aria-required")) === "true"
-    );
-  }
-
-  function fieldHint(field, fallbackIndex) {
-    const parts = [
-      field.getAttribute("aria-label") || "",
-      field.getAttribute("name") || "",
-      field.getAttribute("id") || "",
-      field.getAttribute("placeholder") || "",
-    ]
-      .map(normalized)
-      .filter(Boolean);
-    return parts[0] || `field-${fallbackIndex + 1}`;
+    return resolveJobsRuntimeOptions(options, DEFAULT_RUNTIME_OPTIONS);
   }
 
   function isFieldEmpty(field) {

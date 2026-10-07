@@ -42,6 +42,7 @@ describe('jobs-assist easy apply progression', () => {
         jest.resetModules();
         document.body.innerHTML = '';
         delete window.linkedInJobsAssistInjected;
+        Object.assign(global, require('../extension/lib/jobs-utils'));
         jobsAssist = require('../extension/jobs-assist');
     });
 
