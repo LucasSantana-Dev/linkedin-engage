@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
+- Chrome Web Store publish job; releases ship as GitHub zip only (#225)
+
+### Docs
+- README, privacy policy and agent docs no longer describe removed Feed, Nurture and Groq features (#226)
 
 ## [1.40.0] - 2026-06-26
 
