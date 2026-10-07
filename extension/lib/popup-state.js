@@ -84,6 +84,37 @@
             tagVersion: 5
         });
 
+        // "Withdraw stale invites" settings (opt-in mode, stored under its own
+        // storage key so existing popup state needs no migration).
+        const DEFAULT_WITHDRAW_MIN_WEEKS = 3;
+        const DEFAULT_WITHDRAW_LIMIT = 20;
+        const MAX_WITHDRAW_LIMIT = 20;
+        const MAX_WITHDRAW_MIN_WEEKS = 520;
+
+        function clampInt(value, fallback, min, max) {
+            const n = Math.floor(Number(value));
+            if (!Number.isFinite(n) || n < min) return fallback;
+            return Math.min(n, max);
+        }
+
+        function normalizeWithdrawSettings(input) {
+            const source = input && typeof input === 'object' ? input : {};
+            return {
+                withdrawMinWeeks: clampInt(
+                    source.withdrawMinWeeks,
+                    DEFAULT_WITHDRAW_MIN_WEEKS,
+                    1,
+                    MAX_WITHDRAW_MIN_WEEKS
+                ),
+                withdrawLimit: clampInt(
+                    source.withdrawLimit,
+                    DEFAULT_WITHDRAW_LIMIT,
+                    1,
+                    MAX_WITHDRAW_LIMIT
+                )
+            };
+        }
+
         /**
          * Load popup state from chrome.storage.local with migration.
          * Calls migrateConnectPopupState if available (from connect-config.js).
@@ -141,6 +172,10 @@
 
         return {
             DEFAULT_POPUP_STATE,
+            DEFAULT_WITHDRAW_MIN_WEEKS,
+            DEFAULT_WITHDRAW_LIMIT,
+            MAX_WITHDRAW_LIMIT,
+            normalizeWithdrawSettings,
             loadPopupState,
             savePopupState
         };

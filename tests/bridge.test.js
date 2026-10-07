@@ -131,3 +131,34 @@ describe('bridge AI relay', () => {
         expect(unhandled).toBeNull();
     });
 });
+
+describe('bridge withdraw relay', () => {
+    afterEach(() => { delete global.chrome; });
+
+    function post(data) {
+        window.dispatchEvent(new MessageEvent('message', {
+            data, source: window
+        }));
+    }
+
+    it('forwards withdraw progress and done to the runtime', () => {
+        jest.resetModules();
+        global.chrome = {
+            runtime: {
+                lastError: null,
+                onMessage: { addListener: jest.fn() },
+                sendMessage: jest.fn()
+            },
+            storage: { local: { get: jest.fn(), set: jest.fn() } }
+        };
+        require('../extension/bridge');
+        post({ type: 'LINKEDIN_BOT_WITHDRAW_PROGRESS', sent: 2, limit: 5, skipped: 1 });
+        post({ type: 'LINKEDIN_BOT_WITHDRAW_DONE', result: { mode: 'withdraw' } });
+        expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+            action: 'withdrawProgress', sent: 2, limit: 5, skipped: 1
+        });
+        expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+            action: 'withdrawDone', result: { mode: 'withdraw' }
+        });
+    });
+});

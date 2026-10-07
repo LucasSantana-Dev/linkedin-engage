@@ -15,6 +15,7 @@ In `chrome.storage.local`:
 - **Sent profile URLs** of people you invited, used for deduplication
 - **Stats and run history:** per-run counters, outcomes and logs shown in the dashboard
 - **Rate-limit counters:** hourly, daily and weekly counts, cleaned automatically
+- **Withdraw stale invites (opt-in):** your minimum-age and per-run settings, plus the name, profile URL and sent age of each invitation the mode withdraws, shown in the activity dashboard. Nothing about it leaves your browser
 - **Resume parse counters** (`resumeParseStats`): aggregate counts of how resume parsing went, with no resume content
 
 In IndexedDB:

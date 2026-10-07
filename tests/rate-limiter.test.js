@@ -228,7 +228,7 @@ describe('rate-limiter UMD exposure', () => {
     const names = [
         'DAILY_LIMITS', 'HOURLY_LIMITS', 'WEEKLY_LIMIT', 'getHourKey',
         'getDayKey', 'getWeekKey', 'checkLimits', 'getLimitStatus',
-        'incrementCount', 'cleanupOldKeys'
+        'incrementCount', 'incrementPeriodCounts', 'cleanupOldKeys'
     ];
 
     test('exports a frozen api and mirrors every name onto the global', () => {
@@ -256,5 +256,41 @@ describe('checkLimits daily override', () => {
     test('non-numeric override is ignored', () => {
         expect(checkLimits(0, 39, 0, 'connect', undefined).allowed).toBe(true);
         expect(checkLimits(0, 40, 0, 'connect', 'x').limit).toBe(40);
+    });
+});
+
+describe('withdrawInvites mode', () => {
+    const { incrementPeriodCounts } = require('../extension/lib/rate-limiter');
+
+    test('limits are 20 per hour and 40 per day', () => {
+        expect(HOURLY_LIMITS.withdrawInvites).toBe(20);
+        expect(DAILY_LIMITS.withdrawInvites).toBe(40);
+        expect(checkLimits(0, 40, 0, 'withdrawInvites').reason).toBe('daily');
+        expect(checkLimits(20, 0, 0, 'withdrawInvites').reason).toBe('hourly');
+        expect(checkLimits(10, 25, 999, 'withdrawInvites')).toMatchObject({
+            allowed: true,
+            remaining: 10
+        });
+    });
+
+    test('incrementPeriodCounts adds to hour and day only', () => {
+        const set = jest.fn();
+        incrementPeriodCounts('withdrawInvites', {
+            get: (keys, cb) => cb({ [keys[1]]: 5 }),
+            set
+        }, 3);
+        const written = set.mock.calls[0][0];
+        expect(Object.keys(written)).toHaveLength(2);
+        expect(Object.keys(written).some(k => k.startsWith('week_'))).toBe(false);
+        expect(Object.values(written).sort()).toEqual([3, 8]);
+    });
+
+    test('incrementPeriodCounts ignores bad input', () => {
+        const set = jest.fn();
+        const storage = { get: (k, cb) => cb({}), set };
+        incrementPeriodCounts('withdrawInvites', storage, 0);
+        incrementPeriodCounts('withdrawInvites', storage, 'x');
+        incrementPeriodCounts('withdrawInvites', null, 2);
+        expect(set).not.toHaveBeenCalled();
     });
 });

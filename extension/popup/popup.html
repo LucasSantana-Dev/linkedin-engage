@@ -2109,6 +2109,40 @@
             Export Connection Log (CSV)
         </button>
 
+        <div id="withdrawSection" style="margin-top:14px;">
+            <div class="section-label" data-i18n="popup.withdraw.title">Withdraw stale invites</div>
+            <div style="font-size:10px; color:var(--text-muted); margin-bottom:8px;" data-i18n="popup.withdraw.help">
+                Opens your Sent invitations and withdraws pending invites older than the minimum age. Up to 20 per run and 40 per day. Turn it on under Feature Toggles first.
+            </div>
+            <div class="row">
+                <div class="input-group">
+                    <label for="withdrawMinWeeks" data-i18n="popup.withdraw.minWeeks">Minimum age (weeks)</label>
+                    <input type="number" id="withdrawMinWeeks" value="3" min="1" max="520" />
+                </div>
+                <div class="input-group">
+                    <label for="withdrawLimit" data-i18n="popup.withdraw.limit">Per run (max 20)</label>
+                    <input type="number" id="withdrawLimit" value="20" min="1" max="20" />
+                </div>
+            </div>
+            <button id="withdrawStartBtn" type="button" style="
+                display:block; width:100%; padding:8px;
+                background:transparent;
+                border:1.5px solid var(--warning);
+                border-radius:var(--radius-md);
+                color:var(--warning); font-size:12px;
+                font-weight:600; cursor:pointer;
+            " data-i18n="popup.withdraw.start">Withdraw stale invites</button>
+            <button id="withdrawStopBtn" type="button" style="
+                display:none; width:100%; padding:8px;
+                background:transparent;
+                border:1.5px solid var(--border);
+                border-radius:var(--radius-md);
+                color:var(--text-main); font-size:12px;
+                font-weight:600; cursor:pointer;
+            " data-i18n="common.stop">Stop</button>
+            <div id="withdrawStatus" style="font-size:11px; margin-top:6px; color:var(--text-muted);"></div>
+        </div>
+
         <div id="recentProfiles" style="display:none; margin-top:14px;">
             <div class="section-label">Recent Connections</div>
             <div id="recentList" style="
@@ -2138,6 +2172,10 @@
                 <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
                     <input type="checkbox" id="companiesToggle" checked />
                     <span data-i18n="popup.settings.companiesEnabled">Enable Companies automation</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer;">
+                    <input type="checkbox" id="withdrawToggle" />
+                    <span data-i18n="popup.settings.withdrawEnabled">Enable Withdraw stale invites (opt-in)</span>
                 </label>
             </div>
         </div>

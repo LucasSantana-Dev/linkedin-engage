@@ -4884,7 +4884,8 @@ if (typeof getFeatureToggles === 'function'
     const toggleEls = {
         connectEnabled: document.getElementById('connectToggle'),
         jobsEnabled: document.getElementById('jobsToggle'),
-        companiesEnabled: document.getElementById('companiesToggle')
+        companiesEnabled: document.getElementById('companiesToggle'),
+        withdrawEnabled: document.getElementById('withdrawToggle')
     };
     getFeatureToggles((toggles) => {
         Object.keys(toggleEls).forEach((key) => {
@@ -4900,6 +4901,7 @@ if (typeof getFeatureToggles === 'function'
     wire(toggleEls.connectEnabled, FEATURE_KEYS.CONNECT);
     wire(toggleEls.jobsEnabled, FEATURE_KEYS.JOBS);
     wire(toggleEls.companiesEnabled, FEATURE_KEYS.COMPANIES);
+    wire(toggleEls.withdrawEnabled, FEATURE_KEYS.WITHDRAW);
 }
 
 updateWeeklyDisplay();
@@ -4911,3 +4913,129 @@ if (document.getElementById('scheduleCheckbox').checked &&
     document.getElementById('smartModeCheckbox').checked) {
     fetchScheduleInsight();
 }
+
+// Withdraw stale invites (opt-in mode). Own storage key, own Start/Stop and
+// status line; completion arrives as `withdrawProgress` / `withdrawDone`.
+(function initWithdrawSection() {
+    const startBtn = document.getElementById('withdrawStartBtn');
+    const stopBtn = document.getElementById('withdrawStopBtn');
+    const statusEl = document.getElementById('withdrawStatus');
+    const weeksEl = document.getElementById('withdrawMinWeeks');
+    const limitEl = document.getElementById('withdrawLimit');
+    if (!startBtn || !stopBtn || !statusEl || !weeksEl || !limitEl) return;
+    const SETTINGS_KEY = 'withdrawSettings';
+
+    function readSettings() {
+        return normalizeWithdrawSettings({
+            withdrawMinWeeks: weeksEl.value,
+            withdrawLimit: limitEl.value
+        });
+    }
+
+    function setWithdrawStatus(text) {
+        statusEl.textContent = text;
+    }
+
+    function setRunning(on) {
+        startBtn.style.display = on ? 'none' : 'block';
+        stopBtn.style.display = on ? 'block' : 'none';
+        stopBtn.disabled = false;
+    }
+
+    chrome.storage.local.get(SETTINGS_KEY, (data) => {
+        const saved = normalizeWithdrawSettings(data?.[SETTINGS_KEY]);
+        weeksEl.value = saved.withdrawMinWeeks;
+        limitEl.value = saved.withdrawLimit;
+    });
+
+    function persist() {
+        const settings = readSettings();
+        chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+        return settings;
+    }
+    weeksEl.addEventListener('change', persist);
+    limitEl.addEventListener('change', persist);
+
+    startBtn.addEventListener('click', () => {
+        const settings = persist();
+        weeksEl.value = settings.withdrawMinWeeks;
+        limitEl.value = settings.withdrawLimit;
+        setRunning(true);
+        setWithdrawStatus(tr(
+            'popup.withdraw.opening', null, 'Opening Sent invitations...'
+        ));
+        chrome.runtime.sendMessage({
+            action: 'startWithdrawInvites',
+            minWeeks: settings.withdrawMinWeeks,
+            limit: settings.withdrawLimit
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                setRunning(false);
+                setWithdrawStatus(tr(
+                    'popup.withdraw.failed',
+                    [chrome.runtime.lastError.message],
+                    'Withdraw failed: ' + chrome.runtime.lastError.message
+                ));
+                return;
+            }
+            if (response?.status === 'blocked') {
+                setRunning(false);
+                setWithdrawStatus(
+                    response.reason === 'feature-disabled'
+                        ? tr(
+                            'popup.withdraw.disabled', null,
+                            'Turn on Withdraw stale invites under Feature Toggles first.'
+                        )
+                        : tr(
+                            'popup.withdraw.blocked', null,
+                            'Withdraw limit reached (20 per hour, 40 per day). Try again later.'
+                        )
+                );
+            }
+        });
+    });
+
+    stopBtn.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: 'stop' });
+        stopBtn.disabled = true;
+        stopBtn.textContent = tr('common.stopping', null, 'Stopping...');
+    });
+
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === 'withdrawProgress') {
+            setWithdrawStatus(tr(
+                'popup.withdraw.progress',
+                [request.sent, request.limit],
+                `Withdrawn ${request.sent} / ${request.limit}`
+            ));
+            return;
+        }
+        if (request.action !== 'withdrawDone') return;
+        const r = request.result || {};
+        setRunning(false);
+        stopBtn.textContent = tr('common.stop', null, 'Stop');
+        const withdrawn = Number(r.withdrawn) || Number(r.actionCount) || 0;
+        if (r.stoppedByUser === true || r.runStatus === 'canceled') {
+            setWithdrawStatus(tr(
+                'popup.runCanceled', null, 'Run canceled by user.'
+            ));
+        } else if (r.reason === 'no-results') {
+            setWithdrawStatus(resolveResultText(
+                r,
+                'No pending invitation older than the minimum age was found.',
+                tr
+            ));
+        } else if (r.runStatus === 'failed' || r.success === false) {
+            const reason = r.error || r.message || r.reason || '';
+            setWithdrawStatus(tr(
+                'popup.withdraw.failed', [reason], 'Withdraw failed: ' + reason
+            ));
+        } else {
+            setWithdrawStatus(resolveResultText(
+                r,
+                `Withdrew ${withdrawn} stale invitation(s).`,
+                tr
+            ));
+        }
+    });
+})();

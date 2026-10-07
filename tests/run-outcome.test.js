@@ -193,3 +193,27 @@ describe('normalizeRunOutcome', () => {
         expect(result.reason).toBe('no-items-processed');
     });
 });
+
+describe('withdraw mode outcome', () => {
+    test('zero eligible invites (no-results) is a successful run', () => {
+        const result = normalizeRunOutcome({
+            mode: 'withdraw',
+            reason: 'no-results',
+            processedCount: 0,
+            skippedCount: 0
+        });
+        expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
+    });
+
+    test('withdrawn entries count as actions', () => {
+        const result = normalizeRunOutcome({
+            mode: 'withdraw',
+            log: [
+                { status: 'withdrawn' },
+                { status: 'error-withdraw-not-confirmed' }
+            ]
+        });
+        expect(result.actionCount).toBe(1);
+        expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
+    });
+});

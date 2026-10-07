@@ -21,8 +21,8 @@ describe('FEATURE_KEYS', () => {
         expect(FEATURE_KEYS.JOBS).toBe('jobsEnabled');
         expect(FEATURE_KEYS.COMPANIES).toBe('companiesEnabled');
     });
-    it('has exactly 3 keys', () => {
-        expect(Object.keys(FEATURE_KEYS)).toHaveLength(3);
+    it('has exactly 4 keys (connect, jobs, companies, withdraw)', () => {
+        expect(Object.keys(FEATURE_KEYS)).toHaveLength(4);
     });
 });
 
@@ -130,5 +130,23 @@ describe('isFeatureEnabled', () => {
 
     it('treats an unknown mode as enabled (fail-open)', () => {
         expect(isFeatureEnabled('feed', { connectEnabled: false })).toBe(true);
+    });
+});
+
+describe('withdraw invites toggle', () => {
+    const ft = require('../extension/lib/feature-toggles');
+
+    it('is opt-in: defaults to disabled', (done) => {
+        ft.getFeatureToggles((toggles) => {
+            expect(toggles.withdrawEnabled).toBe(false);
+            expect(ft.isFeatureEnabled('withdrawInvites', toggles)).toBe(false);
+            done();
+        });
+    });
+
+    it('enables when switched on', () => {
+        expect(ft.isFeatureEnabled('withdrawInvites', { withdrawEnabled: true }))
+            .toBe(true);
+        expect(ft.FEATURE_KEYS.WITHDRAW).toBe('withdrawEnabled');
     });
 });

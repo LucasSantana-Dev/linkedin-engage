@@ -16,6 +16,7 @@ Personal use only. It is distributed as a GitHub release zip, not through the Ch
 | **Connect** | Boolean search builder (EN/PT-BR, 19 area presets), candidate scoring, connection invites with area-aware notes |
 | **Companies** | Batch-follow target companies by query or list, with preset queues |
 | **Jobs** | Rank Easy Apply listings by fit score, pre-fill forms from an encrypted local resume cache, never submits for you |
+| **Withdraw stale invites** | Opt-in (off by default, enable it under Feature Toggles). Opens your Sent invitations and withdraws pending ones older than N weeks (default 3), up to 20 per run and 40 per day |
 
 Also built in: scheduled recurring runs, rate limits (hourly, daily, weekly cap of 100 invites), CAPTCHA/security-challenge detection that stops the run, background task management, and an activity dashboard with stats, history and logs.
 

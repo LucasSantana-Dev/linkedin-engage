@@ -7,13 +7,16 @@
     const FEATURE_KEYS = Object.freeze({
         CONNECT: 'connectEnabled',
         JOBS: 'jobsEnabled',
-        COMPANIES: 'companiesEnabled'
+        COMPANIES: 'companiesEnabled',
+        WITHDRAW: 'withdrawEnabled'
     });
 
     const DEFAULTS = Object.freeze({
         connectEnabled: true,
         jobsEnabled: true,
-        companiesEnabled: true
+        companiesEnabled: true,
+        // Opt-in: withdrawing invitations is destructive, so it defaults OFF.
+        withdrawEnabled: false
     });
 
     // Maps a runtime automation mode (and its background-message aliases) to
@@ -23,7 +26,8 @@
         companies: 'companiesEnabled',
         companyFollow: 'companiesEnabled',
         jobs: 'jobsEnabled',
-        jobsAssist: 'jobsEnabled'
+        jobsAssist: 'jobsEnabled',
+        withdrawInvites: 'withdrawEnabled'
     });
 
     function getFeatureToggles(callback) {

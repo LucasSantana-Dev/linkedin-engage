@@ -1099,5 +1099,50 @@
   },
   "popup_result_jobsNoManualReview": {
     "message": "No job reached manual-review stage."
+  },
+  "popup_settings_withdrawEnabled": {
+    "message": "Enable Withdraw stale invites (opt-in)"
+  },
+  "popup_withdraw_title": {
+    "message": "Withdraw stale invites"
+  },
+  "popup_withdraw_help": {
+    "message": "Opens your Sent invitations and withdraws pending invites older than the minimum age. Up to 20 per run and 40 per day. Turn it on under Feature Toggles first."
+  },
+  "popup_withdraw_minWeeks": {
+    "message": "Minimum age (weeks)"
+  },
+  "popup_withdraw_limit": {
+    "message": "Per run (max 20)"
+  },
+  "popup_withdraw_start": {
+    "message": "Withdraw stale invites"
+  },
+  "popup_withdraw_opening": {
+    "message": "Opening Sent invitations..."
+  },
+  "popup_withdraw_progress": {
+    "message": "Withdrawn $1 / $2"
+  },
+  "popup_withdraw_done": {
+    "message": "Withdrew $1 stale invitation(s). Kept $2 recent and $3 with unknown age."
+  },
+  "popup_withdraw_none": {
+    "message": "No pending invitation older than $1 week(s) was found."
+  },
+  "popup_withdraw_failed": {
+    "message": "Withdraw failed: $1"
+  },
+  "popup_withdraw_disabled": {
+    "message": "Turn on Withdraw stale invites under Feature Toggles first."
+  },
+  "popup_withdraw_blocked": {
+    "message": "Withdraw limit reached (20 per hour, 40 per day). Try again later."
+  },
+  "notification_withdraw_done": {
+    "message": "Withdrew $1 stale invitation(s)."
+  },
+  "status_withdrawn": {
+    "message": "Withdrawn"
   }
 }
