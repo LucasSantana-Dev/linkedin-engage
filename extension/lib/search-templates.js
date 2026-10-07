@@ -2173,7 +2173,7 @@
         function buildConnectQueryPlan(template, options) {
             const selectedTags = options?.selectedTags || {};
             const hasSelectedKey = (key) => Object.prototype.hasOwnProperty
-                .call(selectedTags, key);
+                .call(selectedTags, key) && selectedTags[key] !== undefined;
             const selectedValues = (key) => listFrom(selectedTags[key]);
             const shouldOmitDefaults = (key) => {
                 if (!hasSelectedKey(key)) return false;
@@ -2308,11 +2308,11 @@
             const hasExplicitKeywords = Object.prototype.hasOwnProperty.call(
                 selectedTags,
                 'keywords'
-            );
+            ) && selectedTags.keywords !== undefined;
             const hasExplicitExcludeKeywords = Object.prototype.hasOwnProperty.call(
                 selectedTags,
                 'excludeKeywords'
-            );
+            ) && selectedTags.excludeKeywords !== undefined;
 
             const isTechTalentWatchlist = normalizeAreaFamily(
                 template?.areaPreset
