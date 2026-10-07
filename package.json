@@ -23,7 +23,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "playwright": "^1.63.0",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "js-yaml": "^4.2.0"
