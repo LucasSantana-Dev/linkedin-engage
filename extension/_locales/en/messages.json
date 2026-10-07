@@ -1183,5 +1183,11 @@
   },
   "popup_connect_selectedCount": {
     "message": "$1 selected"
+  },
+  "popup_connect_noteLimitHint": {
+    "message": "LinkedIn free accounts allow 200 characters per note; longer notes are trimmed."
+  },
+  "popup_connect_noteQuotaReached": {
+    "message": "LinkedIn note quota reached: $1 invites were sent without a note."
   }
 }

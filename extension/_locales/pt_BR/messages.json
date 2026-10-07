@@ -1183,5 +1183,11 @@
   },
   "popup_connect_selectedCount": {
     "message": "$1 selecionados"
+  },
+  "popup_connect_noteLimitHint": {
+    "message": "Contas gratuitas do LinkedIn aceitam 200 caracteres por nota; notas maiores são cortadas."
+  },
+  "popup_connect_noteQuotaReached": {
+    "message": "Cota de notas do LinkedIn atingida: $1 convites foram enviados sem nota."
   }
 }

@@ -36,6 +36,11 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         runningNotifyBar = null;
     }
     const connectionLog = [];
+    // Run-scoped: set once LinkedIn stops offering a note textarea (free
+    // note quota used up). Reset at the start of each Connect run.
+    let noteQuotaExhausted = false;
+    let noteTextareaMisses = 0;
+    let sentWithoutNoteAfterQuota = 0;
     let lastInviteStatus = null;
     let fuseLimitHit = false;
     const connectActionUtils =
@@ -364,7 +369,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             'textarea[name="message"]'
         ) || queryAll(
             'textarea[id="custom-message"]'
-        ) || queryAll('textarea');
+        ) || queryAll(
+            '.artdeco-modal textarea, [role="dialog"] textarea'
+        );
     }
 
     function findSendButton() {
@@ -646,7 +653,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return {
             processedCount: entries.length,
             actionCount,
-            skippedCount
+            skippedCount,
+            noteQuotaExhausted,
+            sentWithoutNoteAfterQuota
         };
     }
 
@@ -899,11 +908,84 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         let consecutiveFails = 0;
         let backoffMultiplier = 1;
         const MAX_CONSECUTIVE_FAILS = 3;
+        const NOTE_QUOTA_MISS_THRESHOLD = 2;
         const MAX_BACKOFF_MS = 300000;
         stopRequested = false;
         connectionLog.length = 0;
         showRunningNotification();
         const sentUrls = new Set(config?.sentUrls || []);
+        noteQuotaExhausted = false;
+        noteTextareaMisses = 0;
+        sentWithoutNoteAfterQuota = 0;
+
+        // Shared "Send without a note" flow. Returns true when the invite
+        // failed and the caller should skip the post-invite pacing delays.
+        async function sendWithoutNote(button, sendWithoutBtn) {
+            sendWithoutBtn.click();
+            await delay(2000);
+
+            const stillOpen =
+                findInviteButtons();
+            if (stillOpen.addNote ||
+                stillOpen.sendWithout) {
+                consecutiveFails++;
+                dismissModal();
+                await delay(1000);
+                if (consecutiveFails >=
+                    MAX_CONSECUTIVE_FAILS) {
+                    const backoff = Math.min(
+                        30000 * backoffMultiplier +
+                        Math.random() * 30000,
+                        MAX_BACKOFF_MS
+                    );
+                    backoffMultiplier *= 2;
+                    reportProgress(
+                        totalSent, limit,
+                        currentPage, totalSkipped
+                    );
+                    await delay(backoff);
+                    consecutiveFails = 0;
+                }
+                return true;
+            }
+
+            consecutiveFails = 0;
+            backoffMultiplier = 1;
+            const noNoteVerified =
+                await verifyPendingState(
+                    button);
+            const sentInfo2 =
+                extractProfileInfo(button);
+            if (noNoteVerified) {
+                totalSent++;
+                if (noteQuotaExhausted) sentWithoutNoteAfterQuota++;
+                if (sentInfo2.profileUrl) {
+                    sentUrls.add(
+                        sentInfo2.profileUrl
+                    );
+                }
+                connectionLog.push({
+                    ...sentInfo2,
+                    status: 'sent',
+                    time: new Date()
+                        .toISOString()
+                });
+            } else {
+                totalSkipped++;
+                connectionLog.push({
+                    ...sentInfo2,
+                    status:
+                        'skipped-unverified',
+                    time: new Date()
+                        .toISOString()
+                });
+            }
+            reportProgress(
+                totalSent, limit,
+                currentPage, totalSkipped
+            );
+            return false;
+        }
 
         try {
             while (totalSent < limit) {
@@ -1508,7 +1590,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             continue;
                         }
 
-                        if (sendNote && inviteBtns.addNote) {
+                        if (sendNote && inviteBtns.addNote &&
+                            !noteQuotaExhausted) {
                             inviteBtns.addNote.click();
                             await delay(1500);
 
@@ -1540,6 +1623,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             }
 
                             if (textArea) {
+                                noteTextareaMisses = 0;
                                 const nativeSetter =
                                     Object
                                         .getOwnPropertyDescriptor(
@@ -1547,8 +1631,12 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                                 .prototype,
                                             'value'
                                         ).set;
+                                const maxLen = textArea.maxLength > 0
+                                    ? textArea.maxLength
+                                    : DEFAULT_INVITE_NOTE_MAX;
                                 nativeSetter.call(
-                                    textArea, noteText
+                                    textArea,
+                                    fitInviteNote(noteText, maxLen)
                                 );
                                 textArea.dispatchEvent(
                                     new Event('input', {
@@ -1640,71 +1728,34 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                     dismissModal();
                                 }
                             } else {
-                                dismissModal();
+                                // "Add a note" gave no textarea. One miss may
+                                // be a slow modal, so skip this person. After
+                                // NOTE_QUOTA_MISS_THRESHOLD consecutive misses
+                                // assume the free note quota is used up and
+                                // send the rest of the run without notes.
+                                noteTextareaMisses++;
+                                if (noteTextareaMisses >=
+                                    NOTE_QUOTA_MISS_THRESHOLD) {
+                                    noteQuotaExhausted = true;
+                                    const quotaBtns = findInviteButtons();
+                                    if (quotaBtns.sendWithout) {
+                                        if (await sendWithoutNote(
+                                            button,
+                                            quotaBtns.sendWithout)) {
+                                            continue;
+                                        }
+                                    } else {
+                                        dismissModal();
+                                    }
+                                } else {
+                                    dismissModal();
+                                }
                             }
                         } else if (inviteBtns.sendWithout) {
-                            inviteBtns.sendWithout.click();
-                            await delay(2000);
-
-                            const stillOpen =
-                                findInviteButtons();
-                            if (stillOpen.addNote ||
-                                stillOpen.sendWithout) {
-                                consecutiveFails++;
-                                dismissModal();
-                                await delay(1000);
-                                if (consecutiveFails >=
-                                    MAX_CONSECUTIVE_FAILS) {
-                                    const backoff = Math.min(
-                                        30000 * backoffMultiplier +
-                                        Math.random() * 30000,
-                                        MAX_BACKOFF_MS
-                                    );
-                                    backoffMultiplier *= 2;
-                                    reportProgress(
-                                        totalSent, limit,
-                                        currentPage, totalSkipped
-                                    );
-                                    await delay(backoff);
-                                    consecutiveFails = 0;
-                                }
+                            if (await sendWithoutNote(
+                                button, inviteBtns.sendWithout)) {
                                 continue;
                             }
-
-                            consecutiveFails = 0;
-                            backoffMultiplier = 1;
-                            const noNoteVerified =
-                                await verifyPendingState(
-                                    button);
-                            const sentInfo2 =
-                                extractProfileInfo(button);
-                            if (noNoteVerified) {
-                                totalSent++;
-                                if (sentInfo2.profileUrl) {
-                                    sentUrls.add(
-                                        sentInfo2.profileUrl
-                                    );
-                                }
-                                connectionLog.push({
-                                    ...sentInfo2,
-                                    status: 'sent',
-                                    time: new Date()
-                                        .toISOString()
-                                });
-                            } else {
-                                totalSkipped++;
-                                connectionLog.push({
-                                    ...sentInfo2,
-                                    status:
-                                        'skipped-unverified',
-                                    time: new Date()
-                                        .toISOString()
-                                });
-                            }
-                            reportProgress(
-                                totalSent, limit,
-                                currentPage, totalSkipped
-                            );
                         } else {
                             dismissModal();
                         }
