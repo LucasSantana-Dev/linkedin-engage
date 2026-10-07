@@ -217,3 +217,109 @@ describe('withdraw mode outcome', () => {
         expect(result.runStatus).toBe(RUN_STATUS_SUCCESS);
     });
 });
+
+describe('computeConnectOutcomeMetrics', () => {
+    const { computeConnectOutcomeMetrics } = require('../extension/lib/run-outcome');
+
+    test('counts actions, skips and ignores errors, quota stops and empty status', () => {
+        const metrics = computeConnectOutcomeMetrics([
+            { status: 'sent' },
+            { status: 'skipped-already' },
+            { status: 'skip-no-button' },
+            { status: 'error-modal' },
+            { status: 'stopped-quota' },
+            { status: '' },
+            null,
+            { status: 'sent-no-note' }
+        ], true, 3);
+        expect(metrics).toEqual({
+            processedCount: 8,
+            actionCount: 2,
+            skippedCount: 2,
+            noteQuotaExhausted: true,
+            sentWithoutNoteAfterQuota: 3
+        });
+    });
+
+    test('treats a non-array log as empty', () => {
+        expect(computeConnectOutcomeMetrics(undefined, false, 0)).toEqual({
+            processedCount: 0,
+            actionCount: 0,
+            skippedCount: 0,
+            noteQuotaExhausted: false,
+            sentWithoutNoteAfterQuota: 0
+        });
+    });
+});
+
+describe('composeConnectResult', () => {
+    const { composeConnectResult } = require('../extension/lib/run-outcome');
+    const fallback = [{ status: 'sent' }];
+
+    test('falls back to the shared log and succeeds', () => {
+        const result = composeConnectResult({ extra: 1 }, undefined, fallback, false, 0);
+        expect(result).toMatchObject({
+            extra: 1, mode: 'connect', runStatus: 'success', reason: 'unknown',
+            success: true, processedCount: 1, actionCount: 1
+        });
+        expect(result.log).toBe(fallback);
+    });
+
+    test('uses the explicit log over the fallback', () => {
+        const explicit = [{ status: 'skipped-x' }, { status: 'sent' }];
+        const result = composeConnectResult({}, explicit, fallback, true, 2);
+        expect(result.log).toBe(explicit);
+        expect(result).toMatchObject({
+            processedCount: 2, skippedCount: 1,
+            noteQuotaExhausted: true, sentWithoutNoteAfterQuota: 2
+        });
+    });
+
+    test('non-object payload behaves as empty and empty log fails', () => {
+        const result = composeConnectResult(null, [], fallback, false, 0);
+        expect(result).toMatchObject({
+            runStatus: 'failed', reason: 'no-items-processed', success: false
+        });
+    });
+
+    test('stopped by user is canceled', () => {
+        const result = composeConnectResult({ stoppedByUser: true }, undefined, fallback, false, 0);
+        expect(result).toMatchObject({ runStatus: 'canceled', reason: 'stopped-by-user', success: false });
+    });
+
+    test('error with challenge text maps to challenge reason', () => {
+        const result = composeConnectResult({ error: 'Checkpoint hit' }, undefined, fallback, false, 0);
+        expect(result).toMatchObject({ runStatus: 'failed', reason: 'challenge' });
+    });
+
+    test('other error maps to runtime-error', () => {
+        const result = composeConnectResult({ error: 'boom' }, undefined, fallback, false, 0);
+        expect(result).toMatchObject({ runStatus: 'failed', reason: 'runtime-error' });
+    });
+
+    test('empty log with error text still reports challenge first', () => {
+        const result = composeConnectResult({ error: 'authwall' }, [], fallback, false, 0);
+        expect(result.reason).toBe('challenge');
+    });
+
+    test('explicit runStatus and reason are preserved', () => {
+        const result = composeConnectResult(
+            { runStatus: 'failed', reason: 'custom' }, undefined, fallback, false, 0
+        );
+        expect(result).toMatchObject({ runStatus: 'failed', reason: 'custom', success: false });
+    });
+
+    test('failed with empty log and no error reports no-items-processed', () => {
+        const result = composeConnectResult({ runStatus: 'failed' }, [], fallback, false, 0);
+        expect(result.reason).toBe('no-items-processed');
+    });
+
+    test('canceled runStatus given explicitly derives stopped-by-user', () => {
+        const result = composeConnectResult({ runStatus: 'canceled' }, undefined, fallback, false, 0);
+        expect(result.reason).toBe('stopped-by-user');
+    });
+
+    test('exports are frozen', () => {
+        expect(Object.isFrozen(require('../extension/lib/run-outcome'))).toBe(true);
+    });
+});
