@@ -560,6 +560,110 @@ describe('search-templates', () => {
         expect(q).toContain('remote');
     });
 
+    it('keeps missing-key and undefined fallback parity across connect, companies, and jobs', () => {
+        const connectMissing = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { market: [], level: [] }
+        });
+        const connectUndefined = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {
+                role: undefined,
+                industry: undefined,
+                market: [],
+                level: []
+            }
+        });
+        const connectExplicitEmpty = buildSearchTemplatePlan({
+            mode: 'connect',
+            areaPreset: 'tech',
+            usageGoal: 'recruiter_outreach',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { role: [], industry: [], market: [], level: [] }
+        });
+
+        expect(connectMissing.query).toBe(connectUndefined.query);
+        expect(connectExplicitEmpty.query.toLowerCase()).not.toContain('recruiter');
+        expect(connectExplicitEmpty.query.toLowerCase()).not.toContain('software');
+
+        const companiesMissing = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: {}
+        });
+        const companiesUndefined = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { keywords: undefined }
+        });
+        const companiesExplicitEmpty = buildSearchTemplatePlan({
+            mode: 'companies',
+            areaPreset: 'tech',
+            usageGoal: 'talent_watchlist',
+            expectedResultsBucket: 'balanced',
+            auto: true,
+            searchLanguageMode: 'en',
+            selectedTags: { keywords: [] }
+        });
+
+        expect(companiesMissing.query).toBe(companiesUndefined.query);
+        expect(companiesExplicitEmpty.query).toBe('');
+
+        const jobsMissing = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en'
+        });
+        const jobsUndefined = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            roleTerms: undefined,
+            locationTerms: undefined,
+            keywords: undefined
+        });
+        const jobsExplicitEmpty = buildSearchTemplatePlan({
+            mode: 'jobs',
+            areaPreset: 'tech',
+            usageGoal: 'high_fit_easy_apply',
+            expectedResultsBucket: 'precise',
+            auto: true,
+            searchLanguageMode: 'en',
+            roleTerms: [],
+            locationTerms: [],
+            keywords: []
+        });
+
+        expect(jobsMissing.query).toBe(jobsUndefined.query);
+        expect(jobsExplicitEmpty.query).toBe('');
+    });
+
     it('contains starter catalog templates', () => {
         const ids = SEARCH_TEMPLATES.map(t => t.id);
         expect(ids).toContain(
