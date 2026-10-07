@@ -222,3 +222,21 @@ describe('cleanupOldKeys', () => {
         ).not.toThrow();
     });
 });
+
+describe('rate-limiter UMD exposure', () => {
+    const limiter = require('../extension/lib/rate-limiter');
+    const names = [
+        'DAILY_LIMITS', 'HOURLY_LIMITS', 'WEEKLY_LIMIT', 'getHourKey',
+        'getDayKey', 'getWeekKey', 'checkLimits', 'getLimitStatus',
+        'incrementCount', 'cleanupOldKeys'
+    ];
+
+    test('exports a frozen api and mirrors every name onto the global', () => {
+        expect(Object.isFrozen(limiter)).toBe(true);
+        expect(Object.keys(limiter).sort()).toEqual([...names].sort());
+        names.forEach(name => {
+            expect(globalThis[name]).toBe(limiter[name]);
+        });
+        expect(globalThis.LinkedInRateLimiter).toBe(limiter);
+    });
+});
