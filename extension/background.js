@@ -857,7 +857,8 @@ function launchAutomation(config) {
                             'lib/invite-utils.js',
                             'lib/invite-note.js',
                             'lib/human-behavior.js',
-                            'lib/connect-action-utils.js'
+                            'lib/connect-action-utils.js',
+                            'lib/run-outcome.js'
                         ],
                         world: 'MAIN'
                     }, () => {

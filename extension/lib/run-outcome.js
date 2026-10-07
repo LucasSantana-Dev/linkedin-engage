@@ -1,174 +1,273 @@
-var RUN_STATUS_SUCCESS = 'success';
-var RUN_STATUS_FAILED = 'failed';
-var RUN_STATUS_CANCELED = 'canceled';
-
-function toSafeInt(value) {
-    var n = Math.floor(Number(value) || 0);
-    return n > 0 ? n : 0;
-}
-
-function isSkipStatus(status) {
-    return /^skipped|^skip-/.test(String(status || ''));
-}
-
-function isErrorStatus(status) {
-    return /^error-/.test(String(status || ''));
-}
-
-function isActionStatus(status) {
-    var s = String(status || '');
-    if (!s) return false;
-    if (isSkipStatus(s) || isErrorStatus(s)) return false;
-    if (s === 'warmup-learning') return false;
-    return true;
-}
-
-function countSkipped(log) {
-    if (!Array.isArray(log)) return 0;
-    return log.filter(function(entry) {
-        return isSkipStatus(entry?.status);
-    }).length;
-}
-
-function countActions(log) {
-    if (!Array.isArray(log)) return 0;
-    return log.filter(function(entry) {
-        return isActionStatus(entry?.status);
-    }).length;
-}
-
-function inferProcessed(result, mode, actionCount, skippedCount) {
-    var direct = toSafeInt(result?.processedCount);
-    if (direct > 0) return direct;
-
-    if (mode === 'company') {
-        var perStep = toSafeInt(result?.followedThisStep);
-        if (perStep > 0) return perStep;
+(function(root, factory) {
+    const api = factory();
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = api;
     }
-
-    var fromCounts = actionCount + skippedCount;
-    if (fromCounts > 0) return fromCounts;
-    return 0;
-}
-
-function detectStoppedByUser(result) {
-    if (result?.stoppedByUser === true) return true;
-    var text = [
-        result?.message || '',
-        result?.error || '',
-        result?.reason || ''
-    ].join(' ').toLowerCase();
-    return /stopped by user|canceled by user|cancelled by user/.test(text);
-}
-
-function detectChallenge(result) {
-    var text = String(result?.error || '').toLowerCase();
-    return /captcha|security challenge|checkpoint|authwall|challenge/.test(text);
-}
-
-function inferReason(runStatus, result) {
-    var explicitReason = String(result?.reason || '')
-        .trim();
-    if (runStatus === RUN_STATUS_CANCELED) {
-        return 'stopped-by-user';
-    }
-    if (explicitReason && explicitReason !== 'unknown') {
-        return explicitReason;
-    }
-    if (runStatus === RUN_STATUS_SUCCESS) {
-        return explicitReason || 'unknown';
-    }
-    if (detectChallenge(result)) {
-        return 'challenge';
-    }
-    if (String(result?.error || '').trim()) {
-        return 'runtime-error';
-    }
-    if (toSafeInt(result?.processedCount) === 0 &&
-        toSafeInt(result?.processedPosts) === 0) {
-        return 'no-items-processed';
-    }
-    return 'unknown';
-}
-
-function hasNoResultsSignal(result, mode) {
-    // Company and Connect both treat "query ran, zero matches" as a successful
-    // run (not a failure). Connect support added so an empty search page isn't
-    // misreported as FAILED.
-    if (mode !== 'company' && mode !== 'connect' &&
-        mode !== 'withdraw') return false;
-    var reason = String(result?.reason || '').trim().toLowerCase();
-    var stepCode = String(result?.stepCode || '').trim().toLowerCase();
-    if (reason === 'no-results' || stepCode === 'no-results') {
-        return true;
-    }
-    if (!Array.isArray(result?.log)) return false;
-    return result.log.some(function(entry) {
-        return String(entry?.status || '') === 'skipped-no-results';
+    root.LinkedInRunOutcome = api;
+    Object.keys(api).forEach(function(key) {
+        if (typeof root[key] === 'undefined') {
+            root[key] = api[key];
+        }
     });
-}
+})(
+    typeof globalThis !== 'undefined' ? globalThis : this,
+    function() {
+        var RUN_STATUS_SUCCESS = 'success';
+        var RUN_STATUS_FAILED = 'failed';
+        var RUN_STATUS_CANCELED = 'canceled';
 
-function inferRunStatus(result, stoppedByUser, processedCount, mode) {
-    if (stoppedByUser) return RUN_STATUS_CANCELED;
-    if (String(result?.error || '').trim()) return RUN_STATUS_FAILED;
-    if (processedCount === 0) {
-        if (hasNoResultsSignal(result, mode)) {
+        function toSafeInt(value) {
+            var n = Math.floor(Number(value) || 0);
+            return n > 0 ? n : 0;
+        }
+
+        function isSkipStatus(status) {
+            return /^skipped|^skip-/.test(String(status || ''));
+        }
+
+        function isErrorStatus(status) {
+            return /^error-/.test(String(status || ''));
+        }
+
+        function isActionStatus(status) {
+            var s = String(status || '');
+            if (!s) return false;
+            if (isSkipStatus(s) || isErrorStatus(s)) return false;
+            if (s === 'warmup-learning') return false;
+            return true;
+        }
+
+        function countSkipped(log) {
+            if (!Array.isArray(log)) return 0;
+            return log.filter(function(entry) {
+                return isSkipStatus(entry?.status);
+            }).length;
+        }
+
+        function countActions(log) {
+            if (!Array.isArray(log)) return 0;
+            return log.filter(function(entry) {
+                return isActionStatus(entry?.status);
+            }).length;
+        }
+
+        function inferProcessed(result, mode, actionCount, skippedCount) {
+            var direct = toSafeInt(result?.processedCount);
+            if (direct > 0) return direct;
+
+            if (mode === 'company') {
+                var perStep = toSafeInt(result?.followedThisStep);
+                if (perStep > 0) return perStep;
+            }
+
+            var fromCounts = actionCount + skippedCount;
+            if (fromCounts > 0) return fromCounts;
+            return 0;
+        }
+
+        function detectStoppedByUser(result) {
+            if (result?.stoppedByUser === true) return true;
+            var text = [
+                result?.message || '',
+                result?.error || '',
+                result?.reason || ''
+            ].join(' ').toLowerCase();
+            return /stopped by user|canceled by user|cancelled by user/.test(text);
+        }
+
+        function detectChallenge(result) {
+            var text = String(result?.error || '').toLowerCase();
+            return /captcha|security challenge|checkpoint|authwall|challenge/.test(text);
+        }
+
+        function inferReason(runStatus, result) {
+            var explicitReason = String(result?.reason || '')
+                .trim();
+            if (runStatus === RUN_STATUS_CANCELED) {
+                return 'stopped-by-user';
+            }
+            if (explicitReason && explicitReason !== 'unknown') {
+                return explicitReason;
+            }
+            if (runStatus === RUN_STATUS_SUCCESS) {
+                return explicitReason || 'unknown';
+            }
+            if (detectChallenge(result)) {
+                return 'challenge';
+            }
+            if (String(result?.error || '').trim()) {
+                return 'runtime-error';
+            }
+            if (toSafeInt(result?.processedCount) === 0 &&
+                toSafeInt(result?.processedPosts) === 0) {
+                return 'no-items-processed';
+            }
+            return 'unknown';
+        }
+
+        function hasNoResultsSignal(result, mode) {
+            // Company and Connect both treat "query ran, zero matches" as a successful
+            // run (not a failure). Connect support added so an empty search page isn't
+            // misreported as FAILED.
+            if (mode !== 'company' && mode !== 'connect' &&
+                mode !== 'withdraw') return false;
+            var reason = String(result?.reason || '').trim().toLowerCase();
+            var stepCode = String(result?.stepCode || '').trim().toLowerCase();
+            if (reason === 'no-results' || stepCode === 'no-results') {
+                return true;
+            }
+            if (!Array.isArray(result?.log)) return false;
+            return result.log.some(function(entry) {
+                return String(entry?.status || '') === 'skipped-no-results';
+            });
+        }
+
+        function inferRunStatus(result, stoppedByUser, processedCount, mode) {
+            if (stoppedByUser) return RUN_STATUS_CANCELED;
+            if (String(result?.error || '').trim()) return RUN_STATUS_FAILED;
+            if (processedCount === 0) {
+                if (hasNoResultsSignal(result, mode)) {
+                    return RUN_STATUS_SUCCESS;
+                }
+                return RUN_STATUS_FAILED;
+            }
             return RUN_STATUS_SUCCESS;
         }
-        return RUN_STATUS_FAILED;
-    }
-    return RUN_STATUS_SUCCESS;
-}
 
-function normalizeRunOutcome(result, modeHint) {
-    var source = result && typeof result === 'object'
-        ? result
-        : {};
-    var mode = String(source.mode || modeHint || 'connect').trim() || 'connect';
-    var skippedCount = toSafeInt(source.skippedCount);
-    if (skippedCount === 0) {
-        skippedCount = countSkipped(source.log);
-    }
-    var actionCount = toSafeInt(source.actionCount);
-    if (actionCount === 0) {
-        actionCount = countActions(source.log);
-    }
-    var processedCount = inferProcessed(
-        source,
-        mode,
-        actionCount,
-        skippedCount
-    );
-    var stoppedByUser = detectStoppedByUser(source);
-    var runStatus = inferRunStatus(
-        source,
-        stoppedByUser,
-        processedCount,
-        mode
-    );
-    var reason = inferReason(runStatus, {
-        ...source,
-        processedCount
-    });
+        function normalizeRunOutcome(result, modeHint) {
+            var source = result && typeof result === 'object'
+                ? result
+                : {};
+            var mode = String(source.mode || modeHint || 'connect').trim() || 'connect';
+            var skippedCount = toSafeInt(source.skippedCount);
+            if (skippedCount === 0) {
+                skippedCount = countSkipped(source.log);
+            }
+            var actionCount = toSafeInt(source.actionCount);
+            if (actionCount === 0) {
+                actionCount = countActions(source.log);
+            }
+            var processedCount = inferProcessed(
+                source,
+                mode,
+                actionCount,
+                skippedCount
+            );
+            var stoppedByUser = detectStoppedByUser(source);
+            var runStatus = inferRunStatus(
+                source,
+                stoppedByUser,
+                processedCount,
+                mode
+            );
+            var reason = inferReason(runStatus, {
+                ...source,
+                processedCount
+            });
 
-    return {
-        ...source,
-        mode,
-        runStatus,
-        reason,
-        success: runStatus === RUN_STATUS_SUCCESS,
-        stoppedByUser,
-        processedCount,
-        actionCount,
-        skippedCount
-    };
-}
+            return {
+                ...source,
+                mode,
+                runStatus,
+                reason,
+                success: runStatus === RUN_STATUS_SUCCESS,
+                stoppedByUser,
+                processedCount,
+                actionCount,
+                skippedCount
+            };
+        }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        RUN_STATUS_SUCCESS,
-        RUN_STATUS_FAILED,
-        RUN_STATUS_CANCELED,
-        normalizeRunOutcome
-    };
-}
+        function computeConnectOutcomeMetrics(
+            log,
+            noteQuotaExhausted,
+            sentWithoutNoteAfterQuota
+        ) {
+            const entries = Array.isArray(log) ? log : [];
+            let actionCount = 0;
+            let skippedCount = 0;
+            for (const entry of entries) {
+                const status = String(entry?.status || '');
+                if (/^skipped|^skip-/.test(status)) {
+                    skippedCount++;
+                    continue;
+                }
+                if (!status || /^error-/.test(status) ||
+                    status === 'stopped-quota') {
+                    continue;
+                }
+                actionCount++;
+            }
+            return {
+                processedCount: entries.length,
+                actionCount,
+                skippedCount,
+                noteQuotaExhausted,
+                sentWithoutNoteAfterQuota
+            };
+        }
+
+        function composeConnectResult(
+            payload,
+            log,
+            fallbackLog,
+            noteQuotaExhausted,
+            sentWithoutNoteAfterQuota
+        ) {
+            const source = payload && typeof payload === 'object'
+                ? payload
+                : {};
+            const finalLog = Array.isArray(log) ? log : fallbackLog;
+            const metrics = computeConnectOutcomeMetrics(
+                finalLog,
+                noteQuotaExhausted,
+                sentWithoutNoteAfterQuota
+            );
+            const stoppedByUser = source.stoppedByUser === true;
+            const hasError = String(source.error || '').trim() !== '';
+            let runStatus = source.runStatus;
+            if (!runStatus) {
+                if (stoppedByUser) {
+                    runStatus = 'canceled';
+                } else if (hasError || metrics.processedCount <= 0) {
+                    runStatus = 'failed';
+                } else {
+                    runStatus = 'success';
+                }
+            }
+            let reason = source.reason;
+            if (!reason) {
+                if (runStatus === 'canceled') {
+                    reason = 'stopped-by-user';
+                } else if (runStatus === 'failed') {
+                    reason = /captcha|challenge|checkpoint|authwall/i
+                        .test(String(source.error || ''))
+                        ? 'challenge'
+                        : metrics.processedCount <= 0
+                            ? 'no-items-processed'
+                            : 'runtime-error';
+                } else {
+                    reason = 'unknown';
+                }
+            }
+            return {
+                ...source,
+                mode: 'connect',
+                runStatus,
+                reason,
+                success: runStatus === 'success',
+                ...metrics,
+                log: finalLog
+            };
+        }
+
+        return Object.freeze({
+            RUN_STATUS_SUCCESS,
+            RUN_STATUS_FAILED,
+            RUN_STATUS_CANCELED,
+            normalizeRunOutcome,
+            computeConnectOutcomeMetrics,
+            composeConnectResult
+        });
+    }
+);

@@ -1490,8 +1490,22 @@
             return { state: next, changed };
         }
 
+        function getJobsPresetTerms(preset) {
+            if (!preset || preset === 'custom') {
+                return { role: [], industry: [] };
+            }
+            if (AREA_PRESETS[preset]) {
+                return {
+                    role: (AREA_PRESETS[preset].role || []).slice(),
+                    industry: (AREA_PRESETS[preset].industry || []).slice()
+                };
+            }
+            return { role: [], industry: [] };
+        }
+
         return {
             STATE_TAG_VERSION,
+            getJobsPresetTerms,
             AREA_PRESETS,
             AREA_PRESET_VALUES,
             COMPANY_AREA_PRESET_VALUES,

@@ -932,12 +932,37 @@
             return 'en';
         }
 
+        function uiLocaleToSearchLocale(locale) {
+            return locale === 'pt_BR' ? 'pt_BR' : 'en';
+        }
+
+        function formatDisplayTerm(term) {
+            const raw = String(term || '').replace(/^"+|"+$/g, '').trim();
+            if (!raw) return '';
+            return raw.split(/\s+/).map(function(word) {
+                if (/^[A-Z0-9&+-]{2,}$/.test(word)) return word;
+                if (/^[a-z]{1,3}$/.test(word)) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
+        function localizeDisplayTermForLocale(term, uiLocale) {
+            const terms = localizeSearchTerms(
+                [term],
+                uiLocaleToSearchLocale(uiLocale)
+            );
+            return formatDisplayTerm(terms[0] || term);
+        }
+
         return {
             SEARCH_LANGUAGE_MODES,
             normalizeSearchLanguageMode,
             resolveSearchLocale,
             resolveCanonicalTerm,
-            localizeSearchTerms
+            localizeSearchTerms,
+            uiLocaleToSearchLocale,
+            formatDisplayTerm,
+            localizeDisplayTermForLocale
         };
     }
 );

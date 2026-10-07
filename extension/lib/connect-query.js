@@ -192,13 +192,104 @@
                 .length;
         }
 
+        /**
+         * Normalize template metadata. Defaults for usageGoal and
+         * expectedResultsBucket come from an injected lazy provider.
+         * @param {Object} meta - Raw template metadata
+         * @param {string} mode - Search mode (connect, companies, jobs)
+         * @param {Function} getDefaults - Returns { usageGoal, expectedResultsBucket }
+         * @returns {Object} Normalized metadata
+         */
+        function normalizeTemplateMetaWithDefaults(meta, mode, getDefaults) {
+            const source = meta && typeof meta === 'object'
+                ? meta : {};
+            return {
+                templateId: String(source.templateId || ''),
+                usageGoal: String(
+                    source.usageGoal || getDefaults().usageGoal
+                ),
+                expectedResultsBucket: String(
+                    source.expectedResultsBucket ||
+                    getDefaults().expectedResultsBucket
+                ),
+                operatorCount: Math.max(
+                    0,
+                    Number(source.operatorCount) || 0
+                ),
+                compiledQueryLength: Math.max(
+                    0,
+                    Number(source.compiledQueryLength) || 0
+                ),
+                mode
+            };
+        }
+
+        /**
+         * Resolve the connect search plan from already-read popup inputs.
+         * DOM-derived values and host helpers are injected.
+         * @param {Object} input - tags, templateState, areaPreset, roleTermsLimit,
+         *   excludeKeywords, searchLanguageMode
+         * @param {Function} normalizeMeta - normalizeTemplateMeta(meta, mode)
+         * @param {Function} getSafeRoleTerms - role term sanitizer
+         * @returns {Object} Search plan
+         */
+        function resolveConnectSearchPlan(input, normalizeMeta, getSafeRoleTerms) {
+            const tags = input.tags;
+            const templateState = input.templateState;
+            if (typeof buildSearchTemplatePlan === 'function') {
+                const plan = buildSearchTemplatePlan({
+                    mode: 'connect',
+                    areaPreset: input.areaPreset,
+                    usageGoal: templateState.usageGoal,
+                    expectedResultsBucket:
+                        templateState.expectedResultsBucket,
+                    auto: templateState.auto,
+                    templateId: templateState.templateId,
+                    searchLanguageMode: templateState.searchLanguageMode,
+                    selectedTags: tags,
+                    roleTermsLimit: input.roleTermsLimit,
+                    excludeKeywords: input.excludeKeywords
+                });
+                if (plan?.query) return plan;
+            }
+
+            if (typeof buildConnectQueryFromTags === 'function') {
+                const query = buildConnectQueryFromTags(
+                    tags,
+                    input.roleTermsLimit,
+                    input.searchLanguageMode
+                );
+                return {
+                    query,
+                    filterSpec: {},
+                    defaults: {},
+                    meta: normalizeMeta({}, 'connect'),
+                    diagnostics: {}
+                };
+            }
+            const safeRoles = getSafeRoleTerms(tags.role);
+            const queryTerms = safeRoles
+                .concat(tags.industry || [], tags.market || [], tags.level || [])
+                .map(term => String(term || '').trim())
+                .filter(Boolean);
+            return {
+                query: queryTerms.join(' OR '),
+                filterSpec: {},
+                defaults: {},
+                meta: normalizeMeta({}, 'connect'),
+                diagnostics: {}
+            };
+        }
+
         return Object.freeze({
             normalizeConnectQueryTerm,
             buildRelaxedConnectQuery,
             buildConnectSearchKeywords,
             shouldRetryConnectWithRelaxedQuery,
             buildRelaxedConnectConfig,
-            countBooleanOperatorsSafe
+            countBooleanOperatorsSafe,
+            normalizeTemplateMetaWithDefaults,
+            resolveConnectSearchPlan
         });
     }
 );

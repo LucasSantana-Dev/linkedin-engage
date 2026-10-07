@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Profile walker panel and run result messages are now localized in PT-BR (#234)
 
 ### Changed
+- Pure clusters from popup.js, jobs-assist.js and content.js moved into tested lib modules; run-outcome.js is now a UMD module (#239)
 - Weekly invite cap lowered from 150 to 100 (#237)
 - Shared getWeekKey and status labels between popup and dashboard; rate-limiter is now a UMD module (#235)
 
