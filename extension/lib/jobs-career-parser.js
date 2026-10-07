@@ -64,7 +64,8 @@
         async function extractTextFromPdf(arrayBuffer) {
             const pdfjs = await loadPdfJs();
             const loadingTask = pdfjs.getDocument({
-                data: arrayBuffer
+                data: arrayBuffer,
+                isEvalSupported: false
             });
             const pdf = await loadingTask.promise;
             const parts = [];
