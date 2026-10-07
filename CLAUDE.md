@@ -17,7 +17,7 @@ CI runs lint + typecheck on Node 20 only; tests run on Node 18, 20, and 22.
 
 ## Architecture
 
-Chrome Extension (Manifest V3) + a standalone Playwright connector. **No build step** — the extension runs raw JS directly in Chrome.
+Chrome Extension (Manifest V3). **No build step**: the extension runs raw JS directly in Chrome.
 
 ### Extension entry points
 
@@ -26,7 +26,6 @@ Chrome Extension (Manifest V3) + a standalone Playwright connector. **No build s
 | `extension/content.js` | MAIN | Connect automation (reads LinkedIn's JS context) |
 | `extension/company-follow.js` | MAIN | Company follow automation |
 | `extension/jobs-assist.js` | MAIN | Jobs Easy Apply assistant |
-| `extension/feed-engage.js` | MAIN | Feed reaction/comment automation |
 | `extension/bridge.js` | ISOLATED | `chrome.runtime` ↔ `postMessage` relay |
 | `extension/background.js` | Service worker | Tab management, Chrome Alarms, notifications |
 | `extension/popup/popup.js` | — | Settings UI |
@@ -57,7 +56,6 @@ Key lib modules:
 - `search-templates.js` — Boolean template engine, `AREA_FAMILY_MAP`, `SEARCH_TEMPLATES`
 - `search-language.js` — 400+ EN/PT-BR term variants, locale-aware query compilation
 - `i18n.js` — locale catalog loader; keys in `_locales/*/messages.json` must match `[A-Za-z0-9_]` only
-- `feed-utils.js` — barrel re-export (backward compat); real logic is in `feed-comment-*.js`, `feed-dom-extraction.js`, etc.
 - `popup-state.js` — popup DEFAULT_* constants and state normalization
 - `jobs-career-intelligence.js` — resume analysis + jobs plan generation (pure, no chrome API)
 - `jobs-career-vault.js` — AES-GCM + PBKDF2 encrypted IndexedDB; needs `require('crypto').webcrypto` fallback for Node 18
@@ -85,7 +83,7 @@ Coverage applies to `extension/lib/**` only (`collectCoverageFrom` in `jest.conf
 | Functions | 99% |
 | Lines | 97.5% |
 
-Branch headroom is tightest (~0.3pp over threshold) — watch this on refactors that add new conditionals.
+Function headroom is tightest (+0.06pp over threshold: 638/644 at 99%). Watch this on refactors that add or remove functions.
 
 **Node cross-version gotchas:**
 - `crypto.subtle` — not a global on Node 18; use `require('crypto').webcrypto` fallback
@@ -102,14 +100,13 @@ Releases always go through a PR (main is branch-protected). The release skill is
 4. Commit: `chore(release): bump version to X.Y.Z`
 5. PR → CI green → squash merge
 6. Tag: `git tag -a vX.Y.Z -m "..."` + `git push origin vX.Y.Z`
-7. `release.yml` auto-packages `extension/` into `linkedin-engage-vX.Y.Z.zip` and uploads to GitHub Releases
+7. `release.yml` auto-packages `extension/` into `linkedin-engage-vX.Y.Z.zip` and uploads it to GitHub Releases (zip only)
 
 ## Conventions
 
 - **Conventional commits**: `feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`
 - **Squash merge** to main; trunk-based development
 - **`extension/lib/` = testable in Node** — no `chrome.*`, no `document.*`; `extension/*.js` = Chrome-only
-- **`feed-utils.js` is a barrel** — don't add logic there; add to the appropriate `feed-*.js` sub-module
 - **Bump `STATE_TAG_VERSION`** in `connect-config.js` whenever adding/removing area presets (triggers storage migration)
 - **Full EN/PT-BR parity** — every UI string needs a key in both `_locales/en/messages.json` and `_locales/pt_BR/messages.json`
 

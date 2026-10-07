@@ -99,7 +99,7 @@ The tag push triggers `.github/workflows/release.yml`, which packages `extension
 | `extension/lib/` | 33+ pure-logic UMD modules — testable in Node, also imported via `<script>` in popup/options and `importScripts` in the service worker. |
 | `extension/popup/` | Popup UI (`popup.html` + `popup.js`). |
 | `extension/background.js` | MV3 service worker. |
-| `extension/content.js`, `feed-engage.js`, `company-follow.js`, `jobs-assist.js` | Content scripts. |
+| `extension/content.js`, `company-follow.js`, `jobs-assist.js` | Content scripts. |
 | `extension/_locales/` | EN + PT-BR i18n catalogs (full parity required). |
 | `tests/` | Jest test suites. |
 | `.agents/skills/` | Project skills (`release`, `verify`, `area-preset-authoring`, `extension-i18n-search-l10n`). |
