@@ -8,7 +8,8 @@ describe('getStatusLabel', () => {
         ['accepted', 'status.accepted|Accepted'],
         ['visited', 'status.visited|Visited'],
         ['followed', 'status.followed|Followed'],
-        ['visited-followed', 'status.visitedFollowed|Visited + Followed']
+        ['visited-followed', 'status.visitedFollowed|Visited + Followed'],
+        ['withdrawn', 'status.withdrawn|Withdrawn']
     ])('maps %s to its locale key and fallback', (status, expected) => {
         expect(getStatusLabel(status, tr)).toBe(expected);
     });

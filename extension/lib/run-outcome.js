@@ -95,7 +95,8 @@ function hasNoResultsSignal(result, mode) {
     // Company and Connect both treat "query ran, zero matches" as a successful
     // run (not a failure). Connect support added so an empty search page isn't
     // misreported as FAILED.
-    if (mode !== 'company' && mode !== 'connect') return false;
+    if (mode !== 'company' && mode !== 'connect' &&
+        mode !== 'withdraw') return false;
     var reason = String(result?.reason || '').trim().toLowerCase();
     var stepCode = String(result?.stepCode || '').trim().toLowerCase();
     if (reason === 'no-results' || stepCode === 'no-results') {

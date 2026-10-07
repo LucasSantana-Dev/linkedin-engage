@@ -134,6 +134,20 @@ window.addEventListener('message', (event) => {
             });
         });
     }
+    if (event.data?.type === 'LINKEDIN_BOT_WITHDRAW_DONE') {
+        safeSend({
+            action: 'withdrawDone',
+            result: event.data.result
+        });
+    }
+    if (event.data?.type === 'LINKEDIN_BOT_WITHDRAW_PROGRESS') {
+        safeSend({
+            action: 'withdrawProgress',
+            sent: event.data.sent,
+            limit: event.data.limit,
+            skipped: event.data.skipped
+        });
+    }
     if (event.data?.type === 'LINKEDIN_BOT_PROGRESS') {
         safeSend({
             action: 'progress',

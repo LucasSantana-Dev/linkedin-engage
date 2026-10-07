@@ -18,6 +18,16 @@ const JOBS_ASSIST_SCRIPTS = [
     'jobs-assist.js'
 ];
 
+const WITHDRAW_INVITES_SCRIPTS = [
+    'lib/ui-notify.js',
+    'lib/human-behavior.js',
+    'lib/invite-withdraw.js',
+    'withdraw-invites.js'
+];
+const WITHDRAW_INVITES_URL =
+    'https://www.linkedin.com/mynetwork/invitation-manager/sent/';
+const WITHDRAW_RATE_MODE = 'withdrawInvites';
+
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     if (info.status !== 'complete') return;
     if (!tab.url ||
@@ -1087,6 +1097,91 @@ function launchJobsAssist(config) {
 }
 
 
+function launchWithdrawInvites(config) {
+    if (activeTabId !== null) {
+        chrome.tabs.sendMessage(
+            activeTabId,
+            { action: 'stop' },
+            () => { if (chrome.runtime.lastError) { /* tab already gone */ } }
+        );
+        setActiveTab(null);
+        connectLaunchState = null;
+    }
+    chrome.tabs.create(
+        { url: WITHDRAW_INVITES_URL, active: true },
+        (tab) => {
+            if (chrome.runtime.lastError || !tab) {
+                notifyError(
+                    'Failed to open sent invitations: ' +
+                    (chrome.runtime.lastError?.message
+                        || 'unknown error')
+                );
+                return;
+            }
+            setActiveTab(tab.id);
+            injectAndStart(
+                tab.id,
+                WITHDRAW_INVITES_SCRIPTS,
+                'LINKEDIN_WITHDRAW_INVITES_START',
+                config
+            );
+        }
+    );
+}
+
+// Run outcome for the withdraw mode: counts only hour/day budget (the weekly
+// counter belongs to Connect), logs withdrawn entries to the activity history.
+function handleWithdrawDone(result) {
+    setActiveTab(null);
+    const r = normalizeRunOutcome(result, 'withdraw');
+    const log = Array.isArray(r.log) ? r.log : [];
+    const withdrawn = log.filter(
+        entry => entry?.status === 'withdrawn'
+    );
+    if (withdrawn.length > 0) {
+        incrementPeriodCounts(
+            WITHDRAW_RATE_MODE, chrome.storage.local, withdrawn.length
+        );
+        chrome.storage.local.get('connectionHistory', (data) => {
+            chrome.storage.local.set({
+                connectionHistory: (data.connectionHistory || [])
+                    .concat(withdrawn).slice(-500)
+            });
+        });
+    }
+    cleanupOldKeys(chrome.storage.local);
+    if (r.runStatus === 'success') {
+        createLocalizedNotification(
+            'notification.withdraw.done',
+            r.message || `Withdrew ${withdrawn.length} stale invitation(s).`,
+            [withdrawn.length]
+        );
+    } else if (r.runStatus === 'canceled') {
+        createLocalizedNotification(
+            'notification.run.canceled',
+            r.message || 'Run canceled by user.'
+        );
+    } else {
+        const failureMessage = r.error || r.message || 'Unknown';
+        createLocalizedNotification(
+            'notification.run.failed',
+            `Failed: ${failureMessage}`,
+            [failureMessage]
+        );
+    }
+    recordEngagement({
+        entryType: 'run',
+        mode: 'withdraw',
+        status: `run-${r.runStatus}`,
+        runStatus: r.runStatus,
+        runReason: r.reason || 'unknown',
+        processedCount: Number(r.processedCount) || 0,
+        actionCount: Number(r.actionCount) || 0,
+        skippedCount: Number(r.skippedCount) || 0,
+        stoppedByUser: r.stoppedByUser === true
+    }, chrome.storage.local);
+}
+
 function injectAndStart(tabId, scripts, msgType, config) {
     let started = false;
     const timeout = setTimeout(() => {
@@ -1862,6 +1957,30 @@ chrome.runtime.onMessage.addListener(
             return true;
         }
 
+
+        if (request.action === 'startWithdrawInvites') {
+            checkRateLimit(WITHDRAW_RATE_MODE).then((status) => {
+                if (!status.allowed) {
+                    sendResponse({
+                        status: 'blocked',
+                        reason: status.reason
+                    });
+                    return;
+                }
+                request.rateRemaining = status.remaining;
+                launchWithdrawInvites(request);
+                sendResponse({ status: 'started' });
+            }).catch(() => {
+                sendResponse({ status: 'blocked', reason: 'unknown' });
+            });
+            return true;
+        }
+
+        if (request.action === 'withdrawDone') {
+            handleWithdrawDone(request.result);
+            sendResponse({ status: 'received' });
+            return true;
+        }
 
         if (request.action === 'stop') {
             if (companyRunState?.active) {

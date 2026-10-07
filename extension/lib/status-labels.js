@@ -9,7 +9,8 @@
         accepted: ['status.accepted', 'Accepted'],
         visited: ['status.visited', 'Visited'],
         followed: ['status.followed', 'Followed'],
-        'visited-followed': ['status.visitedFollowed', 'Visited + Followed']
+        'visited-followed': ['status.visitedFollowed', 'Visited + Followed'],
+        withdrawn: ['status.withdrawn', 'Withdrawn']
     });
 
     const COMPANY_STATUS_LABELS = Object.freeze({

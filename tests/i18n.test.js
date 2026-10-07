@@ -401,6 +401,7 @@ describe('i18n', () => {
             'content.js',
             'company-follow.js',
             'jobs-assist.js',
+            'withdraw-invites.js',
             'background.js'
         ].map(f => fs.readFileSync(path.join(extDir, f), 'utf8'));
 

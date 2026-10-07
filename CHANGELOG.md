@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Withdraw stale invites mode: opt-in, withdraws pending invitations older than N weeks (default 3), 20 per run and 40 per day (#236)
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
 ### Fixed
