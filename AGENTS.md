@@ -1,6 +1,6 @@
 # linkedin-engage
 
-Chrome Extension (Manifest V3) for LinkedIn networking automation — connections, company follows, feed engagement, and job applications.
+Chrome Extension (Manifest V3) for LinkedIn networking automation: connections, company follows, and job applications.
 
 ## Quick Reference
 
@@ -17,18 +17,17 @@ npm run test:coverage # Jest --coverage --text-summary
 extension/
   _locales/en/         # EN locale catalog (370 keys)
   _locales/pt_BR/      # PT-BR locale catalog (370 keys, full parity)
-  lib/                 # 33 pure-logic modules (testable in Node)
+  lib/                 # 35 pure-logic modules (testable in Node)
   popup/               # Popup UI (popup.html + popup.js)
   options.html         # Options/dashboard page
   options.js           # Options page logic
   background.js        # Service worker (Manifest V3)
   content.js           # Content script
-  feed-engage.js       # Feed engagement content script
   company-follow.js    # Company follow content script
   jobs-assist.js       # Jobs Easy Apply content script
   vendor/              # mammoth.browser.min.js, pdf.min.mjs, pdf.worker.min.mjs
   manifest.json        # MV3 manifest
-tests/                 # 34 test suites, 1052 tests
+tests/                 # 47 test files
 .agents/skills/        # 4 project skills
 .github/workflows/     # ci.yml + release.yml
 ```
@@ -50,16 +49,6 @@ tests/                 # 34 test suites, 1052 tests
 | `connect-config.js` | Area presets (19), company presets, role priority, area labels, STATE_TAG_VERSION |
 | `search-templates.js` | Boolean search template engine, AREA_FAMILY_MAP, SEARCH_TEMPLATES array |
 | `search-language.js` | EN/PT-BR term variants (400+), alias resolution, locale-aware query compilation |
-| `feed-utils.js` | Barrel re-export of 8 feed sub-modules (backward compat) |
-| `feed-copy-guard.js` | Copy/plagiarism risk detection (token overlap, Jaccard, 4-gram) |
-| `feed-nlp-utils.js` | Language detection, topic/key-phrase/concept extraction, tokenization |
-| `feed-comment-analysis.js` | Comment sentiment classification, thread summarization |
-| `feed-post-classification.js` | Post classification (13 categories), reaction typing, career transitions |
-| `feed-dom-extraction.js` | LinkedIn DOM parsing (post text, author, reactions, URN, buttons, comments) |
-| `feed-comment-patterns.js` | Deep pattern analysis, style resolution, pattern fit validation |
-| `feed-safety-guards.js` | Comment safety validation, low-quality detection, stranger distance risk |
-| `feed-comment-generation.js` | Comment building, template expansion, humanization, finalization |
-| `templates.js` | Comment templates EN/PT, topic map, concept patterns, COMPOSED_EN/PT |
 | `jobs-career-intelligence.js` | Resume analysis, career search plan generation, seniority/preset inference |
 | `jobs-career-vault.js` | Encrypted IndexedDB resume storage (AES-GCM + PBKDF2) |
 | `jobs-career-cache.js` | Encrypted career intelligence state cache |
@@ -67,7 +56,6 @@ tests/                 # 34 test suites, 1052 tests
 | `jobs-utils.js` | Job ranking, seniority scoring, offshore compatibility, URL builder |
 | `jobs-profile-import.js` | LinkedIn profile DOM extraction for jobs context |
 | `i18n.js` | Locale catalog loader, getMessage, applyTranslations, key normalization |
-| `pattern-memory.js` | Comment thread pattern learning and style matching |
 | `analytics.js` | Run analytics, best hour/day, top category tracking |
 | `ui-notify.js` | Fixed top-bar notification overlay for errors/blockers (injected in all content scripts) |
 
@@ -78,7 +66,6 @@ tests/                 # 34 test suites, 1052 tests
 | Connect | Automated people connections with preset-based search |
 | Companies | Company follow with talent watchlist and brand watchlist |
 | Jobs | Job search + Easy Apply with career intelligence |
-| Feed | AI-powered comment generation with safety guards |
 
 ## Area Presets (19 total)
 
@@ -90,8 +77,8 @@ tests/                 # 34 test suites, 1052 tests
 ## Coverage
 
 ```
-Statements: 89% | Branches: 76% | Functions: 93% | Lines: 91%
-Thresholds: 84 stmts | 70 branches | 90 functions | 88 lines
+Thresholds: 96 stmts | 85.7 branches | 99 functions | 97.5 lines
+Tightest margin: functions (+0.06pp, 638/644)
 ```
 
 CI auto-posts a coverage table comment on every PR.
@@ -119,6 +106,5 @@ CI auto-posts a coverage table comment on every PR.
 - `extension/lib/` modules are testable in Node; `extension/*.js` scripts are Chrome-only runtime
 - `jobs-career-parser.js` lines 27-56 (loadPdfJs/extractTextFromPdf) require `chrome.runtime.getURL` — untestable in Node/jsdom
 - `jobs-career-vault.js` needs `require('crypto').webcrypto` fallback for Node 18 (no global `crypto.subtle`)
-- `feed-utils.js` is a barrel re-export; real logic lives in 8 `feed-*.js` sub-modules (DOM-heavy ones need jsdom)
 - `STATE_TAG_VERSION` in `connect-config.js` must be bumped when adding presets (triggers migration)
 - Locale keys in `_locales/*/messages.json` must use `[A-Za-z0-9_]` only — dotted keys are normalized at the i18n boundary
