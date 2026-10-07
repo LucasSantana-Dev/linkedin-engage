@@ -724,6 +724,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     }
                     return buildConnectResult({
                         error: 'CAPTCHA detected',
+                        messageKey: 'popup.result.captcha',
                         runStatus: 'failed',
                         reason: 'challenge'
                     }, connectionLog);
@@ -838,6 +839,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 return buildConnectResult({
                     stoppedByUser: true,
                     message: 'Run canceled by user.',
+                    messageKey: 'popup.runCanceled',
                     runStatus: 'canceled',
                     reason: 'stopped-by-user'
                 }, connectionLog);
@@ -845,7 +847,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
 
             return buildConnectResult({
                 message: `Engagement done! Visited/followed ` +
-                    `${totalEngaged} profiles.`
+                    `${totalEngaged} profiles.`,
+                messageKey: 'popup.result.engagementDone',
+                messageArgs: [totalEngaged]
             }, connectionLog);
 
         } catch (error) {
@@ -997,6 +1001,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         error: 'CAPTCHA or security ' +
                             'challenge detected. ' +
                             `Sent ${totalSent} before stop.`,
+                        messageKey: 'popup.result.captchaStopped',
+                        messageArgs: [totalSent],
                         runStatus: 'failed',
                         reason: 'challenge'
                     }, connectionLog);
@@ -1221,7 +1227,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         reason: 'no-results',
                         stepCode: 'no-results',
                         message: 'Search returned no results ' +
-                            'for this query.'
+                            'for this query.',
+                        messageKey: 'popup.result.searchNoResults'
                     }, connectionLog);
                 }
 
@@ -1372,7 +1379,9 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             message:
                                 `Sent ${totalSent}, then ` +
                                 `engaged ${engResult.log.length}` +
-                                ` profiles (quota fallback).`
+                                ` profiles (quota fallback).`,
+                            messageKey: 'popup.result.quotaFallback',
+                            messageArgs: [totalSent, engResult.log.length]
                         }, connectionLog);
                     }
 
@@ -1794,6 +1803,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             error: 'CAPTCHA detected ' +
                                 'after page navigation. ' +
                                 `Sent ${totalSent}.`,
+                            messageKey: 'popup.result.captchaAfterNav',
+                            messageArgs: [totalSent],
                             runStatus: 'failed',
                             reason: 'challenge'
                         }, connectionLog);
@@ -1807,13 +1818,16 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 return buildConnectResult({
                     stoppedByUser: true,
                     message: 'Run canceled by user.',
+                    messageKey: 'popup.runCanceled',
                     runStatus: 'canceled',
                     reason: 'stopped-by-user'
                 }, connectionLog);
             }
             return buildConnectResult({
                 message: `Finished! Sent ` +
-                    `${totalSent} connection requests.`
+                    `${totalSent} connection requests.`,
+                messageKey: 'popup.result.connectFinished',
+                messageArgs: [totalSent]
             }, connectionLog);
 
         } catch (error) {

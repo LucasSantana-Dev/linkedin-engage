@@ -153,6 +153,21 @@
                 });
         }
 
+        function resolveResultText(result, fallbackText, translate) {
+            const fallback = fallbackText === undefined ||
+                fallbackText === null
+                ? ''
+                : String(fallbackText);
+            const key = result && typeof result.messageKey === 'string'
+                ? result.messageKey.trim()
+                : '';
+            if (!key || typeof translate !== 'function') return fallback;
+            const args = Array.isArray(result.messageArgs)
+                ? result.messageArgs
+                : null;
+            return translate(key, args, fallback) || fallback;
+        }
+
         return {
             UI_LANGUAGE_MODES,
             normalizeUiLanguageMode,
@@ -160,7 +175,8 @@
             resolveUiLocale,
             loadLocaleMessages,
             getMessage,
-            applyTranslations
+            applyTranslations,
+            resolveResultText
         };
     }
 );

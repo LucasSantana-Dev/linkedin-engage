@@ -997,5 +997,86 @@
   },
   "popup_connect_noteQuotaReached": {
     "message": "Cota de notas do LinkedIn atingida: $1 convites foram enviados sem nota."
+  },
+  "popup_passive_title": {
+    "message": "Visibilidade passiva"
+  },
+  "popup_passive_enableWalker": {
+    "message": "Ativar visitas automáticas a perfis (opcional)"
+  },
+  "popup_passive_dailyTarget": {
+    "message": "Meta diária de visitas a perfis (máx. 50)"
+  },
+  "popup_passive_startWalk": {
+    "message": "Iniciar visitas"
+  },
+  "popup_passive_enableFirst": {
+    "message": "Ative primeiro as visitas automáticas a perfis."
+  },
+  "popup_passive_starting": {
+    "message": "Iniciando visitas a perfis (meta $1)..."
+  },
+  "popup_passive_startFailed": {
+    "message": "Falha ao iniciar as visitas: $1"
+  },
+  "popup_passive_stopRequested": {
+    "message": "Parada solicitada."
+  },
+  "popup_passive_done": {
+    "message": "Visitas concluídas: $1 perfis visitados (hoje $2/$3), motivo $4"
+  },
+  "popup_result_captcha": {
+    "message": "CAPTCHA detectado"
+  },
+  "popup_result_captchaStopped": {
+    "message": "CAPTCHA ou verificação de segurança detectado. $1 enviados antes da parada."
+  },
+  "popup_result_captchaAfterNav": {
+    "message": "CAPTCHA detectado após a navegação de página. $1 enviados."
+  },
+  "popup_result_securityChallenge": {
+    "message": "CAPTCHA ou verificação de segurança detectado"
+  },
+  "popup_result_searchNoResults": {
+    "message": "A busca não retornou resultados para esta consulta."
+  },
+  "popup_result_quotaFallback": {
+    "message": "$1 enviados e depois $2 perfis engajados (alternativa por limite de cota)."
+  },
+  "popup_result_connectFinished": {
+    "message": "Concluído! $1 convites de conexão enviados."
+  },
+  "popup_result_engagementDone": {
+    "message": "Engajamento concluído! $1 perfis visitados/seguidos."
+  },
+  "popup_result_companyNoResults": {
+    "message": "Nenhum resultado para a busca atual."
+  },
+  "popup_result_companyNoMoreResults": {
+    "message": "Nenhum resultado adicional para a busca atual."
+  },
+  "popup_result_companyFollowedStep": {
+    "message": "$1 empresas seguidas nesta busca."
+  },
+  "popup_result_companyFollowedTotal": {
+    "message": "$1 empresas seguidas."
+  },
+  "popup_result_companyOpenSearchFailed": {
+    "message": "Falha ao abrir a busca de empresas"
+  },
+  "popup_result_previousRunCanceled": {
+    "message": "Execução anterior cancelada por uma nova execução de empresas."
+  },
+  "popup_result_jobsNoJobs": {
+    "message": "Nenhuma vaga encontrada na página atual."
+  },
+  "popup_result_jobsPrepared": {
+    "message": "Candidatura preparada. Revise e envie manualmente."
+  },
+  "popup_result_jobsManualInput": {
+    "message": "Entrada manual necessária na candidatura atual. Conclua-a e reinicie o Jobs Assist."
+  },
+  "popup_result_jobsNoManualReview": {
+    "message": "Nenhuma vaga chegou à etapa de revisão manual."
   }
 }

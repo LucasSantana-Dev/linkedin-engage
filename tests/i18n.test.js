@@ -11,7 +11,8 @@ const {
     resolveUiLocale,
     getMessage,
     loadLocaleMessages,
-    applyTranslations
+    applyTranslations,
+    resolveResultText
 } = require('../extension/lib/i18n');
 
 const LOCALES = ['en', 'pt_BR'];
@@ -343,6 +344,82 @@ describe('i18n', () => {
             expect(globalThis.getMessage).toBe('already-set');
             globalThis.getMessage = saved;
             jest.resetModules();
+        });
+    });
+    describe('resolveResultText', () => {
+        const translate = jest.fn((key, args, fallback) =>
+            `${key}|${JSON.stringify(args)}|${fallback}`
+        );
+
+        beforeEach(() => translate.mockClear());
+
+        it('returns the raw text when there is no messageKey', () => {
+            expect(resolveResultText({}, 'raw', translate)).toBe('raw');
+            expect(resolveResultText(null, 'raw', translate)).toBe('raw');
+            expect(resolveResultText({ messageKey: 5 }, 'raw', translate))
+                .toBe('raw');
+            expect(resolveResultText({ messageKey: '  ' }, 'raw', translate))
+                .toBe('raw');
+            expect(translate).not.toHaveBeenCalled();
+        });
+
+        it('returns an empty string for a missing fallback', () => {
+            expect(resolveResultText({}, undefined, translate)).toBe('');
+            expect(resolveResultText({}, null, translate)).toBe('');
+        });
+
+        it('returns the raw text when translate is not a function', () => {
+            expect(resolveResultText({ messageKey: 'k' }, 'raw'))
+                .toBe('raw');
+        });
+
+        it('translates with the key, args and raw fallback', () => {
+            expect(resolveResultText(
+                { messageKey: ' popup.x ', messageArgs: [1, 2] },
+                'raw',
+                translate
+            )).toBe('popup.x|[1,2]|raw');
+            expect(resolveResultText(
+                { messageKey: 'popup.y', messageArgs: 'bad' },
+                'raw',
+                translate
+            )).toBe('popup.y|null|raw');
+        });
+
+        it('falls back to the raw text when translate returns empty', () => {
+            expect(resolveResultText(
+                { messageKey: 'popup.z' },
+                'raw',
+                () => ''
+            )).toBe('raw');
+        });
+    });
+
+    describe('run result message keys', () => {
+        const extDir = path.join(__dirname, '..', 'extension');
+        const sources = [
+            'content.js',
+            'company-follow.js',
+            'jobs-assist.js',
+            'background.js'
+        ].map(f => fs.readFileSync(path.join(extDir, f), 'utf8'));
+
+        it('every emitted messageKey exists in both catalogs', () => {
+            const keys = new Set();
+            sources.forEach(src => {
+                for (const m of src.matchAll(
+                    /messageKey:\s*['"]([A-Za-z0-9_.]+)['"]/g
+                )) {
+                    keys.add(m[1]);
+                }
+            });
+            expect(keys.size).toBeGreaterThan(10);
+            LOCALES.forEach(locale => {
+                const catalog = readLocaleCatalog(locale);
+                keys.forEach(key => {
+                    expect(catalog[normalizeCatalogKey(key)]).toBeDefined();
+                });
+            });
         });
     });
 });
