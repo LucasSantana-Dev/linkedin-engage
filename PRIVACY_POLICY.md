@@ -51,7 +51,7 @@ We do not sell, share or transfer any user data to third parties.
 All data persists until you:
 - Clear the extension's storage (via Chrome's extension management page)
 - Uninstall the extension
-- Reset data through the extension's dashboard
+- Clear the extension's storage from the browser's extension settings, or remove the extension
 
 ## Children's Privacy
 

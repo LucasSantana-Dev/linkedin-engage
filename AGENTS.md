@@ -15,8 +15,8 @@ npm run test:coverage # Jest --coverage --text-summary
 
 ```
 extension/
-  _locales/en/         # EN locale catalog (370 keys)
-  _locales/pt_BR/      # PT-BR locale catalog (370 keys, full parity)
+  _locales/en/         # EN locale catalog (395 keys)
+  _locales/pt_BR/      # PT-BR locale catalog (395 keys, full parity)
   lib/                 # 35 pure-logic modules (testable in Node)
   popup/               # Popup UI (popup.html + popup.js)
   options.html         # Options/dashboard page
@@ -28,7 +28,7 @@ extension/
   vendor/              # mammoth.browser.min.js, pdf.min.mjs, pdf.worker.min.mjs
   manifest.json        # MV3 manifest
 tests/                 # 47 test files
-.agents/skills/        # 4 project skills
+.agents/skills/        # 7 project skills
 .github/workflows/     # ci.yml + release.yml
 ```
 
@@ -97,7 +97,7 @@ CI auto-posts a coverage table comment on every PR.
 - **No build step** — extension runs raw JS in Chrome
 - **UMD-style modules** — `(function(root, factory) { ... })` pattern for Node + browser compatibility
 - **Dark-only UI** — no light theme support
-- **EN/PT-BR** — full locale parity required (370 keys each)
+- **EN/PT-BR** — full locale parity required (395 keys each)
 - **Conventional commits** — `feat:`, `fix:`, `test:`, `chore:`, `refactor:`, `docs:`
 - **Trunk-based development** — PRs to `main`, squash merge
 
