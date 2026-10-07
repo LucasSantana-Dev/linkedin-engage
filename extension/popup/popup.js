@@ -10,7 +10,6 @@ const FALLBACK_TEMPLATES = {
 const TEMPLATES = { ...FALLBACK_TEMPLATES };
 
 const MAX_CHARS = 300;
-const WEEKLY_LIMIT = 150;
 const DEFAULT_ROLE_TERMS_LIMIT = DEFAULT_POPUP_STATE.roleTermsLimit;
 const DEFAULT_TEMPLATE_KEY = DEFAULT_POPUP_STATE.activeTemplate;
 const DEFAULT_AREA_PRESET = DEFAULT_POPUP_STATE.areaPreset;
@@ -466,24 +465,10 @@ function getProgressVerb(mode, isEngagementOnly) {
 }
 
 function getRecentProfileStatusLabel(status) {
-    const value = String(status || '');
-    const labelMap = {
-        sent: ['status.sent', 'Sent'],
-        accepted: ['status.accepted', 'Accepted'],
-        visited: ['status.visited', 'Visited'],
-        followed: ['status.followed', 'Followed'],
-        'visited-followed': ['status.visitedFollowed', 'Visited + Followed']
-    };
-    if (labelMap[value]) {
-        const [key, fallback] = labelMap[value];
-        return tr(key, null, fallback);
-    }
-    if (value.startsWith('skipped-')) {
-        const key = `status.${value.replace(/^skipped-/, '')}`;
-        const fallback = value.replace(/^skipped-/, '');
-        return tr(key, null, fallback);
-    }
-    return value.replace(/-/g, ' ');
+    return getStatusLabel(
+        status,
+        (key, fallback) => tr(key, null, fallback)
+    );
 }
 
 function uiLocaleToSearchLocale(locale) {
@@ -1391,15 +1376,6 @@ function applyAreaPreset(preset, shouldSave) {
     updateQueryPreview();
     updateRefineSelectedCount();
     if (shouldSave) saveState();
-}
-
-function getWeekKey() {
-    const now = new Date();
-    const jan1 = new Date(now.getFullYear(), 0, 1);
-    const week = Math.ceil(
-        ((now - jan1) / 86400000 + jan1.getDay() + 1) / 7
-    );
-    return `week_${now.getFullYear()}_${week}`;
 }
 
 function getWeeklyCount() {

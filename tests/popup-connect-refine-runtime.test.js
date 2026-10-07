@@ -142,6 +142,12 @@ describe('popup connect refine runtime', () => {
             Object.assign(global, require(
                 '../extension/lib/invite-note'
             ));
+            Object.assign(global, require(
+                '../extension/lib/rate-limiter'
+            ));
+            Object.assign(global, require(
+                '../extension/lib/status-labels'
+            ));
             require('../extension/popup/popup.js');
         });
     });

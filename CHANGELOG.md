@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
+### Changed
+- Shared getWeekKey and status labels between popup and dashboard; rate-limiter is now a UMD module (#235)
+
 ### Security
 - Vendored pdf.js updated to 6.4.299 (GHSA-hq66-cqwq-w95j) and eval disabled in the PDF parser (#231)
 

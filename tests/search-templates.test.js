@@ -109,6 +109,31 @@ describe('search-templates', () => {
         );
     });
 
+    it('falls back to the first mode template when no custom balanced template exists', () => {
+        const customJobs = SEARCH_TEMPLATES.filter(template =>
+            template.mode === 'jobs' && template.areaPreset === 'custom'
+        );
+        expect(customJobs.length).toBeGreaterThan(0);
+        const originalPresets = customJobs.map(template => template.areaPreset);
+        try {
+            customJobs.forEach(template => { template.areaPreset = 'detached'; });
+            const template = selectSearchTemplate({
+                mode: 'jobs',
+                areaPreset: 'custom',
+                expectedResultsBucket: 'balanced',
+                auto: true
+            });
+            expect(template).toBe(
+                SEARCH_TEMPLATES.find(item => item.mode === 'jobs')
+            );
+            expect(template.areaPreset).not.toBe('custom');
+        } finally {
+            customJobs.forEach((template, i) => {
+                template.areaPreset = originalPresets[i];
+            });
+        }
+    });
+
     it('resolves area-family fallback when exact area has no template', () => {
         const template = selectSearchTemplate({
             mode: 'connect',
