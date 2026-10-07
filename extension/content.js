@@ -634,73 +634,14 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return false;
     }
 
-    function buildConnectOutcomeMetrics(log) {
-        const entries = Array.isArray(log) ? log : [];
-        let actionCount = 0;
-        let skippedCount = 0;
-        for (const entry of entries) {
-            const status = String(entry?.status || '');
-            if (/^skipped|^skip-/.test(status)) {
-                skippedCount++;
-                continue;
-            }
-            if (!status || /^error-/.test(status) ||
-                status === 'stopped-quota') {
-                continue;
-            }
-            actionCount++;
-        }
-        return {
-            processedCount: entries.length,
-            actionCount,
-            skippedCount,
+    function buildConnectResult(payload, log) {
+        return composeConnectResult(
+            payload,
+            log,
+            connectionLog,
             noteQuotaExhausted,
             sentWithoutNoteAfterQuota
-        };
-    }
-
-    function buildConnectResult(payload, log) {
-        const source = payload && typeof payload === 'object'
-            ? payload
-            : {};
-        const finalLog = Array.isArray(log) ? log : connectionLog;
-        const metrics = buildConnectOutcomeMetrics(finalLog);
-        const stoppedByUser = source.stoppedByUser === true;
-        const hasError = String(source.error || '').trim() !== '';
-        let runStatus = source.runStatus;
-        if (!runStatus) {
-            if (stoppedByUser) {
-                runStatus = 'canceled';
-            } else if (hasError || metrics.processedCount <= 0) {
-                runStatus = 'failed';
-            } else {
-                runStatus = 'success';
-            }
-        }
-        let reason = source.reason;
-        if (!reason) {
-            if (runStatus === 'canceled') {
-                reason = 'stopped-by-user';
-            } else if (runStatus === 'failed') {
-                reason = /captcha|challenge|checkpoint|authwall/i
-                    .test(String(source.error || ''))
-                    ? 'challenge'
-                    : metrics.processedCount <= 0
-                        ? 'no-items-processed'
-                        : 'runtime-error';
-            } else {
-                reason = 'unknown';
-            }
-        }
-        return {
-            ...source,
-            mode: 'connect',
-            runStatus,
-            reason,
-            success: runStatus === 'success',
-            ...metrics,
-            log: finalLog
-        };
+        );
     }
 
     async function runEngagement(config) {

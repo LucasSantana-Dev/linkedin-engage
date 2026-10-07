@@ -462,3 +462,78 @@ describe('buildRelaxedConnectConfig', () => {
         expect(result.connectRelaxAttempt).toBe(6);
     });
 });
+
+describe('connect-query popup plan helpers', () => {
+  const lib = require('../extension/lib/connect-query');
+
+  describe('normalizeTemplateMetaWithDefaults', () => {
+    const defaults = () => ({ usageGoal: 'ug', expectedResultsBucket: 'erb' });
+    it('fills defaults lazily and clamps numbers', () => {
+      expect(lib.normalizeTemplateMetaWithDefaults(null, 'jobs', defaults)).toEqual({
+        templateId: '', usageGoal: 'ug', expectedResultsBucket: 'erb',
+        operatorCount: 0, compiledQueryLength: 0, mode: 'jobs'
+      });
+    });
+    it('keeps provided values and does not call defaults', () => {
+      const spy = jest.fn(defaults);
+      const out = lib.normalizeTemplateMetaWithDefaults({
+        templateId: 't', usageGoal: 'g', expectedResultsBucket: 'b',
+        operatorCount: -3, compiledQueryLength: '7'
+      }, 'connect', spy);
+      expect(out).toEqual({
+        templateId: 't', usageGoal: 'g', expectedResultsBucket: 'b',
+        operatorCount: 0, compiledQueryLength: 7, mode: 'connect'
+      });
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resolveConnectSearchPlan', () => {
+    const norm = jest.fn((m, mode) => ({ norm: true, mode }));
+    const safe = jest.fn((roles) => roles);
+    const state = {
+      usageGoal: 'u', expectedResultsBucket: 'e', auto: true,
+      templateId: 'tid', searchLanguageMode: 'en'
+    };
+    const input = (tags) => ({
+      tags, templateState: state, areaPreset: 'p',
+      roleTermsLimit: 4, excludeKeywords: ['x'], searchLanguageMode: 'pt_BR'
+    });
+    afterEach(() => {
+      delete global.buildSearchTemplatePlan;
+      delete global.buildConnectQueryFromTags;
+      jest.clearAllMocks();
+    });
+
+    it('returns the template plan when it has a query', () => {
+      global.buildSearchTemplatePlan = jest.fn(() => ({ query: 'q1' }));
+      const tags = { role: ['a'] };
+      expect(lib.resolveConnectSearchPlan(input(tags), norm, safe)).toEqual({ query: 'q1' });
+      expect(global.buildSearchTemplatePlan).toHaveBeenCalledWith({
+        mode: 'connect', areaPreset: 'p', usageGoal: 'u',
+        expectedResultsBucket: 'e', auto: true, templateId: 'tid',
+        searchLanguageMode: 'en', selectedTags: tags,
+        roleTermsLimit: 4, excludeKeywords: ['x']
+      });
+    });
+    it('falls through to the tag query builder when plan has no query', () => {
+      global.buildSearchTemplatePlan = jest.fn(() => null);
+      global.buildConnectQueryFromTags = jest.fn(() => 'q2');
+      const tags = { role: ['a'] };
+      expect(lib.resolveConnectSearchPlan(input(tags), norm, safe)).toEqual({
+        query: 'q2', filterSpec: {}, defaults: {},
+        meta: { norm: true, mode: 'connect' }, diagnostics: {}
+      });
+      expect(global.buildConnectQueryFromTags).toHaveBeenCalledWith(tags, 4, 'pt_BR');
+    });
+    it('builds an OR query from tags when no builders exist', () => {
+      const tags = { role: ['a', ' '], industry: ['b'], market: ['c'], level: undefined };
+      const out = lib.resolveConnectSearchPlan(input(tags), norm, safe);
+      expect(out.query).toBe('a OR b OR c');
+      expect(out.meta).toEqual({ norm: true, mode: 'connect' });
+      expect(safe).toHaveBeenCalledWith(tags.role);
+      const bare = lib.resolveConnectSearchPlan(input({ role: ['z'] }), norm, safe);
+      expect(bare.query).toBe('z');
+    });
+  });
+});

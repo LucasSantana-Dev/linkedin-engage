@@ -151,6 +151,15 @@ describe('popup connect refine runtime', () => {
             Object.assign(global, require(
                 '../extension/lib/status-labels'
             ));
+            Object.assign(global, require(
+                '../extension/lib/search-language'
+            ));
+            Object.assign(global, require(
+                '../extension/lib/connect-query'
+            ));
+            Object.assign(global, require(
+                '../extension/lib/popup-run-result'
+            ));
             require('../extension/popup/popup.js');
         });
     });

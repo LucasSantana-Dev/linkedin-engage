@@ -310,20 +310,6 @@ function parseMultilineList(raw) {
         .filter(Boolean);
 }
 
-function getJobsPresetTerms(preset) {
-    if (!preset || preset === 'custom') {
-        return { role: [], industry: [] };
-    }
-    if (typeof AREA_PRESETS !== 'undefined' &&
-        AREA_PRESETS[preset]) {
-        return {
-            role: (AREA_PRESETS[preset].role || []).slice(),
-            industry: (AREA_PRESETS[preset].industry || []).slice()
-        };
-    }
-    return { role: [], industry: [] };
-}
-
 function setCompanyAreaPresetSelectValue(value) {
     const select = document.getElementById(
         'companyAreaPresetSelect'
@@ -424,29 +410,11 @@ function getRecentProfileStatusLabel(status) {
     );
 }
 
-function uiLocaleToSearchLocale(locale) {
-    return locale === 'pt_BR' ? 'pt_BR' : 'en';
-}
-
-function formatDisplayTerm(term) {
-    const raw = String(term || '').replace(/^"+|"+$/g, '').trim();
-    if (!raw) return '';
-    return raw.split(/\s+/).map(word => {
-        if (/^[A-Z0-9&+-]{2,}$/.test(word)) return word;
-        if (/^[a-z]{1,3}$/.test(word)) return word;
-        return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-}
-
 function localizeDisplayTerm(term) {
     if (typeof localizeSearchTerms !== 'function') {
         return formatDisplayTerm(term);
     }
-    const terms = localizeSearchTerms(
-        [term],
-        uiLocaleToSearchLocale(currentUiLocale)
-    );
-    return formatDisplayTerm(terms[0] || term);
+    return localizeDisplayTermForLocale(term, currentUiLocale);
 }
 
 function setElementText(selector, key, fallback) {
@@ -1051,36 +1019,18 @@ function refreshTemplateControls() {
 }
 
 function normalizeTemplateMeta(meta, mode) {
-    const source = meta && typeof meta === 'object'
-        ? meta : {};
-    return {
-        templateId: String(source.templateId || ''),
-        usageGoal: String(
-            source.usageGoal ||
-            (mode === 'connect'
-                ? getConnectUsageGoal()
-                : mode === 'companies'
-                    ? getCompanyUsageGoal()
-                    : getJobsUsageGoal())
-        ),
-        expectedResultsBucket: String(
-            source.expectedResultsBucket ||
-            (mode === 'connect'
-                ? getConnectExpectedResults()
-                : mode === 'companies'
-                    ? getCompanyExpectedResults()
-                    : getJobsExpectedResults())
-        ),
-        operatorCount: Math.max(
-            0,
-            Number(source.operatorCount) || 0
-        ),
-        compiledQueryLength: Math.max(
-            0,
-            Number(source.compiledQueryLength) || 0
-        ),
-        mode
-    };
+    return normalizeTemplateMetaWithDefaults(meta, mode, () => ({
+        usageGoal: mode === 'connect'
+            ? getConnectUsageGoal()
+            : mode === 'companies'
+                ? getCompanyUsageGoal()
+                : getJobsUsageGoal(),
+        expectedResultsBucket: mode === 'connect'
+            ? getConnectExpectedResults()
+            : mode === 'companies'
+                ? getCompanyExpectedResults()
+                : getJobsExpectedResults()
+    }));
 }
 
 function normalizePopupUi(ui) {
@@ -1501,52 +1451,14 @@ function buildConnectSearchPlan(selectedTags) {
             level: getSelectedTags('level'),
             workMode: getSelectedTags('workMode')
         };
-
-    const templateState = getTemplateState('connect');
-    if (typeof buildSearchTemplatePlan === 'function') {
-        const plan = buildSearchTemplatePlan({
-            mode: 'connect',
-            areaPreset: getSelectedAreaPreset(),
-            usageGoal: templateState.usageGoal,
-            expectedResultsBucket:
-                templateState.expectedResultsBucket,
-            auto: templateState.auto,
-            templateId: templateState.templateId,
-            searchLanguageMode: templateState.searchLanguageMode,
-            selectedTags: tags,
-            roleTermsLimit: getRoleTermsLimit(),
-            excludeKeywords: getExcludeKeywordsTerms()
-        });
-        if (plan?.query) return plan;
-    }
-
-    if (typeof buildConnectQueryFromTags === 'function') {
-        const query = buildConnectQueryFromTags(
-            tags,
-            getRoleTermsLimit(),
-            getConnectSearchLanguageMode()
-        );
-        return {
-            query,
-            filterSpec: {},
-            defaults: {},
-            meta: normalizeTemplateMeta({}, 'connect'),
-            diagnostics: {}
-        };
-    }
-    const safeRoles = getSafeRoleTerms(tags.role);
-    const queryTerms = safeRoles
-        .concat(tags.industry || [], tags.market || [], tags.level || [])
-        .map(term => String(term || '').trim())
-        .filter(Boolean);
-    const query = queryTerms.join(' OR ');
-    return {
-        query,
-        filterSpec: {},
-        defaults: {},
-        meta: normalizeTemplateMeta({}, 'connect'),
-        diagnostics: {}
-    };
+    return resolveConnectSearchPlan({
+        tags,
+        templateState: getTemplateState('connect'),
+        areaPreset: getSelectedAreaPreset(),
+        roleTermsLimit: getRoleTermsLimit(),
+        excludeKeywords: getExcludeKeywordsTerms(),
+        searchLanguageMode: getConnectSearchLanguageMode()
+    }, normalizeTemplateMeta, getSafeRoleTerms);
 }
 
 function buildQuery() {
@@ -3706,94 +3618,8 @@ document.getElementById('stopBtn').addEventListener('click', () => {
 let lastReportedSent = 0;
 let lastConnectionLog = [];
 
-function deriveDoneRunStatus(response) {
-    const source = response && typeof response === 'object'
-        ? response
-        : {};
-    const direct = String(source.runStatus || '').toLowerCase();
-    if (direct === 'success' || direct === 'failed' ||
-        direct === 'canceled') {
-        return direct;
-    }
-    const text = String(
-        source.error || source.message || source.reason || ''
-    ).toLowerCase();
-    const reason = String(source.reason || '').toLowerCase();
-    const stepCode = String(source.stepCode || '').toLowerCase();
-    const isCompanyNoResults = source.mode === 'companies' && (
-        reason === 'no-results' ||
-        stepCode === 'no-results' ||
-        Array.isArray(source.log) &&
-            source.log.some((entry) => String(entry?.status || '')
-                .toLowerCase() === 'skipped-no-results')
-    );
-    if (isCompanyNoResults) {
-        return 'success';
-    }
-    if (source.stoppedByUser === true ||
-        /stopped by user|canceled by user|cancelled by user/.test(text)) {
-        return 'canceled';
-    }
-    const processed = Number(
-        source.processedCount ?? source.processedPosts
-    ) || 0;
-    if (String(source.error || '').trim()) {
-        return 'failed';
-    }
-    if (processed <= 0) {
-        return 'failed';
-    }
-    return source.success === false ? 'failed' : 'success';
-}
-
 function getDoneFailureMessage(response) {
-    const reason = String(response?.reason || '').trim().toLowerCase();
-    const stepCode = String(response?.stepCode || '').trim().toLowerCase();
-    const isCompaniesMode = response?.mode === 'companies';
-    const reasonMessages = isCompaniesMode
-        ? {
-            'follow-not-confirmed': tr(
-                'popup.company.followNotConfirmed',
-                null,
-                'Follow click attempted but could not be confirmed on LinkedIn UI.'
-            ),
-            'no-target-matches': tr(
-                'popup.company.noTargetMatches',
-                null,
-                'No company matched the target filter for this run.'
-            ),
-            'already-following-only': tr(
-                'popup.company.alreadyFollowingOnly',
-                null,
-                'All matched companies were already followed.'
-            ),
-            'cards-timeout': tr(
-                'popup.company.cardsTimeout',
-                null,
-                'LinkedIn did not load company results in time. Try again.'
-            )
-        }
-        : {
-            'follow-not-confirmed':
-                'Follow click attempted but could not be confirmed on LinkedIn UI.',
-            'no-target-matches':
-                'No company matched the target filter for this run.',
-            'already-following-only':
-                'All matched companies were already followed.'
-        };
-    if (reasonMessages[reason]) {
-        return reasonMessages[reason];
-    }
-    if (isCompaniesMode && stepCode === 'cards-timeout') {
-        return reasonMessages['cards-timeout'];
-    }
-    const rawText = response?.error || response?.message;
-    if (rawText) return resultText(response, rawText);
-    return tr(
-        'popup.runNoItemsProcessed',
-        null,
-        'No items processed.'
-    );
+    return buildDoneFailureMessage(response, tr, resultText);
 }
 
 document.getElementById('exportBtn').addEventListener('click', () => {

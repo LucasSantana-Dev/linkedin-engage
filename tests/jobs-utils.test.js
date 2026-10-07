@@ -693,3 +693,99 @@ describe('jobs-utils matching and ranking', () => {
         delete global.buildLinkedInJobsSearchUrl;
     });
 });
+
+describe('jobs-assist helper cluster', () => {
+    const lib = require('../extension/lib/jobs-utils');
+
+    test('exports the helpers', () => {
+        ['parsePostedHours', 'inferWorkType', 'resolveJobsRuntimeOptions',
+            'isRequiredField', 'fieldHint'].forEach(name => {
+            expect(typeof lib[name]).toBe('function');
+        });
+    });
+
+    test('parsePostedHours handles each unit, accents and empty input', () => {
+        expect(lib.parsePostedHours('')).toBeNull();
+        expect(lib.parsePostedHours(null)).toBeNull();
+        expect(lib.parsePostedHours('Posted 5 minutes ago')).toBe(1);
+        expect(lib.parsePostedHours('há 3 horas')).toBe(3);
+        expect(lib.parsePostedHours('2 hours ago')).toBe(2);
+        expect(lib.parsePostedHours('4 dias atrás')).toBe(96);
+        expect(lib.parsePostedHours('1 day ago')).toBe(24);
+        expect(lib.parsePostedHours('2 semanas')).toBe(336);
+        expect(lib.parsePostedHours('2 weeks ago')).toBe(336);
+        expect(lib.parsePostedHours('recently')).toBeNull();
+    });
+
+    test('inferWorkType maps remote, hybrid, onsite and unknown', () => {
+        expect(lib.inferWorkType('')).toBe('');
+        expect(lib.inferWorkType('São Paulo (Remoto)')).toBe('remote');
+        expect(lib.inferWorkType('Remote')).toBe('remote');
+        expect(lib.inferWorkType('Híbrido')).toBe('hybrid');
+        expect(lib.inferWorkType('Hybrid')).toBe('hybrid');
+        expect(lib.inferWorkType('On-site')).toBe('');
+        expect(lib.inferWorkType('on site')).toBe('onsite');
+        expect(lib.inferWorkType('Presencial')).toBe('onsite');
+        expect(lib.inferWorkType('Lisbon')).toBe('');
+    });
+
+    describe('resolveJobsRuntimeOptions', () => {
+        const defaults = {
+            openCardScrollMs: 300, openCardOpenMs: 900, afterApplyClickMs: 800,
+            afterStepClickMs: 350, modalPollTimeoutMs: 6000,
+            modalPollIntervalMs: 200, stepPollTimeoutMs: 4500,
+            stepPollIntervalMs: 120, maxModalSteps: 8
+        };
+
+        test('returns defaults for missing or non-object options', () => {
+            expect(lib.resolveJobsRuntimeOptions(undefined, defaults)).toEqual(defaults);
+            expect(lib.resolveJobsRuntimeOptions('x', defaults)).toEqual(defaults);
+        });
+
+        test('floors valid numbers and rejects negatives and NaN', () => {
+            const out = lib.resolveJobsRuntimeOptions({
+                openCardScrollMs: 10.9,
+                openCardOpenMs: -1,
+                afterApplyClickMs: 'abc',
+                afterStepClickMs: '40'
+            }, defaults);
+            expect(out.openCardScrollMs).toBe(10);
+            expect(out.openCardOpenMs).toBe(900);
+            expect(out.afterApplyClickMs).toBe(800);
+            expect(out.afterStepClickMs).toBe(40);
+        });
+
+        test('clamps intervals and max steps to at least 1', () => {
+            const out = lib.resolveJobsRuntimeOptions({
+                modalPollIntervalMs: 0, stepPollIntervalMs: 0, maxModalSteps: 0,
+                modalPollTimeoutMs: 0
+            }, defaults);
+            expect(out.modalPollIntervalMs).toBe(1);
+            expect(out.stepPollIntervalMs).toBe(1);
+            expect(out.maxModalSteps).toBe(1);
+            expect(out.modalPollTimeoutMs).toBe(0);
+        });
+    });
+
+    describe('field helpers', () => {
+        const el = attrs => {
+            return { getAttribute: k => (k in attrs ? attrs[k] : null) };
+        };
+
+        test('isRequiredField via property and aria-required', () => {
+            const a = { required: true, getAttribute: () => null };
+            expect(lib.isRequiredField(a)).toBe(true);
+            expect(lib.isRequiredField(el({ 'aria-required': 'TRUE' }))).toBe(true);
+            expect(lib.isRequiredField(el({ 'aria-required': 'false' }))).toBe(false);
+            expect(lib.isRequiredField(el({}))).toBe(false);
+        });
+
+        test('fieldHint prefers aria-label, name, id, placeholder then index', () => {
+            expect(lib.fieldHint(el({ 'aria-label': 'Phone Número', name: 'n' }), 0)).toBe('phone numero');
+            expect(lib.fieldHint(el({ name: 'City' }), 0)).toBe('city');
+            expect(lib.fieldHint(el({ id: 'x1' }), 0)).toBe('x1');
+            expect(lib.fieldHint(el({ placeholder: 'Your Name' }), 0)).toBe('your name');
+            expect(lib.fieldHint(el({}), 2)).toBe('field-3');
+        });
+    });
+});
