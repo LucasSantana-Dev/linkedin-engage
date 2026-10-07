@@ -1,4 +1,28 @@
-var UI_NOTIFY_CONTAINER_ID = "linkedin-engage-notify-container";
+function uiNotifyRandomToken() {
+  var bytes = new Uint8Array(8);
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.getRandomValues === "function"
+  ) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (var i = 0; i < bytes.length; i++) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  var out = "n";
+  for (var j = 0; j < bytes.length; j++) {
+    out += (bytes[j] + 256).toString(16).slice(1);
+  }
+  return out;
+}
+
+// Random per-page id: nothing recognizable for page scripts to look for.
+// A re-injection into the same page reuses the existing value (var hoisting
+// keeps the earlier global visible) so the container is never duplicated.
+var UI_NOTIFY_CONTAINER_ID =
+  (typeof UI_NOTIFY_CONTAINER_ID === "string" && UI_NOTIFY_CONTAINER_ID) ||
+  uiNotifyRandomToken();
 var UI_NOTIFY_COUNTER = 0;
 var UI_NOTIFY_MAX_VISIBLE = 4;
 var UI_NOTIFY_AUTO_DISMISS_MS = {
@@ -66,7 +90,7 @@ function showTopNotification(message, type, options) {
   if (!container) return null;
   var opts = options || {};
   var palette = UI_NOTIFY_COLORS[type] || UI_NOTIFY_COLORS.info;
-  var id = "le-notify-" + ++UI_NOTIFY_COUNTER;
+  var id = UI_NOTIFY_CONTAINER_ID + "-" + ++UI_NOTIFY_COUNTER;
 
   while (container.children.length >= UI_NOTIFY_MAX_VISIBLE) {
     dismissTopNotification(container.children[0]);
@@ -136,7 +160,7 @@ function showTopNotification(message, type, options) {
   // Optional action button (e.g. an in-page "Stop" control during a run).
   if (opts.action && typeof opts.action.onClick === "function") {
     var actionBtn = document.createElement("button");
-    actionBtn.setAttribute("data-le-action", "1");
+    actionBtn.setAttribute("data-" + UI_NOTIFY_CONTAINER_ID, "a");
     actionBtn.setAttribute(
       "style",
       [

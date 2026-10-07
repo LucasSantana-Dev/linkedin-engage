@@ -37,7 +37,6 @@ The extension communicates only with `linkedin.com`, as required for its automat
 |-----------|----------------|
 | `activeTab` | Interact with the current LinkedIn tab |
 | `storage` | Save settings, stats, run history and counters locally |
-| `tabs` | Open and manage LinkedIn search and automation tabs |
 | `scripting` | Inject automation scripts into LinkedIn pages |
 | `alarms` | Schedule recurring automation runs |
 | `notifications` | Notify you when automation completes or encounters errors |

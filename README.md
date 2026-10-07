@@ -88,7 +88,6 @@ Use in accordance with [LinkedIn's User Agreement](https://www.linkedin.com/lega
 |------------|------------------|
 | `activeTab` | Interact with the current LinkedIn tab |
 | `storage` | Save settings, stats, run history and quota counters locally |
-| `tabs` | Open and manage LinkedIn search and automation tabs |
 | `scripting` | Inject the automation scripts into LinkedIn pages |
 | `alarms` | Run scheduled sessions in the background |
 | `notifications` | Tell you when a run finishes or hits an error |

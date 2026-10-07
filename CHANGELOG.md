@@ -18,9 +18,11 @@ All notable changes to this project will be documented in this file.
 - Shared getWeekKey and status labels between popup and dashboard; rate-limiter is now a UMD module (#235)
 
 ### Security
+- Notification container uses a random per-page id instead of a fixed one (#240)
 - Vendored pdf.js updated to 6.4.299 (GHSA-hq66-cqwq-w95j) and eval disabled in the PDF parser (#231)
 
 ### Removed
+- Dropped the unused tabs permission (#240)
 - Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
 - Chrome Web Store publish job; releases ship as GitHub zip only (#225)
 - Orphan Feed/Nurture/AI locale keys and dead skip-keyword code (#234)
