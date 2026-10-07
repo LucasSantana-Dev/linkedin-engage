@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Invite notes are trimmed to LinkedIn's field limit and, once the free note quota runs out, remaining invites in the run are sent without a note (#232)
 
 ### Fixed
+- People and company search now work with LinkedIn's redesigned result cards (div role=listitem), so Connect profile data and company Follow runs no longer come back empty (#264)
 - Profile walker panel and run result messages are now localized in PT-BR (#234)
 
 ### Changed
