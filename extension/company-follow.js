@@ -520,6 +520,11 @@ if (typeof window.linkedInCompanyFollowInjected === 'undefined') {
                     '[LinkedIn Bot] Error on card:',
                     cardErr.message
                 );
+                followLog.push({
+                    status: 'error-card',
+                    details: cardErr.message,
+                    time: new Date().toISOString()
+                });
                 consecutiveFails++;
                 if (consecutiveFails >= 3) {
                     const backoff = Math.min(

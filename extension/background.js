@@ -5,6 +5,7 @@ const JOBS_PROFILE_CACHE_KEY = 'jobsProfileCache';
 const JOBS_CAREER_INTEL_KEY = 'jobsCareerIntelStateV1';
 
 const COMPANY_FOLLOW_SCRIPTS = [
+    'lib/text-utils.js',
     'lib/ui-notify.js',
     'lib/search-no-results.js',
     'lib/search-result-card.js',
@@ -14,6 +15,7 @@ const COMPANY_FOLLOW_SCRIPTS = [
 ];
 
 const JOBS_ASSIST_SCRIPTS = [
+    'lib/text-utils.js',
     'lib/ui-notify.js',
     'lib/jobs-utils.js',
     'jobs-assist.js'
@@ -41,6 +43,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     }).catch(() => {});
 });
 
+importScripts('lib/text-utils.js');
 importScripts('lib/rate-limiter.js');
 importScripts('lib/connect-safety.js');
 importScripts('lib/analytics.js');
