@@ -199,11 +199,11 @@
         return !!a && !!b && (a === b || a.contains(b) || b.contains(a));
     }
 
-    // A per-card withdraw control is never a confirmation: it matches the
-    // per-card aria-label, or sits in a list item that lives inside the dialog
-    // (a list item that merely wraps the dialog does not count).
+    // A per-card withdraw control is never a confirmation: it sits in a list
+    // item that lives inside the dialog (a list item that merely wraps the
+    // dialog does not count). Decided by structure only: LinkedIn's real
+    // confirm button carries the same per-card aria-label as the card link.
     function isCardWithdrawControl(el, dialog) {
-        if (isWithdrawAriaLabel(el.getAttribute('aria-label'))) return true;
         if (typeof el.closest !== 'function') return false;
         const item = el.closest('[role="listitem"]');
         return !!item && (!dialog || dialog.contains(item));
@@ -253,7 +253,8 @@
             );
             const hit = candidates.find(el =>
                 /^(cancel|dismiss|close|not now|cancelar|fechar|agora nao)$/
-                    .test(normalizeText(el.textContent)) ||
+                    .test(normalizeText(el.textContent))
+            ) || candidates.find(el =>
                 /^(dismiss|close|fechar)/
                     .test(normalizeText(el.getAttribute('aria-label')))
             );

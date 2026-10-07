@@ -271,6 +271,9 @@ describe('confirmation dialog and completion helpers', () => {
             '<button>Withdraw</button></div>' +
             '<a aria-label="Withdraw invitation sent to B">Withdraw</a>' +
             '<button id="real">Withdraw</button></div>';
+        document.querySelector('[role="listitem"]').appendChild(
+            document.querySelector('a')
+        );
         expect(lib.findWithdrawConfirm(document, null).id).toBe('real');
     });
 
@@ -348,8 +351,24 @@ describe('confirmation dialog and completion helpers', () => {
 
     test('a per-card control inside a native dialog is still rejected', () => {
         document.body.innerHTML =
-            '<dialog open><div role="listitem"><button>Withdraw</button></div>' +
-            '<a aria-label="Withdraw invitation sent to B">Withdraw</a></dialog>';
+            '<dialog open><div role="listitem"><button>Withdraw</button>' +
+            '<a aria-label="Withdraw invitation sent to B">Withdraw</a></div></dialog>';
+        expect(lib.findWithdrawConfirm(document, null)).toBeNull();
+    });
+
+    test('the aria-labelled confirm in a native dialog is found (#277)', () => {
+        loadDialogFixture();
+        const btn = document.getElementById('confirm');
+        expect(btn.getAttribute('aria-label'))
+            .toBe('Withdraw invitation sent to Test Person 1');
+        expect(lib.findWithdrawConfirm(document, null)).toBe(btn);
+        expect(lib.findDialogDismiss(document).id).toBe('cancel');
+    });
+
+    test('an aria-labelled card link in a wrapping dialog is rejected', () => {
+        document.body.innerHTML =
+            '<dialog open><div role="listitem">' +
+            '<a aria-label="Withdraw invitation sent to B">Withdraw</a></div></dialog>';
         expect(lib.findWithdrawConfirm(document, null)).toBeNull();
     });
 

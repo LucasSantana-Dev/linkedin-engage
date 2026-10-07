@@ -56,9 +56,12 @@ describe('withdraw-invites MAIN-world runtime', () => {
                     } else {
                         dlg.setAttribute('role', 'dialog');
                     }
+                    const okLabel = behavior === 'confirm-native'
+                        ? ` aria-label="${link.getAttribute('aria-label')}"`
+                        : '';
                     dlg.innerHTML =
                         '<button class="cancel">Cancel</button>' +
-                        '<button class="ok">Withdraw</button>';
+                        `<button class="ok"${okLabel}>Withdraw</button>`;
                     dlg.querySelector('.cancel').addEventListener(
                         'click', () => dlg.remove()
                     );
