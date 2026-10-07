@@ -95,7 +95,8 @@ function findFallbackCompanyContainers(root) {
             '.entity-result, ' +
             '.reusable-search__result-container, ' +
             '[data-chameleon-result-urn], ' +
-            '.scaffold-layout__list-item, li'
+            '.scaffold-layout__list-item, li, ' +
+            '[role="listitem"]'
         );
         if (!container) continue;
         if (!container.querySelector('button')) continue;

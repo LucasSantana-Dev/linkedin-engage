@@ -116,10 +116,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             if (lastInviteStatus === 429) return false;
 
             if (isPendingState(button)) return true;
-            const card = button.closest(
-                '.entity-result, li, ' +
-                '[data-chameleon-result-urn]'
-            );
+            const card = findResultCard(button);
             if (isPendingInCard(card)) return true;
         }
         return false;
@@ -139,64 +136,10 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     function extractProfileInfo(btn) {
-        const card = btn.closest(
-            '.entity-result, li, ' +
-            '[data-chameleon-result-urn]'
-        );
+        const card = findResultCard(btn);
         if (!card) return { name: 'Unknown', headline: '' };
-        const nameEl = card.querySelector(
-            '.entity-result__title-text a span[dir], ' +
-            '.entity-result__title-text a, ' +
-            'span.entity-result__title-text'
-        );
-        const name = nameEl
-            ? nameEl.innerText.trim().split('\n')[0]
-            : 'Unknown';
-        const headlineEl = card.querySelector(
-            '.entity-result__primary-subtitle'
-        );
-        const headline = headlineEl
-            ? headlineEl.innerText.trim() : '';
-        const linkEl = card.querySelector(
-            'a[href*="/in/"]'
-        );
-        const profileUrl = linkEl
-            ? linkEl.href.split('?')[0] : '';
-        const locEl = card.querySelector(
-            '.entity-result__secondary-subtitle'
-        );
-        const location = locEl
-            ? locEl.innerText.trim() : '';
-        const summaryEl = card.querySelector(
-            '.entity-result__summary'
-        );
-        const summary = summaryEl
-            ? summaryEl.innerText.trim() : '';
-        const imgEl = card.querySelector(
-            'img.presence-entity__image, ' +
-            'img.EntityPhoto-circle-5, ' +
-            'img[data-delayed-url]'
-        );
-        const photoUrl = imgEl
-            ? (imgEl.src || imgEl.dataset.delayedUrl
-                || '') : '';
-        const mutualEl = card.querySelector(
-            '.entity-result__simple-insight, ' +
-            '.member-insights__reason'
-        );
-        const mutualText = mutualEl
-            ? mutualEl.innerText.trim() : '';
-        const mutualMatch =
-            mutualText.match(/(\d+)\s*mutual/i);
-        const mutualConnections = mutualMatch
-            ? parseInt(mutualMatch[1]) : 0;
-        return {
-            name, headline, profileUrl, location,
-            summary, photoUrl, mutualConnections
-        };
+        return extractPersonCardInfo(card);
     }
-
-
 
     window.addEventListener('message', (event) => {
         if (event.source !== window) return;
@@ -230,10 +173,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     function isAlreadyConnectedElement(el) {
-        const card = el?.closest(
-            '.entity-result, li, ' +
-            '[data-chameleon-result-urn]'
-        );
+        const card = findResultCard(el);
         if (!card ||
             typeof isAlreadyConnectedCardText !==
             'function') {
@@ -674,37 +614,21 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 await delay(2000);
 
                 const cards = document.querySelectorAll(
-                    '.entity-result, ' +
-                    '[data-chameleon-result-urn]'
+                    SEARCH_RESULT_CARD_SELECTOR
                 );
 
                 for (const card of cards) {
                     if (totalEngaged >= limit ||
                         stopRequested) break;
 
-                    const linkEl = card.querySelector(
-                        'a[href*="/in/"]'
-                    );
-                    const profileUrl = linkEl
-                        ? linkEl.href.split('?')[0] : '';
+                    const cardInfo = extractPersonCardInfo(card);
+                    const profileUrl = cardInfo.profileUrl;
 
                     if (!profileUrl ||
                         sentUrls.has(profileUrl)) continue;
 
-                    const nameEl = card.querySelector(
-                        '.entity-result__title-text ' +
-                        'a span[dir], ' +
-                        '.entity-result__title-text a'
-                    );
-                    const name = nameEl
-                        ? nameEl.innerText.trim()
-                            .split('\n')[0]
-                        : 'Unknown';
-                    const headlineEl = card.querySelector(
-                        '.entity-result__primary-subtitle'
-                    );
-                    const headline = headlineEl
-                        ? headlineEl.innerText.trim() : '';
+                    const name = cardInfo.name;
+                    const headline = cardInfo.headline;
 
                     let actions = [];
 
@@ -1033,11 +957,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 }
 
                 const followCards = document.querySelectorAll(
-                    '.entity-result, ' +
-                    '.reusable-search__result-container, ' +
-                    'li.reusable-search__result-container, ' +
-                    '[data-chameleon-result-urn], ' +
-                    'div[data-view-name="search-entity-result-universal-template"]'
+                    SEARCH_RESULT_CARD_SELECTOR
                 );
                 for (const card of followCards) {
                     const contextBtn = card.querySelector(
@@ -1101,14 +1021,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         }
                         if (seen.has(fbtn)) continue;
                         if (!isButtonClickable(fbtn)) continue;
-                        const card = fbtn.closest(
-                            '.entity-result, ' +
-                            '.reusable-search__result-container, ' +
-                            'li.reusable-search__result-container, ' +
-                            '[data-chameleon-result-urn], ' +
-                            'div[data-view-name="search-entity-result-universal-template"], ' +
-                            'li'
-                        );
+                        const card = findResultCard(fbtn);
                         if (!card) continue;
                         if (cardHasExplicitConnect(card)) continue;
                         if (isAlreadyConnectedElement(fbtn)) {
@@ -1133,11 +1046,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         i >= 0; i--) {
                         const t = actionTargets[i];
                         if (t.action !== 'connect') continue;
-                        const card = t.button.closest(
-                            '.entity-result, ' +
-                            'li.reusable-search__result-container, ' +
-                            'li, [data-chameleon-result-urn]'
-                        );
+                        const card = findResultCard(t.button);
                         if (!card) continue;
                         const fbtn = findFollowButtonInCard(card);
                         if (fbtn && !seen.has(fbtn) &&
@@ -1174,10 +1083,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 }
 
                 function getCardInfo(btn) {
-                    const card = btn.closest(
-                        '.entity-result, ' +
-                        'li, [data-chameleon-result-urn]'
-                    );
+                    const card = findResultCard(btn);
                     if (!card) return {
                         mutual: false, degree: 99
                     };
@@ -1263,10 +1169,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         target.profile || {};
 
                     if (yearsMin !== null || yearsMax !== null) {
-                        const cardForYears = button.closest(
-                            '.entity-result, li, ' +
-                            '[data-chameleon-result-urn]'
-                        );
+                        const cardForYears = findResultCard(button);
                         const txt = (cardForYears?.innerText
                             || '').toLowerCase();
                         const m = txt.match(
@@ -1330,10 +1233,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         const profile = targetProfile.name
                             ? targetProfile
                             : extractProfileInfo(button);
-                        const card = button.closest(
-                            '.entity-result, li, ' +
-                            '[data-chameleon-result-urn]'
-                        );
+                        const card = findResultCard(button);
                         const recruiterLike =
                             typeof isRecruiterProfile ===
                             'function' &&
