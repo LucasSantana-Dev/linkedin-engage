@@ -1,7 +1,7 @@
 const {
     LOW_ACCEPTANCE_RATE, LOW_ACCEPTANCE_MIN_SAMPLE, WARMUP_DAILY_LIMITS,
     computeAcceptance, getWarmupState, getEffectiveConnectDailyLimit,
-    resolveConnectSafety
+    resolveConnectSafety, resolveLaunchLimit
 } = require('../extension/lib/connect-safety');
 
 const DAY = 86400000;
@@ -103,5 +103,32 @@ describe('resolveConnectSafety', () => {
     });
     test('defaults', () => {
         expect(resolveConnectSafety().reasons).toEqual([]);
+    });
+});
+
+describe('resolveLaunchLimit', () => {
+    test('user limit wins when below the remaining budgets', () => {
+        expect(resolveLaunchLimit({
+            userLimit: 1, weeklyLeft: 10, dailyLeft: 5
+        })).toBe(1);
+    });
+    test('daily remaining caps a larger user limit', () => {
+        expect(resolveLaunchLimit({
+            userLimit: 50, weeklyLeft: null, dailyLeft: 3
+        })).toBe(3);
+    });
+    test('weekly remaining caps and takes the smallest cap', () => {
+        expect(resolveLaunchLimit({
+            userLimit: 50, weeklyLeft: 7, dailyLeft: 9
+        })).toBe(7);
+    });
+    test('zero remaining blocks the run', () => {
+        expect(resolveLaunchLimit({
+            userLimit: 5, weeklyLeft: 0, dailyLeft: 4
+        })).toBe(0);
+    });
+    test('no valid cap or negative values give 0', () => {
+        expect(resolveLaunchLimit()).toBe(0);
+        expect(resolveLaunchLimit({ userLimit: -3 })).toBe(0);
     });
 });

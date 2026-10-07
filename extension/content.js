@@ -108,8 +108,20 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         return origXhrSend.apply(this, arguments);
     };
 
+    // Pre-click snapshots (card, name, profile URL) keyed by the clicked
+    // control: LinkedIn replaces that control after a send, detaching it.
+    const sendContexts = new WeakMap();
+
+    function rememberSendContext(button) {
+        sendContexts.set(
+            button,
+            captureSendContext(button, findResultCard(button))
+        );
+    }
+
     async function verifyPendingState(button) {
         if (lastInviteStatus === 429) return false;
+        const ctx = sendContexts.get(button);
 
         for (let i = 0; i < 6; i++) {
             await delay(500);
@@ -118,6 +130,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             if (isPendingState(button)) return true;
             const card = findResultCard(button);
             if (isPendingInCard(card)) return true;
+            if (isSendConfirmed(ctx, document)) return true;
         }
         return false;
     }
@@ -136,7 +149,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
     }
 
     function extractProfileInfo(btn) {
-        const card = findResultCard(btn);
+        const card = findResultCard(btn) ||
+            sendContexts.get(btn)?.card;
         if (!card) return { name: 'Unknown', headline: '' };
         return extractPersonCardInfo(card);
     }
@@ -771,6 +785,8 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
             ? config.yearsMin : null;
         const yearsMax = Number.isFinite(config?.yearsMax)
             ? config.yearsMax : null;
+        // Counts every completed final Send click, verified or not: it is
+        // both the hard limit ceiling and the rate-limiter feed.
         let totalSent = 0;
         let totalSkipped = 0;
         let currentPage = 1;
@@ -840,11 +856,15 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                         .toISOString()
                 });
             } else {
-                totalSkipped++;
+                totalSent++;
+                if (noteQuotaExhausted) sentWithoutNoteAfterQuota++;
+                if (sentInfo2.profileUrl) {
+                    sentUrls.add(sentInfo2.profileUrl);
+                }
                 connectionLog.push({
                     ...sentInfo2,
                     status:
-                        'skipped-unverified',
+                        'sent-unverified',
                     time: new Date()
                         .toISOString()
                 });
@@ -857,7 +877,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
         }
 
         try {
-            while (totalSent < limit) {
+            while (hasSendBudget(totalSent, limit)) {
                 if (stopRequested) {
                     break;
                 }
@@ -1162,7 +1182,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                 actionTargets.push(...sorted);
 
                 for (const target of actionTargets) {
-                    if (totalSent >= limit || stopRequested) break;
+                    if (!hasSendBudget(totalSent, limit) || stopRequested) break;
                     const button = target.button;
                     const actionType = target.action;
                     const targetProfile =
@@ -1321,6 +1341,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                             1000 + Math.random() * 1500
                         );
                         button.focus();
+                        rememberSendContext(button);
                         button.click();
                         button.setAttribute(
                             'disabled', 'disabled'
@@ -1421,11 +1442,17 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                         .toISOString()
                                 });
                             } else {
-                                totalSkipped++;
+                                totalSent++;
+                                const unverifiedInfo =
+                                    extractProfileInfo(button);
+                                if (unverifiedInfo.profileUrl) {
+                                    sentUrls.add(
+                                        unverifiedInfo.profileUrl
+                                    );
+                                }
                                 connectionLog.push({
-                                    ...extractProfileInfo(
-                                        button),
-                                    status: 'skipped-unverified',
+                                    ...unverifiedInfo,
+                                    status: 'sent-unverified',
                                     time: new Date()
                                         .toISOString()
                                 });
@@ -1561,11 +1588,16 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                                                 .toISOString()
                                         });
                                     } else {
-                                        totalSkipped++;
+                                        totalSent++;
+                                        if (sentInfo.profileUrl) {
+                                            sentUrls.add(
+                                                sentInfo.profileUrl
+                                            );
+                                        }
                                         connectionLog.push({
                                             ...sentInfo,
                                             status:
-                                                'skipped-unverified',
+                                                'sent-unverified',
                                             time: new Date()
                                                 .toISOString()
                                         });
@@ -1628,7 +1660,7 @@ if (typeof window.linkedInAutoConnectInjected === 'undefined') {
                     }
                 }
 
-                if (totalSent >= limit) break;
+                if (!hasSendBudget(totalSent, limit)) break;
 
                 const nextBtn = findNextPageButton();
                 if (nextBtn) {

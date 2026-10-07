@@ -3175,13 +3175,15 @@ async function startConnect() {
         return;
     }
 
-    const limit = parseInt(
+    const userLimit = parseInt(
         document.getElementById('limitInput').value
     ) || 50;
     const engagementOnly = document.getElementById(
         'engagementOnlyCheckbox'
     ).checked;
 
+    let weeklyLeft = null;
+    let dailyLeft = null;
     const weeklyCount = await getWeeklyCount();
     if (!engagementOnly && weeklyCount >= WEEKLY_LIMIT) {
         setStatusMessageKey(
@@ -3192,7 +3194,7 @@ async function startConnect() {
         );
         return;
     }
-    if (!engagementOnly && weeklyCount + limit > WEEKLY_LIMIT) {
+    if (!engagementOnly && weeklyCount + userLimit > WEEKLY_LIMIT) {
         const remaining = WEEKLY_LIMIT - weeklyCount;
         setStatusMessageKey(
             'popup.connect.warningWeeklyLimitAdjusted',
@@ -3200,6 +3202,7 @@ async function startConnect() {
             `Only ${remaining} invites left this week (${weeklyCount}/${WEEKLY_LIMIT}). Limit auto-adjusted to ${remaining}.`,
             [remaining, weeklyCount, WEEKLY_LIMIT]
         );
+        weeklyLeft = remaining;
         document.getElementById('limitInput').value = remaining;
     }
     if (!engagementOnly) {
@@ -3213,7 +3216,7 @@ async function startConnect() {
             );
             return;
         }
-        if (safety.dayCount + limit > safety.limit) {
+        if (safety.dayCount + userLimit > safety.limit) {
             const left = safety.limit - safety.dayCount;
             setStatusMessageKey(
                 'popup.safety.warningDailyLimitAdjusted',
@@ -3221,9 +3224,14 @@ async function startConnect() {
                 `Only ${left} invites left today (${safety.dayCount}/${safety.limit}). Limit auto-adjusted to ${left}.`,
                 [left, safety.dayCount, safety.limit]
             );
+            dailyLeft = left;
             document.getElementById('limitInput').value = left;
         }
     }
+    // The launched limit honors every adjustment shown in the input.
+    const limit = resolveLaunchLimit({
+        userLimit, weeklyLeft, dailyLeft
+    });
     const geoUrn = getSelectedRegionGeoUrn();
     const activelyHiring = document.getElementById(
         'activelyHiringCheckbox'
@@ -3734,7 +3742,8 @@ chrome.runtime.onMessage.addListener((request) => {
             );
 
             const newUrls = response.log
-                .filter(r => r.status === 'sent' && r.profileUrl)
+                .filter(r => (r.status === 'sent' ||
+                    r.status === 'sent-unverified') && r.profileUrl)
                 .map(r => r.profileUrl);
             if (newUrls.length) {
                 chrome.storage.local.get(
@@ -3916,7 +3925,7 @@ function renderRecentProfiles(entries) {
 
         const badge = document.createElement('span');
         badge.className = 'profile-badge ';
-        if (r.status === 'sent') {
+        if (r.status === 'sent' || r.status === 'sent-unverified') {
             badge.className += 'sent';
             badge.textContent = tr('status.sent', null, 'Sent');
         } else if (r.status === 'visited' ||

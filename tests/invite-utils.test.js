@@ -24,7 +24,11 @@ const {
     isRecruiterProfile,
     isOpenToWorkCard,
     isJobSeekingProfile,
-    detectNoSearchResults
+    detectNoSearchResults,
+    extractInviteName,
+    captureSendContext,
+    isSendConfirmed,
+    hasSendBudget
 } = require('../extension/lib/invite-utils');
 
 describe('detectNoSearchResults', () => {
@@ -699,5 +703,131 @@ describe('isJobSeekingProfile', () => {
             headline: 'Tech Recruiter',
             summary: 'Hiring backend engineers'
         }, null)).toBe(false);
+    });
+});
+
+describe('send verification on the swapped control (#270)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const { findResultCard } =
+        require('../extension/lib/search-result-card');
+
+    function loadPeople() {
+        document.body.innerHTML = fs.readFileSync(path.join(
+            __dirname,
+            'fixtures/linkedin-search-results/people-cards.html'
+        ), 'utf8');
+        const btn = document.querySelector(
+            'a[aria-label^="Invite Pessoa Teste 1"]'
+        );
+        const pending = document.querySelector(
+            'a[aria-label^="Pending, click to withdraw invitation sent to Pessoa Teste 2"]'
+        );
+        return { btn, pendingHtml: pending.outerHTML };
+    }
+
+    function swap(btn, pendingHtml, name) {
+        const html = pendingHtml.replace('Pessoa Teste 2', name);
+        btn.insertAdjacentHTML('afterend', html);
+        btn.remove();
+    }
+
+    afterEach(() => { document.body.innerHTML = ''; });
+
+    test('extractInviteName reads EN and PT-BR labels', () => {
+        expect(extractInviteName('Invite Ana Souza to connect'))
+            .toBe('Ana Souza');
+        expect(extractInviteName('Convidar Ana para se conectar'))
+            .toBe('Ana');
+        expect(extractInviteName('Message Ana')).toBe('');
+        expect(extractInviteName(null)).toBe('');
+    });
+
+    test('pre-click card reference verifies after the control is detached', () => {
+        const { btn, pendingHtml } = loadPeople();
+        const ctx = captureSendContext(btn, findResultCard(btn));
+        expect(ctx.name).toBe('Pessoa Teste 1');
+        expect(ctx.profileUrl)
+            .toBe('https://www.linkedin.com/in/pessoa-teste-1/');
+        expect(isSendConfirmed(ctx, document)).toBe(false);
+        swap(btn, pendingHtml, 'Pessoa Teste 1');
+        expect(btn.isConnected).toBe(false);
+        expect(isPendingState(btn)).toBe(false);
+        expect(findResultCard(btn)).toBeNull();
+        expect(isSendConfirmed(ctx, document)).toBe(true);
+    });
+
+    test('name fallback finds the Pending control when the card is gone', () => {
+        const { btn, pendingHtml } = loadPeople();
+        const ctx = captureSendContext(btn, findResultCard(btn));
+        swap(btn, pendingHtml, 'Pessoa Teste 1');
+        ctx.card.remove();
+        document.body.insertAdjacentHTML(
+            'beforeend', '<div role="listitem">' +
+            pendingHtml.replace('Pessoa Teste 2', 'Pessoa Teste 1') +
+            '</div>'
+        );
+        expect(isSendConfirmed({ ...ctx, card: null }, document))
+            .toBe(true);
+    });
+
+    test('profile URL fallback matches the owning card', () => {
+        document.body.innerHTML =
+            '<div role="listitem"><a href="https://www.linkedin.com/in/x/?a=1">X</a>' +
+            '<button aria-label="Pending">Pending</button></div>';
+        expect(isSendConfirmed({
+            card: null, name: '',
+            profileUrl: 'https://www.linkedin.com/in/x/'
+        }, document)).toBe(true);
+        expect(isSendConfirmed({
+            card: null, name: '',
+            profileUrl: 'https://www.linkedin.com/in/other/'
+        }, document)).toBe(false);
+    });
+
+    test('does not confirm another person\'s Pending control', () => {
+        const { btn, pendingHtml } = loadPeople();
+        const ctx = captureSendContext(btn, findResultCard(btn));
+        ctx.card.remove();
+        document.body.insertAdjacentHTML(
+            'beforeend', '<div role="listitem">' + pendingHtml + '</div>'
+        );
+        expect(isSendConfirmed({ ...ctx, card: null }, document))
+            .toBe(false);
+        expect(isSendConfirmed(null, document)).toBe(false);
+        expect(isSendConfirmed({ card: null, name: '', profileUrl: '' },
+            document)).toBe(false);
+        expect(isSendConfirmed({ card: null, name: 'A', profileUrl: '' },
+            null)).toBe(false);
+    });
+
+    test('captureSendContext tolerates a missing card', () => {
+        const a = document.createElement('a');
+        a.setAttribute('aria-label', 'Invite Zed to connect');
+        expect(captureSendContext(a, null)).toEqual({
+            card: null, name: 'Zed', profileUrl: ''
+        });
+    });
+});
+
+describe('hasSendBudget hard ceiling (#270)', () => {
+    test('limit 1 stops after exactly one attempt even if verification always fails', () => {
+        const limit = 1;
+        let attempts = 0;
+        let verified = 0;
+        const verify = () => false;
+        while (hasSendBudget(attempts, limit)) {
+            attempts++;
+            if (verify()) verified++;
+        }
+        expect(attempts).toBe(1);
+        expect(verified).toBe(0);
+    });
+
+    test('budget is exhausted exactly at the limit', () => {
+        expect(hasSendBudget(0, 3)).toBe(true);
+        expect(hasSendBudget(2, 3)).toBe(true);
+        expect(hasSendBudget(3, 3)).toBe(false);
+        expect(hasSendBudget(4, 3)).toBe(false);
     });
 });
