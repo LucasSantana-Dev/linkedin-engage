@@ -29,8 +29,51 @@ afterEach(() => {
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 describe("ui-notify constants", () => {
-  test("exports expected container ID", () => {
-    expect(UI_NOTIFY_CONTAINER_ID).toBe("linkedin-engage-notify-container");
+  test("container ID is a random token with no fixed recognizable name", () => {
+    expect(UI_NOTIFY_CONTAINER_ID).toMatch(/^n[0-9a-f]{16}$/);
+    expect(UI_NOTIFY_CONTAINER_ID).not.toMatch(/linkedin|engage|notify/i);
+  });
+
+  test("random token falls back to Math.random without crypto", () => {
+    const original = globalThis.crypto;
+    Object.defineProperty(globalThis, "crypto", {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      jest.isolateModules(() => {
+        const fresh = require("../extension/lib/ui-notify");
+        expect(fresh.UI_NOTIFY_CONTAINER_ID).toMatch(/^n[0-9a-f]{16}$/);
+      });
+    } finally {
+      Object.defineProperty(globalThis, "crypto", {
+        value: original,
+        configurable: true,
+      });
+    }
+  });
+
+  test("re-injection into the same page keeps the same container id", () => {
+    const vm = require("vm");
+    const fs = require("fs");
+    const src = fs.readFileSync(
+      require.resolve("../extension/lib/ui-notify"),
+      "utf8",
+    );
+    const ctx = vm.createContext({});
+    vm.runInContext(src, ctx);
+    const first = ctx.UI_NOTIFY_CONTAINER_ID;
+    vm.runInContext(src, ctx);
+    expect(ctx.UI_NOTIFY_CONTAINER_ID).toBe(first);
+  });
+
+  test("DOM carries no fixed linkedin-engage id or data attribute", () => {
+    showTopNotification("hi", "info", {
+      action: { label: "Go", onClick: () => {} },
+    });
+    expect(document.body.innerHTML).not.toMatch(
+      /linkedin-engage|le-notify|data-le-action/,
+    );
   });
 
   test("error auto-dismiss is 0 (persistent)", () => {
@@ -123,7 +166,7 @@ describe("showTopNotification", () => {
     const a = showTopNotification("A", "info");
     const b = showTopNotification("B", "info");
     expect(a.id).not.toBe(b.id);
-    expect(a.id).toMatch(/^le-notify-/);
+    expect(a.id).toMatch(new RegExp("^" + UI_NOTIFY_CONTAINER_ID + "-"));
   });
 
   test("applies error color border", () => {
@@ -426,7 +469,7 @@ describe("timer-driven paths", () => {
         duration: 0,
         action: { label: "Stop", onClick: () => { clicked++; } },
       });
-      const btn = bar.querySelector("button[data-le-action]");
+      const btn = bar.querySelector("button[data-" + UI_NOTIFY_CONTAINER_ID + "]");
       expect(btn).not.toBeNull();
       expect(btn.textContent).toBe("Stop");
       btn.click();
@@ -435,7 +478,7 @@ describe("timer-driven paths", () => {
 
     it("renders no action button when no action option given", () => {
       const bar = showTopNotification("Plain", "info", { duration: 0 });
-      expect(bar.querySelector("button[data-le-action]")).toBeNull();
+      expect(bar.querySelector("button[data-" + UI_NOTIFY_CONTAINER_ID + "]")).toBeNull();
     });
 
     it("dismisses the notification after the action fires", () => {
@@ -443,7 +486,7 @@ describe("timer-driven paths", () => {
         duration: 0,
         action: { label: "Stop", onClick: () => {} },
       });
-      bar.querySelector("button[data-le-action]").click();
+      bar.querySelector("button[data-" + UI_NOTIFY_CONTAINER_ID + "]").click();
       expect(bar.style.opacity).toBe("0");
     });
   });
