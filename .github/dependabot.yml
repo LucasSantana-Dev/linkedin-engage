@@ -8,11 +8,15 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: "development"
+        update-types: ["minor", "patch"]
     labels:
-      - "chore(deps)"
+      - "dependencies"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-minor:
+        update-types: ["minor", "patch"]
     labels:
-      - "chore(deps)"
+      - "dependencies"
