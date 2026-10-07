@@ -403,4 +403,66 @@ describe('company-follow runtime classification', () => {
             ])
         );
     });
+
+    it('logs an error-card entry when a card throws and keeps going', async () => {
+        const bad = document.createElement('div');
+        bad.className = 'entity-result';
+        bad.dataset.bad = '1';
+        const good = document.createElement('div');
+        good.className = 'entity-result';
+        const btn = document.createElement('button');
+        btn.textContent = '+ Follow';
+        btn.scrollIntoView = jest.fn();
+        btn.addEventListener('click', () => {
+            btn.textContent = 'Following';
+        });
+        good.appendChild(btn);
+        document.body.append(bad, good);
+
+        global.extractCompanyInfo = (card) => {
+            if (card.dataset.bad) throw new Error('boom normalizeToSearch');
+            return {
+                name: 'Good Co',
+                subtitle: 'Software',
+                companyUrl: 'https://www.linkedin.com/company/good-co/'
+            };
+        };
+        global.matchesTargetCompanies = () => true;
+        global.isCompanyFollowText = (text) =>
+            /^(\+\s*)?follow$/i.test(String(text || '').trim());
+        global.isFollowingText = (text) =>
+            /^following$/i.test(String(text || '').trim());
+        global.isCompanyFollowConfirmed = undefined;
+        global.isLowFitCompanyEntity = () => ({ isLowFit: false });
+        global.actionDelay = () => 0;
+        global.shouldTakePause = () => false;
+        global.getCompanySearchPageState = () => ({
+            cards: [bad, good],
+            cardsFound: true,
+            isExplicitNoResults: false,
+            resultsCountHint: 2,
+            resultsCountText: '2 results',
+            selectorHits: {}
+        });
+
+        require('../extension/company-follow');
+        const donePromise = waitForCompanyDone(6000);
+        window.dispatchEvent(new MessageEvent('message', {
+            data: {
+                type: 'LINKEDIN_COMPANY_FOLLOW_START',
+                config: { query: 'x', limit: 1, targetCompanies: [] }
+            },
+            source: window
+        }));
+
+        const result = await donePromise;
+        expect(result.log).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                status: 'error-card',
+                details: 'boom normalizeToSearch',
+                time: expect.any(String)
+            }),
+            expect.objectContaining({ name: 'Good Co', status: 'followed' })
+        ]));
+    });
 });
