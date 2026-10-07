@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Removed
+- Standalone Playwright connector (linkedin-connector.js) and its server dependencies (#224)
 - Chrome Web Store publish job; releases ship as GitHub zip only (#225)
 
 ### Docs
