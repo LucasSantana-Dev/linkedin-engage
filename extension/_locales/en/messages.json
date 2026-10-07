@@ -393,7 +393,7 @@
     "message": "$1 / $2"
   },
   "popup_connect_editQueryManually": {
-    "message": "Edit query manually"
+    "message": "Edit"
   },
   "popup_connect_engagementOnly": {
     "message": "Engagement only (visit + follow, no connect)"
@@ -534,7 +534,7 @@
     "message": "Recruiter Outreach"
   },
   "popup_connect_useTagBuilder": {
-    "message": "Use tag builder"
+    "message": "Done"
   },
   "popup_connect_warningWeeklyLimitAdjusted": {
     "message": "Only $1 invites left this week ($2/$3). Limit auto-adjusted to $1."
@@ -843,16 +843,16 @@
     "message": "Weekly limit reached (100). Try next week."
   },
   "popup_start_companies": {
-    "message": "Follow Companies"
+    "message": "Start Companies"
   },
   "popup_start_connect": {
-    "message": "Launch Automation"
+    "message": "Start Connect"
   },
   "popup_start_errorFailed": {
     "message": "Failed to start: $1"
   },
   "popup_start_jobs": {
-    "message": "Assist Job Apply"
+    "message": "Start Jobs"
   },
   "popup_statusStopping": {
     "message": "Stopping automation..."
@@ -1116,7 +1116,7 @@
     "message": "Per run (max 20)"
   },
   "popup_withdraw_start": {
-    "message": "Withdraw stale invites"
+    "message": "Start Withdraw"
   },
   "popup_withdraw_opening": {
     "message": "Opening Sent invitations..."
@@ -1144,5 +1144,107 @@
   },
   "status_withdrawn": {
     "message": "Withdrawn"
+  },
+  "popup_nav_settings": {
+    "message": "Settings"
+  },
+  "popup_nav_back": {
+    "message": "Back"
+  },
+  "common_withdraw": {
+    "message": "Withdraw"
+  },
+  "popup_filters_more": {
+    "message": "More filters"
+  },
+  "popup_group_search": {
+    "message": "Search"
+  },
+  "popup_group_targets": {
+    "message": "Target companies"
+  },
+  "popup_connect_presetIntent": {
+    "message": "Preset intent"
+  },
+  "popup_connect_compiledQuery": {
+    "message": "Compiled query"
+  },
+  "popup_connect_queryPlaceholder": {
+    "message": "Type your search query..."
+  },
+  "popup_connect_degree": {
+    "message": "Connection degree"
+  },
+  "popup_connect_yearsOfExperience": {
+    "message": "Years of experience"
+  },
+  "popup_connect_exclusionsSection": {
+    "message": "Exclusions"
+  },
+  "popup_connect_excludeKeywords": {
+    "message": "Exclude keywords (comma-separated, maps to NOT)"
+  },
+  "popup_connect_automationSection": {
+    "message": "Automation behavior"
+  },
+  "popup_connect_followFallback": {
+    "message": "Follow people when Connect is unavailable"
+  },
+  "popup_connect_followFirst": {
+    "message": "Prefer Follow over Connect when both are shown (advanced)"
+  },
+  "popup_connect_followMax": {
+    "message": "Max follows per run"
+  },
+  "popup_connect_messageLabel": {
+    "message": "Message"
+  },
+  "popup_connect_messageNameHint": {
+    "message": "{name} = first name"
+  },
+  "popup_connect_rotationHelp": {
+    "message": "Rotates through queries on each run. Leave empty to use current search. Chrome must be running."
+  },
+  "popup_connect_smartTiming": {
+    "message": "Smart timing (skip bad hours)"
+  },
+  "popup_company_batchHelp": {
+    "message": "Rotates through your company list in batches. Chrome must be running."
+  },
+  "popup_jobs_openOnLinkedIn": {
+    "message": "Open on LinkedIn"
+  },
+  "popup_jobs_removeDoc": {
+    "message": "Remove"
+  },
+  "popup_footer_decrease": {
+    "message": "Decrease limit"
+  },
+  "popup_footer_increase": {
+    "message": "Increase limit"
+  },
+  "popup_settings_groupLanguage": {
+    "message": "Language"
+  },
+  "popup_settings_groupLimits": {
+    "message": "Limits and warm-up"
+  },
+  "popup_settings_weeklyInvites": {
+    "message": "Invites this week"
+  },
+  "popup_settings_groupData": {
+    "message": "Data"
+  },
+  "popup_settings_openDashboard": {
+    "message": "Open dashboard"
+  },
+  "popup_withdraw_gateTitle": {
+    "message": "Withdraw is turned off"
+  },
+  "popup_withdraw_gateBody": {
+    "message": "Turn on Withdraw stale invites in Settings to use this mode."
+  },
+  "popup_withdraw_gateAction": {
+    "message": "Open settings"
   }
 }
